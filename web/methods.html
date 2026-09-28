@@ -8,7 +8,7 @@ the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source
   <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
   <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
   <a href="#m-harm">7 Chords from pose</a> <a href="#m-six">7b Six chords</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
-  <a href="#m-live">10 Live</a>
+  <a href="#m-live">10 Live</a> <a href="#m-map">10b Mapping</a> <a href="#m-rhythm">10c Rhythm</a>
 </nav>
 
 <h2 id="m-pose">1. Pose <span class="src">dance_pose.py · track</span></h2>
@@ -305,6 +305,64 @@ set by the Chord hold slider: that value in six-chord mode, and 0.7 times it for
 Flow and Space are the slowest, but they only colour the bass and the pad's tuning.</p>
 <p class="note">Total latency on stage is roughly camera (30–50 ms) + pose (15–30 ms on a laptop GPU) + feature lag + audio output
 (the page shows its measured fps, pose time and audio latency).</p>
+
+<h3 id="m-map">10b. Mapping matrix <span class="src">web/live/mapping.js</span></h3>
+<p>In the live tool every sound parameter (a <em>destination</em>) reads one movement feature (a <em>source</em>, $s\in[0,1]$) through its own curve:
+$$s' = \begin{cases}1-s & \text{inverted}\\ s & \text{otherwise}\end{cases},\qquad c = \operatorname{clip}(g\,s',0,1)^{\,e},\qquad
+v = \begin{cases} v_{\min} + (v_{\max}-v_{\min})\,c & \text{levels, pans, cents}\\ v_{\min}\,(v_{\max}/v_{\min})^{c} & \text{frequencies (equal steps in pitch)}\end{cases}$$
+with gain $g$, curve exponent $e$ and range $[v_{\min}, v_{\max}]$ set per row. Source “none” gives $s=0$, so the parameter stays at $v_{\min}$: that is how a
+parameter is made constant, and the <b>pad floor</b> is simply the pad level's $v_{\min}$. Each value reaches its audio parameter through the
+rise/fall glide $\operatorname{g}^{\uparrow\downarrow}_{\tau_a,\tau_r}$ of §8, with per-destination times. The defaults reproduce §9's ii–V–I mappings.</p>
+<table class="t">
+<tr><th>destination</th><th>default source</th><th>default $[v_{\min}, v_{\max}]$, $g$, $e$</th></tr>
+<tr><td>pad level</td><td>hand speed</td><td>[0, 1], 1, 1.2 (0.06 s / 0.4 s)</td></tr>
+<tr><td>pad brightness</td><td>none</td><td>1600 Hz</td></tr>
+<tr><td>pad detune</td><td>Space, inverted</td><td>[0, 30] cents, 1, 1.3</td></tr>
+<tr><td>bass level · harshness</td><td>Weight · Flow</td><td>[0, 1], 1.3, 1 · [0.3, 4.3], 1, 1.2</td></tr>
+<tr><td>wind level · brightness · pan</td><td>Weight · Weight · travel</td><td>[0, 1], 1.3, 0.9 · [180, 6500] Hz · [−1, 1]</td></tr>
+<tr><td>tuned wind level</td><td>Weight</td><td>[0, 1], 1.3, 0.9</td></tr>
+<tr><td>plucks level · reverb wet</td><td>none · none</td><td>1 · 0.2 (dry $=1-$wet)</td></tr>
+<tr><td>drums level</td><td>rhythm regularity</td><td>[0, 1], 1.4, 1 (0.3 s / 1 s)</td></tr>
+</table>
+<p><b>Sources added for the matrix</b> (all in $[0,1]$):</p>
+<ul>
+<li><b>energy</b>, integrated: a leaky average of normalised Weight, $\varepsilon \leftarrow \varepsilon + \min(1, \Delta t/T_\varepsilon)(\widehat W - \varepsilon)$,
+with $T_\varepsilon$ set by the Energy memory slider (default 3 s). Sustained agitation builds it up; a single gesture barely moves it.</li>
+<li><b>hand speed</b> $\operatorname{clip}(1.6\cdot\tfrac12(s_{\text{Lwr}}+s_{\text{Rwr}})/P_{98})$ and <b>body speed</b> $\operatorname{clip}(1.3\cdot\tfrac14\sum_{\text{limbs}} s_e/P_{98})$.</li>
+<li><b>hands height</b> $\operatorname{clip}((0.8-\mu)/2.3)$, <b>spread</b> $\operatorname{clip}(\sigma_h/2.5)$ and <b>left↔right</b> $\operatorname{clip}(0.5+\lambda/2.4)$,
+with $\lambda,\mu,\sigma_h$ as in §7b (arms hanging ≈ 0 height, overhead ≈ 1).</li>
+<li><b>rhythm regularity</b> and <b>tempo</b> (below).</li>
+</ul>
+<p><b>Presets</b> are partial overrides of the defaults: <i>Pad floor</i> (pad min 0.15, bass min 0.2); <i>Agitation</i> (pad and bass level from energy, with gain 1.5,
+pad brightness 700→4500 Hz from energy, and reverb 0.35→0.12, so calm is wet and agitation is dry and bright); <i>Sculpt</i> (pad brightness from hands height, detune from
+spread, wind pan from left↔right, bass harshness from Time); <i>Rhythm</i> (drums from regularity with gain 1.6, pad from energy). Your own are saved in the browser and can
+be exported and imported as JSON.</p>
+
+<h3 id="m-rhythm">10c. Rhythm and percussion <span class="src">features.js · periodicity, audio.js · hit, groove</span></h3>
+<p><b>Novelty.</b> With $B(t)=\sum_{\text{limbs}} s_e(t)$, the onset strength is its positive rate of change, $\nu(t) = \max(0, \dot B)$. This is the movement analogue of
+spectral flux in audio onset detection. An <em>onset</em> is a local maximum of $\nu$ above half its slowly decaying peak, at least 0.2 s after the previous one.</p>
+<p><b>Periodicity.</b> Every 0.25 s, $\nu$ over the last 6 s is resampled to 50 Hz, its mean removed, and its unbiased normalised autocorrelation computed:
+$$R(k) = \frac{\frac{1}{n-k}\sum_{i\ge k} x_i x_{i-k}}{\frac1n\sum_i x_i^2}.$$
+The strength is $\rho = \max R(k)$ over lags for 50–200 bpm. The period is the <em>shortest</em> local maximum with $R \ge 0.85\rho$, because a pulse also correlates at 2 and 3 periods,
+and taking the maximum alone halves the tempo. $\rho$ is smoothed ($\alpha=0.5$ per update), and the period follows only while $\rho &gt; 0.15$ ($\alpha = 0.3$).
+Regularity $=\operatorname{clip}((\rho-0.15)/0.5)$ and tempo $=60/\text{period}$.</p>
+<p><b>Validation</b> (the live code on landmark files):</p>
+<ul>
+<li>Synthetic limb bounces at 90, 110 and 140 bpm read at 91, 111 and 141 bpm, with regularity 1.00.</li>
+<li>The same bounces with ±40% or ±80% timing jitter read 0.14–0.15.</li>
+<li>the three clips read medians of 0.11–0.25, consistent with the earlier finding that the dance has no steady pulse.</li>
+</ul>
+<p><b>Drum voices</b> (Web Audio, one short node graph per hit, loudness $0.35+0.65\,v$):</p>
+<ul>
+<li>kick: a sine sweeping 150 → 45 Hz (exponential, 0.12 s), decaying over 0.4 s</li>
+<li>snare: band-passed noise (1.8 kHz, 0.18 s) plus a 185 Hz triangle (0.1 s)</li>
+<li>hat: noise high-passed at 7 kHz (0.05 s)</li>
+</ul>
+<p><b>Hits</b> mode plays one drum per sudden event (§6, live version): feet → kick, left hand → snare, right hand → hat, at the event's strength and position.
+<b>Groove</b> mode plays kick on beats 1 and 3, snare on 2 and 4, and hats on every eighth, at the detected period $T$. The grid is anchored at an onset, and
+each new onset within $\pm T/4$ of a predicted beat pulls the grid 30% of the way toward itself. When the tempo changes, the next scheduled eighth keeps its time and the spacing
+after it changes. Hits are scheduled 120 ms ahead on the audio clock. The groove's loudness is the drums-level mapping (by default rhythm regularity with gain 1.4,
+rising in 0.3 s and falling over 1 s), so the beat fades in only as her movement becomes regular.</p>
 
 <h2>Overlay</h2>
 <p>The videos are drawn from the same arrays. The skeleton is $\mathbf p$ (filtered). Arrows are $0.12\,\text{s}\times\mathbf v$ in pixels, capped at 160 px.

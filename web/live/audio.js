@@ -37,8 +37,8 @@ export class Engine {
 
     // master: dry + reverb → limiter → out
     this.bus = ctx.createGain();
-    const dry = ctx.createGain(); dry.gain.value = 0.8;
-    const wet = ctx.createGain(); wet.gain.value = 0.2;
+    const dry = this.dry = ctx.createGain(); dry.gain.value = 0.8;
+    const wet = this.wet = ctx.createGain(); wet.gain.value = 0.2;
     const verb = ctx.createConvolver(); verb.buffer = this.impulse(); verb.normalize = false;
     this.master = ctx.createGain(); this.master.gain.value = 1;
     const lim = ctx.createDynamicsCompressor();
@@ -52,11 +52,17 @@ export class Engine {
     const layer = name => { const g = ctx.createGain(); g.connect(this.bus);
                             this.layers[name] = g; return g; };
     for (const k of ['pad', 'bass', 'plucks', 'wind', 'wind tuned']) layer(k);
+    // drums: hits → dlevel (the mapping) → the drums fader
+    this.layers['drums'] = ctx.createGain(); this.dlevel = ctx.createGain(); this.dlevel.gain.value = 0;
+    this.drumFader = ctx.createGain();
+    this.layers['drums'].connect(this.dlevel).connect(this.drumFader).connect(this.bus);
+    this.beatAt = undefined;
 
     // shared noise source for both winds
     const nb = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
     const d = nb.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = gauss();
+    this.noiseBuf = nb;
     const noise = ctx.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start();
 
     // wind: noise → (0.6 band-pass + 0.4 low-pass), cutoff and level from Weight
@@ -82,7 +88,7 @@ export class Engine {
 
     // pad: four band-limited saws, detuned by slow LFOs when paths wander
     this.pamp = ctx.createGain(); this.pamp.gain.value = 0;
-    const plp = ctx.createBiquadFilter(); plp.type = 'lowpass'; plp.frequency.value = 1600; plp.Q.value = -3;
+    const plp = this.plp = ctx.createBiquadFilter(); plp.type = 'lowpass'; plp.frequency.value = 1600; plp.Q.value = -3;
     this.pamp.connect(plp).connect(this.layers['pad']);
     this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2]].map(([r, sign, pan]) => {
       const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 440;
@@ -138,30 +144,91 @@ export class Engine {
   }
 
   // f: live features, mirror: whether the picture (and so pan) is mirrored
-  update(f, mirror) {
+  // v: destination values from mapping.evaluate; dest: their glide times
+  update(f, v, dest, mirror, drums) {
     if (!this.ctx || !f) return;
-    const t = this.ctx.currentTime, W = f.weight, h = Math.min(1, 1.6 * (f.nspeed[1] + f.nspeed[2]) / 2);
+    const t = this.ctx.currentTime;
     const sx = x => (mirror ? 1 - x : x) * 2 - 1;          // screen x → pan −1…1
-    const w13 = Math.min(1, 1.3 * W);
-    this.wbp.frequency.setTargetAtTime(180 * 2 ** (5.2 * W), t, 0.05);
-    this.wlp.frequency.setTargetAtTime(180 * 2 ** (5.2 * W), t, 0.05);
-    this.wamp.gain.setTargetAtTime(0.5 * w13 ** 0.9, t, 0.05);
-    this.tamp.gain.setTargetAtTime(0.5 * w13 ** 0.9, t, 0.05);
-    const pan = (mirror ? -1 : 1) * (2 * f.travel - 1);   // hips crossing the floor, as seen
-    this.wpan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.25);
-    this.tpan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.25);
-    const wander = (1 - f.space) ** 1.3;
-    this.voices.forEach(v => v.depth.gain.setTargetAtTime(v.sign * 30 * wander, t, 0.15));
-    this.ar(this.pamp.gain, h ** 1.2, t);                   // no floor: still hands, silent pad
-    const I = 0.3 + 4 * f.flow ** 1.2;
-    this.bdev.gain.setTargetAtTime(I * 440, t, 0.06);
-    this.ar(this.bamp.gain, 0.2 * w13, t);
-    for (const ev of f.events) this.pluck(ev, sx(ev.x));
+    const set = (param, k, scale = 1) => this.ar(param, scale * v[k], t, dest[k].att, dest[k].rel);
+    set(this.pamp.gain, 'pad.level');
+    set(this.plp.frequency, 'pad.bright');
+    this.voices.forEach(o => this.ar(o.depth.gain, o.sign * v['pad.detune'], t, dest['pad.detune'].att, dest['pad.detune'].rel));
+    set(this.bamp.gain, 'bass.level', 0.2);
+    set(this.bdev.gain, 'bass.harsh', 440);                // deviation I·440 on the 440 base = I·f
+    set(this.wamp.gain, 'wind.level', 0.5);
+    set(this.tamp.gain, 'tuned.level', 0.5);
+    set(this.wbp.frequency, 'wind.bright'); set(this.wlp.frequency, 'wind.bright');
+    const pan = Math.max(-1, Math.min(1, (mirror ? -1 : 1) * v['wind.pan']));   // as seen
+    this.ar(this.wpan.pan, pan, t, dest['wind.pan'].att, dest['wind.pan'].rel);
+    this.ar(this.tpan.pan, pan, t, dest['wind.pan'].att, dest['wind.pan'].rel);
+    set(this.wet.gain, 'reverb'); this.ar(this.dry.gain, 1 - v['reverb'], t, 0.3, 0.3);
+    set(this.dlevel.gain, 'drums.level');
+    this.pluckLevel = v['plucks.level'];
+    for (const ev of f.events) {
+      this.pluck(ev, sx(ev.x));
+      if (drums.hits) this.hit({ lfoot: 'kick', rfoot: 'kick', lhand: 'snare', rhand: 'hat' }[ev.part],
+                               this.ctx.currentTime, ev.strength, sx(ev.x));
+    }
+    if (drums.groove) this.groove(f, drums);
   }
 
-  ar(param, v, t) {                    // one-pole glide with separate rise and fall times
-    const last = param._target ?? 0;
-    param.setTargetAtTime(v, t, v > last ? ATTACK : RELEASE);
+  // ── percussion ─────────────────────────────────────────────────────
+  // Three synthesised voices; each hit is a handful of nodes that stop themselves.
+  hit(kind, t, vel, pan = 0) {
+    const ctx = this.ctx, out = ctx.createStereoPanner(); out.pan.value = Math.max(-1, Math.min(1, pan));
+    out.connect(this.layers['drums']);
+    const env = (g, peak, decay) => { g.gain.setValueAtTime(peak, t); g.gain.exponentialRampToValueAtTime(1e-4, t + decay); };
+    const noise = (hp, bp) => { const n = ctx.createBufferSource(); n.buffer = this.noiseBuf;
+      n.loopStart = Math.random() * 3; const f = ctx.createBiquadFilter();
+      f.type = hp ? 'highpass' : 'bandpass'; f.frequency.value = hp || bp; f.Q.value = hp ? 0.7 : 0.8;
+      n.connect(f); n.start(t, Math.random() * 3); n.stop(t + 0.4); return f; };
+    vel = 0.35 + 0.65 * Math.min(1, vel);
+    if (kind === 'kick') {                 // sine, pitch falling 150 → 45 Hz
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+      env(g, 0.9 * vel, 0.4); o.connect(g).connect(out); o.start(t); o.stop(t + 0.45);
+    } else if (kind === 'snare') {         // band-passed noise + a short 185 Hz body
+      const g = ctx.createGain(); env(g, 0.5 * vel, 0.18); noise(0, 1800).connect(g).connect(out);
+      const o = ctx.createOscillator(), go = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 185;
+      env(go, 0.35 * vel, 0.1); o.connect(go).connect(out); o.start(t); o.stop(t + 0.15);
+    } else {                               // hat: high-passed noise, 50 ms
+      const g = ctx.createGain(); env(g, 0.25 * vel, 0.05); noise(7000).connect(g).connect(out);
+    }
+  }
+
+  // A beat at the detected tempo, phase-locked to her onsets: kick on 1 and 3,
+  // snare on 2 and 4, hats on the eighths. Its level is the drums.level mapping
+  // (by default the rhythm regularity), so it fades in only as she gets regular.
+  groove(f, drums) {
+    const ctx = this.ctx, now = ctx.currentTime, T = f.period;
+    const toAudio = x => x - drums.clock;                  // feature time → audio time
+    if (this.beatAt === undefined || this.beatAt < now - 60) { this.beatAt = toAudio(f.lastOnset); this.step = 0; this.Tprev = T; }
+    // tempo drifted: keep the next scheduled eighth where it was, change the spacing after it
+    if (Math.abs(T - this.Tprev) > 1e-3) { this.beatAt += (this.step / 2) * (this.Tprev - T); this.Tprev = T; }
+    if (this.beatAt + (this.step / 2) * T < now - 2 * T) {        // fell behind (tab hidden…): catch up
+      this.step += 2 * Math.ceil((now - this.beatAt - (this.step / 2) * T) / T); }
+    // nudge the grid toward a fresh onset that lands near a beat
+    if (f.lastOnset !== this.seenOnset) {
+      this.seenOnset = f.lastOnset;
+      const on = toAudio(f.lastOnset), k = Math.round((on - this.beatAt) / T), err = on - (this.beatAt + k * T);
+      if (Math.abs(err) < T / 4) this.beatAt += 0.3 * err;
+    }
+    while (this.beatAt + (this.step / 2) * T < now + 0.12) {  // schedule 120 ms ahead
+      const at = this.beatAt + (this.step / 2) * T, eighth = this.step % 8;
+      if (at > now - 0.01) {
+        if (eighth === 0 || eighth === 4) this.hit('kick', at, 0.9);
+        if (eighth === 2 || eighth === 6) this.hit('snare', at, 0.8);
+        this.hit('hat', at, eighth % 2 ? 0.45 : 0.7, 0.3);
+      }
+      this.step++;
+    }
+  }
+
+
+  ar(param, v, t, att = ATTACK, rel = RELEASE) {   // one-pole glide, separate rise and fall times
+    const last = param._target ?? param.value;
+    if (Math.abs(v - last) < 1e-4 * (Math.abs(v) + 1e-3)) return;
+    param.setTargetAtTime(v, t, v > last ? att : rel);
     param._target = v;
   }
 
@@ -186,12 +253,15 @@ export class Engine {
       const a = z[j], b = z[(j + 1) % N]; y[i] = a; z[j] = 0.996 * 0.5 * (a + b); j = (j + 1) % N;
     }
     const s = ctx.createBufferSource(); s.buffer = buf;
-    const g = ctx.createGain(); g.gain.value = 0.55 * (0.25 + 0.75 * ev.strength);
+    const g = ctx.createGain(); g.gain.value = (this.pluckLevel ?? 1) * 0.55 * (0.25 + 0.75 * ev.strength);
     const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
     s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
   }
 
-  level(name, v) { if (this.layers[name]) this.layers[name].gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
+  level(name, v) {
+    const g = name === 'drums' ? this.drumFader : this.layers[name];
+    if (g) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+  }
   masterLevel(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
   peak() {
     if (!this.meter) return 0;
