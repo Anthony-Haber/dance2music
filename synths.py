@@ -594,7 +594,10 @@ def manifest():
     json.dump(dict(clips=clips, ideas=ideas), open(os.path.join(M.OUT, 'manifest.json'), 'w'),
               indent=1)
     import shutil
-    shutil.copy(os.path.join(_HERE, 'web', 'index.html'), os.path.join(M.OUT, 'index.html'))
+    for page in ('index.html', 'methods.html'):
+        shutil.copy(os.path.join(_HERE, 'web', page), os.path.join(M.OUT, page))
+    shutil.copytree(os.path.join(_HERE, 'web', 'vendor'), os.path.join(M.OUT, 'vendor'),
+                    dirs_exist_ok=True)
 
 
 def serve(port=5091):

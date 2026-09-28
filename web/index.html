@@ -55,6 +55,30 @@
   .rules b { display: inline-block; width: 30px; }
   details img { width: 100%; border-radius: 6px; margin-top: 8px; background: #fff; }
   summary { cursor: pointer; color: var(--dim); }
+  .mbtn { color: var(--ink); }
+  #drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 100vw);
+            background: #faf8f4; color: #1d1b18; overflow-y: auto; padding: 22px 30px 60px;
+            box-shadow: -12px 0 40px rgba(0,0,0,.5); transform: translateX(105%);
+            transition: transform .25s ease; z-index: 10; line-height: 1.55; font-size: 14.5px; }
+  #drawer.open { transform: none; }
+  #drawer .close { position: sticky; top: 0; float: right; background: #1d1b18; color: #faf8f4;
+                   border: 0; }
+  #drawer h1 { font-size: 22px; margin: 0 0 6px; }
+  #drawer h2 { font-size: 16px; color: #1d1b18; text-transform: none; letter-spacing: 0;
+               font-weight: 650; margin: 28px 0 8px; border-top: 1px solid #e3ddd3; padding-top: 16px; }
+  #drawer h3 { font-size: 14.5px; margin: 18px 0 4px; }
+  #drawer .src { font: 12px ui-monospace, Menlo, monospace; color: #8a8074; font-weight: 400;
+                 margin-left: 8px; }
+  #drawer .lead, #drawer .note { color: #5d554c; }
+  #drawer .warn { background: #fff3df; border-left: 3px solid #e0a040; padding: 6px 10px; }
+  #drawer .toc a { display: inline-block; margin: 0 10px 4px 0; color: #9a5a10; font-size: 13px; }
+  #drawer a { color: #9a5a10; }
+  #drawer table.t { border-collapse: collapse; margin: 8px 0; font-size: 13.5px; }
+  #drawer table.t td, #drawer table.t th { border-bottom: 1px solid #e3ddd3; padding: 4px 12px 4px 0;
+                                           text-align: left; }
+  #drawer code { font-size: 12.5px; background: #efe9df; padding: 1px 4px; border-radius: 3px; }
+  #drawer .here { background: #fff3df; outline: 6px solid #fff3df; border-radius: 2px; }
+  #drawer .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
   @media (max-width: 1000px) {
     main { grid-template-columns: 1fr; }
     video { height: auto; width: 100%; }
@@ -66,8 +90,9 @@
 <header>
   <h1>Dance motion → sound</h1>
   <span class="rule">moving makes the sound; the feature colours it</span>
-  <div class="clips" id="clips"></div>
+  <div class="clips" id="clips"><button class="mbtn" id="mbtn">Methods (m)</button></div>
 </header>
+<aside id="drawer"><button class="close" id="mclose">close ✕</button><div id="methods">loading…</div></aside>
 <main>
   <div class="ideas" id="ideas"></div>
   <div><video id="v" controls playsinline muted></video></div>
@@ -84,6 +109,7 @@
         <b style="color:var(--I)">I</b> each hand and foot on its own side of the body<br>
         <span class="note">anything else holds the chord; a reading must last 0.35 s</span></p>
     </section>
+    <p class="note"><a href="#" id="mdemo" style="color:var(--accent)">The math for this demo →</a></p>
     <section>
       <h2>What is driving the sound</h2>
       <div id="rows"></div>
@@ -116,14 +142,17 @@ const store = {
 };
 
 async function boot() {
+  // before any audio: the stems take all six connections to this host
+  await loadMethods().catch(() => null);
   M = await (await fetch('manifest.json')).json();
-  $('clips').innerHTML = M.clips.map((c, i) =>
-    `<button data-i="${i}">${c.stem.replace('VIDEO-2026-09-21-', '')}</button>`).join('');
+  $('clips').insertAdjacentHTML('beforeend', M.clips.map((c, i) =>
+    `<button data-i="${i}">${c.stem.replace('VIDEO-2026-09-21-', '')}</button>`).join(''));
   $('clips').onclick = e => e.target.dataset.i && pick(M.clips[+e.target.dataset.i], idea);
   const byId = Object.fromEntries(M.ideas.map(x => [x.id, x]));
   const seen = new Set(GROUPS.flatMap(g => g[1]));
   const groups = GROUPS.concat([['Other', M.ideas.map(x => x.id).filter(i => !seen.has(i))]]);
   order = groups.flatMap(g => g[1]).filter(i => byId[i]);
+  if (location.hash.startsWith('#m') || location.hash.startsWith('#d-')) openMethods(location.hash.slice(1) === 'methods' ? null : location.hash.slice(1));
   pick(M.clips.find(c => c.stem === store.get('clip', '')) || M.clips[M.clips.length - 1],
        store.get('demo', order[0]));
 }
@@ -144,7 +173,8 @@ function renderIdeas() {
     }
   }
   $('ideas').innerHTML = html;
-  [...$('clips').children].forEach(b => b.classList.toggle('on', M.clips[+b.dataset.i] === clip));
+  [...$('clips').querySelectorAll('[data-i]')].forEach(b =>
+    b.classList.toggle('on', M.clips[+b.dataset.i] === clip));
 }
 $('ideas').onclick = e => { const d = e.target.closest('.idea'); d && pick(clip, d.dataset.id); };
 
@@ -290,11 +320,52 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const list = order.filter(i => clip.ideas.includes(i));
   if (/^[0-9]$/.test(e.key)) { const k = e.key === '0' ? 9 : +e.key - 1; list[k] && pick(clip, list[k]); }
+  else if (e.key === 'm') { $('drawer').classList.contains('open') ? closeMethods() : openMethods(); }
+  else if (e.key === 'Escape') closeMethods();
   else if (e.key === ' ') { e.preventDefault(); v.paused ? v.play() : v.pause(); }
   else if (e.key === ']' || e.key === '[') {
     const i = M.clips.indexOf(clip) + (e.key === ']' ? 1 : -1);
     if (M.clips[i]) pick(M.clips[i], idea);
   }
+});
+// ── methods drawer: math typeset with KaTeX ──
+let methodsReady = null;
+function loadMethods() {
+  if (methodsReady) return methodsReady;
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'vendor/katex/katex.min.css';
+  document.head.appendChild(css);
+  const script = src => new Promise((ok, bad) => { const s = document.createElement('script');
+    s.src = src; s.onload = ok; s.onerror = bad; document.head.appendChild(s); });
+  methodsReady = (async () => {
+    const katex = script('vendor/katex/katex.min.js').catch(() => null);
+    $('methods').innerHTML = await (await fetch('methods.html')).text();
+    try {
+      await katex;
+      await script('vendor/katex/contrib/auto-render.min.js');
+      renderMathInElement($('methods'), { delimiters: [
+        { left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+        throwOnError: false });
+    } catch (e) { /* offline: the TeX source stays readable */ }
+  })();
+  return methodsReady;
+}
+async function openMethods(anchor) {
+  $('drawer').classList.add('open');
+  await loadMethods();
+  document.querySelectorAll('#methods .here').forEach(x => x.classList.remove('here'));
+  const el = anchor && $(anchor);
+  if (el) { el.classList.add('here'); el.scrollIntoView({ block: 'start' }); }
+}
+function closeMethods() { $('drawer').classList.remove('open'); }
+$('mbtn').onclick = () => openMethods();
+$('mclose').onclick = closeMethods;
+$('mdemo').onclick = e => { e.preventDefault(); openMethods('d-' + idea); };
+$('methods').addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  e.preventDefault(); const t = $(a.getAttribute('href').slice(1));
+  t && t.scrollIntoView({ block: 'start', behavior: 'smooth' });
 });
 boot();
 </script>

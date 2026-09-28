@@ -1,0 +1,229 @@
+<!-- Methods: loaded into the drawer by index.html. Keep in step with the code:
+     every constant here is copied from motion.py, harmony.py, synths.py. -->
+<h1>Methods</h1>
+<p class="lead">Everything that turns the video into the sound, in the order it happens. Frame counts are at
+the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source files are named in each section.</p>
+
+<nav class="toc">
+  <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
+  <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
+  <a href="#m-harm">7 Chords from pose</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
+</nav>
+
+<h2 id="m-pose">1. Pose <span class="src">dance_pose.py · track</span></h2>
+<p>MediaPipe Pose (BlazePose, <code>model_complexity=1</code>, its own temporal smoothing on, detection and
+tracking confidence 0.5), one pass per frame. For each of 33 landmarks $j$ in frame $t$ we keep the image
+position, normalised to $[0,1]$, and a visibility $\nu_{t,j}\in[0,1]$. Positions are converted to pixels:
+$$\mathbf p_{t,j} = (x_{t,j}\,W,\; y_{t,j}\,H),\qquad W\times H = 576\times1024,$$
+with $y$ pointing <em>down</em>. Everything below is 2D image motion. Motion toward or away from the camera is not seen.
+(MediaPipe also gives hip-centred 3D “world” landmarks. They are used by the older vocabulary/sonify
+work, not here, because they remove travel across the floor and their depth is noisy.)</p>
+
+<h2 id="m-clean">2. Cleaning <span class="src">motion.py · clean</span></h2>
+<p>Each coordinate series $p_j(t)$ (one per joint and axis) goes through these steps in order:</p>
+<ol>
+<li><b>Visibility gate.</b> $p_{t,j} \leftarrow \text{NaN}$ if $\nu_{t,j} &lt; 0.5$.</li>
+<li><b>Hampel filter</b> (glitch removal). With a window of $\pm h$ frames, $h=4$ (9 frames ≈ 0.3 s):
+$$m_t = \operatorname{median}_{|k|\le h} p_{t+k},\qquad \sigma_t = 1.4826\,\operatorname{median}_{|k|\le h}|p_{t+k}-m_t|$$
+$$p_t \leftarrow \text{NaN}\quad\text{if}\quad |p_t - m_t| &gt; 3\max(\sigma_t,\,1\,\text{px}).$$
+The 1 px floor stops sub-pixel noise from counting as an outlier when the joint is still.</li>
+<li><b>Gap fill.</b> NaNs are linearly interpolated. Confidence is $c_{t,j}=1$ on observed frames and in gaps of
+$\le 8$ frames (0.3 s), and $0$ inside longer gaps. For a joint, $c$ is the minimum over its two axes, then
+box-smoothed over 5 frames, so it ramps in and out rather than switching.</li>
+<li><b>Low-pass.</b> 4th-order Butterworth, cutoff $f_c = 5$ Hz (normalised $W_n = f_c/(f_s/2)$), run forwards and
+backwards (<code>filtfilt</code>). This gives zero phase, with an effective order of 8 and magnitude response $|H|^2$. Offline, so it costs no latency.
+Human limb motion sits mostly below 5 Hz, and tracker jitter mostly above.</li>
+</ol>
+<p><b>Scale.</b> Distances are measured in torso lengths so the numbers do not depend on how far she is from the camera:
+$$\ell_t = \big\| \tfrac12(\mathbf p_{\text{Lsh}}+\mathbf p_{\text{Rsh}}) - \tfrac12(\mathbf p_{\text{Lhip}}+\mathbf p_{\text{Rhip}}) \big\|,$$
+median-filtered over 149 frames (5 s), then clipped to $[0.6,\,1.4]\times\operatorname{median}_t \ell_t$, so a
+forward fold (where the projected torso shrinks) does not blow up the scale. Derivatives are taken in pixels and then divided by $\ell_t$. Dividing the positions first would turn changes in scale into fake velocity.</p>
+
+<h2 id="m-kin">3. Kinematics <span class="src">motion.py · derivatives, features</span></h2>
+<p><b>Savitzky–Golay derivatives</b> of the filtered positions. At each frame, a polynomial of degree $d$ is fitted by least
+squares to a window of $N$ frames, and its analytic derivative at the centre is used:</p>
+<table class="t">
+<tr><th></th><th>window $N$</th><th>degree $d$</th></tr>
+<tr><td>velocity $\mathbf v = \dot{\mathbf p}$</td><td>7 (0.23 s)</td><td>3</td></tr>
+<tr><td>acceleration $\mathbf a = \ddot{\mathbf p}$</td><td>11 (0.37 s)</td><td>3</td></tr>
+<tr><td>jerk $\mathbf j = \dddot{\mathbf p}$</td><td>15 (0.50 s)</td><td>4</td></tr>
+</table>
+<p>For the five end effectors $e\in\{$head (nose), L/R wrist, L/R ankle$\}$:
+$$s_e = c_e\,\frac{\|\mathbf v_e\|}{\ell},\qquad \alpha_e = c_e\,\frac{\|\mathbf a_e\|}{\ell},\qquad \kappa_e = c_e\,\frac{\|\mathbf j_e\|}{\ell}$$
+in torsos/s, torsos/s², torsos/s³. Joints we cannot see ($c_e = 0$) therefore contribute no motion.</p>
+<p><b>Jitter floor.</b> Each limb's resting reading is subtracted in quadrature, so noise that remains after cleaning does not make sound:
+$$s_e \leftarrow \sqrt{\max\!\big(0,\; s_e^2 - (P_{10}[s_e])^2\big)},$$
+where $P_{10}$ is that limb's 10th percentile over the clip. (Quadrature, because independent noise adds in power.)
+This is applied to speed only, not to $\alpha$ or $\kappa$.</p>
+<p><b>Pelvis</b> (for travel and Weight): $\mathbf v_{\text{pel}} = \tfrac12(\mathbf v_{\text{Lhip}}+\mathbf v_{\text{Rhip}})/\ell$,
+with $s_{\text{pel}} = \|\mathbf v_{\text{pel}}\|$ and travel $= v_{\text{pel},x}$ (signed, screen left/right).</p>
+<p class="note">The diagnostic plot ("How the motion is cleaned") compares $s_{\text{Rwrist}}$ with the uncleaned
+$\|\nabla \mathbf p^{\text{raw}}\| f_s / \ell$ (central differences of the raw, only gap-filled, positions).</p>
+
+<h2 id="m-norm">4. Normalisation <span class="src">motion.py · normalise</span></h2>
+<p>All three clips are pooled (same dancer, same studio), so a given level of “strong” means the same in each clip. For a feature $x$
+with pooled percentiles $P_2, P_{98}$:
+$$\hat x = \operatorname{clip}\!\Big(\frac{x-P_2}{P_{98}-P_2},\,0,\,1\Big).$$
+Exceptions: Space is already a ratio in $[0,1]$ and is used as-is. Travel is symmetric, $\hat x = (x+m)/(2m)$ with
+$m = P_{98}(|x|)$, so $0.5$ means not travelling. Limb speed is $\hat s_e = \operatorname{clip}(s_e/P_{98}(s),0,1)$, with $P_{98}$ pooled over all five effectors.</p>
+
+<h2 id="m-effort">5. Laban features <span class="src">motion.py · features</span></h2>
+<p>These are computable approximations of Laban's Effort qualities, following the usual reading in the literature
+(Larboulette &amp; Gibet, <em>A review of computable expressive descriptors of human motion</em>, MOCO 2015).
+$\mathcal B_n$ is a centred moving average over $n$ frames and $\mathcal M_n$ a centred moving maximum.</p>
+
+<h3>Weight (strong ↔ light): peak kinetic energy</h3>
+$$E_t = \sum_{e} s_{e,t}^2 + 2\,s_{\text{pel},t}^2,\qquad \text{Weight} = \mathcal B_{8}\Big(\sqrt{\mathcal M_{14}(E)}\Big)$$
+<p>This is unit mass per effector, with the pelvis counted twice (the trunk is heavy). The window is 14 frames ≈ 0.47 s. The square root puts it back in speed units. The final
+0.27 s average removes the steps that the moving max leaves.</p>
+
+<h3>Time (sudden ↔ sustained): acceleration</h3>
+$$\text{Time} = \mathcal B_{14}\Big(\tfrac15\textstyle\sum_{e}\alpha_e\Big)$$
+<p class="warn">On these clips Weight and Time correlate at ≈ 0.94 (a strong move is also a fast-accelerating one).
+That is why Time is heard through discrete <a href="#m-events">sudden events</a> rather than as a second continuous control.</p>
+
+<h3>Flow (bound ↔ free): jerkiness</h3>
+<p>Raw jerk mostly tracks acceleration again, so we use jerk <em>relative to</em> acceleration: how fast the acceleration
+itself changes. The ratio has units of Hz. Over the four limbs $e\in\{$L/R wrist, L/R ankle$\}$:
+$$\text{Flow} = \mathcal B_{14}\!\left(\frac{\mathcal B_{14}\big(\sum_e \kappa_e\big)}{\mathcal B_{14}\big(\sum_e \alpha_e\big) + 4}\right)$$
+The constant 4 torsos/s² stops a nearly still body (small $\alpha$, small $\kappa$) from reading as extremely jerky.
+It still correlates at ≈ 0.7 with Time, so it is the weakest of the four features.</p>
+
+<h3>Space (direct ↔ indirect): path straightness of the hands</h3>
+<p>Over a centred window of $2h+1 = 29$ frames (≈ 0.97 s), for each wrist $k$:
+$$L_k(t) = \sum_{|\tau|\le h} \frac{\|\mathbf v_k(t+\tau)\|}{f_s\,\ell},\qquad D_k(t) = \frac{\|\mathbf p_k(t+h)-\mathbf p_k(t-h)\|}{\ell},\qquad d_k = \operatorname{clip}\!\big(D_k/L_k,\,0,\,1\big)$$
+$$\text{Space} = \frac{\sum_k d_k L_k}{\sum_k L_k}$$
+<p>$d_k=1$ means a straight line and $d_k\to0$ means a wandering or returning path. The hand that travels further gets more weight. When
+$\sum_k L_k \le 0.4$ torsos (the hands are barely moving), Space is undefined. It is linearly interpolated across those
+stretches, then smoothed with $\mathcal B_8$.</p>
+
+<h3>Shape: how much room the body takes</h3>
+$$\text{Shape} = \mathcal B_5\!\left(\frac{\operatorname{area}\big(\operatorname{hull}\{\mathbf p_j\}_{j\in J}\big)}{\ell^2}\right)$$
+<p>$J$ = nose, shoulders, elbows, wrists, hips, knees and ankles (13 points). The hull is the 2D convex hull.</p>
+
+<h2 id="m-events">6. Sudden events <span class="src">motion.py · normalise</span></h2>
+<p>These are peaks of each limb's acceleration $\alpha_e$ (four limbs, not the head), found by <code>scipy.signal.find_peaks</code> with one
+threshold pooled over all clips and limbs:</p>
+<ul>
+<li>height $\ge \theta = P_{85}(\alpha)$, prominence $\ge 0.5\,\theta$, at least 7 frames (0.23 s) apart on the same limb</li>
+<li>strength $\;\sigma = \min\!\Big(1,\; \dfrac{\alpha_{\text{peak}}-\theta}{P_{99.5}(\alpha)-\theta} + 0.25\Big)$</li>
+</ul>
+<p>This gives about 1.6–2.7 events per second across the three clips.</p>
+
+<h2 id="m-harm">7. Chords from pose <span class="src">harmony.py</span></h2>
+<p>This uses the filtered pixel positions $\mathbf p$ and torso length $\ell$ from §2. Let the hip centre be $\mathbf c = \tfrac12(\mathbf p_{\text{Lhip}}+\mathbf p_{\text{Rhip}})$.
+Each frame is tested against three rules, and the <b>first match wins</b>:</p>
+<ul>
+<li><b>V, all down.</b> Let $y_{\downarrow} = c_y + 0.5\,(\bar y_{\text{knee}} - c_y)$ (mid-thigh). The rule matches if $y_{\text{Lwr}} &gt; y_\downarrow$ and $y_{\text{Rwr}} &gt; y_\downarrow$
+(remember $y$ points down).</li>
+<li><b>ii, one side.</b> Both wrists are left of $\min(x_{\text{Lank}},x_{\text{Rank}}) - 0.15\,\ell$, or both are right of
+$\max(x_{\text{Lank}},x_{\text{Rank}}) + 0.15\,\ell$.</li>
+<li><b>I, at home.</b> Take the body's own left–right axis $\mathbf u = (\mathbf p_{\text{Lhip}}-\mathbf p_{\text{Rhip}})/\|\cdot\|$ and
+the lateral coordinate $\lambda_j = (\mathbf p_j-\mathbf c)\cdot\mathbf u/\ell$ (positive means her left). The rule matches if
+$\lambda_{\text{Lwr}}&gt;0.05,\ \lambda_{\text{Rwr}}&lt;-0.05,\ \lambda_{\text{Lank}}&gt;0.05,\ \lambda_{\text{Rank}}&lt;-0.05$ and the hip width is
+$\|\mathbf p_{\text{Lhip}}-\mathbf p_{\text{Rhip}}\| &gt; 0.25\,\ell$. When she is side-on the hip width collapses and the rule cannot fire. Because the axis is her own, it still
+works when she turns her back.</li>
+<li>If none matches, or any of the six joints involved has confidence $c&lt;0.5$, the reading is empty.</li>
+</ul>
+<p><b>Dwell.</b> The chord starts on I. It changes to a reading only after that reading has lasted 10 consecutive frames (0.35 s)
+unbroken. Empty readings never change it.</p>
+<p><b>Altered V</b> (demo <i>ii–V–I, altered</i>). While the chord is V, G13 becomes G7alt when $\widehat{\text{Weight}}$ is high. This uses hysteresis:
+on above 0.55, off below 0.4. Alterations shorter than 14 frames (0.47 s) are removed, and a short V or V-alt run at the edge of
+an alteration takes the colour of its neighbour.</p>
+<p><b>Voicings</b> are rootless, with the bass carrying the root (MIDI numbers, C4 = 60):</p>
+<table class="t">
+<tr><th>chord</th><th>bass</th><th>voices</th></tr>
+<tr><td>Dm9 (ii)</td><td>D2 38</td><td>F3 53 · A3 57 · C4 60 · E4 64</td></tr>
+<tr><td>G13 (V)</td><td>G2 43</td><td>F3 53 · A3 57 · B3 59 · E4 64</td></tr>
+<tr><td>G7alt (V)</td><td>G2 43</td><td>F3 53 · A♭3 56 · B3 59 · E♭4 63</td></tr>
+<tr><td>Cmaj9 (I)</td><td>C2 36</td><td>E3 52 · G3 55 · B3 59 · D4 62</td></tr>
+</table>
+<p>The largest move of any upper voice between any two of these chords is 2 semitones. ii→V moves one voice (C→B). V→I moves three voices down a step while B holds.
+G7alt is a semitone from both neighbours in every voice that moves.</p>
+
+<h2 id="m-dsp">8. Synthesis primitives <span class="src">synths.py</span></h2>
+<p><b>Control to audio.</b> A frame-rate control $u_t$ is linearly interpolated to audio rate, then passed through a one-pole glide:
+$$y[n] = y[n-1] + \beta\,(x[n]-y[n-1]),\qquad \beta = 1-e^{-1/(\tau F_s)}.$$
+Each mapping below gives its $\tau$. Pitches glide in <em>semitones</em>, $f = 440\cdot 2^{(m-69)/12}$ with $m$ glided, so every step sounds equal.</p>
+<p><b>Oscillator phase</b> $\varphi[n] = 2\pi\sum_{i\le n} f[i]/F_s$ (so pitch can vary smoothly without clicks).
+<b>Band-limited saw</b>, additive: $\operatorname{saw}_K(\varphi) = \frac{2}{\pi}\sum_{k=1}^{K}\frac{\sin k\varphi}{k}$ (no aliasing).</p>
+<p><b>Filter.</b> A time-varying topology-preserving state-variable filter (Zavalishin), per sample:
+$g=\tan(\pi f_c/F_s)$, $k=1/Q$, $a_1 = 1/(1+g(g+k))$, $a_2=g a_1$, $a_3 = g a_2$;
+$v_3 = x - z_2$, $v_1 = a_1 z_1 + a_2 v_3$, $v_2 = z_2 + a_2 z_1 + a_3 v_3$, $z_1 \leftarrow 2v_1 - z_1$, $z_2 \leftarrow 2v_2 - z_2$.
+The low-pass output is $v_2$ and the band-pass output is $v_1$.</p>
+<p><b>Plucked string</b> (Karplus–Strong). Delay length $N=\lfloor 44100/f\rfloor$, filled with uniform noise that is smoothed by
+$\lfloor 3(1-b)\rfloor+1$ passes of a two-point average (brightness $b = 0.35+0.6\sigma$, so harder hits are brighter). Each step outputs $y=z[i]$ and
+writes back $z[i] \leftarrow 0.996\cdot\tfrac12(z[i]+z[i+1])$. It rings for 2.5 s.</p>
+<p><b>FM.</b> $\sin\!\big(\varphi_c + I\sin\varphi_m\big)$. The modulation index $I$ controls how many sidebands there are, and so how harsh it sounds.</p>
+<p><b>Pan</b> is equal power: $(\cos\frac{\pi p}{2},\,\sin\frac{\pi p}{2})\cdot x$, with $p$ = the joint's screen $x/W$ unless stated.
+<b>Reverb</b>: convolution with a synthetic impulse response, $n(t)e^{-t/0.35\,\text{s}}$ over 1.6 s, 6-tap smoothed, unit energy,
+independent noise per channel, wet 0.2.
+<b>Master</b>: sum the stems, add reverb, apply $g = 0.89/\text{peak}$, then $\tanh(1.1\,g\,x)/\tanh(1.1)$. The stems for the mixer are
+reverb·$g$ without the tanh, so the sliders at 100% reproduce the mix apart from the soft clip.</p>
+
+<h2 id="m-demos">9. Demos</h2>
+<p class="note">Notation: $\hat s_e$ is normalised limb speed, and $\widehat W, \widehat F, \hat S$ are normalised Weight, Flow and Space (§4).
+$\operatorname{g}_\tau(\cdot)$ is the glide of §8 with time constant $\tau$.</p>
+
+<h3 id="d-twofive">ii–V–I from pose</h3>
+<p>The chord comes from §7. Five stems:</p>
+<ul>
+<li><b>pad</b> (Space). Four voices at the voicing pitches $m_v$, glided with $\tau=0.25$ s, each detuned by
+$\pm 30\,w\,\sin(2\pi r_v t)$ cents, where $r_v = 0.31, 0.47, 0.71, 0.23$ Hz and $w=\operatorname{g}_{0.15}\big((1-\hat S)^{1.3}\big)$. Straight paths give $w\to0$ (in tune).
+Source $\operatorname{saw}_{10}$, then a 1600 Hz low-pass ($Q$ 0.7). Level $0.2\,\operatorname{g}_{0.06}(0.15+0.85\,h^{1.2})$,
+with $h=\operatorname{clip}(1.6\cdot\tfrac12(\hat s_{\text{Lwr}}+\hat s_{\text{Rwr}}),0,1)$. The 0.15 floor keeps the chord audible when she is still. Fixed pans 0.25, 0.75, 0.4, 0.6.</li>
+<li><b>bass</b> (Flow). FM with carrier = modulator = the root (glided with $\tau=0.12$ s), $I = \operatorname{g}_{0.06}(0.3+4\widehat F^{1.2})$,
+level $0.2\,\operatorname{g}_{0.06}\big(0.2+0.8\operatorname{clip}(1.3\widehat W,0,1)\big)$. Centred.</li>
+<li><b>plucks</b> (Time). At each sudden event (§6), the limb plucks its tone of the chord sounding at that frame:
+left ankle → root + 12, right ankle → voice 2, left wrist → voice 3 + 12, right wrist → voice 4 + 12.
+Gain $0.55(0.25+0.75\sigma)$, panned to the limb's screen position.</li>
+<li><b>wind</b> (Weight). White noise through the SVF with $f_c = \operatorname{g}_{0.05}(180\cdot2^{5.2\widehat W})$ Hz (180 Hz to about 6.5 kHz),
+$Q=1.2$, output $0.6\,\text{BP}+0.4\,\text{LP}$. Level $0.5\,\operatorname{g}_{0.05}\big(\operatorname{clip}(1.3\widehat W,0,1)^{0.9}\big)$,
+pan $\operatorname{g}_{0.25}(\widehat{\text{travel}})$.</li>
+<li><b>wind tuned</b>. The same noise through 8 band-pass resonators ($Q=60$) at each voice + 12 and + 24 semitones (glided with $\tau = 0.25$ s),
+RMS-matched to the plain wind, with the same level and pan. Blending the two sliders moves between air and a whistled chord.</li>
+</ul>
+
+<h3 id="d-twofive_alt">ii–V–I, altered</h3>
+<p>Identical to the above, except that V switches between G13 and G7alt with Weight (§7, <i>Altered V</i>).</p>
+
+<h3 id="d-efforts">Four Efforts</h3>
+<p>The four single-Effort demos below, summed with gains wind 0.8, plucks 0.7, fm 0.55, space 0.6. Each is a stem.
+The “Time” trace shows $\widehat{\text{Time}}$ for reference, but the plucks are triggered by the events of §6, not by that trace.</p>
+
+<h3 id="d-wind">Weight → wind</h3>
+<p>This is the wind stem of the ii–V–I demo without tuning: noise, SVF $f_c = 180\cdot2^{5.2\widehat W}$ Hz, $Q=1.2$,
+level $\operatorname{clip}(1.3\widehat W,0,1)^{0.9}$, pan = hips' travel.</p>
+
+<h3 id="d-plucks">Time → plucks</h3>
+<p>Karplus–Strong at each event (§6) with fixed pitches per limb: left ankle A2 (110 Hz), right ankle E3 (164.8), left wrist C5 (523.3),
+right wrist E5 (659.3). Gain $0.45(0.25+0.75\sigma)$, brightness $0.35+0.6\sigma$. The traces show $\alpha_e/P_{98}(\alpha)$ per limb, with the
+threshold of §6 applied to the un-normalised $\alpha_e$.</p>
+
+<h3 id="d-fm">Flow → FM</h3>
+<p>Carrier 110 Hz, modulator 220 Hz (ratio 2), $I=\operatorname{g}_{0.06}(0.3+7\widehat F^{1.2})$. A second voice a fifth up
+(×1.5) uses index $0.6I$ and gain 0.5. Level $0.28\,\operatorname{g}_{0.05}\big(\operatorname{clip}(1.3\widehat W,0,1)^{1.2}\big)$.</p>
+
+<h3 id="d-space">Space → tuning</h3>
+<p>Three voices, A3, E4 and A4 (220, 329.6, 440 Hz), each $\operatorname{saw}_{10}$ into a 1800 Hz low-pass, detuned by
+$\pm 38\,w\,\sin(2\pi r t)$ cents with $r = 0.31, 0.47, 0.71$ Hz and $w=\operatorname{g}_{0.15}((1-\hat S)^{1.3})$. Level $0.16\,\operatorname{g}_{0.05}(h^{1.2})$,
+with $h$ as in the pad above.</p>
+
+<h3 id="d-breath">Shape → breath</h3>
+<p>Rate of change of the body's size: $r = \frac{d}{dt}\mathcal B_8(\widehat{\text{Shape}})$ (central differences, times $f_s$), and
+$\text{grow} = \operatorname{clip}(|r|/P_{97}|r|, 0, 1)$, so growing and shrinking both sound. Source: saws on D2, D3 and A3
+($\operatorname{saw}_{24}+0.6\operatorname{saw}_{12}+0.4\operatorname{saw}_8$) plus 0.35 noise, through a low-pass with
+$f_c = \operatorname{g}_{0.08}(200\cdot2^{4.5\,\widehat{\text{Shape}}})$ (a bigger body is brighter). Level $0.3\,\operatorname{g}_{0.06}(\text{grow}^{1.2})$.</p>
+
+<h3 id="d-organ">Limb organ</h3>
+<p>Four sines with a few harmonics, $\sin\varphi+0.2\sin2\varphi+0.08\sin3\varphi$: left ankle C3, right ankle G3, left wrist E4, right wrist B4
+(Cmaj7). Each has level $0.22\,\operatorname{g}_{0.04}(\hat s_e^{1.3})$ and pan $\operatorname{g}_{0.1}(x_e/W)$. Nothing else changes: you hear the speed of each limb directly.</p>
+
+<h3 id="d-siren">Hand sirens</h3>
+<p>One voice per wrist: pitch $\operatorname{g}_{0.06}(220\cdot 2^{2.6\hat s})$ Hz (220 Hz to about 1.33 kHz), level
+$0.3\,\operatorname{g}_{0.04}(\operatorname{clip}(1.4\hat s,0,1)^{1.4})$. The waveform is a soft triangle, $\sin\varphi - \tfrac19\sin3\varphi + \tfrac1{25}\sin5\varphi$.</p>
+
+<h2>Overlay</h2>
+<p>The videos are drawn from the same arrays. The skeleton is $\mathbf p$ (filtered). Arrows are $0.12\,\text{s}\times\mathbf v$ in pixels, capped at 160 px.
+Ring radius is $5+26\times$ the driver's value. Pluck flashes expand over 0.4 s. The Space trail shows the last 1 s of each wrist.
+Rule lines show $y_\downarrow$, the two foot bounds and the body midline $\perp\mathbf u$ through $\mathbf c$. The traces at the bottom show the last 5 s of each driver.</p>
