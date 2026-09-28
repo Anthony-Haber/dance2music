@@ -31,6 +31,9 @@ export const P = {           // tunables (the page exposes some as sliders)
   torsoS: 5, torsoLongS: 60, floorS: 20, floorPct: 10,
   weightWinS: 0.25, weightTau: 0.06, boxS: 0.25, spaceS: 0.7, spaceTau: 0.08,
   flowK: 4, eventGap: 0.23,
+  energyS: 3,                                          // memory of the integrated energy
+  rhythmS: 6, rhythmHz: 50, rhythmEvery: 0.25,         // periodicity analysis
+  bpmLo: 50, bpmHi: 200,
   gain: { weight: 1, time: 1, flow: 1, space: 1 },   // sensitivities
 };
 
@@ -103,6 +106,9 @@ export class Features {
     this.armed = PARTS.map(() => true); this.peak = PARTS.map(() => 0);
     this.lastEvent = PARTS.map(() => -1e9); this.prevA = PARTS.map(() => 0);
     this.out = null;
+    this.energy = 0; this.bodyPrev = null;
+    this.nov = []; this.rhythmAt = 0; this.rhythm = 0; this.period = 0.6; this.lastOnset = -1e9;
+    this.novPrev = 0; this.novPeak = 0;
   }
 
   // lms: 33 normalised landmarks {x, y, visibility}; t in seconds
@@ -201,6 +207,41 @@ export class Features {
     }
 
     const n = (x, [lo, hi], k = 1) => clip(k * (x - lo) / (hi - lo));
+    const weightN = n(this.weightS, REF.weight, P.gain.weight);
+
+    // integrated energy: a leaky average of Weight over the last few seconds,
+    // so sustained agitation builds up and a single gesture does not
+    this.energy += Math.min(1, dt / P.energyS) * (weightN - this.energy);
+
+    // where the hands are, relative to the torso (as in harmony.readRegions)
+    const m2 = (a, b) => [(g(a).p[0] + g(b).p[0]) / 2, (g(a).p[1] + g(b).p[1]) / 2];
+    let height = 0.5, spread = 0, lateral = 0.5;
+    if (g(J.L_WR).p && g(J.R_WR).p) {
+      const c = [(sho[0] + hip[0]) / 2, (sho[1] + hip[1]) / 2], hb = m2(J.L_WR, J.R_WR);
+      const mu = (hb[1] - c[1]) / L, lam = (hb[0] - c[0]) / L;
+      height = clip((0.8 - mu) / 2.3);                      // hanging ≈ 0, overhead ≈ 1
+      spread = clip(norm2([g(J.L_WR).p[0] - g(J.R_WR).p[0], g(J.L_WR).p[1] - g(J.R_WR).p[1]]) / L / 2.5);
+      lateral = clip(0.5 + lam / 2.4);                      // her right 0 … her left 1
+    }
+
+    // rhythm: how periodic the body's onsets are. The novelty (rises in
+    // total limb speed, like spectral flux for audio) is autocorrelated over
+    // the last few seconds; a clear peak at some lag means a pulse at 60/lag bpm.
+    const body = s.slice(1).reduce((q, x) => q + x, 0);
+    const nov = this.bodyPrev === null ? 0 : Math.max(0, (body - this.bodyPrev) / dt);
+    this.bodyPrev = body;
+    this.nov.push([t, nov]);
+    while (this.nov.length && this.nov[0][0] < t - P.rhythmS) this.nov.shift();
+    if (this.novPrev > nov && this.novPrev > 0.5 * this.novPeak && t - this.lastOnset > 0.2)
+      this.lastOnset = t - dt;                                  // a local maximum: an onset
+    this.novPeak = Math.max(0.98 * this.novPeak, nov); this.novPrev = nov;
+    if (t - this.rhythmAt > P.rhythmEvery && this.nov.length > 20) {
+      this.rhythmAt = t;
+      const r = periodicity(this.nov, t, P);
+      this.rhythm += 0.5 * (r.strength - this.rhythm);
+      if (r.strength > 0.15) this.period += 0.3 * (r.period - this.period);
+    }
+
     this.out = {
       t, L, events,
       speed: s, nspeed: s.map(x => clip(x / REF.speed98)), accel: acc,
@@ -209,6 +250,12 @@ export class Features {
       flow: n(this.flowBox.mean(), REF.flow, P.gain.flow),
       space: clip(0.5 + (this.spaceS - 0.5) * P.gain.space),
       travel: clip((pv[0] + REF.travel) / (2 * REF.travel)),
+      energy: this.energy, height, spread, lateral,
+      body: clip(1.3 * s.slice(1).reduce((q, x) => q + x, 0) / 4 / REF.speed98),
+      hands: clip(1.6 * (s[1] + s[2]) / 2 / REF.speed98),
+      rhythm: clip((this.rhythm - 0.15) / 0.5), tempo: 60 / this.period,
+      tempoN: clip((60 / this.period - P.bpmLo) / (P.bpmHi - P.bpmLo)),
+      period: this.period, lastOnset: this.lastOnset,
       pos: j => g(j).p, conf: j => g(j).conf, vel: j => g(j).v,
     };
     return this.out;
@@ -218,4 +265,35 @@ export class Features {
     const long = this.torsoLong.pct(50);
     return clip(this.torso.pct(50), 0.6 * long, 1.4 * long);
   }
+}
+
+// Autocorrelation of the novelty over the trailing window, resampled to a
+// uniform grid. Returns the strongest lag inside the tempo range and how
+// strong it is (normalised autocorrelation, 0 … 1).
+export function periodicity(samples, tEnd, P) {
+  const hz = P.rhythmHz, n = Math.floor(P.rhythmS * hz), x = new Float64Array(n);
+  let j = 0;
+  for (let i = 0; i < n; i++) {
+    const ti = tEnd - P.rhythmS + i / hz;
+    while (j < samples.length - 2 && samples[j + 1][0] < ti) j++;
+    const [t0, v0] = samples[j], [t1, v1] = samples[Math.min(j + 1, samples.length - 1)];
+    x[i] = t1 > t0 ? v0 + (v1 - v0) * clip((ti - t0) / (t1 - t0)) : v0;
+  }
+  let mean = 0; for (const v of x) mean += v; mean /= n;
+  for (let i = 0; i < n; i++) x[i] -= mean;
+  let r0 = 0; for (const v of x) r0 += v * v;
+  if (r0 < 1e-9) return { strength: 0, period: 0.6 };
+  const kLo = Math.round(hz * 60 / P.bpmHi), kHi = Math.round(hz * 60 / P.bpmLo);
+  const R = [];
+  for (let k = 0; k <= Math.min(kHi + 1, n - 1); k++) {
+    let r = 0; for (let i = k; i < n; i++) r += x[i] * x[i - k];
+    R.push(r / (r0 * (n - k) / n));                    // unbiased, normalised
+  }
+  let best = 0;
+  for (let k = kLo; k <= Math.min(kHi, R.length - 2); k++) best = Math.max(best, R[k]);
+  // a pulse also correlates at 2, 3 … periods: take the shortest lag that is a
+  // local maximum and nearly as strong as the best (avoids halving the tempo)
+  for (let k = kLo; k <= Math.min(kHi, R.length - 2); k++)
+    if (R[k] >= 0.85 * best && R[k] >= R[k - 1] && R[k] >= R[k + 1]) return { strength: clip(best), period: k / hz };
+  return { strength: clip(best), period: 0.6 };
 }

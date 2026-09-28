@@ -53,6 +53,20 @@
   .rules { font-size: 12.5px; line-height: 1.6; }
   .rules b { display: inline-block; width: 30px; }
   .rules .now { background: #2c2a27; border-radius: 4px; }
+  .rng { display: grid; grid-template-columns: 1fr 44px; gap: 8px; align-items: center; }
+  .maptools { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; margin-bottom: 6px; }
+  .maptools button, .imp { padding: 5px 8px; font-size: 12px; background: var(--panel); border: 1px solid var(--line);
+                          border-radius: 6px; cursor: pointer; display: block; margin: 0; }
+  details.dest { border-bottom: 1px solid var(--line); }
+  details.dest summary { display: grid; grid-template-columns: 1fr auto 46px; gap: 8px; align-items: center;
+                         padding: 6px 0; cursor: pointer; font-size: 13px; list-style: none; }
+  details.dest summary::-webkit-details-marker { display: none; }
+  .ds { color: var(--dim); font-size: 12px; }
+  .bar.small { height: 6px; } .bar.small i { background: var(--accent); }
+  .dgrid { display: grid; grid-template-columns: 96px 1fr; gap: 5px 8px; align-items: center;
+           font-size: 12.5px; color: var(--dim); padding: 2px 0 10px; }
+  .dgrid input[type=number] { width: 100%; background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+                              border-radius: 5px; padding: 3px 6px; font: inherit; }
   a { color: var(--accent); }
   @media (max-width: 800px) {
     body { grid-template-columns: 1fr; }
@@ -99,8 +113,25 @@
   <h2>Mix</h2>
   <div class="mix" id="mix"></div>
 
+  <h2>Percussion</h2>
+  <label>Drums <select id="drumMode"><option value="off">off</option>
+    <option value="hits">hits: feet kick, left hand snare, right hand hat</option>
+    <option value="groove">groove: a beat at your tempo, as regular as you are</option>
+    <option value="hits+groove">both</option></select></label>
+  <div class="status" id="tempo">no steady pulse</div>
+
   <h2>Movement</h2>
   <div id="meters"></div>
+  <label style="margin-top:6px">Energy memory <span class="rng"><input type="range" id="energyS" min="0.5" max="12" step="0.5">
+    <span class="val" id="energyV"></span></span></label>
+
+  <h2>Mapping</h2>
+  <div class="maptools"><select id="preset"></select>
+    <button id="savePreset">save</button><button id="exportMap">export</button>
+    <label class="imp">import<input type="file" id="importMap" accept="application/json" hidden></label></div>
+  <p class="note">Each sound parameter reads one movement feature. Open a row to change its source, range and curve.
+    With source “none” it stays at its min.</p>
+  <div id="map"></div>
 
   <h2>Sensitivity</h2>
   <div class="mix" id="sens"></div>

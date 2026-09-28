@@ -2,6 +2,7 @@
 import { Features, P, EDGES, J, PART_J, PARTS } from './features.js';
 import { ChordFollower, H as HP } from './harmony.js';
 import { Engine } from './audio.js';
+import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapping.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -17,7 +18,7 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
-let lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
+let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
 // ── setup ───────────────────────────────────────────────────────────
 const exists = async url => { try { return (await fetch(url, { method: 'HEAD' })).ok; } catch (e) { return false; } };
@@ -132,9 +133,12 @@ function loop() {
         const t = (now - t0) / 1000;
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
         if (f) {
-          const key = follower.update(f, t);
+          follower.update(f, t);
           engine.setChord(follower.chord());
-          engine.update(f, mirror());
+          lastVals = evaluate(mapping, f);
+          const drums = { hits: drumMode.includes('hits'), groove: drumMode.includes('groove'),
+                          clock: t - engine.ctx.currentTime };
+          engine.update(f, lastVals, DESTS, mirror(), drums);
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
         } else engine.idle();
         lastF = f;
@@ -240,12 +244,20 @@ function line(x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1
 
 // ── meters and status ───────────────────────────────────────────────
 const METERS = [['weight', 'Weight', '#f06e5a'], ['time', 'Time', '#fad250'],
-                ['flow', 'Flow', '#c88ce6'], ['space', 'Space', '#c8e678'], ['out', 'output', '#efe9df']];
+                ['flow', 'Flow', '#c88ce6'], ['space', 'Space', '#c8e678'],
+                ['energy', 'energy', '#ff9a60'], ['rhythm', 'rhythm', '#7fd0ff'], ['out', 'output', '#efe9df']];
 $('meters').innerHTML = METERS.map(([k, n, c]) =>
   `<div class="meter"><span>${n}</span><div class="bar"><i id="m-${k}" style="background:${c}"></i></div></div>`).join('');
 let statusAt = 0;
 function meters(f) {
-  for (const [k] of METERS.slice(0, 4)) $('m-' + k).style.width = (100 * f[k]).toFixed(0) + '%';
+  for (const [k] of METERS.slice(0, 6)) $('m-' + k).style.width = (100 * f[k]).toFixed(0) + '%';
+  $('tempo').textContent = f.rhythm > 0.2 ? `${f.tempo.toFixed(0)} bpm, regularity ${(100 * f.rhythm).toFixed(0)}%`
+                                          : `no steady pulse (${(100 * f.rhythm).toFixed(0)}%)`;
+  if (lastVals) for (const k of Object.keys(DESTS)) {
+    const d = DESTS[k], val = lastVals[k], el = $('mv:' + k); if (!el) continue;
+    const frac = d.log ? Math.log(val / d.min) / Math.log(d.max / d.min) : (val - d.min) / (d.max - d.min);
+    el.style.width = (100 * Math.max(0, Math.min(1, frac))).toFixed(0) + '%';
+  }
   $('m-out').style.width = Math.min(100, 100 * engine.peak()).toFixed(0) + '%';
   const now = performance.now();
   if (now - statusAt > 500 && engine.ctx) {
@@ -258,14 +270,15 @@ function meters(f) {
 function status(s) { $('status').textContent = s; }
 
 // ── mixer and sensitivity ───────────────────────────────────────────
-const LAYERS = [['pad', 1], ['bass', 1], ['plucks', 1], ['wind', 1], ['wind tuned', 0.6]];
+const LAYERS = [['pad', 1], ['bass', 1], ['plucks', 1], ['wind', 1], ['wind tuned', 0.6], ['drums', 0.8]];
 const mix = store.get('mix', Object.fromEntries(LAYERS.map(([k, d]) => [k, { vol: d, mute: false }]).concat([['master', { vol: 1 }]])));
 const slider = (key, val, min, max, step, cls = '') =>
   `<input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-k="${key}" class="${cls}">`;
 $('mix').innerHTML = LAYERS.map(([k]) => `<span>${k}</span>
   <button data-k="${k}" class="${mix[k]?.mute ? '' : 'on'}">${mix[k]?.mute ? 'off' : 'on'}</button>
   ${slider(k, mix[k]?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-${k.replace(' ', '_')}"></span>`).join('') +
-  `<span>master</span><span></span>${slider('master', mix.master?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-master"></span>`;
+  `<span>master</span><span></span>${slider('master', mix.master?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-master"></span>` +
+  `<span>pad floor</span><button id="floorBtn">off</button>${slider('__floor', 0, 0, 0.5, 0.01)}<span class="val" id="mv-floor"></span>`;
 function applyMix() {
   for (const [k] of LAYERS) {
     const m = mix[k] || (mix[k] = { vol: 1, mute: false });
@@ -276,8 +289,12 @@ function applyMix() {
   store.set('mix', mix);
 }
 $('mix').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return;
+  if (k === '__floor') { mapping['pad.level'].lo = +e.target.value; mapChanged(); return; }
   (mix[k] = mix[k] || {}).vol = +e.target.value; if (engine.ctx) applyMix(); else store.set('mix', mix); });
-$('mix').addEventListener('click', e => { const k = e.target.dataset.k; if (!k || e.target.tagName !== 'BUTTON') return;
+$('mix').addEventListener('click', e => {
+  if (e.target.id === 'floorBtn') { const m = mapping['pad.level'];
+    m.lo = m.lo > 0 ? 0 : (store.get('floorOn', 0.15)); mapChanged(); return; }
+  const k = e.target.dataset.k; if (!k || e.target.tagName !== 'BUTTON') return;
   mix[k].mute = !mix[k].mute; e.target.classList.toggle('on', !mix[k].mute);
   e.target.textContent = mix[k].mute ? 'off' : 'on'; if (engine.ctx) applyMix(); else store.set('mix', mix); });
 
@@ -298,6 +315,69 @@ function applySens() {
 $('sens').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return;
   sens[k] = +e.target.value; applySens(); });
 applySens();
+
+// ── mapping matrix ──────────────────────────────────────────────────
+const custom = store.get('customPresets', {});
+let mapping = store.get('mapping', null) || defaults();
+for (const [k, d] of Object.entries(defaults())) mapping[k] = { ...d, ...(mapping[k] || {}) };
+let drumMode = store.get('drums', 'groove');
+const fmt = (d, x) => d.log ? Math.round(x) : +(+x).toFixed(2);
+
+function presetList() {
+  $('preset').innerHTML = '<option value="">choose a preset…</option>' +
+    [...Object.keys(PRESETS), ...Object.keys(custom).map(k => k)].map(k =>
+      `<option value="${k}">${k}${custom[k] ? ' (yours)' : ''}</option>`).join('');
+}
+function renderMapping() {
+  const opts = sel => SOURCES.map(([k, n]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${n}</option>`).join('');
+  $('map').innerHTML = Object.entries(DESTS).map(([k, d]) => { const m = mapping[k];
+    const num = (f, v, step) => `<input type="number" data-k="${k}" data-f="${f}" value="${fmt(d, v)}" step="${step}">`;
+    const st = d.log ? 1 : 0.01;
+    return `<details class="dest"><summary><span class="dn">${d.label}</span>
+        <span class="ds">${SOURCES.find(s => s[0] === m.src)[1].split(' (')[0]}</span>
+        <span class="bar small"><i id="mv:${k}"></i></span></summary>
+      <div class="dgrid">
+        <span>source</span><select data-k="${k}" data-f="src">${opts(m.src)}</select>
+        <span>min ${d.unit || ''}</span>${num('lo', m.lo, st)}
+        <span>max ${d.unit || ''}</span>${num('hi', m.hi, st)}
+        <span>gain</span>${num('gain', m.gain, 0.05)}
+        <span>curve (exp)</span>${num('exp', m.exp, 0.05)}
+        <span>invert</span><input type="checkbox" data-k="${k}" data-f="inv" ${m.inv ? 'checked' : ''}>
+      </div></details>`; }).join('');
+  const lo = mapping['pad.level'].lo;
+  $('floorBtn').textContent = lo > 0 ? 'on' : 'off'; $('floorBtn').classList.toggle('on', lo > 0);
+  document.querySelector('[data-k="__floor"]').value = lo;
+  $('mv-floor').textContent = Math.round(lo * 100) + '%';
+}
+function mapChanged(rerender = true) {
+  store.set('mapping', mapping);
+  if (mapping['pad.level'].lo > 0) store.set('floorOn', mapping['pad.level'].lo);
+  if (rerender) { const open = [...document.querySelectorAll('#map details[open] [data-f=src]')].map(e => e.dataset.k);
+    renderMapping();
+    open.forEach(k => document.querySelector(`#map [data-k="${k}"]`)?.closest('details')?.setAttribute('open', '')); }
+}
+$('map').addEventListener('change', e => {
+  const k = e.target.dataset.k, fld = e.target.dataset.f; if (!k || !fld) return;
+  mapping[k][fld] = fld === 'src' ? e.target.value : fld === 'inv' ? e.target.checked : +e.target.value;
+  mapChanged(fld === 'src');
+});
+$('preset').onchange = () => { const n = $('preset').value; if (!n) return;
+  mapping = applyPreset(n, custom); mapChanged(); $('preset').value = ''; status('preset: ' + n); };
+$('savePreset').onclick = () => { const n = prompt('Name for this mapping'); if (!n) return;
+  custom[n] = JSON.parse(JSON.stringify(mapping)); store.set('customPresets', custom); presetList(); };
+$('exportMap').onclick = () => { const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(mapping, null, 1)], { type: 'application/json' }));
+  a.download = 'dance2music-mapping.json'; a.click(); };
+$('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!f) return;
+  try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
+        mapChanged(); } catch (e) { status('could not read that mapping'); } };
+$('drumMode').value = drumMode;
+$('drumMode').onchange = () => { drumMode = $('drumMode').value; store.set('drums', drumMode); };
+$('energyS').value = store.get('energyS', 3); P.energyS = +$('energyS').value;
+$('energyV').textContent = P.energyS + ' s';
+$('energyS').oninput = () => { P.energyS = +$('energyS').value; store.set('energyS', P.energyS);
+  $('energyV').textContent = P.energyS + ' s'; };
+presetList(); renderMapping();
 
 // ── controls ────────────────────────────────────────────────────────
 for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
