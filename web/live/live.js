@@ -1,6 +1,6 @@
 // Dance2Music Live: camera → MediaPipe Pose → causal features → Web Audio.
 import { Features, P, EDGES, J, PART_J, PARTS } from './features.js';
-import { ChordFollower, CHORDS } from './harmony.js';
+import { ChordFollower, H as HP } from './harmony.js';
 import { Engine } from './audio.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
@@ -16,7 +16,7 @@ const store = {
 
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 const feats = new Features(), engine = new Engine();
-let follower = new ChordFollower(store.get('mode', 'twofive'));
+let follower = new ChordFollower(store.get('mode', 'six'));
 let lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
 // ── setup ───────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ function loop() {
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
         if (f) {
           const key = follower.update(f, t);
-          engine.setChord(key);
+          engine.setChord(follower.chord());
           engine.update(f, mirror());
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
         } else engine.idle();
@@ -151,7 +151,7 @@ const mirror = () => $('mirror').value === '1';
 
 // ── drawing ─────────────────────────────────────────────────────────
 const COL = { lhand: '#ffaa50', rhand: '#5ab4ff', lfoot: '#78dc78', rfoot: '#f078c8', head: '#ddd' };
-const DEG = { I: '#78dc78', ii: '#5ab4ff', V: '#ffaa50', '': '#efe9df' };
+const DEG = { I: '#78dc78', ii: '#5ab4ff', iii: '#5ac8c8', IV: '#c88ce6', V: '#ffaa50', vi: '#fa78a0', '': '#efe9df' };
 
 function draw() {
   const W = v.videoWidth, H = v.videoHeight;
@@ -173,7 +173,8 @@ function draw() {
   const p = f.pos, lw = 2 / s;
   // rule guides
   const r = follower.last;
-  if (r && r.guides && follower.mode !== 'fixed') {
+  if (r && r.guides && r.guides.six) drawRegions(r);
+  else if (r && r.guides && follower.mode !== 'fixed') {
     const gd = r.guides, L = gd.L, lit = (rule, c) => (g.strokeStyle = r.rule === rule ? c : 'rgba(150,150,150,.5)',
                                                        g.lineWidth = (r.rule === rule ? 3 : 1.2) / s);
     lit('V', DEG.V); line(gd.hip[0] - 1.3 * L, gd.downY, gd.hip[0] + 1.3 * L, gd.downY);
@@ -207,12 +208,33 @@ function draw() {
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   // chord badge and rule list
-  const c = CHORDS[follower.shown];
+  const c = follower.chord();
   $('sym').textContent = c.symbol; $('sym').style.color = DEG[c.degree];
   $('deg').textContent = c.degree;
   document.querySelectorAll('#rules [data-r]').forEach(d =>
     d.classList.toggle('now', !!r && d.dataset.r === r.rule));
   meters(f);
+}
+// the six regions around the torso, the hands' midpoint as a dot
+function drawRegions(r) {
+  const { c, hb, L } = r.guides, b = HP.centreBand * L, dim = 'rgba(170,170,170,.55)';
+  const x0 = c[0] - b, x1 = c[0] + b, top = c[1] - 1.6 * L, bot = c[1] + 1.4 * L, ry = c[1] + HP.raisedAt * L;
+  const s = cv.width / v.videoWidth / devicePixelRatio;
+  g.strokeStyle = dim; g.lineWidth = 1.2 / s;
+  line(x0, top, x0, bot); line(x1, top, x1, bot);
+  line(x0 - 1.4 * L, c[1], x0, c[1]); line(x1, c[1], x1 + 1.4 * L, c[1]); line(x0, ry, x1, ry);
+  const labels = { vi: [x1 + 0.6 * L, c[1] - 0.6 * L], ii: [x1 + 0.6 * L, c[1] + 0.8 * L],
+                   iii: [x0 - 0.6 * L, c[1] - 0.6 * L], V: [x0 - 0.6 * L, c[1] + 0.8 * L],
+                   IV: [c[0], ry - 0.25 * L], I: [c[0], c[1] + 1.2 * L] };
+  for (const [k, [x, y]] of Object.entries(labels)) {
+    const on = r.rule === k;
+    g.save(); g.translate(x, y); if (mirror()) g.scale(-1, 1);          // keep text readable
+    g.font = `${on ? 600 : 400} ${(on ? 26 : 18) / s}px -apple-system, sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = on ? DEG[k] : dim; g.fillText(k, 0, 0); g.restore();
+  }
+  g.fillStyle = DEG[r.rule] || '#eee';
+  g.beginPath(); g.arc(hb[0], hb[1], 7 / s, 0, 7); g.fill();
 }
 function line(x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
 
@@ -261,13 +283,15 @@ $('mix').addEventListener('click', e => { const k = e.target.dataset.k; if (!k |
 
 const SENS = [['weight', 'Weight', 0.25, 3, 1], ['time', 'Suddenness', 0.25, 3, 1],
               ['flow', 'Flow', 0.25, 3, 1], ['space', 'Space', 0.25, 3, 1],
-              ['smooth', 'Smoothing', 0.3, 4, 1.2]];
+              ['smooth', 'Smoothing', 0.3, 4, 1.2], ['hold', 'Chord hold', 0.1, 1.5, 0.5]];
 const sens = store.get('sens', Object.fromEntries(SENS.map(s => [s[0], s[4]])));
 $('sens').innerHTML = SENS.map(([k, n, lo, hi]) => `<span>${n}</span><span></span>
   ${slider(k, sens[k] ?? 1, lo, hi, 0.05)}<span class="val" id="sv-${k}"></span>`).join('');
 function applySens() {
   for (const [k] of SENS.slice(0, 4)) { P.gain[k] = sens[k]; $('sv-' + k).textContent = '×' + (+sens[k]).toFixed(2); }
   P.euroMinCutoff = 4.3 - sens.smooth;            // more smoothing = lower One Euro cutoff
+  HP.dwell6S = sens.hold ?? 0.5; HP.dwellS = 0.7 * HP.dwell6S;
+  $('sv-hold').textContent = HP.dwell6S.toFixed(2) + ' s';
   $('sv-smooth').textContent = P.euroMinCutoff.toFixed(1) + ' Hz';
   store.set('sens', sens);
 }
@@ -281,9 +305,23 @@ for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
 }
 $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
 $('go').onclick = () => (running ? stop() : start());
+const RULES = {
+  six: [['I', 'hands centred, at rest (arms hanging counts)'], ['IV', 'hands centred and raised, or spread wide'],
+        ['vi', 'hands to your left, up'], ['ii', 'hands to your left, down'],
+        ['iii', 'hands to your right, up'], ['V', 'hands to your right, down']],
+  twofive: [['V', 'both hands below mid-thigh'], ['ii', 'both hands past one side of both feet'],
+            ['I', 'each hand and foot on its own side']],
+};
+RULES.twofive_alt = RULES.twofive; RULES.fixed = [];
+function showRules() {
+  const m = $('mode').value;
+  $('rules').innerHTML = (RULES[m] || []).map(([d, t]) =>
+    `<div data-r="${d}"><b style="color:${DEG[d]}">${d}</b>${t}</div>`).join('') +
+    (m === 'six' ? '<div class="note">“hands” = their midpoint, relative to your torso; left/right as you face the camera</div>' : '');
+}
 $('mode').onchange = () => { store.set('mode', $('mode').value); follower = new ChordFollower($('mode').value);
-                              $('rules').style.opacity = $('mode').value === 'fixed' ? 0.35 : 1; };
-$('rules').style.opacity = $('mode').value === 'fixed' ? 0.35 : 1;
+                              showRules(); if (engine.ctx) engine.setChord(follower.chord(), true); };
+showRules();
 $('source').onchange = () => { store.set('source', $('source').value);
   $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file'; };
 $('cam').onchange = async () => { store.set('cam', $('cam').value); if (running && stream) await openCamera(); };
@@ -300,7 +338,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {}); }
-  else if ('123'.includes(e.key)) { $('mode').value = ['twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
+  else if ('1234'.includes(e.key)) { $('mode').value = ['six', 'twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
   else if (e.key === 'm') { engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol); }
 });
 document.addEventListener('fullscreenchange', () => {

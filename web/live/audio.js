@@ -4,6 +4,7 @@
 // (time constant τ). Pitches glide in cents via `detune` on a 440 Hz base,
 // so, as offline, every semitone step sounds equal.
 import { CHORDS } from './harmony.js';
+const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out slowly
 
 const cents = m => 100 * (m - 69);
 
@@ -122,9 +123,12 @@ export class Engine {
     return b;
   }
 
-  setChord(key, instant = false) {
-    if (!this.ctx || key === this.chordKey) return;
-    this.chordKey = key; this.chord = CHORDS[key];
+  // chord: {key, bass, voices} (voices may be voice-led, not fixed)
+  setChord(chord, instant = false) {
+    if (typeof chord === 'string') chord = { key: chord, ...CHORDS[chord] };
+    const sig = chord.key + chord.voices.join();
+    if (!this.ctx || sig === this.chordKey) return;
+    this.chordKey = sig; this.chord = chord;
     const t = this.ctx.currentTime, set = (param, v, tau) =>
       instant ? param.setValueAtTime(v, t) : param.setTargetAtTime(v, t, tau);
     this.voices.forEach((v, i) => set(v.o.detune, cents(this.chord.voices[i]), 0.25));
@@ -148,18 +152,24 @@ export class Engine {
     this.tpan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.25);
     const wander = (1 - f.space) ** 1.3;
     this.voices.forEach(v => v.depth.gain.setTargetAtTime(v.sign * 30 * wander, t, 0.15));
-    this.pamp.gain.setTargetAtTime(0.15 + 0.85 * h ** 1.2, t, 0.06);
+    this.ar(this.pamp.gain, h ** 1.2, t);                   // no floor: still hands, silent pad
     const I = 0.3 + 4 * f.flow ** 1.2;
     this.bdev.gain.setTargetAtTime(I * 440, t, 0.06);
-    this.bamp.gain.setTargetAtTime(0.2 * (0.2 + 0.8 * w13), t, 0.06);
+    this.ar(this.bamp.gain, 0.2 * w13, t);
     for (const ev of f.events) this.pluck(ev, sx(ev.x));
+  }
+
+  ar(param, v, t) {                    // one-pole glide with separate rise and fall times
+    const last = param._target ?? 0;
+    param.setTargetAtTime(v, t, v > last ? ATTACK : RELEASE);
+    param._target = v;
   }
 
   idle() {   // nobody in frame: everything that follows movement falls silent
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    for (const g of [this.wamp, this.tamp, this.bamp]) g.gain.setTargetAtTime(0, t, 0.3);
-    this.pamp.gain.setTargetAtTime(0, t, 0.6);
+    for (const g of [this.wamp, this.tamp]) g.gain.setTargetAtTime(0, t, 0.3);
+    for (const g of [this.pamp, this.bamp]) { g.gain.setTargetAtTime(0, t, 0.6); g.gain._target = 0; }
   }
 
   pluck(ev, pan) {

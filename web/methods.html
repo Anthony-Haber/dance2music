@@ -7,7 +7,7 @@ the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source
 <nav class="toc">
   <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
   <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
-  <a href="#m-harm">7 Chords from pose</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
+  <a href="#m-harm">7 Chords from pose</a> <a href="#m-six">7b Six chords</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
   <a href="#m-live">10 Live</a>
 </nav>
 
@@ -142,10 +142,34 @@ an alteration takes the colour of its neighbour.</p>
 <p>The largest move of any upper voice between any two of these chords is 2 semitones. ii→V moves one voice (C→B). V→I moves three voices down a step while B holds.
 G7alt is a semitone from both neighbours in every voice that moves.</p>
 
+<h3 id="m-six">7b. Six chords from the hands <span class="src">harmony.py · read_regions, chords6, voice_lead</span></h3>
+<p>This uses the torso centre $\mathbf c = \tfrac12\big(\tfrac12(\mathbf p_{\text{Lsh}}+\mathbf p_{\text{Rsh}}) + \tfrac12(\mathbf p_{\text{Lhip}}+\mathbf p_{\text{Rhip}})\big)$,
+the hands' midpoint $\bar{\mathbf h} = \tfrac12(\mathbf p_{\text{Lwr}}+\mathbf p_{\text{Rwr}})$ and the hands' spread $\sigma_h = \|\mathbf p_{\text{Lwr}}-\mathbf p_{\text{Rwr}}\|/\ell$:
+$$\lambda = \frac{\bar h_x - c_x}{\ell}\ \ (\text{+ toward her left as she faces the camera}),\qquad \mu = \frac{\bar h_y - c_y}{\ell}\ \ (\text{+ down}).$$</p>
+<table class="t">
+<tr><th>region</th><th>condition</th><th>chord</th><th>rootless voices (pitch classes)</th><th>bass</th></tr>
+<tr><td>centred, raised or open</td><td>$|\lambda|&lt;0.35$ and ($\mu&lt;-0.5$ or ($\sigma_h&gt;1.8$ and $\mu&lt;0.5$))</td><td>IV · Fmaj9</td><td>A C E G</td><td>F2</td></tr>
+<tr><td>centred, at rest</td><td>$|\lambda|&lt;0.35$ otherwise (arms hanging included)</td><td>I · Cmaj9</td><td>E G B D</td><td>C2</td></tr>
+<tr><td>her left, up</td><td>$\lambda\ge0.35,\ \mu&lt;0$</td><td>vi · Am9</td><td>C E G B</td><td>A2</td></tr>
+<tr><td>her left, down</td><td>$\lambda\ge0.35,\ \mu\ge0$</td><td>ii · Dm9</td><td>F A C E</td><td>D2</td></tr>
+<tr><td>her right, up</td><td>$\lambda\le-0.35,\ \mu&lt;0$</td><td>iii · Em7(11)</td><td>G B D A</td><td>E2</td></tr>
+<tr><td>her right, down</td><td>$\lambda\le-0.35,\ \mu\ge0$</td><td>V · G13</td><td>B E F A</td><td>G2</td></tr>
+</table>
+<p>The “wide” condition needs the hands above the hips ($\mu&lt;0.5$), so hands far apart on the floor in a fold do not read as opening up.
+A reading has to last 0.5 s (live: the Chord hold slider). The regions tile the whole space, so unlike §7 there is no neutral “hold” pose.
+On the three clips this gives 23–28 changes per minute, and all six chords are used.</p>
+<p><b>Voice leading.</b> With six chords any chord can follow any other, so fixed voicings would force leaps. Instead, from the current voicing
+$(m_1,\dots,m_4)$, each permutation $\pi$ of the new chord's pitch classes is tried. Each voice $i$ takes the nearest MIDI note $m_i'$ with
+$m_i' \equiv \pi_i \pmod{12}$, folded by octaves into $[50, 70]$. The choice minimises $\sum_i |m_i'-m_i|$, with ties broken by the largest single move.
+The largest move of any one voice between any two of the six chords is 3 semitones. The voices then glide as in §9 ($\tau = 0.25$ s),
+and each keeps its own line.</p>
+
 <h2 id="m-dsp">8. Synthesis primitives <span class="src">synths.py</span></h2>
 <p><b>Control to audio.</b> A frame-rate control $u_t$ is linearly interpolated to audio rate, then passed through a one-pole glide:
 $$y[n] = y[n-1] + \beta\,(x[n]-y[n-1]),\qquad \beta = 1-e^{-1/(\tau F_s)}.$$
-Each mapping below gives its $\tau$. Pitches glide in <em>semitones</em>, $f = 440\cdot 2^{(m-69)/12}$ with $m$ glided, so every step sounds equal.</p>
+Each mapping below gives its $\tau$. $\operatorname{g}^{\uparrow\downarrow}_{\tau_a,\tau_r}$ is the same glide with
+$\tau=\tau_a$ while the input is above the output (rising) and $\tau=\tau_r$ while it is below (falling), so a sound can swell fast and ring out slowly.
+Pitches glide in <em>semitones</em>, $f = 440\cdot 2^{(m-69)/12}$ with $m$ glided, so every step sounds equal.</p>
 <p><b>Oscillator phase</b> $\varphi[n] = 2\pi\sum_{i\le n} f[i]/F_s$ (so pitch can vary smoothly without clicks).
 <b>Band-limited saw</b>, additive: $\operatorname{saw}_K(\varphi) = \frac{2}{\pi}\sum_{k=1}^{K}\frac{\sin k\varphi}{k}$ (no aliasing).</p>
 <p><b>Filter.</b> A time-varying topology-preserving state-variable filter (Zavalishin), per sample:
@@ -171,10 +195,11 @@ $\operatorname{g}_\tau(\cdot)$ is the glide of §8 with time constant $\tau$.</p
 <ul>
 <li><b>pad</b> (Space). Four voices at the voicing pitches $m_v$, glided with $\tau=0.25$ s, each detuned by
 $\pm 30\,w\,\sin(2\pi r_v t)$ cents, where $r_v = 0.31, 0.47, 0.71, 0.23$ Hz and $w=\operatorname{g}_{0.15}\big((1-\hat S)^{1.3}\big)$. Straight paths give $w\to0$ (in tune).
-Source $\operatorname{saw}_{10}$, then a 1600 Hz low-pass ($Q$ 0.7). Level $0.2\,\operatorname{g}_{0.06}(0.15+0.85\,h^{1.2})$,
-with $h=\operatorname{clip}(1.6\cdot\tfrac12(\hat s_{\text{Lwr}}+\hat s_{\text{Rwr}}),0,1)$. The 0.15 floor keeps the chord audible when she is still. Fixed pans 0.25, 0.75, 0.4, 0.6.</li>
+Source $\operatorname{saw}_{10}$, then a 1600 Hz low-pass ($Q$ 0.7). Level $0.2\,\operatorname{g}^{\uparrow\downarrow}_{0.06,\,0.4}(h^{1.2})$,
+with $h=\operatorname{clip}(1.6\cdot\tfrac12(\hat s_{\text{Lwr}}+\hat s_{\text{Rwr}}),0,1)$. There is no floor: when her hands are still the pad is silent,
+and it rings out over 0.4 s rather than stopping. Fixed pans 0.25, 0.75, 0.4, 0.6.</li>
 <li><b>bass</b> (Flow). FM with carrier = modulator = the root (glided with $\tau=0.12$ s), $I = \operatorname{g}_{0.06}(0.3+4\widehat F^{1.2})$,
-level $0.2\,\operatorname{g}_{0.06}\big(0.2+0.8\operatorname{clip}(1.3\widehat W,0,1)\big)$. Centred.</li>
+level $0.2\,\operatorname{g}^{\uparrow\downarrow}_{0.06,\,0.4}\big(\operatorname{clip}(1.3\widehat W,0,1)\big)$ (no floor, silent when still). Centred.</li>
 <li><b>plucks</b> (Time). At each sudden event (§6), the limb plucks its tone of the chord sounding at that frame:
 left ankle → root + 12, right ankle → voice 2, left wrist → voice 3 + 12, right wrist → voice 4 + 12.
 Gain $0.55(0.25+0.75\sigma)$, panned to the limb's screen position.</li>
@@ -184,6 +209,9 @@ pan $\operatorname{g}_{0.25}(\widehat{\text{travel}})$.</li>
 <li><b>wind tuned</b>. The same noise through 8 band-pass resonators ($Q=60$) at each voice + 12 and + 24 semitones (glided with $\tau = 0.25$ s),
 RMS-matched to the plain wind, with the same level and pan. Blending the two sliders moves between air and a whistled chord.</li>
 </ul>
+
+<h3 id="d-sixchords">Six chords from the hands</h3>
+<p>The layers and mappings of the ii–V–I demo below. The chord comes from the six regions of §7b, and the voicing from the voice leader rather than a table.</p>
 
 <h3 id="d-twofive_alt">ii–V–I, altered</h3>
 <p>Identical to the above, except that V switches between G13 and G7alt with Weight (§7, <i>Altered V</i>).</p>
@@ -253,7 +281,9 @@ velocity $(w,d) = (0.23\,\text{s}, 2)$, acceleration $(0.3\,\text{s}, 2)$, jerk 
 then $\tau = 0.08$ s. Sensitivity sliders multiply the normalised value (Space is scaled about its midpoint, 0.5).</p>
 <p><b>Sudden events.</b> A Schmitt trigger on each limb's $\alpha_e$. The trigger arms when $\alpha_e &lt; 0.5\theta$, tracks the peak once $\alpha_e &gt; \theta$, and fires
 on the first frame that $\alpha_e$ falls, at least 0.23 s after that limb's last event. $\theta = 18.4$ torsos/s², divided by the Suddenness slider. Strength is as in §6.</p>
-<p><b>Chords</b> follow the rules of §7, with the dwell (0.35 s) and the altered-V minimum (0.5 s) measured in seconds.</p>
+<p><b>Chords</b> follow §7b by default (six chords, voice-led, the same code as offline), or the rules of §7. Dwells are measured in seconds,
+set by the Chord hold slider: that value in six-chord mode, and 0.7 times it for ii–V–I. Run on the same landmark files, the live six-chord mode agrees with the offline one on
+80–89% of frames, with about the same number of changes.</p>
 <p><b>Sound</b> uses Web Audio nodes with the parameters of §9 (ii–V–I demo):</p>
 <ul>
 <li>Every control reaches its parameter through <code>setTargetAtTime(value, now, τ)</code>. That is the one-pole glide of §8 with the same $\tau$.</li>
@@ -263,7 +293,7 @@ on the first frame that $\alpha_e$ falls, at least 0.23 s after that limb's last
 <li>Tuned wind: 8 biquad band-passes, $Q=60$, with a fixed ×4 make-up gain in place of offline RMS matching.</li>
 <li>Plucks: Karplus–Strong computed in JavaScript per event, as in §8.</li>
 <li>Reverb: the same impulse recipe, dry 0.8 / wet 0.2. A limiter (−6 dB, 20:1) protects the output.</li>
-<li>When nobody is in frame, all levels glide to 0 (pad $\tau=0.6$ s, the rest 0.3 s).</li>
+<li>Pad and bass levels use separate rise and fall times (0.06 s / 0.4 s), with no floor, so stillness is silence. When nobody is in frame, all levels glide to 0 (pad and bass $\tau=0.6$ s, wind 0.3 s).</li>
 </ul>
 <p><b>Validation.</b> The live feature code was run on the same landmark files as the offline pipeline and compared:</p>
 <ul>

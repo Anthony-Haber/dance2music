@@ -31,7 +31,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _HERE)
 
 import motion as M  # noqa: E402
-from dance_pose import (L_WR, R_WR, L_AN, R_AN, L_HIP, R_HIP, L_KN, R_KN)  # noqa: E402
+from dance_pose import (L_WR, R_WR, L_AN, R_AN, L_HIP, R_HIP, L_KN, R_KN, L_SH, R_SH)  # noqa: E402
 
 DWELL_S = 0.35         # a reading must last this long to change the chord
 DOWN_AT = 0.5          # "down": below this fraction of the way from hips to knees
@@ -45,6 +45,96 @@ CHORDS = {
     'I': dict(symbol='Cmaj9', bass=36, voices=(52, 55, 59, 62)),
 }
 DEGREE = {'ii': 'ii', 'V': 'V', 'Valt': 'V', 'I': 'I'}
+
+
+# ── six chords from where the hands are, relative to the torso ─────────
+#
+# The hands' midpoint h̄ and their spread, in torso lengths from the torso
+# centre c (halfway between the shoulders' and the hips' midpoints).
+# λ = (h̄x − cx)/ℓ is positive toward her left when she faces the camera
+# (her left hand appears on the right of the camera's picture); μ = (h̄y − cy)/ℓ
+# is positive downward.
+#
+#     centred |λ| < 0.35:  raised (μ < −0.5), or spread > 1.8 with μ < 0.5  →  IV
+#                          otherwise (including arms hanging)  →  I
+#     her left  λ ≥ 0.35:  up (μ < 0) → vi,   down → ii
+#     her right λ ≤ −0.35: up (μ < 0) → iii,  down → V
+#
+# Voicings are not fixed: each new chord's four pitch classes are placed on
+# the four voices to move them as little as possible (voice_lead), so any
+# chord can follow any other by steps.
+
+SIX = {
+    'I':   dict(symbol='Cmaj9',   bass=36, pcs=(4, 7, 11, 2)),   # E G B D
+    'ii':  dict(symbol='Dm9',     bass=38, pcs=(5, 9, 0, 4)),    # F A C E
+    'iii': dict(symbol='Em7(11)', bass=40, pcs=(7, 11, 2, 9)),   # G B D A
+    'IV':  dict(symbol='Fmaj9',   bass=41, pcs=(9, 0, 4, 7)),    # A C E G
+    'V':   dict(symbol='G13',     bass=43, pcs=(11, 4, 5, 9)),   # B E F A
+    'vi':  dict(symbol='Am9',     bass=45, pcs=(0, 4, 7, 11)),   # C E G B
+}
+CENTRE_BAND, RAISED_AT, WIDE_AT = 0.35, -0.5, 1.8
+WIDE_BELOW = 0.5        # "wide" only counts with the hands above the hips
+DWELL6_S = 0.5          # the regions tile the whole space, so ask for a little more
+VOICE_RANGE = (50, 70)
+START_VOICING = (52, 55, 59, 62)
+
+
+def voice_lead(prev, pcs, lo=VOICE_RANGE[0], hi=VOICE_RANGE[1]):
+    """Place pitch classes on the voices, least total motion, inside [lo, hi]."""
+    from itertools import permutations
+    best = None
+    for perm in permutations(pcs):
+        out = []
+        for p, pc in zip(prev, perm):
+            m = p + ((pc - p) % 12)                 # the nearest pc at or above p …
+            if m - p > 6:
+                m -= 12                            # … or below it, whichever is closer
+            while m < lo:
+                m += 12
+            while m > hi:
+                m -= 12
+            out.append(m)
+        cost = (sum(abs(a - b) for a, b in zip(out, prev)),
+                max(abs(a - b) for a, b in zip(out, prev)))
+        if best is None or cost < best[0]:
+            best = (cost, tuple(out))
+    return best[1]
+
+
+def read_regions(f):
+    """Per frame: which of the six regions the hands are in ('' if unsure)."""
+    P, tl = f['P'], f['tl']
+    c = ((P[:, L_SH] + P[:, R_SH]) / 2 + (P[:, L_HIP] + P[:, R_HIP]) / 2) / 2
+    hb = (P[:, L_WR] + P[:, R_WR]) / 2
+    lam = (hb[:, 0] - c[:, 0]) / tl
+    mu = (hb[:, 1] - c[:, 1]) / tl
+    spread = np.linalg.norm(P[:, L_WR] - P[:, R_WR], axis=1) / tl
+    centred = np.abs(lam) < CENTRE_BAND
+    up = mu < 0
+    wide = (spread > WIDE_AT) & (mu < WIDE_BELOW)          # arms open, not hands on the floor
+    raw = np.where(centred, np.where((mu < RAISED_AT) | wide, 'IV', 'I'),
+                   np.where(lam > 0, np.where(up, 'vi', 'ii'), np.where(up, 'iii', 'V')))
+    ok = f['conf'][:, [L_WR, R_WR, L_SH, R_SH, L_HIP, R_HIP]].min(1) > 0.5
+    return np.where(ok, raw, ''), dict(c=c, lam=lam, mu=mu, spread=spread)
+
+
+def chords6(f):
+    """Held chord per frame (after the dwell) and its voice-led voicing."""
+    raw, guides = read_regions(f)
+    need = max(1, int(DWELL6_S * f['fps']))
+    cur, run_lab, run_n, voicing = 'I', '', 0, START_VOICING
+    held, voices = [], []
+    for r in raw:
+        if r and r == run_lab:
+            run_n += 1
+        else:
+            run_lab, run_n = r, 1 if r else 0
+        if run_lab and run_n >= need and run_lab != cur:
+            cur = run_lab
+            voicing = voice_lead(voicing, SIX[cur]['pcs'])
+        held.append(cur)
+        voices.append(voicing)
+    return np.array(held, dtype=object), np.array(voices, float), raw, guides
 
 
 def read_pose(f):
@@ -138,13 +228,30 @@ def segments(f, held):
     for i in range(1, len(held) + 1):
         if i == len(held) or held[i] != held[a]:
             c = str(held[a])
+            spec = CHORDS.get(c) if c in DEGREE else SIX[c]
             seg.append(dict(t0=round(float(t[a]), 3), t1=round(float(t[i - 1]), 3),
-                            chord=c, symbol=CHORDS[c]['symbol'], degree=DEGREE[c]))
+                            chord=c, symbol=spec['symbol'], degree=DEGREE.get(c, c)))
             a = i
     return seg
 
 
 def main():
+    # every pair of the six chords, voice-led from every other: the largest step
+    worst = 0
+    for a in SIX:
+        va = voice_lead(START_VOICING, SIX[a]['pcs'])
+        for b in SIX:
+            vb = voice_lead(va, SIX[b]['pcs'])
+            worst = max(worst, max(abs(x - y) for x, y in zip(va, vb)))
+    print(f'six chords: largest single-voice move between any two = {worst} semitones')
+    for stem in M.stems():
+        f = M.load(stem)
+        held, _v, raw, _g = chords6(f)
+        seg = segments(f, held)
+        dur = f['t'][-1] - f['t'][0]
+        share = '  '.join(f"{k} {np.mean(raw == k):.0%}" for k in list(SIX) + [''])
+        print(f"{stem} six: {share}   {len(seg) - 1} changes ({60 * (len(seg) - 1) / dur:.0f}/min), "
+              f"chords used {sorted(set(held))}")
     for stem in M.stems():
         f = M.load(stem)
         held, raw, _ = chords(f)

@@ -104,10 +104,7 @@
     <section id="chordBox" hidden>
       <h2>Chords (click to jump)</h2>
       <canvas id="chordbar"></canvas>
-      <p class="rules"><b style="color:var(--V)">V</b> both hands below mid-thigh<br>
-        <b style="color:var(--ii)">ii</b> both hands past the same side of both feet<br>
-        <b style="color:var(--I)">I</b> each hand and foot on its own side of the body<br>
-        <span class="note">anything else holds the chord; a reading must last 0.35 s</span></p>
+      <p class="rules" id="rules"></p>
     </section>
     <p class="note"><a href="#" id="mdemo" style="color:var(--accent)">The math for this demo →</a></p>
     <section>
@@ -128,10 +125,10 @@
 <script>
 const $ = id => document.getElementById(id);
 const v = $('v');
-const GROUPS = [['Harmony', ['twofive', 'twofive_alt']],
+const GROUPS = [['Harmony', ['sixchords', 'twofive', 'twofive_alt']],
                 ['Laban Efforts', ['efforts', 'wind', 'plucks', 'fm', 'space', 'breath']],
                 ['Velocity', ['organ', 'siren']]];
-const DEG = { I: '#78dc78', ii: '#5ab4ff', V: '#ffaa50' };
+const DEG = { I: '#78dc78', ii: '#5ab4ff', iii: '#5ac8c8', IV: '#c88ce6', V: '#ffaa50', vi: '#fa78a0' };
 let M, clip, idea, meta, order = [];
 let actx, master, bufCache = {}, bufs = {}, srcs = [], gains = {}, t0 = 0;
 const state = {};   // per layer name: {vol, mute, solo}
@@ -179,7 +176,7 @@ function renderIdeas() {
 $('ideas').onclick = e => { const d = e.target.closest('.idea'); d && pick(clip, d.dataset.id); };
 
 async function pick(c, id) {
-  if (!c.ideas.includes(id)) id = c.ideas.includes('twofive') ? 'twofive' : c.ideas[0];
+  if (!c.ideas.includes(id)) id = c.ideas.includes('sixchords') ? 'sixchords' : c.ideas[0];
   const t = c === clip ? v.currentTime : 0, playing = !v.paused;
   v.pause(); stop();
   clip = c; idea = id; store.set('demo', id); store.set('clip', c.stem);
@@ -190,6 +187,8 @@ async function pick(c, id) {
   v.currentTime = Math.min(t, v.duration || t);
   drawRows();
   $('chordBox').hidden = !meta.chords;
+  $('rules').innerHTML = (meta.rules || []).map(([d, txt]) => d
+    ? `<b style="color:${DEG[d]}">${d}</b> ${txt}<br>` : `<span class="note">${txt}</span>`).join('');
   await loadStems();
   if (playing) v.play();
 }

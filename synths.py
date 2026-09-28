@@ -47,6 +47,10 @@ PART_NAME = {'head': 'head', 'lhand': 'left hand', 'rhand': 'right hand',
              'lfoot': 'left foot', 'rfoot': 'right foot'}
 
 # colours: (BGR for the video, hex for the page)
+# chord degrees: BGR for the video (the page has the same colours)
+DEG_BGR = {'I': (120, 220, 120), 'ii': (255, 180, 90), 'iii': (200, 200, 90),
+           'IV': (230, 140, 200), 'V': (80, 170, 255), 'vi': (160, 120, 250)}
+
 COL = {'chord': ((255, 255, 255), '#ffffff'),'lhand': ((80, 170, 255), '#ffaa50'), 'rhand': ((255, 180, 90), '#5ab4ff'),
        'lfoot': ((120, 220, 120), '#78dc78'), 'rfoot': ((200, 120, 240), '#f078c8'),
        'weight': ((90, 110, 240), '#f06e5a'), 'time': ((80, 210, 250), '#fad250'),
@@ -71,6 +75,24 @@ def ctrl(f, x, n, tau=0.03):
     ta = np.arange(n) / SR
     y = np.interp(ta, f['t'] - f['t'][0], np.asarray(x, float))
     return _onepole(y, 1 - np.exp(-1 / (tau * SR)))
+
+
+@njit(cache=True)
+def _onepole_ar(x, a_up, a_down):
+    y = np.empty_like(x)
+    s = x[0]
+    for i in range(len(x)):
+        s += (a_up if x[i] > s else a_down) * (x[i] - s)
+        y[i] = s
+    return y
+
+
+def ctrl_ar(f, x, n, attack, release):
+    """Like ctrl, but rising with one time constant and falling with another."""
+    ta = np.arange(n) / SR
+    y = np.interp(ta, f['t'] - f['t'][0], np.asarray(x, float))
+    k = lambda tau: 1 - np.exp(-1 / (tau * SR))           # noqa: E731
+    return _onepole_ar(y, k(attack), k(release))
 
 
 def osc(freq):
@@ -298,11 +320,15 @@ def _hz(f, midi, n, tau):
     return 440.0 * 2 ** ((ctrl(f, midi, n, tau) - 69) / 12)
 
 
-def _twofive(f, n, alt):
+def _twofive(f, n, alt, six=False):
     import harmony as H
-    held, raw, guides = H.chords(f, alt_weight=f['n_weight'] if alt else None)
-    VO = np.array([H.CHORDS[c]['voices'] for c in held], float)       # (T, 4)
-    BA = np.array([H.CHORDS[c]['bass'] for c in held], float)
+    if six:
+        held, VO, raw, guides = H.chords6(f)                        # voice-led, (T, 4)
+        BA = np.array([H.SIX[c]['bass'] for c in held], float)
+    else:
+        held, raw, guides = H.chords(f, alt_weight=f['n_weight'] if alt else None)
+        VO = np.array([H.CHORDS[c]['voices'] for c in held], float)   # (T, 4)
+        BA = np.array([H.CHORDS[c]['bass'] for c in held], float)
     W, F, S = f['n_weight'], f['n_flow'], f['space']
     hands = np.clip(f['n_speed'][:, 1:3].mean(1) * 1.6, 0, 1)
     ta = np.arange(n) / SR
@@ -310,7 +336,8 @@ def _twofive(f, n, alt):
 
     # pad (Space): four voices glide to the next chord by step
     wander = ctrl(f, (1 - S) ** 1.3, n, 0.15)
-    amp = ctrl(f, 0.15 + 0.85 * hands ** 1.2, n, 0.06)
+    # no floor: still hands, silent pad; it swells in 0.06 s and rings out over 0.4 s
+    amp = ctrl_ar(f, hands ** 1.2, n, 0.06, 0.4)
     pad = 0
     for v, (rate, sign, p) in enumerate(((0.31, 1, 0.25), (0.47, -1, 0.75),
                                          (0.71, 1, 0.4), (0.23, -1, 0.6))):
@@ -324,7 +351,7 @@ def _twofive(f, n, alt):
     bhz = _hz(f, BA, n, 0.12)
     index = ctrl(f, 0.3 + 4 * F ** 1.2, n, 0.06)
     ph = osc(bhz)
-    bamp = ctrl(f, 0.2 + 0.8 * np.clip(W * 1.3, 0, 1), n, 0.06)
+    bamp = ctrl_ar(f, np.clip(W * 1.3, 0, 1), n, 0.06, 0.4)
     stems['bass'] = pan(0.2 * bamp * np.sin(ph + index * np.sin(ph)), np.full(n, 0.5))
 
     # plucks (Time): each limb plucks its own tone of the chord sounding now
@@ -365,7 +392,7 @@ def _twofive(f, n, alt):
         dict(key='flow', signal=F, label='Flow → bass harshness (FM)'),
         dict(key='space', signal=S, label='Space → pad in tune / drifting'),
     ]
-    return stems, drivers, {'events': True, 'chords': (held, raw, guides)}
+    return stems, drivers, {'events': True, 'chords': (held, raw, guides, 'six' if six else 'twofive')}
 
 
 def twofive(f, n):
@@ -374,6 +401,10 @@ def twofive(f, n):
 
 def twofive_alt(f, n):
     return _twofive(f, n, alt=True)
+
+
+def sixchords(f, n):
+    return _twofive(f, n, alt=False, six=True)
 
 
 IDEAS = {
@@ -387,6 +418,7 @@ IDEAS = {
     'efforts': (efforts, 'Four Efforts', 'wind + plucks + FM + tuning, mixable'),
     'twofive': (twofive, 'ii–V–I from pose', 'pose picks the chord; voices glide by step'),
     'twofive_alt': (twofive_alt, 'ii–V–I, altered', 'as before; strong movement alters the V'),
+    'sixchords': (sixchords, 'Six chords from the hands', 'where the hands are around the torso picks the chord'),
 }
 
 
@@ -442,11 +474,10 @@ def render_video(video, f, idea, drivers, extras, wav, out, seconds=None):
     badges = {}
     if ch:
         import harmony as H
-        DEG_COL = {'I': (120, 220, 120), 'ii': (255, 180, 90), 'V': (80, 170, 255)}
-        for c, spec in H.CHORDS.items():
-            rgb = DEG_COL[H.DEGREE[c]][::-1]
+        for c, spec in list(H.CHORDS.items()) + list(H.SIX.items()):
+            rgb = DEG_BGR[H.DEGREE.get(c, c)][::-1]
             badges[c] = _text_layer(200, 74, [(0, 4, spec['symbol'], 30, rgb),
-                                              (0, 44, H.DEGREE[c], 18, (200, 195, 185))])
+                                              (0, 44, H.DEGREE.get(c, c), 18, (200, 195, 185))])
     for i in range(T):
         ok, frame = cap.read()
         if not ok:
@@ -517,11 +548,44 @@ def render_video(video, f, idea, drivers, extras, wav, out, seconds=None):
     proc.wait()
 
 
+def _draw_regions(frame, f, i, ch):
+    """The six regions as a grid around the torso; the hands' midpoint as a dot."""
+    import cv2
+    import harmony as H
+    held, raw, g, _ = ch
+    c, tl = g['c'][i], f['tl'][i]
+    if not np.isfinite(c).all():
+        return
+    b = H.CENTRE_BAND * tl
+    x0, x1 = c[0] - b, c[0] + b
+    top, bot = c[1] - 1.6 * tl, c[1] + 1.4 * tl
+    dim = (120, 120, 120)
+    cv2.line(frame, (int(x0), int(top)), (int(x0), int(bot)), dim, 1, cv2.LINE_AA)
+    cv2.line(frame, (int(x1), int(top)), (int(x1), int(bot)), dim, 1, cv2.LINE_AA)
+    for xa, xb in ((x0 - 1.4 * tl, x0), (x1, x1 + 1.4 * tl)):       # up/down split on the sides
+        cv2.line(frame, (int(xa), int(c[1])), (int(xb), int(c[1])), dim, 1, cv2.LINE_AA)
+    ry = c[1] + H.RAISED_AT * tl                                     # raised, in the centre
+    cv2.line(frame, (int(x0), int(ry)), (int(x1), int(ry)), dim, 1, cv2.LINE_AA)
+    # her left is the camera's right
+    labels = {'vi': (x1 + 0.5 * tl, c[1] - 0.6 * tl), 'ii': (x1 + 0.5 * tl, c[1] + 0.8 * tl),
+              'iii': (x0 - 0.9 * tl, c[1] - 0.6 * tl), 'V': (x0 - 0.9 * tl, c[1] + 0.8 * tl),
+              'IV': (c[0] - 0.2 * tl, ry - 0.2 * tl), 'I': (c[0] - 0.1 * tl, c[1] + 1.2 * tl)}
+    for k, (x, y) in labels.items():
+        on = raw[i] == k
+        col = DEG_BGR[k] if on else dim
+        cv2.putText(frame, k, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.8 if on else 0.6,
+                    col, 2 if on else 1, cv2.LINE_AA)
+    hb = (f['P'][i, L_WR] + f['P'][i, R_WR]) / 2
+    cv2.circle(frame, (int(hb[0]), int(hb[1])), 7, DEG_BGR.get(raw[i], (230, 230, 230)), -1, cv2.LINE_AA)
+
+
 def _draw_rules(frame, f, i, ch):
     """The three pose rules as lines on the body; the one being read is lit."""
     import cv2
     import harmony as H
-    held, raw, g = ch
+    held, raw, g, mode = ch
+    if mode == 'six':
+        return _draw_regions(frame, f, i, ch)
     P, tl = f['P'][i], f['tl'][i]
     r = raw[i]
     lit = {'I': (120, 220, 120), 'ii': (255, 180, 90), 'V': (80, 170, 255)}
@@ -544,6 +608,17 @@ def _draw_rules(frame, f, i, ch):
     a, b = hip - 1.6 * tl * nrm, hip + 1.2 * tl * nrm
     cv2.line(frame, tuple(a.astype(int)), tuple(b.astype(int)),
              lit['I'] if r == 'I' else dim, 2 if r == 'I' else 1, cv2.LINE_AA)
+
+
+RULES_TWOFIVE = [['V', 'both hands below mid-thigh'],
+                 ['ii', 'both hands past the same side of both feet'],
+                 ['I', 'each hand and foot on its own side of the body'],
+                 ['', 'anything else holds the chord; a reading must last 0.35 s']]
+RULES_SIX = [['I', 'hands centred, at rest (arms hanging counts)'],
+             ['IV', 'hands centred and raised above the shoulders, or spread wide above the hips'],
+             ['vi', 'hands to her left, up'], ['ii', 'hands to her left, down'],
+             ['iii', 'hands to her right, up'], ['V', 'hands to her right, down'],
+             ['', '"hands" = their midpoint, relative to the torso centre; a reading must last 0.5 s']]
 
 
 def run(job):
@@ -578,6 +653,7 @@ def run(job):
     if 'chords' in extras:
         import harmony as H
         meta['chords'] = H.segments(f, extras['chords'][0])
+        meta['rules'] = RULES_SIX if extras['chords'][3] == 'six' else RULES_TWOFIVE
     json.dump(meta, open(os.path.join(d, f'{idea}.json'), 'w'))
     print(f'{stem} {idea}: done')
     return stem, idea
