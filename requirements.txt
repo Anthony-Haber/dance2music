@@ -1,0 +1,10 @@
+numpy
+scipy
+numba
+soundfile
+opencv-python
+mediapipe
+pillow
+matplotlib
+umap-learn
+scikit-learn

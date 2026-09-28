@@ -1,0 +1,16 @@
+# media and everything generated from it: code only in git
+videos/
+output/
+*.mp4
+*.mov
+*.m4a
+*.wav
+*.mid
+*.npz
+*.png
+!docs/*.png
+
+__pycache__/
+*.pyc
+.DS_Store
+.venv/

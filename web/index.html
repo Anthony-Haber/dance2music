@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dance Motion Sound</title>
+<style>
+  :root {
+    --bg: #121110; --panel: #1b1a18; --line: #2c2a27; --ink: #efe9df; --dim: #9a9086;
+    --accent: #f0a050; --I: #78dc78; --ii: #5ab4ff; --V: #ffaa50;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.45 -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  header { padding: 14px 20px 10px; border-bottom: 1px solid var(--line);
+           display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  header .rule { color: var(--dim); }
+  .clips { margin-left: auto; display: flex; gap: 6px; }
+  button { background: var(--panel); color: var(--dim); border: 1px solid var(--line);
+           border-radius: 6px; padding: 5px 10px; cursor: pointer; font: inherit; }
+  button.on { color: var(--ink); border-color: var(--accent); }
+  main { display: grid; grid-template-columns: 250px auto minmax(320px, 1fr); gap: 18px;
+         padding: 16px 20px; }
+  .ideas { display: flex; flex-direction: column; gap: 6px; max-height: calc(100vh - 90px);
+           overflow-y: auto; }
+  .group { font-size: 11px; color: var(--dim); text-transform: uppercase;
+           letter-spacing: .08em; margin: 8px 2px 0; }
+  .idea { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+          padding: 8px 12px; cursor: pointer; }
+  .idea.on { border-color: var(--accent); }
+  .idea b { display: block; font-weight: 600; }
+  .idea span { color: var(--dim); font-size: 12.5px; }
+  .idea kbd { float: right; color: var(--dim); font-size: 11px; }
+  video { height: calc(100vh - 110px); max-height: 900px; max-width: 100%;
+          border-radius: 8px; background: #000; display: block; }
+  h2 { font-size: 12px; color: var(--dim); font-weight: 500; margin: 0 0 8px;
+       text-transform: uppercase; letter-spacing: .06em; }
+  section { margin-bottom: 20px; }
+  .row { margin-bottom: 12px; }
+  .row .lab { font-size: 13px; margin-bottom: 3px; }
+  canvas { width: 100%; height: 46px; display: block; cursor: pointer;
+           background: var(--panel); border-radius: 6px; }
+  #chordbar { height: 34px; }
+  .mix { display: grid; grid-template-columns: 90px 30px 30px 1fr 42px; gap: 6px 8px;
+         align-items: center; }
+  .mix button { padding: 2px 0; font-size: 12px; }
+  .mix .name { font-size: 13px; }
+  .mix .val { color: var(--dim); font-size: 12px; text-align: right;
+              font-variant-numeric: tabular-nums; }
+  .mix hr { grid-column: 1 / -1; border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .note { color: var(--dim); font-size: 12.5px; max-width: 62ch; }
+  .rules { font-size: 13px; line-height: 1.6; }
+  .rules b { display: inline-block; width: 30px; }
+  details img { width: 100%; border-radius: 6px; margin-top: 8px; background: #fff; }
+  summary { cursor: pointer; color: var(--dim); }
+  @media (max-width: 1000px) {
+    main { grid-template-columns: 1fr; }
+    video { height: auto; width: 100%; }
+    .clips { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dance motion → sound</h1>
+  <span class="rule">moving makes the sound; the feature colours it</span>
+  <div class="clips" id="clips"></div>
+</header>
+<main>
+  <div class="ideas" id="ideas"></div>
+  <div><video id="v" controls playsinline muted></video></div>
+  <div class="side">
+    <section>
+      <h2>Mix</h2>
+      <div class="mix" id="mix"></div>
+    </section>
+    <section id="chordBox" hidden>
+      <h2>Chords (click to jump)</h2>
+      <canvas id="chordbar"></canvas>
+      <p class="rules"><b style="color:var(--V)">V</b> both hands below mid-thigh<br>
+        <b style="color:var(--ii)">ii</b> both hands past the same side of both feet<br>
+        <b style="color:var(--I)">I</b> each hand and foot on its own side of the body<br>
+        <span class="note">anything else holds the chord; a reading must last 0.35 s</span></p>
+    </section>
+    <section>
+      <h2>What is driving the sound</h2>
+      <div id="rows"></div>
+    </section>
+    <p class="note">Keys: 1–9, 0 demo · space play · [ ] clip · click any trace to jump.
+      Levels are remembered per layer name, so “wind” stays where you left it across demos.</p>
+    <details>
+      <summary>How the motion is cleaned</summary>
+      <p class="note">Unsure landmarks dropped, glitches removed (Hampel), zero-phase 5 Hz
+        low-pass, Savitzky–Golay derivatives, each limb's resting jitter subtracted.
+        Grey: speed from raw frame differences. Blue: what the sound hears.</p>
+      <img src="cleaning.png" alt="raw vs cleaned hand speed">
+    </details>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const v = $('v');
+const GROUPS = [['Harmony', ['twofive', 'twofive_alt']],
+                ['Laban Efforts', ['efforts', 'wind', 'plucks', 'fm', 'space', 'breath']],
+                ['Velocity', ['organ', 'siren']]];
+const DEG = { I: '#78dc78', ii: '#5ab4ff', V: '#ffaa50' };
+let M, clip, idea, meta, order = [];
+let actx, master, bufCache = {}, bufs = {}, srcs = [], gains = {}, t0 = 0;
+const state = {};   // per layer name: {vol, mute, solo}
+
+const store = {
+  get(k, d) { try { const x = localStorage.getItem(k); return x === null ? d : JSON.parse(x); } catch (e) { return d; } },
+  set(k, x) { try { localStorage.setItem(k, JSON.stringify(x)); } catch (e) {} },
+};
+
+async function boot() {
+  M = await (await fetch('manifest.json')).json();
+  $('clips').innerHTML = M.clips.map((c, i) =>
+    `<button data-i="${i}">${c.stem.replace('VIDEO-2026-09-21-', '')}</button>`).join('');
+  $('clips').onclick = e => e.target.dataset.i && pick(M.clips[+e.target.dataset.i], idea);
+  const byId = Object.fromEntries(M.ideas.map(x => [x.id, x]));
+  const seen = new Set(GROUPS.flatMap(g => g[1]));
+  const groups = GROUPS.concat([['Other', M.ideas.map(x => x.id).filter(i => !seen.has(i))]]);
+  order = groups.flatMap(g => g[1]).filter(i => byId[i]);
+  pick(M.clips.find(c => c.stem === store.get('clip', '')) || M.clips[M.clips.length - 1],
+       store.get('demo', order[0]));
+}
+
+function renderIdeas() {
+  const byId = Object.fromEntries(M.ideas.map(x => [x.id, x]));
+  const seen = new Set(GROUPS.flatMap(g => g[1]));
+  const groups = GROUPS.concat([['Other', M.ideas.map(x => x.id).filter(i => !seen.has(i))]]);
+  let html = '';
+  for (const [g, ids] of groups) {
+    const have = ids.filter(i => byId[i] && clip.ideas.includes(i));
+    if (!have.length) continue;
+    html += `<div class="group">${g}</div>`;
+    for (const i of have) {
+      const x = byId[i], k = order.indexOf(i) + 1;
+      html += `<div class="idea ${i === idea ? 'on' : ''}" data-id="${i}">
+        <kbd>${k <= 10 ? k % 10 : ''}</kbd><b>${x.title}</b><span>${x.sub}</span></div>`;
+    }
+  }
+  $('ideas').innerHTML = html;
+  [...$('clips').children].forEach(b => b.classList.toggle('on', M.clips[+b.dataset.i] === clip));
+}
+$('ideas').onclick = e => { const d = e.target.closest('.idea'); d && pick(clip, d.dataset.id); };
+
+async function pick(c, id) {
+  if (!c.ideas.includes(id)) id = c.ideas.includes('twofive') ? 'twofive' : c.ideas[0];
+  const t = c === clip ? v.currentTime : 0, playing = !v.paused;
+  v.pause(); stop();
+  clip = c; idea = id; store.set('demo', id); store.set('clip', c.stem);
+  renderIdeas();
+  meta = await (await fetch(`${c.stem}/${id}.json`)).json();
+  v.src = `${c.stem}/${meta.video}`;
+  await new Promise(r => v.addEventListener('loadedmetadata', r, { once: true }));
+  v.currentTime = Math.min(t, v.duration || t);
+  drawRows();
+  $('chordBox').hidden = !meta.chords;
+  await loadStems();
+  if (playing) v.play();
+}
+
+// ── mixer ──
+async function loadStems() {
+  actx = actx || new AudioContext();
+  if (!master) { master = actx.createGain(); master.connect(actx.destination);
+                 master.gain.value = store.get('mix:master', 1); }
+  bufs = {};
+  $('mix').innerHTML = '<span class="note">loading audio…</span>';
+  await Promise.all(Object.entries(meta.stems).map(async ([k, file]) => {
+    const url = `${clip.stem}/${file}`;
+    if (!bufCache[url]) {
+      const ab = await (await fetch(url)).arrayBuffer();
+      bufCache[url] = await actx.decodeAudioData(ab);
+    }
+    bufs[k] = bufCache[url];
+    if (!gains[k]) { gains[k] = actx.createGain(); gains[k].connect(master); }
+    state[k] = state[k] || store.get('mix:' + k, { vol: 1, mute: false, solo: false });
+    state[k].solo = false;
+  }));
+  const names = Object.keys(bufs);
+  const row = k => `<span class="name">${k}</span>
+    <button data-k="${k}" data-a="mute" class="${state[k].mute ? 'on' : ''}" title="mute">M</button>
+    <button data-k="${k}" data-a="solo" title="solo">S</button>
+    <input type="range" min="0" max="1.5" step="0.01" value="${state[k].vol}" data-k="${k}">
+    <span class="val" id="val-${k.replace(/\W/g, '_')}">${Math.round(state[k].vol * 100)}%</span>`;
+  $('mix').innerHTML = names.map(row).join('') + `<hr>
+    <span class="name">master</span><span></span><span></span>
+    <input type="range" min="0" max="1.5" step="0.01" value="${master.gain.value}" data-k="__master">
+    <span class="val" id="val-master">${Math.round(master.gain.value * 100)}%</span>`;
+  applyGains();
+  if (!v.paused) start();
+}
+function applyGains() {
+  const names = Object.keys(bufs), anySolo = names.some(k => state[k].solo);
+  for (const k of Object.keys(gains)) {
+    const s = state[k], live = names.includes(k);
+    const g = !live || !s || s.mute || (anySolo && !s.solo) ? 0 : s.vol;
+    gains[k].gain.setTargetAtTime(g, actx.currentTime, 0.03);
+  }
+}
+$('mix').addEventListener('input', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  const x = +e.target.value;
+  if (k === '__master') { master.gain.setTargetAtTime(x, actx.currentTime, 0.03);
+    store.set('mix:master', x); $('val-master').textContent = Math.round(x * 100) + '%'; return; }
+  state[k].vol = x; store.set('mix:' + k, state[k]);
+  $('val-' + k.replace(/\W/g, '_')).textContent = Math.round(x * 100) + '%';
+  applyGains();
+});
+$('mix').addEventListener('click', e => {
+  const k = e.target.dataset.k, a = e.target.dataset.a; if (!k || !a) return;
+  state[k][a] = !state[k][a];
+  e.target.classList.toggle('on', state[k][a]);
+  if (a === 'mute') store.set('mix:' + k, { ...state[k], solo: false });
+  applyGains();
+});
+function start() {
+  stop();
+  if (!Object.keys(bufs).length) return;
+  actx.resume();
+  t0 = actx.currentTime - v.currentTime;
+  srcs = Object.entries(bufs).map(([k, b]) => {
+    const s = actx.createBufferSource(); s.buffer = b; s.connect(gains[k]);
+    s.start(0, Math.min(v.currentTime, b.duration)); return s;
+  });
+}
+function stop() { srcs.forEach(s => { try { s.stop(); } catch (e) {} }); srcs = []; }
+v.addEventListener('play', start);
+v.addEventListener('pause', stop);
+v.addEventListener('seeked', () => !v.paused && start());
+v.addEventListener('ended', stop);
+setInterval(() => {   // re-align if the audio drifts from the picture
+  if (srcs.length && !v.paused && Math.abs(actx.currentTime - t0 - v.currentTime) > 0.08) start();
+}, 1000);
+
+// ── traces ──
+function drawRows() {
+  $('rows').innerHTML = meta.drivers.map((d, i) =>
+    `<div class="row"><div class="lab" style="color:${d.color}">${d.label}</div>
+     <canvas id="c${i}"></canvas></div>`).join('');
+  const seek = c => e => { const r = c.getBoundingClientRect();
+    v.currentTime = (e.clientX - r.left) / r.width * meta.duration; };
+  meta.drivers.forEach((d, i) => { $('c' + i).onclick = seek($('c' + i)); });
+  $('chordbar').onclick = seek($('chordbar'));
+}
+function fit(c) {
+  const W = c.clientWidth * devicePixelRatio, H = c.clientHeight * devicePixelRatio;
+  if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+  return [c.getContext('2d'), W, H];
+}
+function paint() {
+  if (!meta) return;
+  const px = W => v.currentTime / meta.duration * W;
+  meta.drivers.forEach((d, i) => {
+    const c = $('c' + i); if (!c) return;
+    const [g, W, H] = fit(c), s = d.signal, n = s.length;
+    g.clearRect(0, 0, W, H);
+    g.beginPath(); g.moveTo(0, H);
+    for (let k = 0; k < n; k++) g.lineTo(k / (n - 1) * W, H - 3 - s[k] * (H - 6));
+    g.lineTo(W, H); g.closePath(); g.fillStyle = d.color + '30'; g.fill();
+    g.beginPath();
+    for (let k = 0; k < n; k++) { const x = k / (n - 1) * W, y = H - 3 - s[k] * (H - 6);
+      k ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.strokeStyle = d.color; g.lineWidth = 1.4 * devicePixelRatio; g.stroke();
+    g.fillStyle = '#efe9df'; g.fillRect(px(W) - devicePixelRatio, 0, 2 * devicePixelRatio, H);
+  });
+  if (meta.chords) {
+    const [g, W, H] = fit($('chordbar'));
+    g.clearRect(0, 0, W, H);
+    g.font = `${12 * devicePixelRatio}px -apple-system, sans-serif`; g.textBaseline = 'middle';
+    for (const s of meta.chords) {
+      const x0 = s.t0 / meta.duration * W, x1 = (s.t1 + 0.034) / meta.duration * W;
+      const alt = s.chord === 'Valt';
+      g.fillStyle = DEG[s.degree] + (alt ? 'cc' : '55'); g.fillRect(x0, 0, x1 - x0 - 1, H);
+      if (x1 - x0 > 40 * devicePixelRatio) {
+        g.fillStyle = '#efe9df'; g.fillText(s.symbol, x0 + 5 * devicePixelRatio, H / 2);
+      }
+    }
+    g.fillStyle = '#fff'; g.fillRect(px(W) - devicePixelRatio, 0, 2 * devicePixelRatio, H);
+  }
+}
+(function loop() { paint(); requestAnimationFrame(loop); })();
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const list = order.filter(i => clip.ideas.includes(i));
+  if (/^[0-9]$/.test(e.key)) { const k = e.key === '0' ? 9 : +e.key - 1; list[k] && pick(clip, list[k]); }
+  else if (e.key === ' ') { e.preventDefault(); v.paused ? v.play() : v.pause(); }
+  else if (e.key === ']' || e.key === '[') {
+    const i = M.clips.indexOf(clip) + (e.key === ']' ? 1 : -1);
+    if (M.clips[i]) pick(M.clips[i], idea);
+  }
+});
+boot();
+</script>
+</body>
+</html>
