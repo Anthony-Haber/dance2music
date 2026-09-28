@@ -1,0 +1,36 @@
+# Publish the live tool and the methods page to GitHub Pages on every push to main.
+# Only web/live, the methods pages and KaTeX go online; the comparison page
+# (web/index.html) needs local renders and stays local.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r web/live web/vendor web/about.html web/methods.html _site/
+          rm -rf _site/live/vendor
+          printf '<!doctype html><meta charset="utf-8"><title>Dance2Music</title><meta http-equiv="refresh" content="0; url=live/"><a href="live/">Dance2Music Live</a>\n' > _site/index.html
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
