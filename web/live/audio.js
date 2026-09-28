@@ -1,0 +1,178 @@
+// Web Audio version of the offline layers (synths.py · _twofive). Controls
+// arrive at the camera's frame rate and reach the sound through
+// setTargetAtTime, which is exactly the one-pole glide of the offline code
+// (time constant τ). Pitches glide in cents via `detune` on a 440 Hz base,
+// so, as offline, every semitone step sounds equal.
+import { CHORDS } from './harmony.js';
+
+const cents = m => 100 * (m - 69);
+
+export class Engine {
+  constructor() { this.ctx = null; this.layers = {}; this.chord = null; }
+
+  async start(sinkId) {
+    const ctx = this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    if (sinkId && ctx.setSinkId) { try { await ctx.setSinkId(sinkId); } catch (e) {} }
+    const now = ctx.currentTime;
+
+    // master: dry + reverb → limiter → out
+    this.bus = ctx.createGain();
+    const dry = ctx.createGain(); dry.gain.value = 0.8;
+    const wet = ctx.createGain(); wet.gain.value = 0.2;
+    const verb = ctx.createConvolver(); verb.buffer = this.impulse(); verb.normalize = false;
+    this.master = ctx.createGain(); this.master.gain.value = 1;
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20;
+    lim.attack.value = 0.003; lim.release.value = 0.1;
+    this.bus.connect(dry).connect(this.master);
+    this.bus.connect(verb).connect(wet).connect(this.master);
+    this.master.connect(lim).connect(ctx.destination);
+    this.meter = ctx.createAnalyser(); this.meter.fftSize = 512; lim.connect(this.meter);
+
+    const layer = name => { const g = ctx.createGain(); g.connect(this.bus);
+                            this.layers[name] = g; return g; };
+    for (const k of ['pad', 'bass', 'plucks', 'wind', 'wind tuned']) layer(k);
+
+    // shared noise source for both winds
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    const d = nb.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = gauss();
+    const noise = ctx.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start();
+
+    // wind: noise → (0.6 band-pass + 0.4 low-pass), cutoff and level from Weight
+    this.wbp = ctx.createBiquadFilter(); this.wbp.type = 'bandpass'; this.wbp.Q.value = 1.2;
+    this.wlp = ctx.createBiquadFilter(); this.wlp.type = 'lowpass'; this.wlp.Q.value = 1.6;
+    const wb = ctx.createGain(); wb.gain.value = 0.6; const wl = ctx.createGain(); wl.gain.value = 0.4;
+    this.wamp = ctx.createGain(); this.wamp.gain.value = 0;
+    this.wpan = ctx.createStereoPanner();
+    noise.connect(this.wbp).connect(wb).connect(this.wamp);
+    noise.connect(this.wlp).connect(wl).connect(this.wamp);
+    this.wamp.connect(this.wpan).connect(this.layers['wind']);
+
+    // wind tuned: eight resonators on the chord tones, an octave and two up
+    this.tamp = ctx.createGain(); this.tamp.gain.value = 0;
+    this.tpan = ctx.createStereoPanner();
+    const makeup = ctx.createGain(); makeup.gain.value = 4;
+    this.res = [];
+    for (let v = 0; v < 4; v++) for (const o of [12, 24]) {
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 60; f.frequency.value = 440;
+      noise.connect(f).connect(makeup); this.res.push({ f, v, o });
+    }
+    makeup.connect(this.tamp).connect(this.tpan).connect(this.layers['wind tuned']);
+
+    // pad: four band-limited saws, detuned by slow LFOs when paths wander
+    this.pamp = ctx.createGain(); this.pamp.gain.value = 0;
+    const plp = ctx.createBiquadFilter(); plp.type = 'lowpass'; plp.frequency.value = 1600; plp.Q.value = -3;
+    this.pamp.connect(plp).connect(this.layers['pad']);
+    this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2]].map(([r, sign, pan]) => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 440;
+      const lfo = ctx.createOscillator(); lfo.frequency.value = r;
+      const depth = ctx.createGain(); depth.gain.value = 0;
+      lfo.connect(depth).connect(o.detune);
+      const g = ctx.createGain(); g.gain.value = 0.2;
+      const p = ctx.createStereoPanner(); p.pan.value = pan;
+      o.connect(g).connect(p).connect(this.pamp);
+      o.start(now); lfo.start(now);
+      return { o, depth, sign };
+    });
+
+    // bass: FM on the root. Adding Δ to `frequency` is scaled by 2^(detune/1200)
+    // like the base, so a deviation of I·440 on the 440 base is I·f at any pitch.
+    this.bc = ctx.createOscillator(); this.bm = ctx.createOscillator();
+    this.bc.frequency.value = 440; this.bm.frequency.value = 440;
+    this.bdev = ctx.createGain(); this.bdev.gain.value = 0;
+    this.bm.connect(this.bdev).connect(this.bc.frequency);
+    this.bamp = ctx.createGain(); this.bamp.gain.value = 0;
+    this.bc.connect(this.bamp).connect(this.layers['bass']);
+    this.bc.start(now); this.bm.start(now);
+
+    this.setChord('I', true);
+    return ctx;
+  }
+
+  impulse() {   // same recipe as synths.reverb: noise · e^{-t/0.35}, 1.6 s, smoothed, unit energy
+    const ctx = this.ctx, n = Math.floor(1.6 * ctx.sampleRate);
+    const b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c); let e = 0;
+      for (let i = 0; i < n; i++) d[i] = gauss() * Math.exp(-i / (0.35 * ctx.sampleRate));
+      for (let i = n - 1; i >= 5; i--) d[i] = (d[i] + d[i - 1] + d[i - 2] + d[i - 3] + d[i - 4] + d[i - 5]) / 6;
+      for (let i = 0; i < n; i++) e += d[i] * d[i];
+      const g = 1 / Math.sqrt(e); for (let i = 0; i < n; i++) d[i] *= g;
+    }
+    return b;
+  }
+
+  setChord(key, instant = false) {
+    if (!this.ctx || key === this.chordKey) return;
+    this.chordKey = key; this.chord = CHORDS[key];
+    const t = this.ctx.currentTime, set = (param, v, tau) =>
+      instant ? param.setValueAtTime(v, t) : param.setTargetAtTime(v, t, tau);
+    this.voices.forEach((v, i) => set(v.o.detune, cents(this.chord.voices[i]), 0.25));
+    this.res.forEach(r => set(r.f.detune, cents(this.chord.voices[r.v] + r.o), 0.25));
+    set(this.bc.detune, cents(this.chord.bass), 0.12);
+    set(this.bm.detune, cents(this.chord.bass), 0.12);
+  }
+
+  // f: live features, mirror: whether the picture (and so pan) is mirrored
+  update(f, mirror) {
+    if (!this.ctx || !f) return;
+    const t = this.ctx.currentTime, W = f.weight, h = Math.min(1, 1.6 * (f.nspeed[1] + f.nspeed[2]) / 2);
+    const sx = x => (mirror ? 1 - x : x) * 2 - 1;          // screen x → pan −1…1
+    const w13 = Math.min(1, 1.3 * W);
+    this.wbp.frequency.setTargetAtTime(180 * 2 ** (5.2 * W), t, 0.05);
+    this.wlp.frequency.setTargetAtTime(180 * 2 ** (5.2 * W), t, 0.05);
+    this.wamp.gain.setTargetAtTime(0.5 * w13 ** 0.9, t, 0.05);
+    this.tamp.gain.setTargetAtTime(0.5 * w13 ** 0.9, t, 0.05);
+    const pan = (mirror ? -1 : 1) * (2 * f.travel - 1);   // hips crossing the floor, as seen
+    this.wpan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.25);
+    this.tpan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.25);
+    const wander = (1 - f.space) ** 1.3;
+    this.voices.forEach(v => v.depth.gain.setTargetAtTime(v.sign * 30 * wander, t, 0.15));
+    this.pamp.gain.setTargetAtTime(0.15 + 0.85 * h ** 1.2, t, 0.06);
+    const I = 0.3 + 4 * f.flow ** 1.2;
+    this.bdev.gain.setTargetAtTime(I * 440, t, 0.06);
+    this.bamp.gain.setTargetAtTime(0.2 * (0.2 + 0.8 * w13), t, 0.06);
+    for (const ev of f.events) this.pluck(ev, sx(ev.x));
+  }
+
+  idle() {   // nobody in frame: everything that follows movement falls silent
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const g of [this.wamp, this.tamp, this.bamp]) g.gain.setTargetAtTime(0, t, 0.3);
+    this.pamp.gain.setTargetAtTime(0, t, 0.6);
+  }
+
+  pluck(ev, pan) {
+    const c = this.chord, midi = { lfoot: c.bass + 12, rfoot: c.voices[1],
+                                   lhand: c.voices[2] + 12, rhand: c.voices[3] + 12 }[ev.part];
+    const ctx = this.ctx, sr = ctx.sampleRate, n = Math.floor(2.5 * sr);
+    const buf = ctx.createBuffer(1, n, sr), y = buf.getChannelData(0);
+    const hz = 440 * 2 ** ((midi - 69) / 12), N = Math.max(2, Math.floor(sr / hz));
+    const z = new Float32Array(N);
+    for (let i = 0; i < N; i++) z[i] = Math.random() * 2 - 1;
+    const passes = Math.floor(3 * (1 - (0.35 + 0.6 * ev.strength))) + 1;
+    for (let p = 0; p < passes; p++) for (let i = 0; i < N; i++) z[i] = 0.5 * (z[i] + z[(i + N - 1) % N]);
+    for (let i = 0, j = 0; i < n; i++) {
+      const a = z[j], b = z[(j + 1) % N]; y[i] = a; z[j] = 0.996 * 0.5 * (a + b); j = (j + 1) % N;
+    }
+    const s = ctx.createBufferSource(); s.buffer = buf;
+    const g = ctx.createGain(); g.gain.value = 0.55 * (0.25 + 0.75 * ev.strength);
+    const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
+    s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
+  }
+
+  level(name, v) { if (this.layers[name]) this.layers[name].gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
+  masterLevel(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
+  peak() {
+    if (!this.meter) return 0;
+    const a = new Float32Array(this.meter.fftSize); this.meter.getFloatTimeDomainData(a);
+    let m = 0; for (const x of a) m = Math.max(m, Math.abs(x)); return m;
+  }
+  async stop() { if (this.ctx) await this.ctx.close(); this.ctx = null; this.chordKey = null; }
+}
+
+function gauss() {   // Box–Muller
+  let u = 0; while (!u) u = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+}

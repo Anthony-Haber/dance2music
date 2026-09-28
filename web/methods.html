@@ -8,6 +8,7 @@ the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source
   <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
   <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
   <a href="#m-harm">7 Chords from pose</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
+  <a href="#m-live">10 Live</a>
 </nav>
 
 <h2 id="m-pose">1. Pose <span class="src">dance_pose.py · track</span></h2>
@@ -222,6 +223,58 @@ $f_c = \operatorname{g}_{0.08}(200\cdot2^{4.5\,\widehat{\text{Shape}}})$ (a bigg
 <h3 id="d-siren">Hand sirens</h3>
 <p>One voice per wrist: pitch $\operatorname{g}_{0.06}(220\cdot 2^{2.6\hat s})$ Hz (220 Hz to about 1.33 kHz), level
 $0.3\,\operatorname{g}_{0.04}(\operatorname{clip}(1.4\hat s,0,1)^{1.4})$. The waveform is a soft triangle, $\sin\varphi - \tfrac19\sin3\varphi + \tfrac1{25}\sin5\varphi$.</p>
+
+
+<h2 id="m-live">10. Live (camera) <span class="src">web/live/features.js · harmony.js · audio.js</span></h2>
+<p>The live tool computes the same quantities in the browser, one camera frame at a time. MediaPipe Pose Landmarker
+(tasks-vision 1.0.1, VIDEO mode, GPU delegate with CPU fallback, one person, confidences 0.5) runs on every new frame.
+Everything above looks both ways in time (zero-phase filters, centred windows). Live, only the past exists,
+so each step has a causal counterpart. Time steps $\Delta t$ are measured, not assumed, because a camera does not keep an exact rate.</p>
+<table class="t">
+<tr><th>offline</th><th>live</th></tr>
+<tr><td>visibility gate, Hampel</td><td>visibility gate; a jump of more than $1.2\,\ell$ in one frame is ignored (up to 3 frames in a row)</td></tr>
+<tr><td>gap fill, confidence</td><td>the last position is held; confidence $c \to 0$ with $\tau = 0.1$ s once a joint has been missing for 0.3 s</td></tr>
+<tr><td>Butterworth 5 Hz, zero-phase</td><td><b>One Euro filter</b> (Casiez et al., CHI 2012) on each pixel coordinate</td></tr>
+<tr><td>centred Savitzky–Golay</td><td>trailing Savitzky–Golay: least squares on the last window, differentiated at the newest sample</td></tr>
+<tr><td>centred windows $\mathcal B_n$, $\mathcal M_n$</td><td>trailing windows, shorter (below) to keep the lag down</td></tr>
+<tr><td>percentile floor over the clip</td><td>10th percentile over the last 20 s, refreshed every 0.5 s</td></tr>
+<tr><td>torso median 5 s, clipped vs clip median</td><td>median of the last 5 s, clipped to $[0.6, 1.4]\times$ the median of the last 60 s</td></tr>
+<tr><td>pooled $P_2, P_{98}$</td><td>the same numbers, fixed (from the three clips), times a sensitivity slider</td></tr>
+</table>
+<p><b>One Euro.</b> For a coordinate $x$, with $\alpha(f_c) = 1 - e^{-2\pi f_c \Delta t}$:
+$$\dot{\hat x} \leftarrow \dot{\hat x} + \alpha(f_d)\Big(\frac{x-\hat x}{\Delta t} - \dot{\hat x}\Big),\qquad
+f_c = f_{\min} + \beta\,|\dot{\hat x}|,\qquad \hat x \leftarrow \hat x + \alpha(f_c)(x - \hat x)$$
+with $f_{\min} = 1.2$ Hz (the Smoothing slider sets $f_{\min} = 4.3 - s$), $\beta = 0.004$ per px/s and $f_d = 1$ Hz.
+A slow joint gets a low cutoff (jitter removed). A fast joint gets a high one (little lag).</p>
+<p><b>Trailing Savitzky–Golay.</b> Over the last $w$ seconds of filtered positions, with $\tau_i = t_i - t$, fit
+$\hat x(\tau) = \sum_{q\le d} c_q \tau^q$ by least squares and take $x^{(k)}(t) = k!\,c_k$:
+velocity $(w,d) = (0.23\,\text{s}, 2)$, acceleration $(0.3\,\text{s}, 2)$, jerk $(0.5\,\text{s}, 3)$.</p>
+<p><b>Windows.</b> Weight: $\sqrt{\max_{0.25\,\text{s}} E}$ then a one-pole glide with $\tau = 0.06$ s. Time and Flow: trailing means over 0.25 s. Space: the last 0.7 s,
+then $\tau = 0.08$ s. Sensitivity sliders multiply the normalised value (Space is scaled about its midpoint, 0.5).</p>
+<p><b>Sudden events.</b> A Schmitt trigger on each limb's $\alpha_e$. The trigger arms when $\alpha_e &lt; 0.5\theta$, tracks the peak once $\alpha_e &gt; \theta$, and fires
+on the first frame that $\alpha_e$ falls, at least 0.23 s after that limb's last event. $\theta = 18.4$ torsos/s², divided by the Suddenness slider. Strength is as in §6.</p>
+<p><b>Chords</b> follow the rules of §7, with the dwell (0.35 s) and the altered-V minimum (0.5 s) measured in seconds.</p>
+<p><b>Sound</b> uses Web Audio nodes with the parameters of §9 (ii–V–I demo):</p>
+<ul>
+<li>Every control reaches its parameter through <code>setTargetAtTime(value, now, τ)</code>. That is the one-pole glide of §8 with the same $\tau$.</li>
+<li>Pitches are set on a 440 Hz base through <code>detune</code> $=100(m-69)$ cents, so they glide in semitones as offline.</li>
+<li>Saws are the browser's band-limited <code>sawtooth</code>. Filters are RBJ biquads rather than the TPT state-variable filter; a low-pass $Q$ is given in dB (−3 dB ≈ 0.707).</li>
+<li>FM: the modulator drives the carrier's <code>frequency</code> with deviation $I\cdot440$. That deviation is scaled by $2^{\text{detune}/1200}$ like the base, so it is $I f$ at any pitch, which is equivalent to the phase modulation $\sin(\varphi + I\sin\varphi)$.</li>
+<li>Tuned wind: 8 biquad band-passes, $Q=60$, with a fixed ×4 make-up gain in place of offline RMS matching.</li>
+<li>Plucks: Karplus–Strong computed in JavaScript per event, as in §8.</li>
+<li>Reverb: the same impulse recipe, dry 0.8 / wet 0.2. A limiter (−6 dB, 20:1) protects the output.</li>
+<li>When nobody is in frame, all levels glide to 0 (pad $\tau=0.6$ s, the rest 0.3 s).</li>
+</ul>
+<p><b>Validation.</b> The live feature code was run on the same landmark files as the offline pipeline and compared:</p>
+<ul>
+<li>Mean levels agree (for example, Weight 0.20 vs 0.25).</li>
+<li>Allowing for lag, the correlations are: Weight $r\approx 0.8$ at 6–8 frames, Time 0.77–0.89 at 11–12 frames, Flow 0.72–0.84 and Space ≈ 0.7 at about 15 frames, hand speed 0.74–0.79 at 2 frames.</li>
+<li>Sudden events: 285 live vs 292 offline on the longest clip. 83% of them are within 0.4 s of an offline event, and they fire a median of 67 ms after the offline peak.</li>
+</ul>
+<p>Part of the measured lag is the offline centred windows responding <em>early</em>. The lag relative to the movement itself is smaller.
+Flow and Space are the slowest, but they only colour the bass and the pad's tuning.</p>
+<p class="note">Total latency on stage is roughly camera (30–50 ms) + pose (15–30 ms on a laptop GPU) + feature lag + audio output
+(the page shows its measured fps, pose time and audio latency).</p>
 
 <h2>Overlay</h2>
 <p>The videos are drawn from the same arrays. The skeleton is $\mathbf p$ (filtered). Arrows are $0.12\,\text{s}\times\mathbf v$ in pixels, capped at 160 px.

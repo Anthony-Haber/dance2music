@@ -14,6 +14,8 @@ Code only in git: clips go in `videos/`, everything generated lands in
     python harmony.py                                # how often each chord rule fires
     python synths.py                                 # render every demo for every clip
     python synths.py --serve                         # the page, http://127.0.0.1:5091/
+    python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
+    python live.py --offline                         # same, with MediaPipe downloaded for a venue without internet
 
 | file | what |
 |---|---|
@@ -25,6 +27,9 @@ Code only in git: clips go in `videos/`, everything generated lands in
 | `harmony.py` | pose → ii–V–I with voice-led voicings |
 | `synths.py` | the demos: synthesis, overlay videos, stems, manifest |
 | `web/index.html` | the comparison page (mixer, chord timeline, traces) |
+| `web/methods.html`, `web/about.html` | the math of everything, as a drawer and as a standalone page |
+| `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
+| `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
 
 ---
 

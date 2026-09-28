@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dance2Music Live</title>
+<style>
+  :root { --bg: #121110; --panel: #1b1a18; --line: #2c2a27; --ink: #efe9df; --dim: #9a9086;
+          --accent: #f0a050; --I: #78dc78; --ii: #5ab4ff; --V: #ffaa50; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); display: grid;
+         grid-template-columns: 1fr 340px; font: 14px/1.45 -apple-system, "SF Pro Text", sans-serif; }
+  body.perf { grid-template-columns: 1fr; }
+  body.perf aside { display: none; }
+  #stage { position: relative; background: #000; display: flex; align-items: center;
+           justify-content: center; overflow: hidden; min-height: 60vh; }
+  #stage video, #stage canvas { position: absolute; max-width: 100%; max-height: 100%; }
+  #stage video.mirror { transform: scaleX(-1); }
+  #badge { position: absolute; top: 18px; right: 22px; text-align: right; pointer-events: none; }
+  #badge b { display: block; font-size: 44px; font-weight: 600; line-height: 1; }
+  #badge span { color: var(--dim); font-size: 18px; }
+  #hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+          color: var(--dim); text-align: center; padding: 30px; }
+  aside { border-left: 1px solid var(--line); overflow-y: auto; padding: 14px 16px 30px; height: 100vh; }
+  h1 { font-size: 16px; margin: 0 0 2px; }
+  .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 12px; }
+  h2 { font-size: 11.5px; color: var(--dim); font-weight: 500; margin: 18px 0 8px;
+       text-transform: uppercase; letter-spacing: .07em; }
+  label { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center;
+          margin-bottom: 7px; font-size: 13px; }
+  select, input[type=file] { width: 100%; background: var(--panel); color: var(--ink);
+          border: 1px solid var(--line); border-radius: 6px; padding: 5px; font: inherit; font-size: 13px; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+           border-radius: 6px; padding: 7px 12px; cursor: pointer; font: inherit; }
+  button.go { background: var(--accent); color: #1b1a18; border: 0; font-weight: 600; width: 100%; }
+  button.on { border-color: var(--accent); }
+  .mix { display: grid; grid-template-columns: 80px 28px 1fr 38px; gap: 6px 8px; align-items: center; }
+  .mix button { padding: 2px 0; font-size: 12px; color: var(--dim); }
+  .mix button.on { color: var(--ink); }
+  .val { color: var(--dim); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .meter { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: center;
+           margin-bottom: 5px; font-size: 12.5px; }
+  .bar { height: 8px; background: var(--panel); border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 4px; }
+  .status { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 8px; }
+  .note { color: var(--dim); font-size: 12.5px; }
+  .rules { font-size: 12.5px; line-height: 1.6; }
+  .rules b { display: inline-block; width: 24px; }
+  .rules .now { background: #2c2a27; border-radius: 4px; }
+  a { color: var(--accent); }
+  @media (max-width: 800px) {
+    body { grid-template-columns: 1fr; }
+    aside { height: auto; border-left: 0; border-top: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="v" playsinline muted></video>
+  <canvas id="c"></canvas>
+  <div id="badge" hidden><b id="sym">Cmaj9</b><span id="deg">I</span></div>
+  <div id="hint">Pick a camera (or a video file) and press Start.<br>
+    Sound starts with the picture; stand so your whole body is in frame.</div>
+</div>
+<aside>
+  <h1>Dance2Music Live</h1>
+  <div class="sub">Music Intelligence Lab · movement → sound in the browser.
+    <a href="../about.html#m-live" target="_blank">How it works (the math)</a></div>
+
+  <h2>Setup</h2>
+  <label>Source <select id="source"><option value="camera">Camera</option>
+    <option value="file">Video file</option></select></label>
+  <label id="camRow">Camera <select id="cam"><option value="">(allow camera first)</option></select></label>
+  <label id="fileRow" hidden>File <input type="file" id="file" accept="video/*"></label>
+  <label>Resolution <select id="res"><option value="640x480">640 × 480</option>
+    <option value="1280x720" selected>1280 × 720</option><option value="1920x1080">1920 × 1080</option></select></label>
+  <label>Model <select id="model"><option value="lite">lite (fastest)</option>
+    <option value="full" selected>full</option><option value="heavy">heavy (most accurate)</option></select></label>
+  <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
+    <option value="0">as the camera sees</option></select></label>
+  <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
+  <button class="go" id="go">Start</button>
+  <div class="status" id="status">idle</div>
+
+  <h2>Harmony</h2>
+  <label>Mode <select id="mode"><option value="twofive">ii–V–I from pose</option>
+    <option value="twofive_alt">ii–V–I, strong movement alters V</option>
+    <option value="fixed">one chord (A minor add9)</option></select></label>
+  <div class="rules" id="rules">
+    <div data-r="V"><b style="color:var(--V)">V</b>both hands below mid-thigh</div>
+    <div data-r="ii"><b style="color:var(--ii)">ii</b>both hands past one side of both feet</div>
+    <div data-r="I"><b style="color:var(--I)">I</b>each hand and foot on its own side</div>
+  </div>
+
+  <h2>Mix</h2>
+  <div class="mix" id="mix"></div>
+
+  <h2>Movement</h2>
+  <div id="meters"></div>
+
+  <h2>Sensitivity</h2>
+  <div class="mix" id="sens"></div>
+  <p class="note">Keys: space start/stop · f performance view · 1 2 3 harmony mode · m mute.
+    Everything runs on this computer; no video leaves the browser.</p>
+</aside>
+<script type="module" src="live.js"></script>
+</body>
+</html>

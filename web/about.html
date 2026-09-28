@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dance2Music Methods</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<style>
+  :root { --bg: #faf8f4; --ink: #1d1b18; --dim: #5d554c; --line: #e3ddd3; --link: #9a5a10; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #161514; --ink: #efe9df; --dim: #a39a90; --line: #2c2a27; --link: #f0a050; } }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.6 -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  main { max-width: 780px; margin: 0 auto; padding: 28px 16px 80px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 34px 0 8px; border-top: 1px solid var(--line); padding-top: 18px; }
+  h3 { font-size: 15.5px; margin: 20px 0 4px; }
+  .src { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); font-weight: 400; margin-left: 8px; }
+  .lead, .note { color: var(--dim); }
+  .warn { background: rgba(224,160,64,.14); border-left: 3px solid #e0a040; padding: 6px 10px; }
+  a { color: var(--link); }
+  .toc a { display: inline-block; margin: 0 12px 4px 0; font-size: 13.5px; }
+  table.t { border-collapse: collapse; margin: 8px 0; font-size: 14px; }
+  table.t td, table.t th { border-bottom: 1px solid var(--line); padding: 4px 14px 4px 0; text-align: left; }
+  code { font-size: 13px; background: rgba(128,128,128,.14); padding: 1px 4px; border-radius: 3px; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+  .here { background: rgba(224,160,64,.14); }
+</style>
+</head>
+<body>
+<main id="m">loading…</main>
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+(async () => {
+  const m = document.getElementById('m');
+  m.innerHTML = await (await fetch('methods.html')).text();
+  renderMathInElement(m, { delimiters: [{ left: '$$', right: '$$', display: true },
+    { left: '$', right: '$', display: false }], throwOnError: false });
+  const el = location.hash && document.getElementById(location.hash.slice(1));
+  if (el) { el.classList.add('here'); el.scrollIntoView(); }
+})();
+</script>
+</body>
+</html>

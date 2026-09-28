@@ -14,3 +14,6 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
+
+# live: optional offline MediaPipe copy (python live.py --offline)
+web/live/vendor/
