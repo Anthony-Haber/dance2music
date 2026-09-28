@@ -81,6 +81,7 @@ async function openFile() {
 }
 
 async function start() {
+  engine.unlock();                     // first, while we are still inside the tap (iOS)
   try {
     $('go').disabled = true;
     await loadLandmarker();
@@ -89,6 +90,7 @@ async function start() {
     feats.reset(); follower.reset();
     await engine.start($('out').value || undefined);
     applyMix(); applySens();
+    watchAudio();
     running = true; $('hint').hidden = true; $('badge').hidden = false;
     $('go').textContent = 'Stop'; $('go').disabled = false;
     loop();
@@ -102,8 +104,19 @@ async function stop() {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
   await engine.stop();
-  $('go').textContent = 'Start'; $('hint').hidden = false; status('stopped');
+  $('go').textContent = 'Start'; $('hint').hidden = false; $('tap').hidden = true; status('stopped');
 }
+
+// iOS can leave the context suspended, or interrupt it when the camera
+// starts or a call comes in: then one more tap brings the sound back.
+function watchAudio() {
+  const ctx = engine.ctx; if (!ctx) return;
+  const check = () => { $('tap').hidden = !running || ctx.state === 'running'; };
+  ctx.onstatechange = check; setTimeout(check, 800);
+}
+$('tap').onclick = () => { engine.unlock(); setTimeout(() => { if (engine.ctx) $('tap').hidden = engine.ctx.state === 'running'; }, 300); };
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && running && engine.ctx && engine.ctx.state !== 'running') $('tap').hidden = false; });
 
 // ── the loop: one pose per new video frame ────────────────────────────
 function loop() {

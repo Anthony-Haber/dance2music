@@ -10,8 +10,27 @@ const cents = m => 100 * (m - 69);
 export class Engine {
   constructor() { this.ctx = null; this.layers = {}; this.chord = null; }
 
+  // Must run synchronously inside the user's tap: iOS only lets an
+  // AudioContext make sound if it was created or resumed during a gesture,
+  // and mutes Web Audio with the ring/silent switch unless the page says it
+  // is playing media.
+  unlock() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    if (!this.keepAlive) {              // older iOS: a playing <audio> element does the same
+      const el = this.keepAlive = document.createElement('audio');
+      el.src = URL.createObjectURL(silentWav()); el.loop = true;
+      el.setAttribute('playsinline', ''); el.volume = 0.01;
+    }
+    this.keepAlive.play().catch(() => {});
+    if (!this.ctx) this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    this.ctx.resume().catch(() => {});
+    const b = this.ctx.createBuffer(1, 1, this.ctx.sampleRate), s = this.ctx.createBufferSource();
+    s.buffer = b; s.connect(this.ctx.destination); s.start();
+    return this.ctx;
+  }
+
   async start(sinkId) {
-    const ctx = this.ctx = new AudioContext({ latencyHint: 'interactive' });
+    const ctx = this.ctx || this.unlock();
     if (sinkId && ctx.setSinkId) { try { await ctx.setSinkId(sinkId); } catch (e) {} }
     const now = ctx.currentTime;
 
@@ -169,10 +188,25 @@ export class Engine {
     const a = new Float32Array(this.meter.fftSize); this.meter.getFloatTimeDomainData(a);
     let m = 0; for (const x of a) m = Math.max(m, Math.abs(x)); return m;
   }
-  async stop() { if (this.ctx) await this.ctx.close(); this.ctx = null; this.chordKey = null; }
+  async stop() {
+    if (this.ctx) await this.ctx.close();
+    this.ctx = null; this.chordKey = null; this.layers = {};
+    if (this.keepAlive) this.keepAlive.pause();
+  }
 }
 
 function gauss() {   // Box–Muller
   let u = 0; while (!u) u = Math.random();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+}
+
+function silentWav(seconds = 1, sr = 8000) {   // a tiny silent 8-bit WAV
+  const n = seconds * sr, b = new DataView(new ArrayBuffer(44 + n));
+  const w = (o, str) => [...str].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); b.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); b.setUint32(16, 16, true);
+  b.setUint16(20, 1, true); b.setUint16(22, 1, true); b.setUint32(24, sr, true);
+  b.setUint32(28, sr, true); b.setUint16(32, 1, true); b.setUint16(34, 8, true);
+  w(36, 'data'); b.setUint32(40, n, true);
+  for (let i = 0; i < n; i++) b.setUint8(44 + i, 128);
+  return new Blob([b], { type: 'audio/wav' });
 }
