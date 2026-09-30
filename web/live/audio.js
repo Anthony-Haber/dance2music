@@ -133,7 +133,7 @@ export class Engine {
   setChord(chord, instant = false) {
     if (typeof chord === 'string') chord = { key: chord, ...CHORDS[chord] };
     const sig = chord.key + chord.voices.join();
-    if (!this.ctx || sig === this.chordKey) return;
+    if (!this.ctx || !this.voices || sig === this.chordKey) return;
     this.chordKey = sig; this.chord = chord;
     const t = this.ctx.currentTime, set = (param, v, tau) =>
       instant ? param.setValueAtTime(v, t) : param.setTargetAtTime(v, t, tau);
@@ -169,7 +169,31 @@ export class Engine {
       if (drums.hits) this.hit({ lfoot: 'kick', rfoot: 'kick', lhand: 'snare', rhand: 'hat' }[ev.part],
                                this.ctx.currentTime, ev.strength, sx(ev.x));
     }
-    if (drums.groove) this.groove(f, drums);
+    if (drums.groove && drums.enabled !== false) this.groove(f, drums);
+    if (drums.bounce) this.bounceGroove(drums.bounce, drums);
+  }
+
+  // The hip-locked groove. bo.nextBeat is the next bottom of her bounce, on
+  // the camera's capture clock (performance.now, in s). getOutputTimestamp maps
+  // that clock to the audio clock *at the speaker*, so a hit scheduled at the
+  // mapped time is heard when her hip is at the bottom (plus the sync offset).
+  bounceGroove(bo, cfg) {
+    const ctx = this.ctx, now = ctx.currentTime, T = bo.period;
+    const ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null;
+    const toCtx = ms => (ts && ts.performanceTime ? ts.contextTime + (ms - ts.performanceTime) / 1000
+                                                  : now + (ms - performance.now()) / 1000);
+    const base = bo.nextBeat * 1000 + (cfg.offsetMs || 0) + (cfg.accent === 'up' ? 500 * T : 0);
+    this.scheduled = (this.scheduled || []).filter(b => b > performance.now() - 2000);
+    for (const ms of [base, base + 1000 * T]) {
+      const at = toCtx(ms);
+      if (at < now + 0.005 || at > now + 0.25) continue;               // too late, or not yet
+      if (this.lastBeatAt !== undefined && at - this.lastBeatAt < 0.6 * T) continue;   // already have it
+      this.lastBeatAt = at; this.beatN = (this.beatN || 0) + 1;
+      this.hit('kick', at, 0.95);
+      if (this.beatN % 2 === 0) this.hit('snare', at, 0.8);
+      this.hit('hat', at + T / 2, 0.55, 0.3);
+      this.scheduled.push(ms - (cfg.offsetMs || 0));   // for the ring drawn at her hip
+    }
   }
 
   // ── percussion ─────────────────────────────────────────────────────

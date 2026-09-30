@@ -16,6 +16,9 @@ export const SOURCES = [
   ['energy', 'energy, integrated'], ['height', 'hands height'], ['spread', 'hands spread'],
   ['lateral', 'hands left ↔ right'], ['travel', 'hips travel'],
   ['rhythm', 'rhythm regularity'], ['tempoN', 'tempo'],
+  ['bounce', 'hip bounce (probability)'], ['bounceTempoN', 'hip bounce tempo'],
+  ['openL', 'left hand openness'], ['openR', 'right hand openness'], ['openMax', 'most open hand'],
+  ['fingers', 'fingers raised (both hands)'],
 ];
 
 // att / rel: rise and fall time constants (s) of the glide into the parameter
@@ -31,7 +34,7 @@ export const DESTS = {
   'tuned.level':  { label: 'tuned wind level', lo: 0, hi: 1, min: 0, max: 1, src: 'weight', gain: 1.3, exp: 0.9, att: 0.05, rel: 0.05 },
   'plucks.level': { label: 'plucks level', lo: 1, hi: 1, min: 0, max: 1.5, src: 'none', att: 0.05, rel: 0.05 },
   'reverb':       { label: 'reverb (wet)', lo: 0.2, hi: 0.2, min: 0, max: 0.8, src: 'none', att: 0.3, rel: 0.3 },
-  'drums.level':  { label: 'drums level', lo: 0, hi: 1, min: 0, max: 1.5, src: 'rhythm', gain: 1.4, att: 0.3, rel: 1.0 },
+  'drums.level':  { label: 'drums level', lo: 0, hi: 1, min: 0, max: 1.5, src: 'bounce', gain: 1.2, att: 0.3, rel: 1.0 },
 };
 
 const BASE = { gain: 1, exp: 1, inv: false, log: false, unit: '' };
@@ -58,6 +61,11 @@ export const PRESETS = {
     'pad.detune': { src: 'spread', inv: false, lo: 0, hi: 45, exp: 1.5 },
     'wind.pan': { src: 'lateral' },
     'bass.harsh': { src: 'time', gain: 1.3 },
+  },
+  'Hands': {
+    'pad.bright': { src: 'openMax', lo: 500, hi: 5000 },
+    'wind.level': { src: 'openMax', gain: 1.2 },
+    'bass.harsh': { src: 'fingers', lo: 0.3, hi: 6, gain: 1 },
   },
   'Rhythm': {
     'drums.level': { src: 'rhythm', gain: 1.6 },
