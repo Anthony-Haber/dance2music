@@ -105,6 +105,7 @@
 
   <h2>Harmony</h2>
   <label>Mode <select id="mode"><option value="six">six chords from the hands</option>
+    <option value="fingers">six chords from fingers (needs hands)</option>
     <option value="twofive">ii–V–I from pose</option>
     <option value="twofive_alt">ii–V–I, strong movement alters V</option>
     <option value="fixed">one chord (A minor add9)</option></select></label>
@@ -115,10 +116,26 @@
 
   <h2>Percussion</h2>
   <label>Drums <select id="drumMode"><option value="off">off</option>
+    <option value="bounce">groove locked to your hip bounce</option>
     <option value="hits">hits: feet kick, left hand snare, right hand hat</option>
-    <option value="groove">groove: a beat at your tempo, as regular as you are</option>
-    <option value="hits+groove">both</option></select></label>
+    <option value="hits+bounce">hits + hip groove</option>
+    <option value="body">groove from whole-body rhythm (older)</option></select></label>
+  <label>Beat on <select id="accent"><option value="down">bottom of the bounce</option>
+    <option value="up">top of the bounce</option></select></label>
+  <label>Sync offset <span class="rng"><input type="range" id="syncOff" min="-200" max="200" step="5">
+    <span class="val" id="syncV"></span></span></label>
+  <div class="status" id="bounceTxt">hips not seen</div>
   <div class="status" id="tempo">no steady pulse</div>
+  <p class="note">Bounce steadily from the knees: the groove starts once the hips have been clearly periodic
+    for about a second, and follows your tempo. A ring at the hips marks each beat; if the drums feel
+    early or late against your body, move Sync offset.</p>
+
+  <h2>Hands</h2>
+  <label>Tracking <select id="handMode"><option value="off">off</option>
+    <option value="far">far: crop around each wrist (dancer in full view)</option>
+    <option value="near">near: whole frame (close to the camera)</option></select></label>
+  <div class="status" id="handTxt" style="white-space:pre-line">hand tracking off</div>
+  <div class="dgrid" id="gestures"></div>
 
   <h2>Movement</h2>
   <div id="meters"></div>
@@ -137,7 +154,7 @@
   <div class="mix" id="sens"></div>
   <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
     “Tap for sound”. The ring/silent switch should not matter on iOS 16.4 and later.</p>
-  <p class="note">Keys: space start/stop · f performance view · 1–4 harmony mode · m mute.
+  <p class="note">Keys: space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>
 </aside>
 <script type="module" src="live.js"></script>

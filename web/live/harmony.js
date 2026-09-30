@@ -61,6 +61,13 @@ export function readRegions(f) {
   return { rule, guides: { six: true, c, hb, L } };
 }
 
+// fingers raised on both hands together: 1 → I … 5 → V, 6+ → vi; 0 (fists) holds
+const BY_COUNT = ['', 'I', 'ii', 'iii', 'IV', 'V', 'vi'];
+export function readFingers(hands) {
+  if (!hands || !hands.anySeen()) return { rule: '', guides: null };
+  return { rule: BY_COUNT[Math.min(6, hands.total())], guides: null };
+}
+
 // which rule the pose satisfies now: 'V', 'ii', 'I' or ''
 export function readPose(f) {
   const p = f.pos, ok = [J.L_WR, J.R_WR, J.L_AN, J.R_AN, J.L_HIP, J.R_HIP].every(j => p(j) && f.conf(j) > 0.5);
@@ -86,20 +93,21 @@ export class ChordFollower {
   constructor(mode = 'six') { this.mode = mode; this.reset(); }
   reset() { this.cur = 'I'; this.run = ''; this.since = 0; this.hot = false; this.hotSince = -1e9;
             this.shown = this.mode === 'fixed' ? 'Am' : 'I'; this.shownSince = 0;
-            this.voicing = this.mode === 'six' ? [52, 55, 59, 62] : null; }
+            this.voicing = [52, 55, 59, 62]; }
   // the chord sounding now, as {key, symbol, degree, bass, voices}
   chord() {
-    if (this.mode === 'six') return { key: this.shown, ...SIX[this.shown], voices: this.voicing };
+    if (this.mode === 'six' || this.mode === 'fingers') return { key: this.shown, ...SIX[this.shown], voices: this.voicing };
     return { key: this.shown, ...CHORDS[this.shown] };
   }
   // returns the chord key sounding now
-  update(f, t) {
-    const six = this.mode === 'six';
-    const r = six ? readRegions(f) : readPose(f);
+  // hands: live hand state (for the fingers mode); frozen: a gesture holds the chord
+  update(f, t, hands = null, frozen = false) {
+    const fingers = this.mode === 'fingers', six = this.mode === 'six' || fingers;
+    const r = fingers ? readFingers(hands) : this.mode === 'six' ? readRegions(f) : readPose(f);
     this.last = r;
     if (this.mode === 'fixed') return (this.shown = 'Am');
     if (r.rule !== this.run) { this.run = r.rule; this.since = t; }
-    if (this.run && this.run !== this.cur && t - this.since >= (six ? H.dwell6S : H.dwellS)) {
+    if (!frozen && this.run && this.run !== this.cur && t - this.since >= (six ? H.dwell6S : H.dwellS)) {
       this.cur = this.run;
       if (six) this.voicing = voiceLead(this.voicing, SIX[this.cur].pcs);
     }

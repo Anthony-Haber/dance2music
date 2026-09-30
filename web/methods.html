@@ -8,7 +8,7 @@ the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source
   <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
   <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
   <a href="#m-harm">7 Chords from pose</a> <a href="#m-six">7b Six chords</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
-  <a href="#m-live">10 Live</a> <a href="#m-map">10b Mapping</a> <a href="#m-rhythm">10c Rhythm</a>
+  <a href="#m-live">10 Live</a> <a href="#m-map">10b Mapping</a> <a href="#m-rhythm">10c Rhythm</a> <a href="#m-bounce">10d Hip bounce</a> <a href="#m-hands">10e Hands</a>
 </nav>
 
 <h2 id="m-pose">1. Pose <span class="src">dance_pose.py · track</span></h2>
@@ -363,6 +363,73 @@ Regularity $=\operatorname{clip}((\rho-0.15)/0.5)$ and tempo $=60/\text{period}$
 each new onset within $\pm T/4$ of a predicted beat pulls the grid 30% of the way toward itself. When the tempo changes, the next scheduled eighth keeps its time and the spacing
 after it changes. Hits are scheduled 120 ms ahead on the audio clock. The groove's loudness is the drums-level mapping (by default rhythm regularity with gain 1.4,
 rising in 0.3 s and falling over 1 s), so the beat fades in only as her movement becomes regular.</p>
+
+<h3 id="m-bounce">10d. Hip bounce and the locked groove <span class="src">web/live/bounce.js, audio.js · bounceGroove</span></h3>
+<p><b>Observation.</b> The pelvis height from the raw landmarks, $y = -\tfrac12(y_{\text{Lhip}}+y_{\text{Rhip}})\,H/\ell$ (up positive, torso lengths).
+It is taken without the One Euro filter, because the Bayesian filter below is the smoothing, and the One Euro filter's lag would shift the beat. It is detrended
+by the mean of the last 2 s and scaled by the RMS of the last 3 s, so a sinusoidal bounce has unit amplitude:
+$z = (y - \bar y_{2\,\text{s}})/(\sqrt2\,\text{RMS}_{3\,\text{s}})$. Each sample carries its camera <em>capture</em> time
+(<code>requestVideoFrameCallback</code> metadata), not the time it was processed.</p>
+<p><b>State and transition.</b> A grid of 40 tempo periods $T_j$ (log-spaced over 50–180 bpm) × 48 phases $\varphi_k\in[0,1)$.
+The prediction step advances each phase by $\Delta t/T_j$ (split linearly between neighbouring bins). It then diffuses the phase ($\pm1$ bin, 1%), lets the tempo
+random-walk to its neighbours (4% each way), and leaks 0.2% to uniform, so the filter can re-lock after she stops or changes tempo.</p>
+<p><b>Observation model.</b> Bouncing: $z\mid\varphi \sim \mathcal N(-\cos 2\pi\varphi,\ 0.45^2)$, with $\varphi=0$ at the bottom. Not bouncing: $z\sim\mathcal N(0,\tfrac12)$
+(the same variance as a unit sinusoid). Frames 33 ms apart are not independent, so each likelihood is tempered by $w=\min(1,\Delta t/0.1\,\text{s})$:
+the posterior is multiplied by $\mathcal L^{w}$. Evidence counts only after 1.5 s of history.</p>
+<p><b>Is she bouncing?</b> The predictive evidence $p(z\mid M_1)=\sum_{j,k}\pi_{\text{pred}}(j,k)\,\mathcal L(z\mid\varphi_k)$ is compared with $p(z\mid M_0)$ in a
+forgetting log Bayes factor,
+$$\Lambda \leftarrow e^{-\Delta t/3\,\text{s}}\,\Lambda + w\,\big(\log p(z\mid M_1) - \log p(z\mid M_0)\big),\qquad
+P(\text{bouncing}) = g\cdot\sigma\!\Big(\Lambda + \log\tfrac{0.2}{0.8}\Big),$$
+where $\sigma$ is the logistic function and the gate $g=\operatorname{clip}((\text{RMS}-0.02)/0.02)$ says a hip moving less than about 2% of a torso is not bouncing.
+The groove starts once $P &gt; 0.8$ for 0.8 s and stops once $P&lt;0.4$ for 1 s.</p>
+<p><b>Where the beat is.</b> The tempo is the posterior's most probable $T_j$, and the phase is the circular mean within it. The beat is not assumed to sit at $\varphi=0$.
+While $P&gt;0.7$, $z$ is averaged in each phase bin (rate 0.15), and the beat is placed at that profile's minimum (interpolated between bins). A bounce with a quick drop and
+a slow rise therefore still gets its beat near the real bottom. The profile is not fed back into the likelihood, so it cannot chase its own phase estimate.
+Next beat: $t_{\text{beat}} = t + ((\varphi_b-\hat\varphi) \bmod 1)\,T$.</p>
+<p><b>Scheduling.</b> The beat time is on the capture clock (performance time). <code>AudioContext.getOutputTimestamp()</code> gives the pair (context time, performance time)
+for the sample now leaving the speaker. A beat at performance time $p$ is therefore scheduled at context time $c_0 + (p-p_0)$, so it is heard when her hip is at the
+bottom, plus the Sync offset slider. Beats are scheduled 5–250 ms ahead, at most one per $0.6T$. The pattern is a kick on every beat, a snare on every second one,
+and a hat halfway between beats (with "Beat on: top", everything moves by $T/2$). Its loudness is the drums-level mapping, by default $P(\text{bouncing})$ with gain 1.2.
+The ring drawn at the hips appears when the <em>frame on screen</em> reaches a scheduled beat, so ring and lowest point should coincide on the video.</p>
+<p><b>Validation</b> (the filter on synthetic hip signals at 30 fps with timestamp jitter, and on the three clips; beat error = scheduled beat − true bottom):</p>
+<table class="t">
+<tr><th>signal</th><th>P(bouncing)</th><th>lock</th><th>tempo</th><th>beat error, median · |p90|</th></tr>
+<tr><td>steady 100 bpm, amplitude 0.08, noise 0.01</td><td>1.00</td><td>2.1 s</td><td>100</td><td>−14 ms · 20 ms</td></tr>
+<tr><td>steady 128 bpm, amplitude 0.05, noise 0.015</td><td>0.89</td><td>2.6 s</td><td>130</td><td>−10 ms · 35 ms</td></tr>
+<tr><td>tempo ramp 90 → 120 bpm</td><td>1.00</td><td>2.0 s</td><td>117 (end)</td><td>−14 ms · 26 ms</td></tr>
+<tr><td>asymmetric bounce (quick drop, slow rise), 92 bpm</td><td>1.00</td><td>2.1 s</td><td>93</td><td>+42 ms · 93 ms</td></tr>
+<tr><td>random smooth hip drift</td><td>0.02 (p90 0.19)</td><td>—</td><td></td><td></td></tr>
+<tr><td>hips still (tracker noise)</td><td>0.00</td><td>never</td><td></td><td></td></tr>
+<tr><td>the three Sep 21 clips</td><td>median 0.00 (p90 0.01–0.33)</td><td></td><td></td><td></td></tr>
+</table>
+<p>In the browser, a still frame of the dancer moved up and down at 100 bpm read as 100 bpm, $P=1.00$, with the groove on. The filter costs 0.08 ms per frame.
+The asymmetric case is the known weakness. The model phase follows the fundamental of the bounce, and the profile minimum recovers about half of the
+offset (it was 94 ms before the profile was added).</p>
+
+<h3 id="m-hands">10e. Hands and gestures <span class="src">web/live/hands.js</span></h3>
+<p>MediaPipe Gesture Recognizer (hand detector + 21-landmark hand model + canned-gesture classifier) in VIDEO mode, in one of two modes:</p>
+<ul>
+<li><b>Far</b>: a square crop around each wrist, centred at $\mathbf p_{\text{wr}} + 0.35(\mathbf p_{\text{wr}}-\mathbf p_{\text{el}})$ (toward the hand), side
+$\max(64\,\text{px}, 1.1\,\ell)$, drawn to a 256×256 canvas. The hands alternate frame by frame, so each hand runs at half the frame rate, and each has its own recogniser.</li>
+<li><b>Near</b>: the whole frame, two hands, each assigned to the nearer pose wrist. The handedness labels assume a mirrored selfie and are not used.</li>
+</ul>
+<p>On the Sep 21 clips (hands about 85–90 px across in 576×1024 frames), hands were found in 2% of full frames and in 52–55% of crops. The canned gesture
+was mostly "None" at that resolution: open palms were recognised, and thumbs up only unreliably.</p>
+<p><b>From landmarks</b>, with $d$ the distance in the crop:</p>
+<ul>
+<li>A finger is extended when $d(\text{tip},\text{wrist}) &gt; 1.15\,d(\text{PIP},\text{wrist})$.</li>
+<li>The thumb is extended when $d(\text{tip}_4, \text{pinky base}_{17}) &gt; d(\text{IP}_3, \text{pinky base}_{17})$.</li>
+<li>Openness is $\operatorname{clip}\big((\bar r-1.1)/0.8\big)$, where $\bar r$ is the mean over the four fingers of $d(\text{tip},\text{wrist})/d(\text{MCP},\text{wrist})$: about 1 curled, about 2 straight.</li>
+</ul>
+<p>On 1,926 hands from the clips: the four fingers read 4 on 98% of Open_Palm detections. The thumb rule reads "out" on 95% of open palms and 81% of Thumb_Up
+(a stricter rule, first tried, gave 69% and 42%).</p>
+<p><b>Debouncing.</b> The finger count must hold for 0.3 s and a gesture (score ≥ 0.5) for 0.35 s before either counts. Openness glides with $\tau=0.1$ s. A hand unseen for 0.4 s is dropped.</p>
+<p><b>Uses:</b></p>
+<ul>
+<li>Mapping sources: left and right openness, the more open hand, and the fingers raised on both hands together divided by 10.</li>
+<li>The <i>fingers</i> harmony mode: 1 → I … 5 → V, 6 or more → vi, using the six-chord voice leader. Fists (0) hold the chord.</li>
+<li>A gesture → action table. The defaults are: fist holds the chord while shown, thumb up and down turn the drums on and off, victory moves to the next mapping preset, and "I love you" mutes. Actions fire once when a gesture begins.</li>
+</ul>
 
 <h2>Overlay</h2>
 <p>The videos are drawn from the same arrays. The skeleton is $\mathbf p$ (filtered). Arrows are $0.12\,\text{s}\times\mathbf v$ in pixels, capped at 160 px.

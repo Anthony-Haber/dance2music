@@ -3,6 +3,8 @@ import { Features, P, EDGES, J, PART_J, PARTS } from './features.js';
 import { ChordFollower, H as HP } from './harmony.js';
 import { Engine } from './audio.js';
 import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapping.js';
+import { Bounce } from './bounce.js';
+import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -18,6 +20,8 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
+const bounce = new Bounce(), hands = new Hands();
+let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
 // ── setup ───────────────────────────────────────────────────────────
@@ -88,7 +92,11 @@ async function start() {
     await loadLandmarker();
     status('opening source…');
     if ($('source').value === 'camera') await openCamera(); else await openFile();
-    feats.reset(); follower.reset();
+    feats.reset(); follower.reset(); bounce.reset(); bounceOn = false;
+    if ($('handMode').value !== 'off') status('loading hand model…');
+    const th = performance.now();
+    await hands.load(vision, $('handMode').value);
+
     await engine.start($('out').value || undefined);
     applyMix(); applySens();
     watchAudio();
@@ -123,21 +131,37 @@ document.addEventListener('visibilitychange', () => {
 function loop() {
   if (!running) return;
   const next = () => (v.requestVideoFrameCallback ? v.requestVideoFrameCallback(frame) : requestAnimationFrame(frame));
-  function frame() {
+  function frame(nowCb, meta) {
     if (!running) return;
     if (v.readyState >= 2 && landmarker) {
       const now = performance.now(), W = v.videoWidth, H = v.videoHeight;
+      // when the camera took this frame (same clock as performance.now); the
+      // bounce tracker and the groove use it so the beat lands on the real body
+      const capMs = (meta && (meta.captureTime || meta.expectedDisplayTime)) || now;
       landmarker.detectForVideo(v, now, res => {
         inferMs = performance.now() - now;
         const lms = res.landmarks && res.landmarks[0];
         const t = (now - t0) / 1000;
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
         if (f) {
-          follower.update(f, t);
+          // hips: raw landmark heights (no smoothing: the filter is the smoothing)
+          const lh = lms[23], rh = lms[24];
+          if (lh && rh && (lh.visibility ?? 1) > 0.5 && (rh.visibility ?? 1) > 0.5)
+            lastBounce = bounce.update(-((lh.y + rh.y) / 2) * H / f.L, capMs / 1000);
+          lastCapMs = capMs;
+          hands.detect(v, f, now);
+          const bo = lastBounce;
+          Object.assign(f, hands.sources(), { bounce: bo ? bo.prob : 0,
+                                              bounceTempoN: bo ? Math.min(1, Math.max(0, (bo.tempo - 50) / 130)) : 0 });
+          gestureActions(t);
+          follower.update(f, t, hands, frozen);
           engine.setChord(follower.chord());
           lastVals = evaluate(mapping, f);
-          const drums = { hits: drumMode.includes('hits'), groove: drumMode.includes('groove'),
-                          clock: t - engine.ctx.currentTime };
+          updateBounceGate(bo, t);
+          const drums = { hits: drumMode.includes('hits'), groove: drumMode.includes('body'),
+                          clock: t - engine.ctx.currentTime, enabled: drumsEnabled,
+                          bounce: drumMode.includes('bounce') && bounceOn && drumsEnabled ? bo : null,
+                          offsetMs: +$('syncOff').value, accent: $('accent').value };
           engine.update(f, lastVals, DESTS, mirror(), drums);
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
         } else engine.idle();
@@ -150,6 +174,44 @@ function loop() {
   }
   next();
 }
+
+// the groove starts after P(bouncing) has stayed above 0.8 for 0.8 s and
+// stops after it has stayed below 0.4 for 1 s
+let bounceOn = false, bounceSince = 0;
+function updateBounceGate(bo, t) {
+  const p = bo ? bo.prob : 0, want = bounceOn ? p > 0.4 : p > 0.8;
+  if (want === bounceOn) bounceSince = t;
+  else if (t - bounceSince >= (bounceOn ? 1.0 : 0.8)) { bounceOn = want; bounceSince = t; }
+}
+
+// ── gestures → actions ──────────────────────────────────────────────
+const ACTIONS = [['none', '—'], ['hold', 'hold the chord (while shown)'], ['drumsOn', 'drums on'],
+                 ['drumsOff', 'drums off'], ['drumsToggle', 'drums on/off'], ['nextPreset', 'next mapping preset'],
+                 ['nextMode', 'next harmony mode'], ['mute', 'mute / unmute']];
+const DEFAULT_ACTIONS = { Closed_Fist: 'hold', Open_Palm: 'none', Pointing_Up: 'none', Thumb_Up: 'drumsOn',
+                          Thumb_Down: 'drumsOff', Victory: 'nextPreset', ILoveYou: 'mute' };
+let actions = { ...DEFAULT_ACTIONS, ...store.get('actions', {}) };
+let frozen = false, drumsEnabled = true, lastG = { L: 'None', R: 'None' }, gestureLog = '';
+function gestureActions(t) {
+  frozen = false;
+  for (const side of ['L', 'R']) {
+    const h = hands[side], g = h.seen ? h.gesture : 'None';
+    if (actions[g] === 'hold') frozen = true;
+    if (g === lastG[side]) continue;
+    lastG[side] = g;
+    const a = actions[g]; if (!a || a === 'none' || a === 'hold') continue;
+    if (a === 'drumsOn') drumsEnabled = true;
+    else if (a === 'drumsOff') drumsEnabled = false;
+    else if (a === 'drumsToggle') drumsEnabled = !drumsEnabled;
+    else if (a === 'nextPreset') { const names = Object.keys(PRESETS), i = (names.indexOf(lastPreset) + 1) % names.length;
+      lastPreset = names[i]; mapping = applyPreset(lastPreset, custom); mapChanged(); }
+    else if (a === 'nextMode') { const ms = ['six', 'fingers', 'twofive', 'twofive_alt', 'fixed'];
+      $('mode').value = ms[(ms.indexOf($('mode').value) + 1) % ms.length]; $('mode').onchange(); }
+    else if (a === 'mute') engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol);
+    gestureLog = `${side === 'L' ? 'left' : 'right'} ${g.replace('_', ' ')} → ${ACTIONS.find(x => x[0] === a)[1]}`;
+  }
+}
+let lastPreset = 'Moving = sound';
 
 const mirror = () => $('mirror').value === '1';
 
@@ -201,6 +263,27 @@ function draw() {
     if (n > 160 / s) { dx *= 160 / s / n; dy *= 160 / s / n; }
     if (n > 4) line(q[0], q[1], q[0] + dx, q[1] + dy);
   });
+  // hands: landmarks, and each hand's state
+  for (const side of ['L', 'R']) {
+    const h = hands[side]; if (!h.seen || !h.lm) continue;
+    g.strokeStyle = side === 'L' ? '#ffaa50' : '#5ab4ff'; g.lineWidth = 1.5 / s;
+    for (const [a, b] of HAND_EDGES) line(h.lm[a].px, h.lm[a].py, h.lm[b].px, h.lm[b].py);
+    if (hands.mode === 'far' && h.box) { g.strokeStyle = 'rgba(200,200,200,.25)'; g.strokeRect(...h.box); }
+  }
+  // hips: the bounce, and a ring at every beat, drawn when the frame on screen
+  // reaches the beat's time, so the ring should coincide with her lowest point
+  const hp = p(J.L_HIP) && p(J.R_HIP) ? [(p(J.L_HIP)[0] + p(J.R_HIP)[0]) / 2, (p(J.L_HIP)[1] + p(J.R_HIP)[1]) / 2] : null;
+  if (hp && lastBounce && drumMode.includes('bounce')) {
+    const on = bounceOn;
+    g.strokeStyle = on ? '#7fd0ff' : 'rgba(127,208,255,.35)'; g.lineWidth = 2 / s;
+    line(hp[0] - 0.5 * f.L, hp[1], hp[0] + 0.5 * f.L, hp[1]);
+    for (const bp of engine.scheduled || []) {
+      const age = lastCapMs - bp;
+      if (age >= 0 && age < 180) { const a = age / 180;
+        g.strokeStyle = `rgba(127,208,255,${1 - a})`; g.lineWidth = 5 * (1 - a) / s + 1 / s;
+        g.beginPath(); g.arc(hp[0], hp[1], (0.25 + 0.4 * a) * f.L, 0, 7); g.stroke(); }
+    }
+  }
   // pluck flashes
   const now = performance.now();
   flashes = flashes.filter(fl => now - fl.t0 < 400);
@@ -217,6 +300,7 @@ function draw() {
   $('deg').textContent = c.degree;
   document.querySelectorAll('#rules [data-r]').forEach(d =>
     d.classList.toggle('now', !!r && d.dataset.r === r.rule));
+  handReadout();
   meters(f);
 }
 // the six regions around the torso, the hands' midpoint as a dot
@@ -245,12 +329,18 @@ function line(x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1
 // ── meters and status ───────────────────────────────────────────────
 const METERS = [['weight', 'Weight', '#f06e5a'], ['time', 'Time', '#fad250'],
                 ['flow', 'Flow', '#c88ce6'], ['space', 'Space', '#c8e678'],
-                ['energy', 'energy', '#ff9a60'], ['rhythm', 'rhythm', '#7fd0ff'], ['out', 'output', '#efe9df']];
+                ['energy', 'energy', '#ff9a60'], ['rhythm', 'rhythm', '#7fd0ff'], ['bounce', 'hip bounce', '#7fd0ff'],
+                ['out', 'output', '#efe9df']];
 $('meters').innerHTML = METERS.map(([k, n, c]) =>
   `<div class="meter"><span>${n}</span><div class="bar"><i id="m-${k}" style="background:${c}"></i></div></div>`).join('');
 let statusAt = 0;
 function meters(f) {
   for (const [k] of METERS.slice(0, 6)) $('m-' + k).style.width = (100 * f[k]).toFixed(0) + '%';
+  const bo = lastBounce;
+  $('bounceTxt').textContent = !bo ? 'hips not seen' :
+    `hips: P(bouncing) ${(100 * bo.prob).toFixed(0)}%` + (bo.prob > 0.3 ? `, ${bo.tempo.toFixed(0)} bpm` : '') +
+    (bounceOn ? ' · groove on' : '') + (drumsEnabled ? '' : ' · drums off (gesture)');
+  $('m-bounce').style.width = (100 * (bo ? bo.prob : 0)).toFixed(0) + '%';
   $('tempo').textContent = f.rhythm > 0.2 ? `${f.tempo.toFixed(0)} bpm, regularity ${(100 * f.rhythm).toFixed(0)}%`
                                           : `no steady pulse (${(100 * f.rhythm).toFixed(0)}%)`;
   if (lastVals) for (const k of Object.keys(DESTS)) {
@@ -372,6 +462,16 @@ $('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!
   try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
         mapChanged(); } catch (e) { status('could not read that mapping'); } };
 $('drumMode').value = drumMode;
+$('syncOff').value = store.get('syncOff', 0); $('syncV').textContent = $('syncOff').value + ' ms';
+$('syncOff').oninput = () => { store.set('syncOff', +$('syncOff').value); $('syncV').textContent = $('syncOff').value + ' ms'; };
+$('accent').value = store.get('accent', 'down'); $('accent').onchange = () => store.set('accent', $('accent').value);
+$('handMode').value = store.get('handMode', 'off');
+$('handMode').onchange = async () => { store.set('handMode', $('handMode').value);
+  if (running && vision) { status('loading hand model…'); await hands.load(vision, $('handMode').value); status('hands: ' + $('handMode').value); } };
+$('gestures').innerHTML = GESTURES.map(gname => `<span>${gname.replace('_', ' ')}</span><select data-g="${gname}">` +
+  ACTIONS.map(([k, n]) => `<option value="${k}" ${actions[gname] === k ? 'selected' : ''}>${n}</option>`).join('') + '</select>').join('');
+$('gestures').onchange = e => { const gname = e.target.dataset.g; if (!gname) return;
+  actions[gname] = e.target.value; store.set('actions', actions); };
 $('drumMode').onchange = () => { drumMode = $('drumMode').value; store.set('drums', drumMode); };
 $('energyS').value = store.get('energyS', 3); P.energyS = +$('energyS').value;
 $('energyV').textContent = P.energyS + ' s';
@@ -393,6 +493,8 @@ const RULES = {
             ['I', 'each hand and foot on its own side']],
 };
 RULES.twofive_alt = RULES.twofive; RULES.fixed = [];
+RULES.fingers = [['I', '1 finger (both hands together)'], ['ii', '2 fingers'], ['iii', '3 fingers'],
+                 ['IV', '4 fingers'], ['V', '5 fingers'], ['vi', '6 or more'], ['', 'no fingers (fists) holds the chord; needs hand tracking on']];
 function showRules() {
   const m = $('mode').value;
   $('rules').innerHTML = (RULES[m] || []).map(([d, t]) =>
@@ -418,7 +520,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {}); }
-  else if ('1234'.includes(e.key)) { $('mode').value = ['six', 'twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
+  else if ('12345'.includes(e.key)) { $('mode').value = ['six', 'fingers', 'twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
   else if (e.key === 'm') { engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol); }
 });
 document.addEventListener('fullscreenchange', () => {
@@ -427,3 +529,11 @@ document.addEventListener('fullscreenchange', () => {
 // fill device lists if permission was granted before
 navigator.mediaDevices?.enumerateDevices && listDevices().catch(() => {});
 if (!window.isSecureContext) status('needs https or localhost for the camera');
+
+function handReadout() {
+  if (hands.mode === 'off') { $('handTxt').textContent = 'hand tracking off'; return; }
+  const one = (h, n) => !h.seen ? `${n}: —` : `${n}: ${h.fingers} finger${h.fingers === 1 ? '' : 's'}, open ${(100 * h.open).toFixed(0)}%` +
+    (h.gesture !== 'None' ? `, ${h.gesture.replace('_', ' ')}` : '');
+  $('handTxt').textContent = `${one(hands.L, 'left')} · ${one(hands.R, 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
+    (frozen ? ' · chord held' : '') + (gestureLog ? `\nlast: ${gestureLog}` : '');
+}
