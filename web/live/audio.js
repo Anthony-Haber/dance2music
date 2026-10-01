@@ -51,6 +51,7 @@ export class Engine {
     this.inst.connect(verb).connect(wet).connect(this.master);
     this.master.connect(lim).connect(ctx.destination);
     this.meter = ctx.createAnalyser(); this.meter.fftSize = 512; lim.connect(this.meter);
+    this.limiter = lim; this.recDest = null;
 
     const layer = name => { const g = ctx.createGain(); g.connect(this.bus);
                             this.layers[name] = g; return g; };
@@ -339,6 +340,12 @@ export class Engine {
     s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
   }
 
+  // a MediaStream of exactly what goes to the speakers, for the recorder
+  recordStream() {
+    if (!this.recDest) { this.recDest = this.ctx.createMediaStreamDestination(); this.limiter.connect(this.recDest); }
+    return this.recDest.stream;
+  }
+
   level(name, v) {
     const g = name === 'drums' ? this.drumFader : this.layers[name];
     if (g) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
@@ -351,7 +358,7 @@ export class Engine {
   }
   async stop() {
     if (this.ctx) await this.ctx.close();
-    this.ctx = null; this.chordKey = null; this.layers = {};
+    this.ctx = null; this.chordKey = null; this.layers = {}; this.recDest = null;
     if (this.keepAlive) this.keepAlive.pause();
   }
 }

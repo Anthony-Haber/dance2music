@@ -5,6 +5,7 @@ import { Engine } from './audio.js';
 import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapping.js';
 import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
+import { Recorder } from './recorder.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -20,7 +21,7 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
-const bounce = new Bounce(), hands = new Hands();
+const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
@@ -101,7 +102,7 @@ async function start() {
     applyMix(); applySens();
     watchAudio();
     running = true; $('hint').hidden = true; $('badge').hidden = false;
-    $('go').textContent = 'Stop'; $('go').disabled = false;
+    $('go').textContent = 'Stop'; $('go').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
   } catch (e) {
     status('could not start: ' + e.message); $('go').disabled = false;
@@ -109,6 +110,8 @@ async function start() {
 }
 
 async function stop() {
+  if (recorder.active) await toggleRecord();
+  $('rec').disabled = true;
   running = false;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
@@ -555,6 +558,7 @@ $('file').onchange = () => { if (running) openFile(); };
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
   if (e.key === ' ') { e.preventDefault(); running ? stop() : start(); }
+  else if (e.key === 'r') { if (running) toggleRecord(); }
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {}); }
@@ -575,3 +579,28 @@ function handReadout() {
   $('handTxt').textContent = `${one(hands.L, 'left')} · ${one(hands.R, 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
     (frozen ? ' · chord held' : '') + (gestureLog ? `\nlast: ${gestureLog}` : '');
 }
+
+// ── recording ───────────────────────────────────────────────────────
+async function toggleRecord() {
+  if (!recorder.active) {
+    try {
+      const type = recorder.start({ engine, video: v, overlay: cv, mirror,
+        audioOnly: $('recWhat').value === 'audio',
+        label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
+      $('rec').classList.add('on'); $('rec').textContent = '■ Stop recording'; $('recDot').hidden = false;
+      status('recording ' + type.split(';')[0]);
+      recTick();
+    } catch (e) { status('could not record: ' + e.message); }
+  } else {
+    const r = await recorder.stop();
+    $('rec').classList.remove('on'); $('rec').textContent = '● Record'; $('recDot').hidden = true;
+    if (r) $('recMsg').textContent = `saved ${r.name} (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s) to your downloads`;
+  }
+}
+function recTick() {
+  if (!recorder.active) return;
+  const s = Math.floor(recorder.elapsed());
+  $('recDot').textContent = `● REC ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  setTimeout(recTick, 250);
+}
+$('rec').onclick = () => toggleRecord();

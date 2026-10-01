@@ -21,6 +21,9 @@
   #badge { position: absolute; top: 18px; right: 22px; text-align: right; pointer-events: none; }
   #badge b { display: block; font-size: 44px; font-weight: 600; line-height: 1; }
   #badge span { color: var(--dim); font-size: 18px; }
+  .recrow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  #rec.on { background: #c0392b; color: #fff; border-color: #c0392b; }
+  #recDot { position: absolute; top: 18px; left: 22px; color: #ff5a4a; font-weight: 600; z-index: 3; }
   #tap { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 3;
          background: var(--accent); color: #1b1a18; border: 0; font-weight: 600; font-size: 17px;
          padding: 12px 22px; border-radius: 24px; }
@@ -79,6 +82,7 @@
   <video id="v" playsinline muted></video>
   <canvas id="c"></canvas>
   <button id="tap" hidden>Tap for sound</button>
+  <div id="recDot" hidden>● REC 0:00</div>
   <div id="badge" hidden><b id="sym">Cmaj9</b><span id="deg">I</span></div>
   <div id="hint">Pick a camera (or a video file) and press Start.<br>
     Sound starts with the picture; stand so your whole body is in frame.</div>
@@ -101,6 +105,9 @@
     <option value="0">as the camera sees</option></select></label>
   <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
   <button class="go" id="go">Start</button>
+  <div class="recrow"><button id="rec" disabled>● Record</button>
+    <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>
+  <div class="status" id="recMsg"></div>
   <div class="status" id="status">idle</div>
 
   <h2>Harmony</h2>
@@ -163,7 +170,7 @@
   <div class="mix" id="sens"></div>
   <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
     “Tap for sound”. The ring/silent switch should not matter on iOS 16.4 and later.</p>
-  <p class="note">Keys: space start/stop · f performance view · 1–5 harmony mode · m mute.
+  <p class="note">Keys: r record/stop · space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>
 </aside>
 <script type="module" src="live.js"></script>
