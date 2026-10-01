@@ -8,7 +8,7 @@ the clips' frame rate, $f_s = 29.99$ fps; audio runs at $F_s = 44100$ Hz. Source
   <a href="#m-pose">1 Pose</a> <a href="#m-clean">2 Cleaning</a> <a href="#m-kin">3 Kinematics</a>
   <a href="#m-norm">4 Normalisation</a> <a href="#m-effort">5 Laban features</a> <a href="#m-events">6 Sudden events</a>
   <a href="#m-harm">7 Chords from pose</a> <a href="#m-six">7b Six chords</a> <a href="#m-dsp">8 Synthesis primitives</a> <a href="#m-demos">9 Demos</a>
-  <a href="#m-live">10 Live</a> <a href="#m-map">10b Mapping</a> <a href="#m-rhythm">10c Rhythm</a> <a href="#m-bounce">10d Hip bounce</a> <a href="#m-hands">10e Hands</a>
+  <a href="#m-live">10 Live</a> <a href="#m-map">10b Mapping</a> <a href="#m-rhythm">10c Rhythm</a> <a href="#m-bounce">10d Hip bounce</a> <a href="#m-hands">10e Hands</a> <a href="#m-sphere">10f Sphere, timbres</a>
 </nav>
 
 <h2 id="m-pose">1. Pose <span class="src">dance_pose.py · track</span></h2>
@@ -321,6 +321,7 @@ rise/fall glide $\operatorname{g}^{\uparrow\downarrow}_{\tau_a,\tau_r}$ of §8, 
 <tr><td>bass level · harshness</td><td>Weight · Flow</td><td>[0, 1], 1.3, 1 · [0.3, 4.3], 1, 1.2</td></tr>
 <tr><td>wind level · brightness · pan</td><td>Weight · Weight · travel</td><td>[0, 1], 1.3, 0.9 · [180, 6500] Hz · [−1, 1]</td></tr>
 <tr><td>tuned wind level</td><td>Weight</td><td>[0, 1], 1.3, 0.9</td></tr>
+<tr><td>instrument volume · pad vowel</td><td>none · none</td><td>1 · 0.5</td></tr>
 <tr><td>plucks level · reverb wet</td><td>none · none</td><td>1 · 0.2 (dry $=1-$wet)</td></tr>
 <tr><td>drums level</td><td>rhythm regularity</td><td>[0, 1], 1.4, 1 (0.3 s / 1 s)</td></tr>
 </table>
@@ -429,6 +430,30 @@ was mostly "None" at that resolution: open palms were recognised, and thumbs up 
 <li>Mapping sources: left and right openness, the more open hand, and the fingers raised on both hands together divided by 10.</li>
 <li>The <i>fingers</i> harmony mode: 1 → I … 5 → V, 6 or more → vi, using the six-chord voice leader. Fists (0) hold the chord.</li>
 <li>A gesture → action table. The defaults are: fist holds the chord while shown, thumb up and down turn the drums on and off, victory moves to the next mapping preset, and "I love you" mutes. Actions fire once when a gesture begins.</li>
+</ul>
+
+<h3 id="m-sphere">10f. The sphere between the hands, and pad timbres <span class="src">features.js, live.js · drawSphere, audio.js · setTimbre</span></h3>
+<p><b>Sphere.</b> Centre $\mathbf c_s = \tfrac12(\mathbf p_{\text{Lwr}}+\mathbf p_{\text{Rwr}})$ and radius $r = \tfrac12\|\mathbf p_{\text{Lwr}}-\mathbf p_{\text{Rwr}}\|$ (pose wrists, One-Euro filtered).
+The mapping source is
+$$\text{sphere} = \operatorname{clip}\!\Big(\frac{r/\ell}{1.5}\Big)\cdot\min(c_{\text{Lwr}}, c_{\text{Rwr}}),$$
+where 1.5 torso lengths is about a full wrist-to-wrist span, so arms wide is about 1. A destination with curve exponent $e=3$ follows the sphere's <em>volume</em>,
+$\tfrac43\pi r^3$, normalised, and $e=1$ follows its radius. On the three clips, the sphere's median size was 0.23–0.26 of full spread and its 90th percentile 0.78–0.85.
+Under $r^3$, that gives a median loudness of 0.012–0.017 of full (about −36 dB) and a 90th percentile of 0.48–0.62. Cubing makes small spheres very quiet,
+so the <i>Sphere, gentle</i> preset uses $e=1.5$.</p>
+<p><b>Instrument volume</b> is a gain on the whole instrument, before the reverb split and the master fader, so reverb tails follow it too. <i>Sphere</i> sets it from
+sphere with $e=3$ and range $[0, 1.2]$. It holds the pad (level 1) and bass (0.5) constant and silences wind, plucks and drums, so the sphere is all you hear changing.
+<i>Sphere + vowel</i> adds pad vowel from hands height and pad brightness from the sphere (900 → 4000 Hz).</p>
+<p><b>Drawing.</b> A radial gradient of radius $1.25r$ (white → amber → red, or the current chord's colour), drawn additively. The radius flickers by
+$1 + 0.05\sin(t/45\,\text{ms}) + 0.035\sin(t/23\,\text{ms}+1) + 0.08\,\varepsilon\sin(t/11\,\text{ms})$, where $\varepsilon$ is the integrated energy.
+Each frame emits $1 + 8\varepsilon + 6\cdot\text{sphere}$ sparks from the surface. They live 0.4–0.9 s, and in fire mode they rise.</p>
+<p><b>Pad timbres</b> (four voice-led voices each; pitch is carried on <code>detune</code>, so the chord glides are the same for all of them):</p>
+<ul>
+<li><b>saw</b>: one band-limited sawtooth per voice (the original sound).</li>
+<li><b>strings</b>: two saws at ±8 cents, with 5.3 Hz vibrato of ±12 cents.</li>
+<li><b>glass</b>: FM with the modulator at 3.5× the carrier and index 1.2. The inharmonic sidebands give a bell or glass colour.</li>
+<li><b>organ</b>: one periodic wave with harmonic amplitudes 1, .8, .5, .6, 0, .35, 0, .3 (drawbar-like).</li>
+<li><b>choir</b>: a saw with 4.8 Hz, ±15 cent vibrato, through three parallel band-pass formants ($Q=9$, gains 1, .55, .3). These are interpolated along
+oo (300, 870, 2240 Hz) → o (450, 800, 2830) → a (730, 1090, 2440) → e (530, 1840, 2480) → ee (270, 2290, 3010) by the <i>pad vowel</i> destination (0 … 1).</li>
 </ul>
 
 <h2>Overlay</h2>

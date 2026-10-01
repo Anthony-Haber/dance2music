@@ -19,10 +19,13 @@ export const SOURCES = [
   ['bounce', 'hip bounce (probability)'], ['bounceTempoN', 'hip bounce tempo'],
   ['openL', 'left hand openness'], ['openR', 'right hand openness'], ['openMax', 'most open hand'],
   ['fingers', 'fingers raised (both hands)'],
+  ['sphere', 'sphere size (between the hands)'],
 ];
 
 // att / rel: rise and fall time constants (s) of the glide into the parameter
 export const DESTS = {
+  'inst.level':   { label: 'instrument volume', lo: 1, hi: 1, min: 0, max: 1.5, src: 'none', att: 0.05, rel: 0.15 },
+  'pad.vowel':    { label: 'pad vowel (choir: oo → ee)', lo: 0.5, hi: 0.5, min: 0, max: 1, src: 'none', att: 0.08, rel: 0.08 },
   'pad.level':    { label: 'pad level', lo: 0, hi: 1, min: 0, max: 1, src: 'hands', exp: 1.2, att: 0.06, rel: 0.4 },
   'pad.bright':   { label: 'pad brightness', unit: 'Hz', lo: 1600, hi: 1600, min: 300, max: 8000, log: true, src: 'none', att: 0.1, rel: 0.1 },
   'pad.detune':   { label: 'pad detune', unit: 'cents', lo: 0, hi: 30, min: 0, max: 80, src: 'space', inv: true, exp: 1.3, att: 0.15, rel: 0.15 },
@@ -49,6 +52,27 @@ export function defaults() {
 
 export const PRESETS = {
   'Moving = sound': {},
+  // the sphere between the hands is the instrument: its volume (r³, curve 3)
+  // is the loudness; everything else is held steady so that is what you hear
+  'Sphere': {
+    'inst.level': { src: 'sphere', lo: 0, hi: 1.2, exp: 3 },
+    'pad.level': { src: 'none', lo: 1 }, 'bass.level': { src: 'none', lo: 0.5 },
+    'wind.level': { src: 'none', lo: 0 }, 'tuned.level': { src: 'none', lo: 0 },
+    'plucks.level': { lo: 0 }, 'drums.level': { src: 'none', lo: 0 },
+  },
+  'Sphere, gentle': {           // curve 1.5: between radius (1) and volume (3)
+    'inst.level': { src: 'sphere', lo: 0, hi: 1.1, exp: 1.5 },
+    'pad.level': { src: 'none', lo: 1 }, 'bass.level': { src: 'none', lo: 0.5 },
+    'wind.level': { src: 'none', lo: 0 }, 'tuned.level': { src: 'none', lo: 0 },
+    'plucks.level': { lo: 0 }, 'drums.level': { src: 'none', lo: 0 },
+  },
+  'Sphere + vowel': {
+    'inst.level': { src: 'sphere', lo: 0, hi: 1.2, exp: 3 },
+    'pad.level': { src: 'none', lo: 1 }, 'bass.level': { src: 'none', lo: 0.4 },
+    'pad.vowel': { src: 'height', lo: 0, hi: 1 }, 'pad.bright': { src: 'sphere', lo: 900, hi: 4000 },
+    'wind.level': { src: 'none', lo: 0 }, 'tuned.level': { src: 'none', lo: 0 },
+    'plucks.level': { lo: 0 }, 'drums.level': { src: 'none', lo: 0 },
+  },
   'Pad floor': { 'pad.level': { lo: 0.15 }, 'bass.level': { lo: 0.2 } },
   'Agitation': {
     'pad.level': { src: 'energy', lo: 0, gain: 1.5, exp: 1 },

@@ -5,6 +5,11 @@ built, move it to the bottom under "Done" with the commit.
 
 ## The ball between the hands (Sep 30)
 
+*First step built Oct 1:* a visible sphere (fire or chord-coloured light) at
+the hands' midpoint, radius = half their distance, and an `instrument volume`
+mapping that can follow its volume r³ (preset *Sphere*). Still open below:
+holding/releasing, throwing with inertia, velocity as excitation.
+
 The hands' midpoint is already computed (six-chord mode uses it). Make it a
 visible object, a ball of fire or light, that she holds and floats around, and
 make *the ball* the instrument rather than the body.
@@ -53,5 +58,6 @@ make *the ball* the instrument rather than the body.
 
 ## Done
 
+- Sphere between the hands + instrument volume ∝ r³; pad timbres (saw, strings, glass, organ, choir with vowel) — Oct 1
 - Mapping matrix, integrated energy, rhythm detection, first percussion — `live: mapping matrix…`
 - Six chords from the hands, voice-led — `Six chords from the hands…`

@@ -31,7 +31,7 @@ export const P = {           // tunables (the page exposes some as sliders)
   torsoS: 5, torsoLongS: 60, floorS: 20, floorPct: 10,
   weightWinS: 0.25, weightTau: 0.06, boxS: 0.25, spaceS: 0.7, spaceTau: 0.08,
   flowK: 4, eventGap: 0.23,
-  energyS: 3,                                          // memory of the integrated energy
+  energyS: 3, sphereMax: 1.5,                                          // memory of the integrated energy
   rhythmS: 6, rhythmHz: 50, rhythmEvery: 0.25,         // periodicity analysis
   bpmLo: 50, bpmHi: 200,
   gain: { weight: 1, time: 1, flow: 1, space: 1 },   // sensitivities
@@ -215,13 +215,18 @@ export class Features {
 
     // where the hands are, relative to the torso (as in harmony.readRegions)
     const m2 = (a, b) => [(g(a).p[0] + g(b).p[0]) / 2, (g(a).p[1] + g(b).p[1]) / 2];
-    let height = 0.5, spread = 0, lateral = 0.5;
+    let height = 0.5, spread = 0, lateral = 0.5, sphere = 0, sphereC = null, sphereR = 0;
     if (g(J.L_WR).p && g(J.R_WR).p) {
       const c = [(sho[0] + hip[0]) / 2, (sho[1] + hip[1]) / 2], hb = m2(J.L_WR, J.R_WR);
       const mu = (hb[1] - c[1]) / L, lam = (hb[0] - c[0]) / L;
       height = clip((0.8 - mu) / 2.3);                      // hanging ≈ 0, overhead ≈ 1
       spread = clip(norm2([g(J.L_WR).p[0] - g(J.R_WR).p[0], g(J.L_WR).p[1] - g(J.R_WR).p[1]]) / L / 2.5);
       lateral = clip(0.5 + lam / 2.4);                      // her right 0 … her left 1
+      // the sphere between the hands: centre at their midpoint, radius half
+      // their distance; `sphere` is that radius over the full-spread radius
+      // (1.5 torsos, about a full wrist-to-wrist span), so with curve 3 a destination follows its volume r³
+      sphereC = hb; sphereR = norm2([g(J.L_WR).p[0] - g(J.R_WR).p[0], g(J.L_WR).p[1] - g(J.R_WR).p[1]]) / 2;
+      sphere = clip(sphereR / L / P.sphereMax) * Math.min(g(J.L_WR).conf, g(J.R_WR).conf);
     }
 
     // rhythm: how periodic the body's onsets are. The novelty (rises in
@@ -250,7 +255,7 @@ export class Features {
       flow: n(this.flowBox.mean(), REF.flow, P.gain.flow),
       space: clip(0.5 + (this.spaceS - 0.5) * P.gain.space),
       travel: clip((pv[0] + REF.travel) / (2 * REF.travel)),
-      energy: this.energy, height, spread, lateral,
+      energy: this.energy, height, spread, lateral, sphere, sphereC, sphereR,
       body: clip(1.3 * s.slice(1).reduce((q, x) => q + x, 0) / 4 / REF.speed98),
       hands: clip(1.6 * (s[1] + s[2]) / 2 / REF.speed98),
       rhythm: clip((this.rhythm - 0.15) / 0.5), tempo: 60 / this.period,

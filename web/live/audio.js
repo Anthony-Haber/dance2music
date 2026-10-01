@@ -44,8 +44,11 @@ export class Engine {
     const lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20;
     lim.attack.value = 0.003; lim.release.value = 0.1;
-    this.bus.connect(dry).connect(this.master);
-    this.bus.connect(verb).connect(wet).connect(this.master);
+    // instrument volume (a mapping destination: e.g. the sphere) sits before the reverb split
+    this.inst = ctx.createGain(); this.inst.gain.value = 1;
+    this.bus.connect(this.inst);
+    this.inst.connect(dry).connect(this.master);
+    this.inst.connect(verb).connect(wet).connect(this.master);
     this.master.connect(lim).connect(ctx.destination);
     this.meter = ctx.createAnalyser(); this.meter.fftSize = 512; lim.connect(this.meter);
 
@@ -86,21 +89,13 @@ export class Engine {
     }
     makeup.connect(this.tamp).connect(this.tpan).connect(this.layers['wind tuned']);
 
-    // pad: four band-limited saws, detuned by slow LFOs when paths wander
+    // pad: four voices, detuned by slow LFOs when paths wander. The voices'
+    // sound (the timbre) is swappable; they all feed padBus → timbre post-chain
+    // → level → brightness low-pass → the pad fader.
     this.pamp = ctx.createGain(); this.pamp.gain.value = 0;
     const plp = this.plp = ctx.createBiquadFilter(); plp.type = 'lowpass'; plp.frequency.value = 1600; plp.Q.value = -3;
     this.pamp.connect(plp).connect(this.layers['pad']);
-    this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2]].map(([r, sign, pan]) => {
-      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 440;
-      const lfo = ctx.createOscillator(); lfo.frequency.value = r;
-      const depth = ctx.createGain(); depth.gain.value = 0;
-      lfo.connect(depth).connect(o.detune);
-      const g = ctx.createGain(); g.gain.value = 0.2;
-      const p = ctx.createStereoPanner(); p.pan.value = pan;
-      o.connect(g).connect(p).connect(this.pamp);
-      o.start(now); lfo.start(now);
-      return { o, depth, sign };
-    });
+    this.setTimbre(this.timbre || 'saw', true);
 
     // bass: FM on the root. Adding Δ to `frequency` is scaled by 2^(detune/1200)
     // like the base, so a deviation of I·440 on the 440 base is I·f at any pitch.
@@ -114,6 +109,66 @@ export class Engine {
 
     this.setChord('I', true);
     return ctx;
+  }
+
+  // ── pad timbres ───────────────────────────────────────────────────
+  // Each voice: oscillators whose `detune` params carry the pitch (in cents,
+  // plus a fixed offset per oscillator), one LFO for the wander detune, and an
+  // output panned into padBus. Swapping timbre rebuilds the voices and keeps
+  // the chord.
+  setTimbre(name, building = false) {
+    this.timbre = name;
+    if (!this.ctx || !this.pamp) return;
+    const ctx = this.ctx, now = ctx.currentTime;
+    if (this.voices) for (const v of this.voices) v.nodes.forEach(n => { try { n.stop && n.stop(); n.disconnect(); } catch (e) {} });
+    if (this.padBus) { this.padBus.disconnect(); (this.padPost || []).forEach(n => n.disconnect()); }
+    this.padBus = ctx.createGain(); this.formants = null; this.padPost = [];
+    let post = this.padBus;
+    if (name === 'choir') {          // three formant band-passes in parallel, vowel-morphed
+      const sum = ctx.createGain(); sum.gain.value = 3.2;
+      this.formants = [1, 0.55, 0.3].map(g => { const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 9;
+        const a = ctx.createGain(); a.gain.value = g; this.padBus.connect(f).connect(a).connect(sum); this.padPost.push(f, a); return f; });
+      this.padPost.push(sum); post = sum; this.setVowel(this.vowel ?? 0.5, now, true);
+    }
+    post.connect(this.pamp);
+    const organ = ctx.createPeriodicWave(new Float32Array([0, 1, 0.8, 0.5, 0.6, 0, 0.35, 0, 0.3]), new Float32Array(9));
+    const osc = (type, base = 440) => { const o = ctx.createOscillator(); if (type === 'organ') o.setPeriodicWave(organ); else o.type = type;
+                                          o.frequency.value = base; o.start(now); return o; };
+    this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2]].map(([r, sign, pan], i) => {
+      const lfo = ctx.createOscillator(); lfo.frequency.value = r; lfo.start(now);
+      const depth = ctx.createGain(); depth.gain.value = 0; lfo.connect(depth);
+      const out = ctx.createGain(), pn = ctx.createStereoPanner(); pn.pan.value = pan; out.connect(pn).connect(this.padBus);
+      const nodes = [lfo, depth, out, pn], pitch = [];
+      const vib = (hz, cents) => { const l = ctx.createOscillator(), g = ctx.createGain(); l.frequency.value = hz * (1 + 0.07 * i);
+                                   g.gain.value = cents; l.connect(g); l.start(now); nodes.push(l, g); return g; };
+      const add = (o, off, gain, vibrato) => { const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out);
+        depth.connect(o.detune); if (vibrato) vibrato.connect(o.detune); pitch.push([o.detune, off]); nodes.push(o, g); return o; };
+      if (name === 'strings') {       // two saws ±8 cents, 5.3 Hz vibrato
+        const vb = vib(5.3, 12); add(osc('sawtooth'), -8, 0.13, vb); add(osc('sawtooth'), 8, 0.13, vb);
+      } else if (name === 'glass') {  // FM bell: modulator at 3.5 × the carrier, index 1.2
+        const c = add(osc('sine'), 0, 0.22), m = osc('sine', 440 * 3.5), dev = ctx.createGain();
+        dev.gain.value = 1.2 * 440 * 3.5; m.connect(dev).connect(c.frequency); depth.connect(m.detune);
+        pitch.push([m.detune, 0]); nodes.push(m, dev);
+      } else if (name === 'organ') {  // drawbar-like harmonics 1, 2, 3, 4, 6, 8
+        add(osc('organ'), 0, 0.16);
+      } else if (name === 'choir') {  // saws through the formants, a slow vocal vibrato
+        add(osc('sawtooth'), 0, 0.2, vib(4.8, 15));
+      } else {
+        add(osc('sawtooth'), 0, 0.2);
+      }
+      return { depth, sign, pitch, nodes };
+    });
+    if (!building && this.chord) { const c = this.chord; this.chordKey = null; this.setChord(c, true); }
+  }
+
+  // vowel 0 … 1: "oo" → "o" → "a" → "e" → "ee" (formant frequencies, Hz)
+  setVowel(x, t, instant = false) {
+    this.vowel = x;
+    if (!this.formants) return;
+    const V = [[300, 870, 2240], [450, 800, 2830], [730, 1090, 2440], [530, 1840, 2480], [270, 2290, 3010]];
+    const u = Math.max(0, Math.min(1, x)) * (V.length - 1), i = Math.min(V.length - 2, Math.floor(u)), f = u - i;
+    this.formants.forEach((flt, k) => { const hz = V[i][k] * (1 - f) + V[i + 1][k] * f;
+      instant ? flt.frequency.setValueAtTime(hz, t) : flt.frequency.setTargetAtTime(hz, t, 0.08); });
   }
 
   impulse() {   // same recipe as synths.reverb: noise · e^{-t/0.35}, 1.6 s, smoothed, unit energy
@@ -137,7 +192,7 @@ export class Engine {
     this.chordKey = sig; this.chord = chord;
     const t = this.ctx.currentTime, set = (param, v, tau) =>
       instant ? param.setValueAtTime(v, t) : param.setTargetAtTime(v, t, tau);
-    this.voices.forEach((v, i) => set(v.o.detune, cents(this.chord.voices[i]), 0.25));
+    this.voices.forEach((v, i) => v.pitch.forEach(([param, off]) => set(param, cents(this.chord.voices[i]) + off, 0.25)));
     this.res.forEach(r => set(r.f.detune, cents(this.chord.voices[r.v] + r.o), 0.25));
     set(this.bc.detune, cents(this.chord.bass), 0.12);
     set(this.bm.detune, cents(this.chord.bass), 0.12);
@@ -151,6 +206,8 @@ export class Engine {
     const sx = x => (mirror ? 1 - x : x) * 2 - 1;          // screen x → pan −1…1
     const set = (param, k, scale = 1) => this.ar(param, scale * v[k], t, dest[k].att, dest[k].rel);
     set(this.pamp.gain, 'pad.level');
+    set(this.inst.gain, 'inst.level');
+    if (this.formants) this.setVowel(v['pad.vowel'], t);
     set(this.plp.frequency, 'pad.bright');
     this.voices.forEach(o => this.ar(o.depth.gain, o.sign * v['pad.detune'], t, dest['pad.detune'].att, dest['pad.detune'].rel));
     set(this.bamp.gain, 'bass.level', 0.2);
