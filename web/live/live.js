@@ -5,6 +5,7 @@ import { Engine } from './audio.js';
 import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapping.js';
 import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
+import { Recorder } from './recorder.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -20,7 +21,7 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
-const bounce = new Bounce(), hands = new Hands();
+const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
@@ -101,7 +102,7 @@ async function start() {
     applyMix(); applySens();
     watchAudio();
     running = true; $('hint').hidden = true; $('badge').hidden = false;
-    $('go').textContent = 'Stop'; $('go').disabled = false;
+    $('go').textContent = 'Stop'; $('go').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
   } catch (e) {
     status('could not start: ' + e.message); $('go').disabled = false;
@@ -109,6 +110,8 @@ async function start() {
 }
 
 async function stop() {
+  if (recorder.active) await toggleRecord();
+  $('rec').disabled = true;
   running = false;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
@@ -263,6 +266,7 @@ function draw() {
     if (n > 160 / s) { dx *= 160 / s / n; dy *= 160 / s / n; }
     if (n > 4) line(q[0], q[1], q[0] + dx, q[1] + dy);
   });
+  if ($('sphereShow').value !== 'off') drawSphere(f, s);
   // hands: landmarks, and each hand's state
   for (const side of ['L', 'R']) {
     const h = hands[side]; if (!h.seen || !h.lm) continue;
@@ -324,6 +328,39 @@ function drawRegions(r) {
   g.fillStyle = DEG[r.rule] || '#eee';
   g.beginPath(); g.arc(hb[0], hb[1], 7 / s, 0, 7); g.fill();
 }
+// the sphere between the hands: a glowing ball, radius = half the hands'
+// distance, flickering with energy and throwing sparks that rise like fire
+let sparks = [], sparkT = performance.now();
+function drawSphere(f, s) {
+  const c = f.sphereC, R = f.sphereR, now = performance.now(), dt = Math.min(0.1, (now - sparkT) / 1000);
+  sparkT = now;
+  if (!c || R < 2 || f.sphere <= 0) { sparks = []; return; }
+  const e = f.energy, style = $('sphereShow').value;
+  const fl = 1 + 0.05 * Math.sin(now / 45) + 0.035 * Math.sin(now / 23 + 1) + 0.08 * e * Math.sin(now / 11);
+  const r = Math.max(4 / s, R * fl);
+  const col = style === 'light' ? hexRgb(DEG[follower.chord().degree] || '#ffffff') : null;
+  const stops = col ? [[0, `rgba(255,255,255,.95)`], [0.3, `rgba(${col},.75)`], [0.75, `rgba(${col},.3)`], [1, `rgba(${col},0)`]]
+                    : [[0, 'rgba(255,250,225,.95)'], [0.3, 'rgba(255,200,90,.8)'], [0.65, 'rgba(255,100,30,.45)'], [1, 'rgba(190,30,10,0)']];
+  g.save(); g.globalCompositeOperation = 'lighter';
+  const gr = g.createRadialGradient(c[0], c[1], 0, c[0], c[1], r * 1.25);
+  for (const [o, cl] of stops) gr.addColorStop(o, cl);
+  g.fillStyle = gr; g.beginPath(); g.arc(c[0], c[1], r * 1.25, 0, 7); g.fill();
+  g.strokeStyle = col ? `rgba(${col},.55)` : 'rgba(255,170,70,.5)'; g.lineWidth = 1.5 / s;
+  g.beginPath(); g.arc(c[0], c[1], r, 0, 7); g.stroke();
+  // sparks from the surface, more with energy; fire rises, light drifts
+  const n = Math.round(1 + 8 * e + 6 * f.sphere);
+  for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, sp = (40 + 160 * Math.random()) * (0.4 + e) / s;
+    sparks.push({ x: c[0] + r * Math.cos(a), y: c[1] + r * Math.sin(a), vx: sp * Math.cos(a), vy: sp * Math.sin(a) - (col ? 0 : 60 / s),
+                  life: 0.4 + 0.5 * Math.random(), age: 0 }); }
+  sparks = sparks.filter(p => (p.age += dt) < p.life).slice(-300);
+  for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= (col ? 0 : 120 / s) * dt;
+    const a = 1 - p.age / p.life;
+    g.fillStyle = col ? `rgba(${col},${0.8 * a})` : `rgba(255,${Math.round(140 + 100 * a)},60,${0.85 * a})`;
+    g.beginPath(); g.arc(p.x, p.y, (1 + 2.5 * a) / s, 0, 7); g.fill(); }
+  g.restore();
+}
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
+
 function line(x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
 
 // ── meters and status ───────────────────────────────────────────────
@@ -462,6 +499,10 @@ $('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!
   try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
         mapChanged(); } catch (e) { status('could not read that mapping'); } };
 $('drumMode').value = drumMode;
+$('timbre').value = store.get('timbre', 'saw'); engine.timbre = $('timbre').value;
+$('timbre').onchange = () => { store.set('timbre', $('timbre').value); engine.setTimbre($('timbre').value); };
+$('sphereShow').value = store.get('sphereShow', 'fire');
+$('sphereShow').onchange = () => store.set('sphereShow', $('sphereShow').value);
 $('syncOff').value = store.get('syncOff', 0); $('syncV').textContent = $('syncOff').value + ' ms';
 $('syncOff').oninput = () => { store.set('syncOff', +$('syncOff').value); $('syncV').textContent = $('syncOff').value + ' ms'; };
 $('accent').value = store.get('accent', 'down'); $('accent').onchange = () => store.set('accent', $('accent').value);
@@ -517,6 +558,7 @@ $('file').onchange = () => { if (running) openFile(); };
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
   if (e.key === ' ') { e.preventDefault(); running ? stop() : start(); }
+  else if (e.key === 'r') { if (running) toggleRecord(); }
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {}); }
@@ -537,3 +579,28 @@ function handReadout() {
   $('handTxt').textContent = `${one(hands.L, 'left')} · ${one(hands.R, 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
     (frozen ? ' · chord held' : '') + (gestureLog ? `\nlast: ${gestureLog}` : '');
 }
+
+// ── recording ───────────────────────────────────────────────────────
+async function toggleRecord() {
+  if (!recorder.active) {
+    try {
+      const type = recorder.start({ engine, video: v, overlay: cv, mirror,
+        audioOnly: $('recWhat').value === 'audio',
+        label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
+      $('rec').classList.add('on'); $('rec').textContent = '■ Stop recording'; $('recDot').hidden = false;
+      status('recording ' + type.split(';')[0]);
+      recTick();
+    } catch (e) { status('could not record: ' + e.message); }
+  } else {
+    const r = await recorder.stop();
+    $('rec').classList.remove('on'); $('rec').textContent = '● Record'; $('recDot').hidden = true;
+    if (r) $('recMsg').textContent = `saved ${r.name} (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s) to your downloads`;
+  }
+}
+function recTick() {
+  if (!recorder.active) return;
+  const s = Math.floor(recorder.elapsed());
+  $('recDot').textContent = `● REC ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  setTimeout(recTick, 250);
+}
+$('rec').onclick = () => toggleRecord();
