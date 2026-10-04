@@ -1,0 +1,39 @@
+{
+  "excluded_cross_language_calls": [
+    {
+      "source": "synths_twofive",
+      "target": "web_vendor_katex_katex_min_p",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "synths.py",
+      "source_location": "L347",
+      "weight": 1.0
+    },
+    {
+      "source": "synths_twofive",
+      "target": "web_vendor_katex_katex_min_w",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "synths.py",
+      "source_location": "L390",
+      "weight": 1.0
+    },
+    {
+      "source": "synths_twofive",
+      "target": "web_vendor_katex_katex_min_s",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "synths.py",
+      "source_location": "L393",
+      "weight": 1.0
+    }
+  ],
+  "reason": "Same-name AST inference cannot establish calls across programming languages.",
+  "token_usage_available": false
+}
