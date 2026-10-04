@@ -31,6 +31,7 @@ Code only in git: clips go in `videos/`, everything generated lands in
 | `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
 | `IDEAS.md` | ideas not built yet |
+| `ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
 
 ---
 

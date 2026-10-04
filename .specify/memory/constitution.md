@@ -59,11 +59,77 @@ identify the operation and actionable cause rather than silently produce plausib
 CLI failures MUST return a nonzero exit status. Reproducibility and clear errors make maintenance
 possible beyond the original development machine.
 
-## Python and Project Constraints
+### VI. Local Work Until Explicit Authorization
 
-Python is the primary language for analysis and orchestration. Changes MUST use an explicitly
-documented Python version compatible with the required scientific and media dependencies.
-Browser or native integrations MUST preserve documented contracts with the Python pipeline.
+Project work, including source changes, documentation, commits, and generated artifacts, MUST
+remain local unless the user explicitly authorizes an external action. Agents MUST NOT push
+commits, publish or deploy work, upload project content, or create remote pull requests or issues
+without that authorization. Informing the user of a planned action does not itself authorize it.
+Authorization MUST apply only to the action and scope the user requested; permission to pull
+updates or make local commits does not authorize a push. This preserves the user's control over
+when project work leaves the local workspace.
+
+### VII. Task Status Records
+
+After each user-requested task, and before its final handoff, the agent MUST update `status.md`
+at the repository root. Each entry MUST identify the task, date, completion state, changes made,
+verification performed and its results, and any outstanding work or blockers. Existing task
+history MUST be preserved. A task is the actual unit of work requested by the user; individual
+commands and internal implementation steps MUST NOT receive separate task entries. Partial or
+blocked work MUST be recorded accurately rather than marked complete. This provides a persistent
+record of outcomes between sessions.
+
+### VIII. Graphify-First Codebase Navigation
+
+When searching or investigating the codebase, agents MUST consult the installed graphify skill
+and use the project's knowledge graph first when `graphify-out/graph.json` exists. Start with
+`graphify query "<question>"`; use `graphify path "<A>" "<B>"` for relationships and
+`graphify explain "<concept>"` for focused concepts. For broad navigation, agents MUST use
+`graphify-out/wiki/index.md` when available. Agents MUST use the resulting file locations to
+focus source reads and searches, and verify implementation details against the source before
+editing. Read `graphify-out/GRAPH_REPORT.md` only for broad architecture reviews or when scoped
+queries provide insufficient context. Dirty graph files MUST NOT be a reason to skip graphify.
+If the graph or tool is unavailable, the graph is the subject of a stale-output investigation,
+or the user explicitly requests another approach, agents MUST record the reason and use focused
+source searches. After modifying code, agents MUST run `graphify update .` to refresh the graph
+locally using AST extraction without API cost. This reduces unnecessary browsing while keeping
+codebase relationships available for future tasks.
+
+### IX. User Decisions on Design Dilemmas
+
+Whenever a design dilemma arises, agents MUST prompt the user with the competing options,
+their relevant tradeoffs, and a recommendation. Agents MUST wait for the user's decision before
+implementing work that depends on that choice; independent work may continue. A design dilemma
+is an unresolved choice between viable approaches with tradeoffs in architecture, behavior,
+user experience, interfaces, dependencies, or maintainability. Agents MUST NOT silently settle
+such a dilemma through an assumption. Previously supplied user decisions MUST be honored without
+asking for the same decision again. The chosen option and its rationale MUST be recorded in the
+relevant design documentation or task status entry. This keeps consequential design choices
+under the user's control.
+
+### X. Python First, Web Translation by Explicit Request
+
+New feature development MUST follow two separate stages. Stage 1 implements, runs, and validates
+the feature locally in Python, with its behavior, relevant interfaces, test evidence, and design
+decisions recorded. A Python server hosting JavaScript feature logic does not satisfy this stage.
+Stage 2 translates the validated behavior into the JavaScript web application only after the
+user explicitly requests that translation. Agents MUST NOT start a web port, modify web feature
+logic as part of the Python implementation, or treat successful Python validation, a roadmap,
+or a general implementation request as authorization to translate. A translation request MUST
+identify the feature or scope it authorizes; unrelated features remain in Stage 1. Before an
+authorized port, the plan MUST identify Python behavior to preserve and the browser-specific
+differences to verify. Completing a local web port does not authorize publishing or deployment.
+This separates experimentation from platform adaptation and avoids premature duplicate work.
+
+## Python and JavaScript Project Constraints
+
+The analysis and orchestration code uses Python; the web application uses JavaScript with HTML
+and CSS. Work in each area MUST use its established language. Python changes MUST use an
+explicitly documented Python version compatible with the required scientific and media
+dependencies. Python-specific requirements apply to Python code; browser JavaScript MUST use
+the web application's documented browser support and applicable tooling. Language-independent
+requirements for correctness, testing, boundaries, and documentation apply to both. Browser or
+native integrations MUST preserve documented contracts with the Python pipeline.
 
 Development MUST use an isolated Python environment. The project MUST document repeatable
 commands for tests, formatting, linting, and type checking; checks MUST be applied to changed
@@ -81,6 +147,14 @@ MUST declare setup requirements and fail with actionable guidance when unavailab
 Before implementation, each change MUST identify its intended behavior, affected contracts, and
 verification approach. Feature plans MUST assess compliance with these principles and identify
 any justified exceptions. Changes MUST remain focused on the stated requirement.
+
+Feature plans MUST separate Stage 1 local Python development from Stage 2 JavaScript translation.
+Without explicit user authorization for Stage 2, the active implementation scope MUST end at
+Python validation and its documentation. Any proposed web adaptation MUST remain deferred.
+
+Task handoff MUST include the required `status.md` update and a check that any external project
+action had explicit user authorization. Local completion MUST NOT imply permission to publish
+the result.
 
 Before merging or declaring implementation complete, the author MUST run the affected automated
 tests and configured formatting, lint, and type checks, and record the results. Changes to shared
@@ -114,4 +188,4 @@ Exceptions MUST record the affected rule, reason, risk, compensating verificatio
 condition or review date. The project maintainer MUST explicitly approve them; exceptions do not
 silently amend the constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-09-30
+**Version**: 1.3.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-04

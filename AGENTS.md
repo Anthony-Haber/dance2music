@@ -1,3 +1,22 @@
+# Project Context
+
+dance2music turns dance and body/hand movement into music. The Python pipeline tracks pose with
+MediaPipe, cleans motion, extracts kinematics and Laban Efforts, chooses harmony, and renders sound
+and visual comparisons. The existing JavaScript app in `web/live/` uses a camera or video to drive
+pose/hand gestures, chord selection, Web Audio synthesis, and a visible ball between the hands.
+`live.py` serves that app locally; its live feature logic currently runs in JavaScript.
+
+Anthony's vision is an expressive musical instrument with a 3D ball, gesture-controlled chord
+roots and qualities, three-move chord spells, beginner learning games, and single-note MIDI chord
+triggers sent to Ableton's Expressive Chords through a virtual MIDI cable.
+
+- Read `README.md` for the existing pipeline and commands.
+- Read `ANTHONY_IDEAS.md` for the vision, priorities, accepted decisions, and possible design flaws.
+- Follow `.specify/memory/constitution.md` for project governance. Develop and validate new features
+  locally in Python first; translate them into the JavaScript website only on explicit user request.
+- Keep project work local until explicitly authorized otherwise, ask the user about design dilemmas,
+  and update `status.md` after each user-requested task.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
