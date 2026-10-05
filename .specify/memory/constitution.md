@@ -121,6 +121,19 @@ authorized port, the plan MUST identify Python behavior to preserve and the brow
 differences to verify. Completing a local web port does not authorize publishing or deployment.
 This separates experimentation from platform adaptation and avoids premature duplicate work.
 
+### XI. Compact After Each Completed Feature
+
+After completing each feature-sized task, such as one implemented idea in `ANTHONY_IDEAS.md`,
+agents MUST run `/compact` before starting the next feature. Individual commands, tests,
+implementation steps, and checklist items do not each trigger compaction. Before compaction,
+agents MUST save the completed feature's outcome, verification, decisions, and outstanding work
+in `status.md` and relevant feature documentation so work can resume accurately.
+
+Agents MUST use the session's supported compaction command when available. If the session does
+not expose a way to invoke `/compact`, agents MUST state that limitation and ask the user to run
+the command; printing `/compact` or writing a summary MUST NOT be reported as executed compaction.
+This keeps conversation context focused between completed features without losing project state.
+
 ## Python and JavaScript Project Constraints
 
 The analysis and orchestration code uses Python; the web application uses JavaScript with HTML
@@ -188,4 +201,4 @@ Exceptions MUST record the affected rule, reason, risk, compensating verificatio
 condition or review date. The project maintainer MUST explicitly approve them; exceptions do not
 silently amend the constitution.
 
-**Version**: 1.3.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-04
+**Version**: 1.4.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05

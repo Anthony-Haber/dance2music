@@ -21,6 +21,7 @@ The initial Python prototype will reuse Joseph's glowing 2D ball design; depth/3
   locally in Python first; translate them into the JavaScript website only on explicit user request.
 - Keep project work local until explicitly authorized otherwise, ask the user about design dilemmas,
   and update `status.md` after each user-requested task.
+- Add or update concise usage instructions in `FEATURE_TUTORIALS.md` for each implemented feature.
 
 ## graphify
 

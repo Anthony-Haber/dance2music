@@ -144,3 +144,51 @@
 - Outstanding: Anthony's live gesture/threshold and listening review. 3D, spells, games, MIDI and
   JavaScript translation remain separate future work. Prior dated graph snapshots and caches
   unrelated to this resume remain unstaged; no historical task records were removed.
+
+## 2026-10-05 - Mark Anthony's ideas 0–2 and remaining work
+
+- State: Complete documentation update.
+- Task: Confirm whether ideas 0, 1 and 2 were implemented, mark their completed scope,
+  and state what still needs fixing.
+- Changes: Added an explicit completion checklist and status to each idea in ANTHONY_IDEAS.md.
+  Marked root lock, the approved temporary 2D/split ball and the initial 72-chord catalogue
+  complete for the local Python prototype. Replaced superseded unanswered questions with
+  the implemented choices. Listed label overlap, live recognition/timing trials, distant or
+  occluded hand assessment and subjective listening as remaining cleanup/review. Kept true
+  3D and other unbuilt additions explicitly deferred; recorded the validation fixes already done.
+- Verification: Consulted graphify and the current spec, decisions, completed tasks and evidence.
+  Matched completion claims to local implementation commit 6acfa55 and its recorded 28 passing
+  tests. Reviewed the Markdown diff and whitespace. No executable behavior changed, so new tests
+  and a code graph refresh were not required.
+- Local state: Documentation edits remain local and uncommitted on anthony-explorations.
+  Existing graph snapshot/cache changes were preserved. No external actions occurred.
+- Outstanding: The listed performer acceptance and visual cleanup; deferred future features
+  are not represented as completed. No documentation work remains for this request.
+
+## 2026-10-05 - Create concise feature tutorials
+
+- State: Complete.
+- Task: Write a concise Markdown guide explaining how to use each implemented feature.
+- Changes: Created FEATURE_TUTORIALS.md with launch/demo commands, ideas 0–2 controls,
+  the six quality gestures, save/replay/video commands and reset/recovery/quit instructions.
+  Linked it from README and added project guidance to maintain it for future implemented features.
+- Verification: Consulted graphify and checked commands, timings and gestures against the
+  quickstart and current harmony mappings. Checked local links and Markdown whitespace.
+  No executable behavior changed; application tests and a code graph refresh were not required.
+- Local state: Documentation changes remain local and uncommitted on anthony-explorations.
+  Prior documentation and graph changes were preserved. No external actions occurred.
+- Outstanding: None for this documentation request; existing performer review and deferred
+  feature work remain as recorded in ANTHONY_IDEAS.md.
+
+## 2026-10-05 - Require compaction after completed features
+
+- State: Constitution amendment complete; automatic command invocation unavailable here.
+- Task: Record the user's requirement to run `/compact` after each feature-sized task,
+  such as one implemented Anthony idea.
+- Changes: Added principle XI and bumped the constitution from 1.3.0 to 1.4.0. Require
+  persistent handoff notes before compaction; exclude individual commands and checklist steps.
+  Record unavailable command execution accurately and ask the user to invoke it when needed.
+- Verification: Resolved the active constitution template; no extension hooks are configured.
+  Checked version, dates, placeholders and whitespace. No executable behavior changed.
+- Local state: Documentation remains local and uncommitted; prior work is preserved.
+- Outstanding: This session has no callable `/compact` capability. No compaction was executed.

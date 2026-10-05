@@ -47,6 +47,7 @@ gestures, headless replay, local exports and checks; [decisions](specs/001-antho
 records provisional choices for Anthony's review. True 3D and JavaScript translation remain deferred.
 The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
 model/device checks, measured latency and the remaining performer/listening review.
+For short feature instructions, see [Feature Tutorials](FEATURE_TUTORIALS.md).
 
 ---
 

@@ -31,7 +31,56 @@ The original vision and design risks below remain relevant. Human gesture/listen
 acceptance is still pending; 3D, extra finger-pattern modes, spells, game and MIDI
 remain future work. The website has not been translated or changed by this feature.
 
-| Area | Existing capability | Proposed direction |
+## Completion checklist: ideas 0–2
+
+Checked means the agreed **local Python prototype scope is implemented and tested**.
+It does not mean the full future vision or performer acceptance is complete.
+
+- [x] **0 — Persistent fist root lock:** either hand toggles root-only lock;
+  reopening rearms, quality remains editable, and nearby split takes priority.
+- [x] **1 — Agreed temporary 2D ball and basic two-ball mode:** Joseph-inspired
+  fire/light glow, wrist geometry, sparks, persistent nearby-fist split and M merge.
+  True 3D remains deferred as agreed.
+- [x] **2 — Initial musical catalogue:** all 12 roots × six absolute qualities
+  (72 chords), bounded voice leading, visible chord feedback and local synthesis.
+
+### What still needs fixing or review
+
+There are no known failing automated feature checks in the recorded validation.
+The following concrete limitations and acceptance work remain:
+
+- [ ] **Visual cleanup:** root and hand labels can overlap the glow or each other.
+- [ ] **Live gesture validation:** test all quality signs, fist lock/unlock, nearby
+  split and recovery with a performer. The camera smoke detected no hands/body;
+  it verified capture/inference, not gesture usability.
+- [ ] **Timing and proximity tuning after that trial:** review the approximately
+  0.60-second fist response, 0.35-second dwell, 0.20-second rearm/gap limits and
+  0.6-torso split distance. Their current values are provisional.
+- [ ] **Distant/occluded hands:** assess recognition when hands are small, close
+  together or crossing. The tracker uses full-frame recognition; the browser's
+  far-hand crop mode has not been adapted to Python.
+- [ ] **Musical feel and listening:** review local synth sound/volume, the dense
+  12-sector root ring and the right-hand quality priority. Opening with Open_Palm
+  selects major, so reopening can change a minor chord back to major; this is the
+  current documented mapping, not a failing test.
+
+**Deferred additions, rather than fixes to implemented scope:** true 3D/depth,
+animator assets, rotation/hold-time effects, extra finger-pattern modes, a merge
+gesture, broader chord vocabulary, and separate musical roles for the two balls.
+Ableton MIDI, spells and the game remain ideas 6, 3 and 4. JavaScript translation
+still requires an explicit request.
+
+### Fixes already completed during validation
+
+- [x] Corrected WAV chord/gain timing across irregular frame gaps.
+- [x] Made the visible dead-zone guide match configured root selection.
+- [x] Added line-specific errors for malformed replay observations.
+- [x] Rejected nonfinite tracking confidence and invalid synth sample rates.
+
+Evidence: [28 passing tests and device/replay checks](specs/001-anthony-instrument/evidence.md).
+Implementation commit: `6acfa55` (local).
+
+| Area | Original pipeline/browser capability | Anthony's direction |
 | --- | --- | --- |
 | Python | Recorded-video pose/motion analysis, harmony, sound rendering, MIDI-file workflows | Local live prototype for the new interactions and MIDI output |
 | Live web app | Camera/video tracking, hand recognition, six chord regions, finger-count selection, synthesis and recording | Later translation of validated Python behavior, on explicit request |
@@ -76,6 +125,10 @@ design supersedes the earlier decision to start with estimated-depth 3D. The fut
 
 ## 0. First task: persistent fist root lock
 
+**Status: DONE for the local Python prototype.** Implemented in
+[controller.py](instrument/controller.py), with timing, dropout and split-conflict
+tests. Live timing/recognition review remains on the checklist above.
+
 **Vision.** Turn the existing fist hold into a toggle. The performer can select a root using a
 region or another root-selection method, close a fist to keep that root, then move freely without
 quadrant/region changes changing it. Closing a fist again unlocks root selection.
@@ -100,14 +153,23 @@ the ball must not also change the root-lock state.
 - Tracking loss, restart, and a missed unlock can leave an unexpected state. Recovery and a clear
   reset action must be specified before live use.
 
-**Questions for design.** Which hand toggles the lock? How does the detector rearm? On unlock,
-does a fresh dwell begin? Which reset action and tracking-loss policy are appropriate?
+**Current answers.** Either hand toggles after stable closure and arbitration;
+a recognized non-fist held for 0.20 seconds rearms. Unlock starts fresh root dwell.
+Tracking loss cancels pending actions while retaining chord/lock/split and muting
+sound; a reacquired fist must reopen before toggling. R resets to C major,
+unlocked and merged. The timings remain provisional pending performer review.
 
 **Python validation direction.** Replay timestamped hand and root-selection events: lock, reopen,
 move across regions, change quality, close again, and unlock. Include flicker, both-hand events,
 tracking loss, and split gestures. The accepted behavior must be deterministic before a web port.
 
 ## 1. A 3D ball between the hands, with two-ball modes
+
+**Status: DONE for the agreed temporary 2D Python scope; full 3D vision deferred.**
+Implemented glow, fire/light styles, energy flicker, bounded sparks, persistent
+hand-anchored split and keyboard M merge. Both balls share one chord and gain;
+splitting conserves their combined area and does not double loudness. Label
+placement needs cleanup; tracking usability still needs a performer trial.
 
 **Vision.** Evolve the central ball into a 3D object the performer manipulates. In some modes,
 finger patterns split it into two balls, one associated with each hand. The exact nearby-fist
@@ -126,10 +188,13 @@ The normalized sphere-size source can drive whole-instrument gain. The `Sphere` 
 cubic size curve; `Sphere, gentle` uses exponent 1.5; `Sphere + vowel` also maps hands' height to
 the choir vowel and sphere size to pad brightness. The same commit added five pad timbres.
 
-**Reuse boundary.** Reuse the visual concept, wrist geometry, and useful mappings. Its renderer
-is browser JavaScript using Canvas 2D, so the Python prototype needs a Python rendering adaptation;
-running `live.py` is not that adaptation. The current ball has no true depth control, split/merge
-state, rotation-driven effect, hold-duration color behavior, or animator-asset interface.
+**Reuse boundary.** The visual concept, wrist geometry and spacing-to-gain mapping
+have been adapted in [visuals.py](instrument/visuals.py) and
+[controller.py](instrument/controller.py). Joseph's original renderer is browser
+JavaScript using Canvas 2D; running `live.py` is not the Python adaptation. His
+original browser ball has no split/merge state. The Python version adds that state
+but still has no true depth control, rotation-driven effect, hold-duration color
+behavior or animator-asset interface.
 
 For later planning, keep musical/gesture state independent of the drawing method so a future
 3D renderer can display the same instrument behavior. Depth-dependent interactions will still need
@@ -177,15 +242,22 @@ and which renderer/asset format supports those controls when the 3D stage is req
 
 ## 2. Musician-oriented harmony: roots and qualities
 
+**Status: DONE for the initial 72-chord Python catalogue.** Implemented in
+[harmony.py](instrument/harmony.py) and [audio.py](instrument/audio.py). Automated
+tests cover all 5,184 starting-to-target chord combinations. Live gesture and
+subjective listening review remain; broader vocabulary and Ableton output are deferred.
+
 **Vision.** Make harmonic actions musically understandable and avoid being trapped in the current
 fixed palette. From whichever chord is active, the performer should have a path to every chord
 in the chosen musical vocabulary. Select a root through regions or another agreed method;
 use gestures to change its quality independently.
 
-Anthony's examples include G becoming minor, minor-major, or dominant. A possible interpretation
-is G -> Gm -> Gm(maj7) -> G7; the meaning of "minor-major" and the exact extensions/voicings
-must be confirmed before that catalogue is implemented. Root locking allows these transformations
-without accidental region-driven root changes.
+Anthony's examples include G becoming minor, minor-major or dominant. The initial
+catalogue now implements major, minor, dominant seventh, major seventh, minor
+seventh and minor-major seventh. "Minor-major" means m(maj7) in this scope, so
+G -> Gm -> Gm(maj7) -> G7 is reachable through absolute quality gestures while
+root locking prevents region-driven root changes. Other extensions/inversions
+and plugin voicings remain outside the agreed initial catalogue.
 
 **Possible design flaws.**
 
@@ -202,9 +274,11 @@ without accidental region-driven root changes.
 - Broad harmonic access conflicts with a small, memorable gesture vocabulary. Expert freedom and
   beginner restrictions may need distinct modes rather than a single crowded mapping.
 
-**Questions for design.** What is the initial root/quality catalogue? How are roots beyond the
-current regions reached? Are quality gestures absolute selections or relative transformations?
-How are missing Expressive Chords mappings reported?
+**Current answers.** Twelve chromatic root sectors and six absolute quality gestures
+provide the initial catalogue; Open_Palm major, Pointing_Up minor, Victory 7,
+Thumb_Up maj7, Thumb_Down m7 and ILoveYou m(maj7). The right model-labeled hand
+wins conflicting quality selections. Wider catalogues, alternative root navigation
+and missing Expressive Chords mapping behavior require later design decisions.
 
 ## 3. Chords as three-move magic spells
 
