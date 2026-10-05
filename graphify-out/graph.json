@@ -1938,7 +1938,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "c_code_github_serious_dance2music_instrument_models_frame",
-      "community": 19,
+      "community": 23,
       "norm_label": "frame"
     },
     {
@@ -1988,7 +1988,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "c_code_github_serious_dance2music_instrument_models_output",
-      "community": 19,
+      "community": 120,
       "norm_label": "output"
     },
     {
@@ -2018,7 +2018,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "c_code_github_serious_dance2music_instrument_replay_py",
-      "community": 65,
+      "community": 120,
       "norm_label": "replay.py"
     },
     {
@@ -2058,7 +2058,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "c_code_github_serious_dance2music_instrument_replay_rationale_1",
-      "community": 65,
+      "community": 120,
       "norm_label": "repeatable scripted frames and jsonl replay, independent of camera/models."
     },
     {
@@ -2082,13 +2082,43 @@
       "norm_label": "jsonl: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy."
     },
     {
+      "label": "setup_models.py",
+      "file_type": "code",
+      "source_file": "instrument/setup_models.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "instrument_setup_models",
+      "community": 127,
+      "norm_label": "setup_models.py"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "instrument/setup_models.py",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "instrument_setup_models_main",
+      "community": 127,
+      "norm_label": "main()"
+    },
+    {
+      "label": "Explicitly fetch public MediaPipe models; never called by instrument imports.",
+      "file_type": "rationale",
+      "source_file": "instrument/setup_models.py",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "instrument_setup_models_rationale_1",
+      "community": 127,
+      "norm_label": "explicitly fetch public mediapipe models; never called by instrument imports."
+    },
+    {
       "label": "tracking.py",
       "file_type": "code",
       "source_file": "instrument/tracking.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py",
-      "community": 17,
+      "id": "instrument_tracking",
+      "community": 65,
       "norm_label": "tracking.py"
     },
     {
@@ -2097,8 +2127,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_observations",
-      "community": 17,
+      "id": "instrument_tracking_observations",
+      "community": 65,
       "norm_label": "observations()"
     },
     {
@@ -2107,8 +2137,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py_any",
-      "community": 148,
+      "id": "instrument_tracking_py_any",
+      "community": 65,
       "norm_label": "any"
     },
     {
@@ -2118,7 +2148,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "hand",
-      "community": 17,
+      "community": 65,
       "norm_label": "hand"
     },
     {
@@ -2127,8 +2157,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L58",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry",
-      "community": 17,
+      "id": "instrument_tracking_torso_geometry",
+      "community": 65,
       "norm_label": "torso_geometry()"
     },
     {
@@ -2137,8 +2167,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py_point",
-      "community": 151,
+      "id": "instrument_tracking_py_point",
+      "community": 65,
       "norm_label": "point"
     },
     {
@@ -2147,7 +2177,7 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L78",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_tracker",
+      "id": "instrument_tracking_tracker",
       "community": 23,
       "norm_label": "tracker"
     },
@@ -2157,7 +2187,7 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L81",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_tracker_init",
+      "id": "instrument_tracking_tracker_init",
       "community": 23,
       "norm_label": ".__init__()"
     },
@@ -2167,8 +2197,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py_path",
-      "community": 150,
+      "id": "instrument_tracking_py_path",
+      "community": 23,
       "norm_label": "path"
     },
     {
@@ -2177,8 +2207,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L117",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_tracker_detect",
-      "community": 17,
+      "id": "instrument_tracking_tracker_detect",
+      "community": 65,
       "norm_label": ".detect()"
     },
     {
@@ -2187,8 +2217,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py_ndarray",
-      "community": 149,
+      "id": "instrument_tracking_py_ndarray",
+      "community": 65,
       "norm_label": "ndarray"
     },
     {
@@ -2197,8 +2227,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_py_uint8",
-      "community": 152,
+      "id": "instrument_tracking_py_uint8",
+      "community": 65,
       "norm_label": "uint8"
     },
     {
@@ -2207,7 +2237,7 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L152",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_tracker_close",
+      "id": "instrument_tracking_tracker_close",
       "community": 23,
       "norm_label": ".close()"
     },
@@ -2217,8 +2247,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_rationale_1",
-      "community": 17,
+      "id": "instrument_tracking_rationale_1",
+      "community": 65,
       "norm_label": "mediapipe boundary. models must already exist; all detection is local."
     },
     {
@@ -2227,8 +2257,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_rationale_15",
-      "community": 17,
+      "id": "instrument_tracking_rationale_15",
+      "community": 65,
       "norm_label": "convert tasks results to pixel coordinates, rejecting ambiguous identities."
     },
     {
@@ -2237,8 +2267,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L59",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_rationale_59",
-      "community": 17,
+      "id": "instrument_tracking_rationale_59",
+      "community": 65,
       "norm_label": "reliable shoulder/hip geometry, in pixels; absent pose returns none."
     },
     {
@@ -2247,7 +2277,7 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L79",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_rationale_79",
+      "id": "instrument_tracking_rationale_79",
       "community": 23,
       "norm_label": "synchronous video-mode tasks with strict monotonic timestamps and cleanup."
     },
@@ -2257,8 +2287,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L118",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_tracking_rationale_118",
-      "community": 17,
+      "id": "instrument_tracking_rationale_118",
+      "community": 65,
       "norm_label": "image_bgr: (h,w,3) uint8 mirrored image; timestamps are elapsed seconds."
     },
     {
@@ -2610,36 +2640,6 @@
       "id": "motion_rationale_215",
       "community": 12,
       "norm_label": "pool the clips (same dancer, same studio) so 'strong' means the same in each."
-    },
-    {
-      "label": "setup_instrument_models.py",
-      "file_type": "code",
-      "source_file": "scripts/setup_instrument_models.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_scripts_setup_instrument_models_py",
-      "community": 128,
-      "norm_label": "setup_instrument_models.py"
-    },
-    {
-      "label": "main()",
-      "file_type": "code",
-      "source_file": "scripts/setup_instrument_models.py",
-      "source_location": "L25",
-      "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_scripts_setup_instrument_models_main",
-      "community": 128,
-      "norm_label": "main()"
-    },
-    {
-      "label": "Explicitly fetch public MediaPipe models; never called by instrument imports.",
-      "file_type": "rationale",
-      "source_file": "scripts/setup_instrument_models.py",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_scripts_setup_instrument_models_rationale_1",
-      "community": 128,
-      "norm_label": "explicitly fetch public mediapipe models; never called by instrument imports."
     },
     {
       "label": "sonify.py",
@@ -3217,7 +3217,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_py",
+      "id": "tests_test_instrument_cli",
       "community": 65,
       "norm_label": "test_instrument_cli.py"
     },
@@ -3227,7 +3227,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L23",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
+      "id": "tests_test_instrument_cli_clitests",
       "community": 65,
       "norm_label": "clitests"
     },
@@ -3237,7 +3237,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
+      "id": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "community": 23,
       "norm_label": ".test_exported_audio_changes_at_observation_time_after_irregular_gap()"
     },
@@ -3247,7 +3247,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L41",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
+      "id": "tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
       "community": 65,
       "norm_label": ".test_malformed_replay_has_line_context()"
     },
@@ -3257,8 +3257,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L53",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
-      "community": 17,
+      "id": "tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
+      "community": 65,
       "norm_label": ".test_tracking_adapter_rejects_nonfinite_confidence()"
     },
     {
@@ -3267,7 +3267,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L73",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
+      "id": "tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
       "community": 65,
       "norm_label": ".test_headless_demo_writes_events_audio_and_frames_without_models()"
     },
@@ -3277,7 +3277,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L107",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
+      "id": "tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
       "community": 65,
       "norm_label": ".test_replay_bad_line_and_missing_model_fail_cleanly()"
     },
@@ -3287,8 +3287,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
-      "community": 17,
+      "id": "tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
+      "community": 65,
       "norm_label": ".test_tracking_adapter_drops_duplicates_and_missing_body()"
     },
     {
@@ -3297,7 +3297,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L143",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_model_setup_rejects_corrupt_existing_file_without_network",
+      "id": "tests_test_instrument_cli_clitests_test_model_setup_rejects_corrupt_existing_file_without_network",
       "community": 65,
       "norm_label": ".test_model_setup_rejects_corrupt_existing_file_without_network()"
     },
@@ -3307,7 +3307,7 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_cli_rationale_1",
+      "id": "tests_test_instrument_cli_rationale_1",
       "community": 65,
       "norm_label": "native cli contracts, replay exports, tracking adapters and failure messages."
     },
@@ -3578,7 +3578,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "c_code_github_serious_dance2music_tests_test_instrument_visuals_visualtests_test_midpoint_radius_and_split_area_gain",
-      "community": 19,
+      "community": 23,
       "norm_label": ".test_midpoint_radius_and_split_area_gain()"
     },
     {
@@ -4228,7 +4228,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_live_features",
-      "community": 7,
+      "community": 160,
       "norm_label": "features.js"
     },
     {
@@ -4238,7 +4238,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_live_features_j",
-      "community": 5,
+      "community": 160,
       "norm_label": "j"
     },
     {
@@ -4248,7 +4248,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_live_features_parts",
-      "community": 7,
+      "community": 160,
       "norm_label": "parts"
     },
     {
@@ -4258,7 +4258,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_live_features_part_j",
-      "community": 7,
+      "community": 160,
       "norm_label": "part_j"
     },
     {
@@ -4268,7 +4268,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_live_features_edges",
-      "community": 7,
+      "community": 160,
       "norm_label": "edges"
     },
     {
@@ -4278,7 +4278,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_live_features_tracked",
-      "community": 7,
+      "community": 160,
       "norm_label": "tracked"
     },
     {
@@ -4288,7 +4288,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_live_features_ref",
-      "community": 7,
+      "community": 160,
       "norm_label": "ref"
     },
     {
@@ -4308,7 +4308,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "web_live_features_lp",
-      "community": 7,
+      "community": 160,
       "norm_label": "lp()"
     },
     {
@@ -4328,7 +4328,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "web_live_features_polyderiv",
-      "community": 7,
+      "community": 128,
       "norm_label": "polyderiv()"
     },
     {
@@ -4338,7 +4338,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "web_live_features_oneeuro",
-      "community": 7,
+      "community": 160,
       "norm_label": "oneeuro"
     },
     {
@@ -4348,7 +4348,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "web_live_features_oneeuro_constructor",
-      "community": 7,
+      "community": 160,
       "norm_label": ".constructor()"
     },
     {
@@ -4358,7 +4358,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "web_live_features_oneeuro_filter",
-      "community": 7,
+      "community": 160,
       "norm_label": ".filter()"
     },
     {
@@ -4368,7 +4368,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "web_live_features_window",
-      "community": 7,
+      "community": 128,
       "norm_label": "window"
     },
     {
@@ -4378,7 +4378,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_live_features_window_constructor",
-      "community": 7,
+      "community": 128,
       "norm_label": ".constructor()"
     },
     {
@@ -4388,7 +4388,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "web_live_features_window_push",
-      "community": 7,
+      "community": 128,
       "norm_label": ".push()"
     },
     {
@@ -4398,7 +4398,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "web_live_features_window_mean",
-      "community": 7,
+      "community": 128,
       "norm_label": ".mean()"
     },
     {
@@ -4408,7 +4408,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "web_live_features_window_max",
-      "community": 7,
+      "community": 128,
       "norm_label": ".max()"
     },
     {
@@ -4418,7 +4418,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "web_live_features_window_pct",
-      "community": 7,
+      "community": 128,
       "norm_label": ".pct()"
     },
     {
@@ -4428,7 +4428,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "web_live_features_window_first",
-      "community": 7,
+      "community": 128,
       "norm_label": ".first()"
     },
     {
@@ -4588,7 +4588,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "web_live_hands_hands",
-      "community": 160,
+      "community": 67,
       "norm_label": "hands"
     },
     {
@@ -4598,7 +4598,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_live_hands_hands_constructor",
-      "community": 160,
+      "community": 67,
       "norm_label": ".constructor()"
     },
     {
@@ -4608,7 +4608,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "web_live_hands_hands_load",
-      "community": 160,
+      "community": 67,
       "norm_label": ".load()"
     },
     {
@@ -4618,7 +4618,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "web_live_hands_hands_detect",
-      "community": 160,
+      "community": 67,
       "norm_label": ".detect()"
     },
     {
@@ -4628,7 +4628,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "web_live_hands_hands_drawcrop",
-      "community": 160,
+      "community": 67,
       "norm_label": ".drawcrop()"
     },
     {
@@ -4638,7 +4638,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "web_live_hands_hands_pick",
-      "community": 160,
+      "community": 67,
       "norm_label": ".pick()"
     },
     {
@@ -4648,7 +4648,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "web_live_hands_hands_sources",
-      "community": 160,
+      "community": 67,
       "norm_label": ".sources()"
     },
     {
@@ -4658,7 +4658,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "web_live_hands_hands_total",
-      "community": 160,
+      "community": 67,
       "norm_label": ".total()"
     },
     {
@@ -4668,7 +4668,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "web_live_hands_hands_anyseen",
-      "community": 160,
+      "community": 67,
       "norm_label": ".anyseen()"
     },
     {
@@ -5078,7 +5078,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "web_live_live_loop",
-      "community": 20,
+      "community": 6,
       "norm_label": "loop()"
     },
     {
@@ -5128,7 +5128,7 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "web_live_live_gestureactions",
-      "community": 20,
+      "community": 6,
       "norm_label": "gestureactions()"
     },
     {
@@ -5358,7 +5358,7 @@
       "source_location": "L458",
       "_origin": "ast",
       "id": "web_live_live_rendermapping",
-      "community": 20,
+      "community": 6,
       "norm_label": "rendermapping()"
     },
     {
@@ -5368,7 +5368,7 @@
       "source_location": "L479",
       "_origin": "ast",
       "id": "web_live_live_mapchanged",
-      "community": 20,
+      "community": 6,
       "norm_label": "mapchanged()"
     },
     {
@@ -5428,7 +5428,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_live_mapping",
-      "community": 20,
+      "community": 6,
       "norm_label": "mapping.js"
     },
     {
@@ -5438,7 +5438,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_live_mapping_sources",
-      "community": 20,
+      "community": 6,
       "norm_label": "sources"
     },
     {
@@ -5448,7 +5448,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_live_mapping_dests",
-      "community": 20,
+      "community": 6,
       "norm_label": "dests"
     },
     {
@@ -5458,7 +5458,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "web_live_mapping_base",
-      "community": 20,
+      "community": 6,
       "norm_label": "base"
     },
     {
@@ -5468,7 +5468,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "web_live_mapping_defaults",
-      "community": 20,
+      "community": 6,
       "norm_label": "defaults()"
     },
     {
@@ -5478,7 +5478,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "web_live_mapping_presets",
-      "community": 20,
+      "community": 6,
       "norm_label": "presets"
     },
     {
@@ -5488,7 +5488,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "web_live_mapping_applypreset",
-      "community": 20,
+      "community": 6,
       "norm_label": "applypreset()"
     },
     {
@@ -5498,7 +5498,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "web_live_mapping_clip",
-      "community": 20,
+      "community": 6,
       "norm_label": "clip()"
     },
     {
@@ -5508,7 +5508,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "web_live_mapping_evaluate",
-      "community": 20,
+      "community": 6,
       "norm_label": "evaluate()"
     },
     {
@@ -5828,7 +5828,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_a",
-      "community": 18,
+      "community": 68,
       "norm_label": "a"
     },
     {
@@ -5838,7 +5838,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_a_constructor",
-      "community": 18,
+      "community": 68,
       "norm_label": ".constructor()"
     },
     {
@@ -5848,7 +5848,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_a_hasclass",
-      "community": 18,
+      "community": 68,
       "norm_label": ".hasclass()"
     },
     {
@@ -5868,7 +5868,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_a_tomarkup",
-      "community": 18,
+      "community": 68,
       "norm_label": ".tomarkup()"
     },
     {
@@ -5878,7 +5878,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_a_totext",
-      "community": 18,
+      "community": 68,
       "norm_label": ".totext()"
     },
     {
@@ -6078,7 +6078,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w",
-      "community": 127,
+      "community": 1,
       "norm_label": "w"
     },
     {
@@ -6088,7 +6088,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w_constructor",
-      "community": 127,
+      "community": 1,
       "norm_label": ".constructor()"
     },
     {
@@ -6098,7 +6098,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w_setattribute",
-      "community": 127,
+      "community": 1,
       "norm_label": ".setattribute()"
     },
     {
@@ -6108,7 +6108,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w_hasclass",
-      "community": 127,
+      "community": 1,
       "norm_label": ".hasclass()"
     },
     {
@@ -6118,7 +6118,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w_tonode",
-      "community": 127,
+      "community": 1,
       "norm_label": ".tonode()"
     },
     {
@@ -6128,7 +6128,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_w_tomarkup",
-      "community": 127,
+      "community": 1,
       "norm_label": ".tomarkup()"
     },
     {
@@ -6298,7 +6298,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k",
-      "community": 156,
+      "community": 18,
       "norm_label": "k"
     },
     {
@@ -6308,7 +6308,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_constructor",
-      "community": 156,
+      "community": 18,
       "norm_label": ".constructor()"
     },
     {
@@ -6318,7 +6318,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_tonode",
-      "community": 156,
+      "community": 18,
       "norm_label": ".tonode()"
     },
     {
@@ -6328,7 +6328,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_tomarkup",
-      "community": 156,
+      "community": 18,
       "norm_label": ".tomarkup()"
     },
     {
@@ -6338,7 +6338,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q",
-      "community": 159,
+      "community": 121,
       "norm_label": "q"
     },
     {
@@ -6348,7 +6348,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_constructor",
-      "community": 159,
+      "community": 121,
       "norm_label": ".constructor()"
     },
     {
@@ -6358,7 +6358,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_tonode",
-      "community": 159,
+      "community": 121,
       "norm_label": ".tonode()"
     },
     {
@@ -6368,7 +6368,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_tomarkup",
-      "community": 159,
+      "community": 121,
       "norm_label": ".tomarkup()"
     },
     {
@@ -8642,26 +8642,6 @@
       "norm_label": "post-execution checks"
     },
     {
-      "label": "CLAUDE.md",
-      "file_type": "document",
-      "source_file": ".claude/CLAUDE.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "claude_claude",
-      "community": 68,
-      "norm_label": "claude.md"
-    },
-    {
-      "label": "graphify",
-      "file_type": "document",
-      "source_file": ".claude/CLAUDE.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "claude_claude_graphify",
-      "community": 68,
-      "norm_label": "graphify"
-    },
-    {
       "label": "SKILL.md",
       "file_type": "document",
       "source_file": ".claude/skills/graphify/SKILL.md",
@@ -9295,7 +9275,7 @@
       "label": "dance2music Constitution",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L10",
+      "source_location": "L1",
       "_origin": "ast",
       "id": "specify_memory_constitution_dance2music_constitution",
       "community": 46,
@@ -9305,7 +9285,7 @@
       "label": "Core Principles",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L12",
+      "source_location": "L3",
       "_origin": "ast",
       "id": "specify_memory_constitution_core_principles",
       "community": 46,
@@ -9315,7 +9295,7 @@
       "label": "I. Readable, Explicit Python",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L14",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "specify_memory_constitution_i_readable_explicit_python",
       "community": 46,
@@ -9325,7 +9305,7 @@
       "label": "II. Meaningful Automated Tests",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L24",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "specify_memory_constitution_ii_meaningful_automated_tests",
       "community": 46,
@@ -9335,7 +9315,7 @@
       "label": "III. Numerical and Integration Correctness",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L35",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "specify_memory_constitution_iii_numerical_and_integration_correctness",
       "community": 46,
@@ -9345,7 +9325,7 @@
       "label": "IV. Maintainable Boundaries and Documentation",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L47",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "specify_memory_constitution_iv_maintainable_boundaries_and_documentation",
       "community": 46,
@@ -9355,7 +9335,7 @@
       "label": "V. Reproducible Environments and Diagnosable Failures",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L59",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "specify_memory_constitution_v_reproducible_environments_and_diagnosable_failures",
       "community": 46,
@@ -9365,7 +9345,7 @@
       "label": "VI. Local Work Until Explicit Authorization",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L71",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "specify_memory_constitution_vi_local_work_until_explicit_authorization",
       "community": 46,
@@ -9375,7 +9355,7 @@
       "label": "VII. Feature Implementation Status Records",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L81",
+      "source_location": "L72",
       "_origin": "ast",
       "id": "specify_memory_constitution_vii_feature_implementation_status_records",
       "community": 46,
@@ -9385,7 +9365,7 @@
       "label": "VIII. Graphify-First Codebase Navigation",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L96",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "specify_memory_constitution_viii_graphify_first_codebase_navigation",
       "community": 46,
@@ -9395,7 +9375,7 @@
       "label": "IX. User Decisions on Design Dilemmas",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L112",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "specify_memory_constitution_ix_user_decisions_on_design_dilemmas",
       "community": 46,
@@ -9405,7 +9385,7 @@
       "label": "X. Python First, Web Translation by Explicit Request",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L124",
+      "source_location": "L115",
       "_origin": "ast",
       "id": "specify_memory_constitution_x_python_first_web_translation_by_explicit_request",
       "community": 46,
@@ -9415,7 +9395,7 @@
       "label": "XI. Compact After Each Completed Feature",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L138",
+      "source_location": "L129",
       "_origin": "ast",
       "id": "specify_memory_constitution_xi_compact_after_each_completed_feature",
       "community": 46,
@@ -9425,7 +9405,7 @@
       "label": "XII. Coherent File Organization",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L151",
+      "source_location": "L142",
       "_origin": "ast",
       "id": "specify_memory_constitution_xii_coherent_file_organization",
       "community": 46,
@@ -9435,7 +9415,7 @@
       "label": "Python and JavaScript Project Constraints",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L170",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "specify_memory_constitution_python_and_javascript_project_constraints",
       "community": 46,
@@ -9445,7 +9425,7 @@
       "label": "Development Workflow and Quality Gates",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L199",
+      "source_location": "L190",
       "_origin": "ast",
       "id": "specify_memory_constitution_development_workflow_and_quality_gates",
       "community": 46,
@@ -9455,7 +9435,7 @@
       "label": "Governance",
       "file_type": "document",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L226",
+      "source_location": "L217",
       "_origin": "ast",
       "id": "specify_memory_constitution_governance",
       "community": 46,
@@ -10118,7 +10098,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "agents",
-      "community": 66,
+      "community": 16,
       "norm_label": "agents.md"
     },
     {
@@ -10128,7 +10108,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "agents_project_context",
-      "community": 66,
+      "community": 16,
       "norm_label": "project context"
     },
     {
@@ -10138,7 +10118,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "agents_spec_kit_platforms",
-      "community": 66,
+      "community": 16,
       "norm_label": "spec kit platforms"
     },
     {
@@ -10148,168 +10128,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "agents_graphify",
-      "community": 66,
+      "community": 16,
       "norm_label": "graphify"
-    },
-    {
-      "label": "ANTHONY_IDEAS.md",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "anthony_ideas",
-      "community": 125,
-      "norm_label": "anthony_ideas.md"
-    },
-    {
-      "label": "Anthony's Vision for dance2music",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "community": 123,
-      "norm_label": "anthony's vision for dance2music"
-    },
-    {
-      "label": "Project purpose and starting point",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L7",
-      "_origin": "ast",
-      "id": "anthony_ideas_project_purpose_and_starting_point",
-      "community": 123,
-      "norm_label": "project purpose and starting point"
-    },
-    {
-      "label": "Completion checklist: ideas 0\u20132",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L34",
-      "_origin": "ast",
-      "id": "anthony_ideas_completion_checklist_ideas_0_2",
-      "community": 123,
-      "norm_label": "completion checklist: ideas 0\u20132"
-    },
-    {
-      "label": "What still needs fixing or review",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L47",
-      "_origin": "ast",
-      "id": "anthony_ideas_what_still_needs_fixing_or_review",
-      "community": 123,
-      "norm_label": "what still needs fixing or review"
-    },
-    {
-      "label": "Fixes already completed during validation",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "anthony_ideas_fixes_already_completed_during_validation",
-      "community": 123,
-      "norm_label": "fixes already completed during validation"
-    },
-    {
-      "label": "Working stages",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L97",
-      "_origin": "ast",
-      "id": "anthony_ideas_working_stages",
-      "community": 123,
-      "norm_label": "working stages"
-    },
-    {
-      "label": "Priorities and accepted decisions",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L108",
-      "_origin": "ast",
-      "id": "anthony_ideas_priorities_and_accepted_decisions",
-      "community": 123,
-      "norm_label": "priorities and accepted decisions"
-    },
-    {
-      "label": "0. First task: persistent fist root lock",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L126",
-      "_origin": "ast",
-      "id": "anthony_ideas_0_first_task_persistent_fist_root_lock",
-      "community": 123,
-      "norm_label": "0. first task: persistent fist root lock"
-    },
-    {
-      "label": "1. A 3D ball between the hands, with two-ball modes",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L166",
-      "_origin": "ast",
-      "id": "anthony_ideas_1_a_3d_ball_between_the_hands_with_two_ball_modes",
-      "community": 123,
-      "norm_label": "1. a 3d ball between the hands, with two-ball modes"
-    },
-    {
-      "label": "2. Musician-oriented harmony: roots and qualities",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L243",
-      "_origin": "ast",
-      "id": "anthony_ideas_2_musician_oriented_harmony_roots_and_qualities",
-      "community": 123,
-      "norm_label": "2. musician-oriented harmony: roots and qualities"
-    },
-    {
-      "label": "3. Chords as three-move magic spells",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L283",
-      "_origin": "ast",
-      "id": "anthony_ideas_3_chords_as_three_move_magic_spells",
-      "community": 123,
-      "norm_label": "3. chords as three-move magic spells"
-    },
-    {
-      "label": "4. A beginner game that teaches the magic chords",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L309",
-      "_origin": "ast",
-      "id": "anthony_ideas_4_a_beginner_game_that_teaches_the_magic_chords",
-      "community": 123,
-      "norm_label": "4. a beginner game that teaches the magic chords"
-    },
-    {
-      "label": "5. Nearby closed fists split the central ball",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L332",
-      "_origin": "ast",
-      "id": "anthony_ideas_5_nearby_closed_fists_split_the_central_ball",
-      "community": 123,
-      "norm_label": "5. nearby closed fists split the central ball"
-    },
-    {
-      "label": "6. Ableton / Expressive Chords through a virtual MIDI cable",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L359",
-      "_origin": "ast",
-      "id": "anthony_ideas_6_ableton_expressive_chords_through_a_virtual_midi_cable",
-      "community": 123,
-      "norm_label": "6. ableton / expressive chords through a virtual midi cable"
-    },
-    {
-      "label": "Implementation boundaries and next review",
-      "file_type": "document",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L391",
-      "_origin": "ast",
-      "id": "anthony_ideas_implementation_boundaries_and_next_review",
-      "community": 123,
-      "norm_label": "implementation boundaries and next review"
     },
     {
       "label": "CLAUDE.md",
@@ -10318,118 +10138,18 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "claude",
-      "community": 67,
+      "community": 16,
       "norm_label": "claude.md"
     },
     {
-      "label": "graphify",
+      "label": "Claude project instructions",
       "file_type": "document",
       "source_file": "CLAUDE.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "claude_graphify",
-      "community": 67,
-      "norm_label": "graphify"
-    },
-    {
-      "label": "FEATURE_TUTORIALS.md",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "feature_tutorials",
-      "community": 125,
-      "norm_label": "feature_tutorials.md"
-    },
-    {
-      "label": "Feature Tutorials",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "feature_tutorials_feature_tutorials",
-      "community": 122,
-      "norm_label": "feature tutorials"
-    },
-    {
-      "label": "Spec Kit on macOS and Windows",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L3",
-      "_origin": "ast",
-      "id": "feature_tutorials_spec_kit_on_macos_and_windows",
-      "community": 122,
-      "norm_label": "spec kit on macos and windows"
-    },
-    {
-      "label": "Python environment on macOS",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L25",
-      "_origin": "ast",
-      "id": "feature_tutorials_python_environment_on_macos",
-      "community": 122,
-      "norm_label": "python environment on macos"
-    },
-    {
-      "label": "Start the Python instrument",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L41",
-      "_origin": "ast",
-      "id": "feature_tutorials_start_the_python_instrument",
-      "community": 122,
-      "norm_label": "start the python instrument"
-    },
-    {
-      "label": "0 \u2014 Lock a chord root",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L55",
-      "_origin": "ast",
-      "id": "feature_tutorials_0_lock_a_chord_root",
-      "community": 122,
-      "norm_label": "0 \u2014 lock a chord root"
-    },
-    {
-      "label": "1 \u2014 Control and split the ball",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L64",
-      "_origin": "ast",
-      "id": "feature_tutorials_1_control_and_split_the_ball",
-      "community": 122,
-      "norm_label": "1 \u2014 control and split the ball"
-    },
-    {
-      "label": "2 \u2014 Choose roots and chord qualities",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L73",
-      "_origin": "ast",
-      "id": "feature_tutorials_2_choose_roots_and_chord_qualities",
-      "community": 122,
-      "norm_label": "2 \u2014 choose roots and chord qualities"
-    },
-    {
-      "label": "Save, replay or use video",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L92",
-      "_origin": "ast",
-      "id": "feature_tutorials_save_replay_or_use_video",
-      "community": 122,
-      "norm_label": "save, replay or use video"
-    },
-    {
-      "label": "Reset or quit",
-      "file_type": "document",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L103",
-      "_origin": "ast",
-      "id": "feature_tutorials_reset_or_quit",
-      "community": 122,
-      "norm_label": "reset or quit"
+      "id": "claude_claude_project_instructions",
+      "community": 16,
+      "norm_label": "claude project instructions"
     },
     {
       "label": "IDEAS.md",
@@ -10438,7 +10158,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ideas",
-      "community": 54,
+      "community": 125,
       "norm_label": "ideas.md"
     },
     {
@@ -10448,7 +10168,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ideas_ideas",
-      "community": 54,
+      "community": 148,
       "norm_label": "ideas"
     },
     {
@@ -10458,7 +10178,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "ideas_the_ball_between_the_hands_sep_30",
-      "community": 54,
+      "community": 148,
       "norm_label": "the ball between the hands (sep 30)"
     },
     {
@@ -10468,7 +10188,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "ideas_percussion",
-      "community": 54,
+      "community": 148,
       "norm_label": "percussion"
     },
     {
@@ -10478,7 +10198,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "ideas_hands",
-      "community": 54,
+      "community": 148,
       "norm_label": "hands"
     },
     {
@@ -10488,7 +10208,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "ideas_platform",
-      "community": 54,
+      "community": 148,
       "norm_label": "platform"
     },
     {
@@ -10498,7 +10218,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "ideas_done",
-      "community": 54,
+      "community": 148,
       "norm_label": "done"
     },
     {
@@ -10518,14 +10238,34 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "readme_dance2music",
-      "community": 125,
+      "community": 122,
       "norm_label": "dance2music"
+    },
+    {
+      "label": "Repository layout",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "readme_repository_layout",
+      "community": 122,
+      "norm_label": "repository layout"
+    },
+    {
+      "label": "Pipeline commands",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L31",
+      "_origin": "ast",
+      "id": "readme_pipeline_commands",
+      "community": 122,
+      "norm_label": "pipeline commands"
     },
     {
       "label": "Dance \u2192 the rope's music engine",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L54",
+      "source_location": "L75",
       "_origin": "ast",
       "id": "readme_dance_the_rope_s_music_engine",
       "community": 42,
@@ -10535,7 +10275,7 @@
       "label": "How the dance becomes the three signals",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L66",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "readme_how_the_dance_becomes_the_three_signals",
       "community": 42,
@@ -10545,7 +10285,7 @@
       "label": "The music",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L100",
+      "source_location": "L121",
       "_origin": "ast",
       "id": "readme_the_music",
       "community": 42,
@@ -10555,7 +10295,7 @@
       "label": "What this is not",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L113",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "readme_what_this_is_not",
       "community": 42,
@@ -10565,7 +10305,7 @@
       "label": "Her vocabulary, discovered (`vocabulary.py`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L121",
+      "source_location": "L142",
       "_origin": "ast",
       "id": "readme_her_vocabulary_discovered_vocabulary_py",
       "community": 42,
@@ -10575,7 +10315,7 @@
       "label": "Sonifying from the vocabulary (`sonify.py`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L148",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "readme_sonifying_from_the_vocabulary_sonify_py",
       "community": 42,
@@ -10585,7 +10325,7 @@
       "label": "For the Ableton side",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L162",
+      "source_location": "L183",
       "_origin": "ast",
       "id": "readme_for_the_ableton_side",
       "community": 42,
@@ -10595,7 +10335,7 @@
       "label": "Motion, not pose: simple synths (`motion.py`, `synths.py`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L183",
+      "source_location": "L204",
       "_origin": "ast",
       "id": "readme_motion_not_pose_simple_synths_motion_py_synths_py",
       "community": 42,
@@ -10605,210 +10345,480 @@
       "label": "ii\u2013V\u2013I from pose (`harmony.py`, demos `twofive`, `twofive_alt`)",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L217",
+      "source_location": "L238",
       "_origin": "ast",
       "id": "readme_ii_v_i_from_pose_harmony_py_demos_twofive_twofive_alt",
       "community": 42,
       "norm_label": "ii\u2013v\u2013i from pose (`harmony.py`, demos `twofive`, `twofive_alt`)"
     },
     {
-      "label": "explanation.md",
+      "label": "ANTHONY_IDEAS.md",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/ANTHONY_IDEAS.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_md",
-      "community": 13,
+      "id": "docs_anthony_ideas",
+      "community": 125,
+      "norm_label": "anthony_ideas.md"
+    },
+    {
+      "label": "Anthony's Vision for dance2music",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "community": 20,
+      "norm_label": "anthony's vision for dance2music"
+    },
+    {
+      "label": "Project purpose and starting point",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_project_purpose_and_starting_point",
+      "community": 20,
+      "norm_label": "project purpose and starting point"
+    },
+    {
+      "label": "Completion checklist: ideas 0\u20132",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_completion_checklist_ideas_0_2",
+      "community": 20,
+      "norm_label": "completion checklist: ideas 0\u20132"
+    },
+    {
+      "label": "What still needs fixing or review",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_what_still_needs_fixing_or_review",
+      "community": 20,
+      "norm_label": "what still needs fixing or review"
+    },
+    {
+      "label": "Fixes already completed during validation",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L73",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_fixes_already_completed_during_validation",
+      "community": 20,
+      "norm_label": "fixes already completed during validation"
+    },
+    {
+      "label": "Working stages",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_working_stages",
+      "community": 20,
+      "norm_label": "working stages"
+    },
+    {
+      "label": "Priorities and accepted decisions",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L108",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_priorities_and_accepted_decisions",
+      "community": 20,
+      "norm_label": "priorities and accepted decisions"
+    },
+    {
+      "label": "0. First task: persistent fist root lock",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L126",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_0_first_task_persistent_fist_root_lock",
+      "community": 20,
+      "norm_label": "0. first task: persistent fist root lock"
+    },
+    {
+      "label": "1. A 3D ball between the hands, with two-ball modes",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L166",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_1_a_3d_ball_between_the_hands_with_two_ball_modes",
+      "community": 20,
+      "norm_label": "1. a 3d ball between the hands, with two-ball modes"
+    },
+    {
+      "label": "2. Musician-oriented harmony: roots and qualities",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L243",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_2_musician_oriented_harmony_roots_and_qualities",
+      "community": 20,
+      "norm_label": "2. musician-oriented harmony: roots and qualities"
+    },
+    {
+      "label": "3. Chords as three-move magic spells",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L283",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_3_chords_as_three_move_magic_spells",
+      "community": 20,
+      "norm_label": "3. chords as three-move magic spells"
+    },
+    {
+      "label": "4. A beginner game that teaches the magic chords",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L309",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_4_a_beginner_game_that_teaches_the_magic_chords",
+      "community": 20,
+      "norm_label": "4. a beginner game that teaches the magic chords"
+    },
+    {
+      "label": "5. Nearby closed fists split the central ball",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L332",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_5_nearby_closed_fists_split_the_central_ball",
+      "community": 20,
+      "norm_label": "5. nearby closed fists split the central ball"
+    },
+    {
+      "label": "6. Ableton / Expressive Chords through a virtual MIDI cable",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L359",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_6_ableton_expressive_chords_through_a_virtual_midi_cable",
+      "community": 20,
+      "norm_label": "6. ableton / expressive chords through a virtual midi cable"
+    },
+    {
+      "label": "Implementation boundaries and next review",
+      "file_type": "document",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L391",
+      "_origin": "ast",
+      "id": "docs_anthony_ideas_implementation_boundaries_and_next_review",
+      "community": 20,
+      "norm_label": "implementation boundaries and next review"
+    },
+    {
+      "label": "FEATURE_TUTORIALS.md",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials",
+      "community": 125,
+      "norm_label": "feature_tutorials.md"
+    },
+    {
+      "label": "Feature Tutorials",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_feature_tutorials",
+      "community": 54,
+      "norm_label": "feature tutorials"
+    },
+    {
+      "label": "Repository layout and moved commands",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_repository_layout_and_moved_commands",
+      "community": 54,
+      "norm_label": "repository layout and moved commands"
+    },
+    {
+      "label": "Spec Kit on macOS and Windows",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_spec_kit_on_macos_and_windows",
+      "community": 54,
+      "norm_label": "spec kit on macos and windows"
+    },
+    {
+      "label": "Python environment on macOS",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_python_environment_on_macos",
+      "community": 54,
+      "norm_label": "python environment on macos"
+    },
+    {
+      "label": "Start the Python instrument",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_start_the_python_instrument",
+      "community": 54,
+      "norm_label": "start the python instrument"
+    },
+    {
+      "label": "0 \u2014 Lock a chord root",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_0_lock_a_chord_root",
+      "community": 54,
+      "norm_label": "0 \u2014 lock a chord root"
+    },
+    {
+      "label": "1 \u2014 Control and split the ball",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L85",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_1_control_and_split_the_ball",
+      "community": 54,
+      "norm_label": "1 \u2014 control and split the ball"
+    },
+    {
+      "label": "2 \u2014 Choose roots and chord qualities",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_2_choose_roots_and_chord_qualities",
+      "community": 54,
+      "norm_label": "2 \u2014 choose roots and chord qualities"
+    },
+    {
+      "label": "Save, replay or use video",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L113",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_save_replay_or_use_video",
+      "community": 54,
+      "norm_label": "save, replay or use video"
+    },
+    {
+      "label": "Reset or quit",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L124",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_reset_or_quit",
+      "community": 54,
+      "norm_label": "reset or quit"
+    },
+    {
+      "label": "explanation.md",
+      "file_type": "document",
+      "source_file": "docs/explanation.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_explanation",
+      "community": 125,
       "norm_label": "explanation.md"
     },
     {
       "label": "How dance2music works",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "community": 13,
+      "id": "docs_explanation_how_dance2music_works",
+      "community": 17,
       "norm_label": "how dance2music works"
     },
     {
       "label": "1. The three existing ways to run the project",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_1_the_three_existing_ways_to_run_the_project",
-      "community": 13,
+      "id": "docs_explanation_1_the_three_existing_ways_to_run_the_project",
+      "community": 17,
       "norm_label": "1. the three existing ways to run the project"
     },
     {
       "label": "Recorded-video processing in Python",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_recorded_video_processing_in_python",
-      "community": 13,
+      "id": "docs_explanation_recorded_video_processing_in_python",
+      "community": 17,
       "norm_label": "recorded-video processing in python"
     },
     {
       "label": "Live camera/video interaction in JavaScript",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L33",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_live_camera_video_interaction_in_javascript",
-      "community": 13,
+      "id": "docs_explanation_live_camera_video_interaction_in_javascript",
+      "community": 17,
       "norm_label": "live camera/video interaction in javascript"
     },
     {
       "label": "Native live interaction in Python",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L54",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_native_live_interaction_in_python",
-      "community": 13,
+      "id": "docs_explanation_native_live_interaction_in_python",
+      "community": 17,
       "norm_label": "native live interaction in python"
     },
     {
       "label": "2. What the computer-vision models provide",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L80",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_2_what_the_computer_vision_models_provide",
-      "community": 13,
+      "id": "docs_explanation_2_what_the_computer_vision_models_provide",
+      "community": 17,
       "norm_label": "2. what the computer-vision models provide"
     },
     {
       "label": "Body pose",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L82",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_body_pose",
-      "community": 13,
+      "id": "docs_explanation_body_pose",
+      "community": 17,
       "norm_label": "body pose"
     },
     {
       "label": "Hands and built-in gestures",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L101",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_hands_and_built_in_gestures",
-      "community": 13,
+      "id": "docs_explanation_hands_and_built_in_gestures",
+      "community": 17,
       "norm_label": "hands and built-in gestures"
     },
     {
       "label": "3. What the project adds after computer vision",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "community": 13,
+      "id": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "community": 17,
       "norm_label": "3. what the project adds after computer vision"
     },
     {
       "label": "Getting usable measurements",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L124",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_getting_usable_measurements",
-      "community": 13,
+      "id": "docs_explanation_getting_usable_measurements",
+      "community": 17,
       "norm_label": "getting usable measurements"
     },
     {
       "label": "Calculating movement and rhythm",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L144",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_calculating_movement_and_rhythm",
-      "community": 13,
+      "id": "docs_explanation_calculating_movement_and_rhythm",
+      "community": 17,
       "norm_label": "calculating movement and rhythm"
     },
     {
       "label": "Making hand recognition usable as a control",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L167",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_making_hand_recognition_usable_as_a_control",
-      "community": 13,
+      "id": "docs_explanation_making_hand_recognition_usable_as_a_control",
+      "community": 17,
       "norm_label": "making hand recognition usable as a control"
     },
     {
       "label": "Choosing harmony",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L184",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_choosing_harmony",
-      "community": 13,
+      "id": "docs_explanation_choosing_harmony",
+      "community": 17,
       "norm_label": "choosing harmony"
     },
     {
       "label": "Mapping controls and producing sound",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L196",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_mapping_controls_and_producing_sound",
-      "community": 13,
+      "id": "docs_explanation_mapping_controls_and_producing_sound",
+      "community": 17,
       "norm_label": "mapping controls and producing sound"
     },
     {
       "label": "Drawing the ball and recording the result",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L212",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_drawing_the_ball_and_recording_the_result",
-      "community": 13,
+      "id": "docs_explanation_drawing_the_ball_and_recording_the_result",
+      "community": 17,
       "norm_label": "drawing the ball and recording the result"
     },
     {
       "label": "4. Are we training our own AI?",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L228",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_4_are_we_training_our_own_ai",
-      "community": 13,
+      "id": "docs_explanation_4_are_we_training_our_own_ai",
+      "community": 17,
       "norm_label": "4. are we training our own ai?"
     },
     {
       "label": "5. How much comes from the model, and how much are we doing?",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L241",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_5_how_much_comes_from_the_model_and_how_much_are_we_doing",
-      "community": 13,
+      "id": "docs_explanation_5_how_much_comes_from_the_model_and_how_much_are_we_doing",
+      "community": 17,
       "norm_label": "5. how much comes from the model, and how much are we doing?"
     },
     {
       "label": "6. What our next work actually is",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L266",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_6_what_our_next_work_actually_is",
-      "community": 13,
+      "id": "docs_explanation_6_what_our_next_work_actually_is",
+      "community": 17,
       "norm_label": "6. what our next work actually is"
     },
     {
       "label": "7. Where to look for detail",
       "file_type": "document",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L290",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_explanation_7_where_to_look_for_detail",
-      "community": 13,
+      "id": "docs_explanation_7_where_to_look_for_detail",
+      "community": 17,
       "norm_label": "7. where to look for detail"
     },
     {
@@ -10987,8 +10997,8 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_md",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan",
+      "community": 66,
       "norm_label": "plan.md"
     },
     {
@@ -10997,8 +11007,8 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "community": 66,
       "norm_label": "implementation plan: anthony's local python instrument"
     },
     {
@@ -11007,8 +11017,8 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_technical_context",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_technical_context",
+      "community": 66,
       "norm_label": "technical context"
     },
     {
@@ -11017,38 +11027,38 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_structure",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_structure",
+      "community": 66,
       "norm_label": "structure"
     },
     {
       "label": "Constitution check",
       "file_type": "document",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L32",
+      "source_location": "L36",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_constitution_check",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_constitution_check",
+      "community": 66,
       "norm_label": "constitution check"
     },
     {
       "label": "Implementation strategy",
       "file_type": "document",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L40",
+      "source_location": "L44",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_strategy",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_implementation_strategy",
+      "community": 66,
       "norm_label": "implementation strategy"
     },
     {
       "label": "Timing and recovery choices",
       "file_type": "document",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L47",
+      "source_location": "L51",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_timing_and_recovery_choices",
-      "community": 38,
+      "id": "specs_001_anthony_instrument_plan_timing_and_recovery_choices",
+      "community": 66,
       "norm_label": "timing and recovery choices"
     },
     {
@@ -11057,8 +11067,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_md",
-      "community": 13,
+      "id": "specs_001_anthony_instrument_quickstart",
+      "community": 125,
       "norm_label": "quickstart.md"
     },
     {
@@ -11067,8 +11077,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
-      "community": 13,
+      "id": "specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
+      "community": 123,
       "norm_label": "run anthony's python instrument"
     },
     {
@@ -11077,8 +11087,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_controls",
-      "community": 13,
+      "id": "specs_001_anthony_instrument_quickstart_controls",
+      "community": 123,
       "norm_label": "controls"
     },
     {
@@ -11087,8 +11097,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L51",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_headless_validation_and_local_exports",
-      "community": 13,
+      "id": "specs_001_anthony_instrument_quickstart_headless_validation_and_local_exports",
+      "community": 123,
       "norm_label": "headless validation and local exports"
     },
     {
@@ -11097,8 +11107,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L72",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_setup_on_a_fresh_machine",
-      "community": 13,
+      "id": "specs_001_anthony_instrument_quickstart_setup_on_a_fresh_machine",
+      "community": 123,
       "norm_label": "setup on a fresh machine"
     },
     {
@@ -11178,7 +11188,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "specs_001_anthony_instrument_tasks",
-      "community": 125,
+      "community": 124,
       "norm_label": "tasks.md"
     },
     {
@@ -11442,6 +11452,16 @@
       "norm_label": "2026-10-05 - share spec kit workflows across macos and windows"
     },
     {
+      "label": "2026-10-05 - Organize files by purpose",
+      "file_type": "document",
+      "source_file": "status.md",
+      "source_location": "L262",
+      "_origin": "ast",
+      "id": "status_2026_10_05_organize_files_by_purpose",
+      "community": 126,
+      "norm_label": "2026-10-05 - organize files by purpose"
+    },
+    {
       "label": "speckit-analyze",
       "file_type": "document",
       "source_file": ".agents/skills/speckit-analyze/SKILL.md",
@@ -11603,7 +11623,7 @@
       "community": 107,
       "community_name": "Graphify Extraction Tools",
       "norm_label": "claude graphify integration",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_integration"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_integration"
     },
     {
       "label": "graphify knowledge graph pipeline",
@@ -12321,7 +12341,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 125,
+      "community": 122,
       "community_name": "Dance Music Methods",
       "norm_label": "scientific media runtime dependencies",
       "id": "requirements_runtime_dependencies"
@@ -14516,6 +14536,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/__main__.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "c_code_github_serious_dance2music_instrument_main_py",
+      "target": "instrument_tracking",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "instrument/__main__.py",
@@ -14629,20 +14660,20 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "instrument/__main__.py",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 0.8,
       "source": "c_code_github_serious_dance2music_instrument_main_exports",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker",
+      "target": "c_code_github_serious_dance2music_instrument_visuals_renderer",
       "confidence_score": 0.5
     },
     {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "instrument/__main__.py",
-      "source_location": "L24",
+      "source_location": "L23",
       "weight": 0.8,
       "source": "c_code_github_serious_dance2music_instrument_main_exports",
-      "target": "c_code_github_serious_dance2music_instrument_visuals_renderer",
+      "target": "instrument_tracking_tracker",
       "confidence_score": 0.5
     },
     {
@@ -14667,12 +14698,23 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "c_code_github_serious_dance2music_instrument_main_exports",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L16",
       "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
+      "source": "tests_test_instrument_cli_clitests",
       "target": "c_code_github_serious_dance2music_instrument_main_exports",
       "confidence_score": 0.5
     },
@@ -14681,10 +14723,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L30",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
+      "source": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "target": "c_code_github_serious_dance2music_instrument_main_exports"
     },
     {
@@ -14725,10 +14767,10 @@
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L29",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
+      "source": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "target": "exitstack"
     },
     {
@@ -14792,7 +14834,7 @@
       "source_location": "L101",
       "weight": 1.0,
       "source": "c_code_github_serious_dance2music_instrument_main_camera_frames",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker",
+      "target": "instrument_tracking_tracker",
       "confidence_score": 1.0
     },
     {
@@ -14887,23 +14929,23 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "instrument/__main__.py",
-      "source_location": "L153",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_main_run",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "C:/Code/Github Serious/dance2music/instrument/__main__.py",
       "source_location": "L141",
       "weight": 1.0,
       "source": "c_code_github_serious_dance2music_instrument_main_run",
       "target": "c_code_github_serious_dance2music_instrument_visuals_renderer"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/__main__.py",
+      "source_location": "L153",
+      "weight": 1.0,
+      "source": "c_code_github_serious_dance2music_instrument_main_run",
+      "target": "instrument_tracking_tracker",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -15471,27 +15513,6 @@
     {
       "relation": "uses",
       "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_cli.py",
-      "source_location": "L17",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_instrument_controller_controller",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
-      "source_location": "L28",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
-      "target": "c_code_github_serious_dance2music_instrument_controller_controller"
-    },
-    {
-      "relation": "uses",
-      "confidence": "INFERRED",
       "source_file": "tests/test_instrument_controller.py",
       "source_location": "L6",
       "weight": 0.8,
@@ -15583,6 +15604,38 @@
       "source_location": "L48",
       "weight": 1.0,
       "source": "c_code_github_serious_dance2music_tests_test_instrument_visuals_visualtests_test_render_is_finite_deterministic_bounded_and_copies_input",
+      "target": "c_code_github_serious_dance2music_instrument_controller_controller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "c_code_github_serious_dance2music_instrument_controller_controller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L17",
+      "weight": 0.8,
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "c_code_github_serious_dance2music_instrument_controller_controller",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "target": "c_code_github_serious_dance2music_instrument_controller_controller"
     },
     {
@@ -16039,16 +16092,6 @@
     {
       "relation": "uses",
       "confidence": "INFERRED",
-      "source_file": "instrument/tracking.py",
-      "source_location": "L11",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "target": "c_code_github_serious_dance2music_instrument_models_hand",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "uses",
-      "confidence": "INFERRED",
       "source_file": "tests/test_instrument_controller.py",
       "source_location": "L7",
       "weight": 0.8,
@@ -16089,13 +16132,25 @@
       "target": "c_code_github_serious_dance2music_instrument_models_hand"
     },
     {
-      "relation": "method",
+      "relation": "imports",
+      "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "instrument/models.py",
-      "source_location": "L49",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L11",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_models_frame",
-      "target": "c_code_github_serious_dance2music_instrument_models_frame_post_init",
+      "source": "instrument_tracking",
+      "target": "c_code_github_serious_dance2music_instrument_models_hand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "instrument_tracking_observations",
+      "target": "c_code_github_serious_dance2music_instrument_models_hand",
       "confidence_score": 1.0
     },
     {
@@ -16104,9 +16159,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L11",
       "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "source": "instrument_tracking_tracker",
+      "target": "c_code_github_serious_dance2music_instrument_models_hand",
       "confidence_score": 0.5
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/models.py",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "c_code_github_serious_dance2music_instrument_models_frame",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame_post_init",
+      "confidence_score": 1.0
     },
     {
       "relation": "uses",
@@ -16127,27 +16192,6 @@
       "source": "c_code_github_serious_dance2music_instrument_visuals_renderer",
       "target": "c_code_github_serious_dance2music_instrument_models_frame",
       "confidence_score": 0.5
-    },
-    {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_cli.py",
-      "source_location": "L18",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_instrument_models_frame",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
-      "source_location": "L28",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
-      "target": "c_code_github_serious_dance2music_instrument_models_frame"
     },
     {
       "relation": "uses",
@@ -16221,6 +16265,70 @@
       "source_location": "L38",
       "weight": 1.0,
       "source": "c_code_github_serious_dance2music_tests_test_instrument_visuals_visualtests_test_midpoint_radius_and_split_area_gain",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "instrument_tracking",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L11",
+      "weight": 0.8,
+      "source": "instrument_tracking_tracker",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "instrument_tracking_tracker_detect",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L18",
+      "weight": 0.8,
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "c_code_github_serious_dance2music_instrument_models_frame",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "target": "c_code_github_serious_dance2music_instrument_models_frame"
     },
     {
@@ -16366,14 +16474,25 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "c_code_github_serious_dance2music_instrument_replay_read_replay",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L105",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
+      "source": "tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
       "target": "c_code_github_serious_dance2music_instrument_replay_read_replay"
     },
     {
@@ -16381,10 +16500,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L51",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
+      "source": "tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
       "target": "c_code_github_serious_dance2music_instrument_replay_read_replay"
     },
     {
@@ -16392,11 +16511,31 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L112",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
+      "source": "tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
       "target": "c_code_github_serious_dance2music_instrument_replay_read_replay"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/setup_models.py",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "instrument_setup_models",
+      "target": "instrument_setup_models_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/setup_models.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "instrument_setup_models_rationale_1",
+      "target": "instrument_setup_models",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -16404,8 +16543,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_py",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_observations",
+      "source": "instrument_tracking",
+      "target": "instrument_tracking_observations",
       "confidence_score": 1.0
     },
     {
@@ -16414,8 +16553,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L58",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_py",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry",
+      "source": "instrument_tracking",
+      "target": "instrument_tracking_torso_geometry",
       "confidence_score": 1.0
     },
     {
@@ -16424,8 +16563,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L78",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_py",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker",
+      "source": "instrument_tracking",
+      "target": "instrument_tracking_tracker",
       "confidence_score": 1.0
     },
     {
@@ -16434,8 +16573,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_rationale_1",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_py",
+      "source": "instrument_tracking_rationale_1",
+      "target": "instrument_tracking",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "instrument_tracking",
       "confidence_score": 1.0
     },
     {
@@ -16445,8 +16595,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_observations",
+      "source": "instrument_tracking_observations",
       "target": "hand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "instrument_tracking_observations",
+      "target": "instrument_tracking_py_any",
       "confidence_score": 1.0
     },
     {
@@ -16455,8 +16616,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_rationale_15",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_observations",
+      "source": "instrument_tracking_rationale_15",
+      "target": "instrument_tracking_observations",
       "confidence_score": 1.0
     },
     {
@@ -16466,8 +16627,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L137",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker_detect",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_observations",
+      "source": "instrument_tracking_tracker_detect",
+      "target": "instrument_tracking_observations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "instrument_tracking_observations",
       "confidence_score": 1.0
     },
     {
@@ -16475,22 +16647,33 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L129",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_observations"
+      "source": "tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
+      "target": "instrument_tracking_observations"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L62",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_observations"
+      "source": "tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
+      "target": "instrument_tracking_observations"
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "instrument_tracking_torso_geometry",
+      "target": "instrument_tracking_py_any",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -16498,8 +16681,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L59",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_rationale_59",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry",
+      "source": "instrument_tracking_rationale_59",
+      "target": "instrument_tracking_torso_geometry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "instrument_tracking_torso_geometry",
+      "target": "instrument_tracking_py_point",
       "confidence_score": 1.0
     },
     {
@@ -16509,8 +16703,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker_detect",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry",
+      "source": "instrument_tracking_tracker_detect",
+      "target": "instrument_tracking_torso_geometry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_cli.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "tests_test_instrument_cli",
+      "target": "instrument_tracking_torso_geometry",
       "confidence_score": 1.0
     },
     {
@@ -16518,22 +16723,22 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry"
+      "source": "tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
+      "target": "instrument_tracking_torso_geometry"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_cli.py",
+      "source_file": "tests/test_instrument_cli.py",
       "source_location": "L69",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_torso_geometry"
+      "source": "tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
+      "target": "instrument_tracking_torso_geometry"
     },
     {
       "relation": "rationale_for",
@@ -16541,8 +16746,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L79",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_rationale_79",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker",
+      "source": "instrument_tracking_rationale_79",
+      "target": "instrument_tracking_tracker",
       "confidence_score": 1.0
     },
     {
@@ -16551,8 +16756,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L152",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker_close",
+      "source": "instrument_tracking_tracker",
+      "target": "instrument_tracking_tracker_close",
       "confidence_score": 1.0
     },
     {
@@ -16561,8 +16766,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L117",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker_detect",
+      "source": "instrument_tracking_tracker",
+      "target": "instrument_tracking_tracker_detect",
       "confidence_score": 1.0
     },
     {
@@ -16571,8 +16776,19 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L81",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker_init",
+      "source": "instrument_tracking_tracker",
+      "target": "instrument_tracking_tracker_init",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "instrument_tracking_tracker_init",
+      "target": "instrument_tracking_py_path",
       "confidence_score": 1.0
     },
     {
@@ -16582,8 +16798,8 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L112",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_tracker_init",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker_close",
+      "source": "instrument_tracking_tracker_init",
+      "target": "instrument_tracking_tracker_close",
       "confidence_score": 1.0
     },
     {
@@ -16592,8 +16808,30 @@
       "source_file": "instrument/tracking.py",
       "source_location": "L118",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_tracking_rationale_118",
-      "target": "c_code_github_serious_dance2music_instrument_tracking_tracker_detect",
+      "source": "instrument_tracking_rationale_118",
+      "target": "instrument_tracking_tracker_detect",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "instrument_tracking_tracker_detect",
+      "target": "instrument_tracking_py_ndarray",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/tracking.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "instrument_tracking_tracker_detect",
+      "target": "instrument_tracking_py_uint8",
       "confidence_score": 1.0
     },
     {
@@ -17181,26 +17419,6 @@
       "weight": 1.0,
       "source": "synths_twofive",
       "target": "motion_stems"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup_instrument_models.py",
-      "source_location": "L25",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_scripts_setup_instrument_models_py",
-      "target": "c_code_github_serious_dance2music_scripts_setup_instrument_models_main",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup_instrument_models.py",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_scripts_setup_instrument_models_rationale_1",
-      "target": "c_code_github_serious_dance2music_scripts_setup_instrument_models_py",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18408,8 +18626,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L23",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_py",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
+      "source": "tests_test_instrument_cli",
+      "target": "tests_test_instrument_cli_clitests",
       "confidence_score": 1.0
     },
     {
@@ -18418,8 +18636,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_rationale_1",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_py",
+      "source": "tests_test_instrument_cli_rationale_1",
+      "target": "tests_test_instrument_cli",
       "confidence_score": 1.0
     },
     {
@@ -18428,8 +18646,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L24",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_exported_audio_changes_at_observation_time_after_irregular_gap",
       "confidence_score": 1.0
     },
     {
@@ -18438,8 +18656,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L73",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
       "confidence_score": 1.0
     },
     {
@@ -18448,8 +18666,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L41",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
       "confidence_score": 1.0
     },
     {
@@ -18458,8 +18676,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L143",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_model_setup_rejects_corrupt_existing_file_without_network",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_model_setup_rejects_corrupt_existing_file_without_network",
       "confidence_score": 1.0
     },
     {
@@ -18468,8 +18686,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L107",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
       "confidence_score": 1.0
     },
     {
@@ -18478,8 +18696,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L122",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_tracking_adapter_drops_duplicates_and_missing_body",
       "confidence_score": 1.0
     },
     {
@@ -18488,8 +18706,8 @@
       "source_file": "tests/test_instrument_cli.py",
       "source_location": "L53",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
+      "source": "tests_test_instrument_cli_clitests",
+      "target": "tests_test_instrument_cli_clitests_test_tracking_adapter_rejects_nonfinite_confidence",
       "confidence_score": 1.0
     },
     {
@@ -27564,13 +27782,13 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "contains",
+      "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": ".claude/CLAUDE.md",
-      "source_location": "L1",
+      "source_file": "CLAUDE.md",
+      "source_location": "L4",
       "weight": 1.0,
-      "source": "claude_claude",
-      "target": "claude_claude_graphify",
+      "source": "claude",
+      "target": "claude_skills_graphify_skill",
       "confidence_score": 1.0
     },
     {
@@ -28104,10 +28322,20 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L295",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "specify_memory_constitution",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L10",
+      "source_location": "L1",
       "weight": 1.0,
       "source": "specify_memory_constitution",
       "target": "specify_memory_constitution_dance2music_constitution",
@@ -28117,7 +28345,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L12",
+      "source_location": "L3",
       "weight": 1.0,
       "source": "specify_memory_constitution_dance2music_constitution",
       "target": "specify_memory_constitution_core_principles",
@@ -28127,7 +28355,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L199",
+      "source_location": "L190",
       "weight": 1.0,
       "source": "specify_memory_constitution_dance2music_constitution",
       "target": "specify_memory_constitution_development_workflow_and_quality_gates",
@@ -28137,7 +28365,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L226",
+      "source_location": "L217",
       "weight": 1.0,
       "source": "specify_memory_constitution_dance2music_constitution",
       "target": "specify_memory_constitution_governance",
@@ -28147,7 +28375,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L170",
+      "source_location": "L161",
       "weight": 1.0,
       "source": "specify_memory_constitution_dance2music_constitution",
       "target": "specify_memory_constitution_python_and_javascript_project_constraints",
@@ -28157,7 +28385,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L14",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_i_readable_explicit_python",
@@ -28167,7 +28395,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L24",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_ii_meaningful_automated_tests",
@@ -28177,7 +28405,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L35",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_iii_numerical_and_integration_correctness",
@@ -28187,7 +28415,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L47",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_iv_maintainable_boundaries_and_documentation",
@@ -28197,7 +28425,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L112",
+      "source_location": "L103",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_ix_user_decisions_on_design_dilemmas",
@@ -28207,7 +28435,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L59",
+      "source_location": "L50",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_v_reproducible_environments_and_diagnosable_failures",
@@ -28217,7 +28445,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L71",
+      "source_location": "L62",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_vi_local_work_until_explicit_authorization",
@@ -28227,7 +28455,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L81",
+      "source_location": "L72",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_vii_feature_implementation_status_records",
@@ -28237,7 +28465,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L96",
+      "source_location": "L87",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_viii_graphify_first_codebase_navigation",
@@ -28247,7 +28475,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L124",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_x_python_first_web_translation_by_explicit_request",
@@ -28257,7 +28485,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L138",
+      "source_location": "L129",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_xi_compact_after_each_completed_feature",
@@ -28267,7 +28495,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".specify/memory/constitution.md",
-      "source_location": "L151",
+      "source_location": "L142",
       "weight": 1.0,
       "source": "specify_memory_constitution_core_principles",
       "target": "specify_memory_constitution_xii_coherent_file_organization",
@@ -28884,6 +29112,16 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "CLAUDE.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "claude",
+      "target": "agents",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
@@ -28906,301 +29144,21 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "anthony_ideas",
-      "target": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "source": "anthony_ideas",
-      "target": "ideas",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "source": "anthony_ideas",
-      "target": "readme",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L29",
-      "weight": 1.0,
-      "source": "anthony_ideas",
-      "target": "specs_001_anthony_instrument_evidence",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L27",
-      "weight": 1.0,
-      "source": "anthony_ideas",
-      "target": "specs_001_anthony_instrument_tasks",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L126",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_0_first_task_persistent_fist_root_lock",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L166",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_1_a_3d_ball_between_the_hands_with_two_ball_modes",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L243",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_2_musician_oriented_harmony_roots_and_qualities",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L283",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_3_chords_as_three_move_magic_spells",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L309",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_4_a_beginner_game_that_teaches_the_magic_chords",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L332",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_5_nearby_closed_fists_split_the_central_ball",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L359",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_6_ableton_expressive_chords_through_a_virtual_midi_cable",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L34",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_completion_checklist_ideas_0_2",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L391",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_implementation_boundaries_and_next_review",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L108",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_priorities_and_accepted_decisions",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L7",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_project_purpose_and_starting_point",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L97",
-      "weight": 1.0,
-      "source": "anthony_ideas_anthony_s_vision_for_dance2music",
-      "target": "anthony_ideas_working_stages",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L73",
-      "weight": 1.0,
-      "source": "anthony_ideas_completion_checklist_ideas_0_2",
-      "target": "anthony_ideas_fixes_already_completed_during_validation",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "ANTHONY_IDEAS.md",
-      "source_location": "L47",
-      "weight": 1.0,
-      "source": "anthony_ideas_completion_checklist_ideas_0_2",
-      "target": "anthony_ideas_what_still_needs_fixing_or_review",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "CLAUDE.md",
       "source_location": "L1",
       "weight": 1.0,
       "source": "claude",
-      "target": "claude_graphify",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "feature_tutorials",
-      "target": "feature_tutorials_feature_tutorials",
+      "target": "claude_claude_project_instructions",
       "confidence_score": 1.0
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L50",
-      "weight": 1.0,
-      "source": "readme",
-      "target": "feature_tutorials",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L55",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_0_lock_a_chord_root",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L64",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_1_control_and_split_the_ball",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L73",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_2_choose_roots_and_chord_qualities",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L25",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_python_environment_on_macos",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L103",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_reset_or_quit",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
+      "source_file": "docs/ANTHONY_IDEAS.md",
       "source_location": "L92",
       "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_save_replay_or_use_video",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_spec_kit_on_macos_and_windows",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "FEATURE_TUTORIALS.md",
-      "source_location": "L41",
-      "weight": 1.0,
-      "source": "feature_tutorials_feature_tutorials",
-      "target": "feature_tutorials_start_the_python_instrument",
+      "source": "docs_anthony_ideas",
+      "target": "ideas",
       "confidence_score": 1.0
     },
     {
@@ -29211,6 +29169,16 @@
       "weight": 1.0,
       "source": "ideas",
       "target": "ideas_ideas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "readme",
+      "target": "ideas",
       "confidence_score": 1.0
     },
     {
@@ -29264,6 +29232,36 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas",
+      "target": "readme",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L292",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "readme",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "readme",
+      "target": "docs_feature_tutorials",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
@@ -29277,7 +29275,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L54",
+      "source_location": "L75",
       "weight": 1.0,
       "source": "readme",
       "target": "readme_dance_the_rope_s_music_engine",
@@ -29287,10 +29285,40 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L48",
+      "source_location": "L69",
       "weight": 1.0,
       "source": "readme",
       "target": "specs_001_anthony_instrument_evidence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "readme",
+      "target": "specs_001_anthony_instrument_quickstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "readme_dance2music",
+      "target": "readme_pipeline_commands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "readme_dance2music",
+      "target": "readme_repository_layout",
       "confidence_score": 1.0
     },
     {
@@ -29307,7 +29335,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L121",
+      "source_location": "L142",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_her_vocabulary_discovered_vocabulary_py",
@@ -29317,7 +29345,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L66",
+      "source_location": "L87",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_how_the_dance_becomes_the_three_signals",
@@ -29327,7 +29355,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L217",
+      "source_location": "L238",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_ii_v_i_from_pose_harmony_py_demos_twofive_twofive_alt",
@@ -29337,7 +29365,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L183",
+      "source_location": "L204",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_motion_not_pose_simple_synths_motion_py_synths_py",
@@ -29347,7 +29375,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L148",
+      "source_location": "L169",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_sonifying_from_the_vocabulary_sonify_py",
@@ -29357,7 +29385,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L100",
+      "source_location": "L121",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_the_music",
@@ -29367,7 +29395,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L113",
+      "source_location": "L134",
       "weight": 1.0,
       "source": "readme_dance_the_rope_s_music_engine",
       "target": "readme_what_this_is_not",
@@ -29377,7 +29405,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L162",
+      "source_location": "L183",
       "weight": 1.0,
       "source": "readme_sonifying_from_the_vocabulary_sonify_py",
       "target": "readme_for_the_ableton_side",
@@ -29386,211 +29414,521 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
+      "source_file": "docs/ANTHONY_IDEAS.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_md",
-      "target": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
+      "source": "docs_anthony_ideas",
+      "target": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
       "confidence_score": 1.0
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L77",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L29",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_decisions_md",
+      "source": "docs_anthony_ideas",
+      "target": "specs_001_anthony_instrument_evidence",
       "confidence_score": 1.0
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas",
+      "target": "specs_001_anthony_instrument_quickstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas",
+      "target": "specs_001_anthony_instrument_tasks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L269",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "docs_anthony_ideas",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_0_first_task_persistent_fist_root_lock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L166",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_1_a_3d_ball_between_the_hands_with_two_ball_modes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L243",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_2_musician_oriented_harmony_roots_and_qualities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L283",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_3_chords_as_three_move_magic_spells",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L309",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_4_a_beginner_game_that_teaches_the_magic_chords",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L332",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_5_nearby_closed_fists_split_the_central_ball",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L359",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_6_ableton_expressive_chords_through_a_virtual_midi_cable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_completion_checklist_ideas_0_2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L391",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_implementation_boundaries_and_next_review",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L108",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_priorities_and_accepted_decisions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_project_purpose_and_starting_point",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_anthony_s_vision_for_dance2music",
+      "target": "docs_anthony_ideas_working_stages",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_completion_checklist_ideas_0_2",
+      "target": "docs_anthony_ideas_fixes_already_completed_during_validation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas_completion_checklist_ideas_0_2",
+      "target": "docs_anthony_ideas_what_still_needs_fixing_or_review",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials",
+      "target": "docs_feature_tutorials_feature_tutorials",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials",
+      "target": "specs_001_anthony_instrument_quickstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
       "source_location": "L76",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_md",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_0_lock_a_chord_root",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L15",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L85",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_1_the_three_existing_ways_to_run_the_project",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_1_control_and_split_the_ball",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L80",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L94",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_2_what_the_computer_vision_models_provide",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_2_choose_roots_and_chord_qualities",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L122",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L46",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_python_environment_on_macos",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L228",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L3",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_4_are_we_training_our_own_ai",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_repository_layout_and_moved_commands",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L241",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_5_how_much_comes_from_the_model_and_how_much_are_we_doing",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L266",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_6_what_our_next_work_actually_is",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L290",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_how_dance2music_works",
-      "target": "c_code_github_serious_dance2music_explanation_7_where_to_look_for_detail",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L33",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_1_the_three_existing_ways_to_run_the_project",
-      "target": "c_code_github_serious_dance2music_explanation_live_camera_video_interaction_in_javascript",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L54",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_1_the_three_existing_ways_to_run_the_project",
-      "target": "c_code_github_serious_dance2music_explanation_native_live_interaction_in_python",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L17",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_1_the_three_existing_ways_to_run_the_project",
-      "target": "c_code_github_serious_dance2music_explanation_recorded_video_processing_in_python",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L82",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_2_what_the_computer_vision_models_provide",
-      "target": "c_code_github_serious_dance2music_explanation_body_pose",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L101",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_2_what_the_computer_vision_models_provide",
-      "target": "c_code_github_serious_dance2music_explanation_hands_and_built_in_gestures",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L144",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_calculating_movement_and_rhythm",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L184",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_choosing_harmony",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
-      "source_location": "L212",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_drawing_the_ball_and_recording_the_result",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
       "source_location": "L124",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_getting_usable_measurements",
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_reset_or_quit",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_save_replay_or_use_video",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_spec_kit_on_macos_and_windows",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_start_the_python_instrument",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "docs_explanation_how_dance2music_works",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "specs_001_anthony_instrument_evidence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L76",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "specs_001_anthony_instrument_quickstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L296",
+      "weight": 1.0,
+      "source": "docs_explanation",
+      "target": "status",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_1_the_three_existing_ways_to_run_the_project",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_2_what_the_computer_vision_models_provide",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L228",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_4_are_we_training_our_own_ai",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L241",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_5_how_much_comes_from_the_model_and_how_much_are_we_doing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L266",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_6_what_our_next_work_actually_is",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L290",
+      "weight": 1.0,
+      "source": "docs_explanation_how_dance2music_works",
+      "target": "docs_explanation_7_where_to_look_for_detail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "docs_explanation_1_the_three_existing_ways_to_run_the_project",
+      "target": "docs_explanation_live_camera_video_interaction_in_javascript",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "docs_explanation_1_the_three_existing_ways_to_run_the_project",
+      "target": "docs_explanation_native_live_interaction_in_python",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "docs_explanation_1_the_three_existing_ways_to_run_the_project",
+      "target": "docs_explanation_recorded_video_processing_in_python",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "docs_explanation_2_what_the_computer_vision_models_provide",
+      "target": "docs_explanation_body_pose",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "docs_explanation_2_what_the_computer_vision_models_provide",
+      "target": "docs_explanation_hands_and_built_in_gestures",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L144",
+      "weight": 1.0,
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_calculating_movement_and_rhythm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_choosing_harmony",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L212",
+      "weight": 1.0,
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_drawing_the_ball_and_recording_the_result",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
+      "source_location": "L124",
+      "weight": 1.0,
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_getting_usable_measurements",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/explanation.md",
       "source_location": "L167",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_making_hand_recognition_usable_as_a_control",
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_making_hand_recognition_usable_as_a_control",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "explanation.md",
+      "source_file": "docs/explanation.md",
       "source_location": "L196",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_explanation_3_what_the_project_adds_after_computer_vision",
-      "target": "c_code_github_serious_dance2music_explanation_mapping_controls_and_producing_sound",
+      "source": "docs_explanation_3_what_the_project_adds_after_computer_vision",
+      "target": "docs_explanation_mapping_controls_and_producing_sound",
       "confidence_score": 1.0
     },
     {
@@ -29644,16 +29982,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "specs/001-anthony-instrument/quickstart.md",
-      "source_location": "L95",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_decisions_md",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "specs/001-anthony-instrument/decisions.md",
@@ -29691,6 +30019,16 @@
       "weight": 1.0,
       "source": "specs_001_anthony_instrument_evidence",
       "target": "specs_001_anthony_instrument_evidence_validation_evidence_local_python_instrument",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/quickstart.md",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_quickstart",
+      "target": "specs_001_anthony_instrument_evidence",
       "confidence_score": 1.0
     },
     {
@@ -29749,38 +30087,28 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_spec_md",
+      "source": "specs_001_anthony_instrument_plan",
+      "target": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L32",
+      "source_location": "L36",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_constitution_check",
+      "source": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "target": "specs_001_anthony_instrument_plan_constitution_check",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_strategy",
+      "source": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "target": "specs_001_anthony_instrument_plan_implementation_strategy",
       "confidence_score": 1.0
     },
     {
@@ -29789,8 +30117,8 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L18",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_structure",
+      "source": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "target": "specs_001_anthony_instrument_plan_structure",
       "confidence_score": 1.0
     },
     {
@@ -29799,18 +30127,18 @@
       "source_file": "specs/001-anthony-instrument/plan.md",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_technical_context",
+      "source": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "target": "specs_001_anthony_instrument_plan_technical_context",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "specs/001-anthony-instrument/plan.md",
-      "source_location": "L47",
+      "source_location": "L51",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_plan_timing_and_recovery_choices",
+      "source": "specs_001_anthony_instrument_plan_implementation_plan_anthony_s_local_python_instrument",
+      "target": "specs_001_anthony_instrument_plan_timing_and_recovery_choices",
       "confidence_score": 1.0
     },
     {
@@ -29819,8 +30147,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
+      "source": "specs_001_anthony_instrument_quickstart",
+      "target": "specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
       "confidence_score": 1.0
     },
     {
@@ -29829,8 +30157,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L18",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_controls",
+      "source": "specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
+      "target": "specs_001_anthony_instrument_quickstart_controls",
       "confidence_score": 1.0
     },
     {
@@ -29839,8 +30167,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L51",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_headless_validation_and_local_exports",
+      "source": "specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
+      "target": "specs_001_anthony_instrument_quickstart_headless_validation_and_local_exports",
       "confidence_score": 1.0
     },
     {
@@ -29849,8 +30177,8 @@
       "source_file": "specs/001-anthony-instrument/quickstart.md",
       "source_location": "L72",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_quickstart_setup_on_a_fresh_machine",
+      "source": "specs_001_anthony_instrument_quickstart_run_anthony_s_python_instrument",
+      "target": "specs_001_anthony_instrument_quickstart_setup_on_a_fresh_machine",
       "confidence_score": 1.0
     },
     {
@@ -30121,6 +30449,16 @@
       "weight": 1.0,
       "source": "status_project_status",
       "target": "status_2026_10_05_mark_anthony_s_ideas_0_2_and_remaining_work",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "status.md",
+      "source_location": "L262",
+      "weight": 1.0,
+      "source": "status_project_status",
+      "target": "status_2026_10_05_organize_files_by_purpose",
       "confidence_score": 1.0
     },
     {
@@ -30705,5 +31043,5 @@
       "source_file": "web/methods.html"
     }
   ],
-  "built_at_commit": "ec3288645e5dedd5e2d99bd6f2a5fd2d1e426fb8"
+  "built_at_commit": "ac9a522d68923187d8fc7f03c0902e4ad45cc4c4"
 }

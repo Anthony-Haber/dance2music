@@ -1,16 +1,16 @@
 # Graph Report - dance2music  (2026-10-05)
 
 ## Corpus Check
-- 98 files · ~118,307 words
+- 97 files · ~118,888 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1214 nodes · 1721 edges · 162 communities (69 shown, 93 thin omitted)
+- 1219 nodes · 1758 edges · 155 communities (73 shown, 82 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 88 edges (avg confidence: 0.56)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ec328864`
+- Built from commit: `ac9a522d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -139,10 +139,8 @@
 - [[_COMMUNITY_ControllerTests|ControllerTests]]
 - [[_COMMUNITY_Anthony's Vision for dance2music|Anthony's Vision for dance2music]]
 - [[_COMMUNITY_Tasks Anthony's local Python instrument|Tasks: Anthony's local Python instrument]]
-- [[_COMMUNITY_ANTHONY_IDEAS|ANTHONY_IDEAS.md]]
 - [[_COMMUNITY_Project Status|Project Status]]
 - [[_COMMUNITY_valid_point|valid_point]]
-- [[_COMMUNITY_Run Anthony's Python instrument|Run Anthony's Python instrument]]
 - [[_COMMUNITY_Mn|Mn]]
 - [[_COMMUNITY_setup_instrument_models.py|setup_instrument_models.py]]
 - [[_COMMUNITY_Decisions made during ideas 0–2 implementation|Decisions made during ideas 0–2 implementation]]
@@ -162,40 +160,34 @@
 - [[_COMMUNITY_uint8|uint8]]
 - [[_COMMUNITY_Point|Point]]
 - [[_COMMUNITY_Path|Path]]
-- [[_COMMUNITY_Any|Any]]
-- [[_COMMUNITY_NDArray|NDArray]]
-- [[_COMMUNITY_Path|Path]]
-- [[_COMMUNITY_Point|Point]]
-- [[_COMMUNITY_uint8|uint8]]
 - [[_COMMUNITY_NDArray|NDArray]]
 - [[_COMMUNITY_Point|Point]]
 - [[_COMMUNITY_uint8|uint8]]
 - [[_COMMUNITY_Hands|Hands]]
-- [[_COMMUNITY_Window|Window]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `handler()` - 30 edges
-2. `Vn` - 27 edges
-3. `Controller` - 26 edges
+2. `Controller` - 27 edges
+3. `Vn` - 27 edges
 4. `Hn` - 25 edges
-5. `Engine` - 21 edges
-6. `$()` - 21 edges
-7. `Frame` - 19 edges
-8. `O` - 18 edges
-9. `Exports` - 17 edges
+5. `Frame` - 22 edges
+6. `Engine` - 21 edges
+7. `$()` - 21 edges
+8. `Exports` - 18 edges
+9. `O` - 18 edges
 10. `ControllerTests` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CliTests` --uses--> `Exports`  [INFERRED]
   tests/test_instrument_cli.py → instrument/__main__.py
-- `CliTests` --uses--> `Controller`  [INFERRED]
-  tests/test_instrument_cli.py → instrument/controller.py
 - `ControllerTests` --uses--> `Controller`  [INFERRED]
   tests/test_instrument_controller.py → instrument/controller.py
 - `HarmonyTests` --uses--> `Controller`  [INFERRED]
   tests/test_instrument_harmony.py → instrument/controller.py
 - `VisualTests` --uses--> `Controller`  [INFERRED]
   tests/test_instrument_visuals.py → instrument/controller.py
+- `CliTests` --uses--> `Controller`  [INFERRED]
+  tests/test_instrument_cli.py → instrument/controller.py
 
 ## Import Cycles
 - None detected.
@@ -204,7 +196,7 @@
 - **Shared mathematical explanations** — web_about_standalone_methods, web_index_comparison_page, web_live_index_live_instrument, web_methods_methods [INFERRED 0.95]
 - **Movement to sound contracts** — readme_mediapipe_pose, web_methods_motion_cleaning, web_methods_savitzky_golay_derivatives, web_methods_laban_efforts, web_methods_synthesis_primitives [EXTRACTED 1.00]
 
-## Communities (162 total, 93 thin omitted)
+## Communities (155 total, 82 thin omitted)
 
 ### Community 0 - "Dance Music Methods"
 Cohesion: 0.09
@@ -235,12 +227,12 @@ Cohesion: 0.06
 Nodes (37): ACTIONS, bounce, COL, custom, cv, DEFAULT_ACTIONS, DEG, drumMode (+29 more)
 
 ### Community 7 - "KaTeX Macro Expansion"
-Cohesion: 0.12
-Nodes (14): EDGES, J, lp(), OneEuro, PART_J, PARTS, REF, TRACKED (+6 more)
+Cohesion: 0.11
+Nodes (13): clip(), EDGES, Features, lp(), OneEuro, PART_J, PARTS, periodicity() (+5 more)
 
 ### Community 8 - "Live Motion Features"
-Cohesion: 0.39
-Nodes (4): clip(), Features, periodicity(), g
+Cohesion: 0.23
+Nodes (13): Find-SpecifyRoot(), Format-SpecKitCommand(), Get-CurrentBranch(), Get-FeaturePathsEnv(), Get-InvokeSeparator(), Get-NormalizedPriority(), Get-Python3Command(), Get-RepoRoot() (+5 more)
 
 ### Community 9 - "Camera Display Controls"
 Cohesion: 0.20
@@ -255,20 +247,20 @@ Cohesion: 0.11
 Nodes (28): chords(), chords6(), main(), Per frame: which of the six regions the hands are in ('' if unsure)., Held chord per frame (after the dwell) and its voice-led voicing., Per frame: which rule the pose satisfies ('ii', 'V', 'I' or '')., Held chord per frame after the dwell, starting on I.      `alt_weight`: if given, Place pitch classes on the voices, least total motion, inside [lo, hi]. (+20 more)
 
 ### Community 13 - "Specification Script Utilities"
-Cohesion: 0.07
-Nodes (27): 1. The three existing ways to run the project, 2. What the computer-vision models provide, 3. What the project adds after computer vision, 4. Are we training our own AI?, 5. How much comes from the model, and how much are we doing?, 6. What our next work actually is, 7. Where to look for detail, Body pose (+19 more)
+Cohesion: 0.40
+Nodes (4): Agent choices, provisional and open to revision, Confirmed by Anthony, Decisions made during ideas 0–2 implementation, Resume validation, 2026-10-05
 
 ### Community 15 - "Project Quality Standards"
 Cohesion: 0.40
 Nodes (5): Implementation Plan Template, Feature Specification Template, Task List Template, Full SDD Cycle, Specification and Plan Review Gates
 
 ### Community 16 - "Offline Chord Harmony"
-Cohesion: 0.07
-Nodes (26): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+18 more)
+Cohesion: 0.06
+Nodes (30): graphify, Project Context, Spec Kit platforms, Claude project instructions, For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only (+22 more)
 
 ### Community 17 - "Hand Tracking Runtime"
-Cohesion: 0.24
-Nodes (7): observations(), MediaPipe boundary. Models must already exist; all detection is local., image_bgr: (H,W,3) uint8 mirrored image; timestamps are elapsed seconds., Convert Tasks results to pixel coordinates, rejecting ambiguous identities., Reliable shoulder/hip geometry, in pixels; absent pose returns None., torso_geometry(), Hand
+Cohesion: 0.11
+Nodes (19): 1. The three existing ways to run the project, 2. What the computer-vision models provide, 3. What the project adds after computer vision, 4. Are we training our own AI?, 5. How much comes from the model, and how much are we doing?, 6. What our next work actually is, 7. Where to look for detail, Body pose (+11 more)
 
 ### Community 18 - "KaTeX DOM Construction"
 Cohesion: 0.13
@@ -276,11 +268,15 @@ Nodes (4): dt, K, toText(), ut
 
 ### Community 19 - "Motion Sound Mapping"
 Cohesion: 0.17
-Nodes (11): Config, Frame, Output, Particle, pixel(), Native adaptation of Joseph Bakarji's wrist-based glow and sparks.  Geometry is, Return an independent rendered image; caller's input is never modified., Renderer (+3 more)
+Nodes (9): Config, Particle, pixel(), Native adaptation of Joseph Bakarji's wrist-based glow and sparks.  Geometry is, Return an independent rendered image; caller's input is never modified., Renderer, root_color(), Ball geometry, deterministic drawing, and loss behavior. (+1 more)
+
+### Community 20 - "KaTeX Markup Serialization"
+Cohesion: 0.13
+Nodes (15): 0. First task: persistent fist root lock, 1. A 3D ball between the hands, with two-ball modes, 2. Musician-oriented harmony: roots and qualities, 3. Chords as three-move magic spells, 4. A beginner game that teaches the magic chords, 5. Nearby closed fists split the central ball, 6. Ableton / Expressive Chords through a virtual MIDI cable, Anthony's Vision for dance2music (+7 more)
 
 ### Community 23 - "Hand Gesture Features"
-Cohesion: 0.15
-Nodes (13): camera_frames(), Exports, main(), Native Python instrument: camera/video, deterministic demo and JSONL replay., Incremental diagnostic exports; no unbounded audio/video buffers., Apply an observation only from its timestamp onward, in bounded chunks., Give the final observation one nominal frame interval before closing., run() (+5 more)
+Cohesion: 0.13
+Nodes (15): camera_frames(), Exports, main(), Native Python instrument: camera/video, deterministic demo and JSONL replay., Incremental diagnostic exports; no unbounded audio/video buffers., Apply an observation only from its timestamp onward, in bounded chunks., Give the final observation one nominal frame interval before closing., run() (+7 more)
 
 ### Community 24 - "KaTeX Node Rendering"
 Cohesion: 0.12
@@ -299,7 +295,7 @@ Cohesion: 0.07
 Nodes (26): 1. Initialize Analysis Context, 2. Load Artifacts (Progressive Disclosure), 3. Build Semantic Models, 4. Detection Passes (Token-Efficient Analysis), 5. Severity Assignment, 6. Produce Compact Analysis Report, 7. Provide Next Actions, 8. Offer Remediation (+18 more)
 
 ### Community 28 - "KaTeX Text Elements"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (5): CompletedProcess, Exercise the official native-shell helpers against disposable project fixtures., Validate the same file and JSON contracts on macOS and Windows., Run a bundled helper without touching the working project's feature state., SpecKitScriptTests
 
 ### Community 29 - "KaTeX Markup Elements"
@@ -315,16 +311,16 @@ Cohesion: 0.29
 Nodes (3): ct(), mt(), Z
 
 ### Community 36 - "Feature Prerequisite Checks"
-Cohesion: 0.23
-Nodes (13): Find-SpecifyRoot(), Format-SpecKitCommand(), Get-CurrentBranch(), Get-FeaturePathsEnv(), Get-InvokeSeparator(), Get-NormalizedPriority(), Get-Python3Command(), Get-RepoRoot() (+5 more)
+Cohesion: 0.39
+Nodes (4): ConvertTo-AsciiLower(), ConvertTo-CleanBranchName(), ConvertTo-UnicodeWords(), Get-BranchName()
 
 ### Community 37 - "Specification Template Resolution"
 Cohesion: 0.23
 Nodes (3): ControllerTests, Observable event contracts, runnable by pytest without devices., sample()
 
 ### Community 38 - "Implementation Plan Setup"
-Cohesion: 0.14
-Nodes (12): Constitution check, Implementation Plan: Anthony's local Python instrument, Implementation strategy, Structure, Technical context, Timing and recovery choices, Feature: Anthony's local Python instrument, ideas 0–2, Required validation (+4 more)
+Cohesion: 0.29
+Nodes (6): Feature: Anthony's local Python instrument, ideas 0–2, Required validation, Scope and decisions, US1 — Persistent root lock (P1, idea 0), US2 — Joseph's temporary ball and persistent split (P2, idea 1), US3 — Reachable roots and musical qualities (P3, idea 2)
 
 ### Community 39 - "Implementation Task Setup"
 Cohesion: 0.26
@@ -387,8 +383,8 @@ Cohesion: 0.25
 Nodes (7): Completion Report, Done When, Mandatory Post-Execution Hooks, Outline, Platform execution, Pre-Execution Checks, User Input
 
 ### Community 54 - "Ideas"
-Cohesion: 0.29
-Nodes (6): Done, Hands, Ideas, Percussion, Platform, The ball between the hands (Sep 30)
+Cohesion: 0.20
+Nodes (10): 0 — Lock a chord root, 1 — Control and split the ball, 2 — Choose roots and chord qualities, Feature Tutorials, Python environment on macOS, Repository layout and moved commands, Reset or quit, Save, replay or use video (+2 more)
 
 ### Community 55 - "draw"
 Cohesion: 0.38
@@ -423,36 +419,40 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 65 - "gestureActions"
-Cohesion: 0.22
-Nodes (5): Repeatable scripted frames and JSONL replay, independent of camera/models., JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy., read_replay(), CliTests, Native CLI contracts, replay exports, tracking adapters and failure messages.
+Cohesion: 0.12
+Nodes (15): JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy., read_replay(), Hand, observations(), Any, NDArray, Point, uint8 (+7 more)
 
 ### Community 66 - "AGENTS.md"
-Cohesion: 0.50
-Nodes (3): graphify, Project Context, Spec Kit platforms
+Cohesion: 0.29
+Nodes (6): Constitution check, Implementation Plan: Anthony's local Python instrument, Implementation strategy, Structure, Technical context, Timing and recovery choices
+
+### Community 67 - "CLAUDE.md"
+Cohesion: 0.33
+Nodes (6): Done, Hands, Ideas, Percussion, Platform, The ball between the hands (Sep 30)
 
 ### Community 120 - "Implementation Plan: Anthony's local Python instrument"
-Cohesion: 0.25
-Nodes (6): Hand, Device-independent contracts. Positions and radii use displayed image pixels., True when both pixel coordinates are finite., valid_point(), demonstration(), 15-second sequence: root, lock, locked minor, unlock, near split, reopen.      C
+Cohesion: 0.18
+Nodes (8): Hand, Output, Device-independent contracts. Positions and radii use displayed image pixels., True when both pixel coordinates are finite., valid_point(), demonstration(), Repeatable scripted frames and JSONL replay, independent of camera/models., 15-second sequence: root, lock, locked minor, unlock, near split, reopen.      C
 
 ### Community 121 - "handler"
 Cohesion: 0.18
 Nodes (3): _, kt(), Q
 
 ### Community 122 - "ControllerTests"
-Cohesion: 0.22
-Nodes (9): 0 — Lock a chord root, 1 — Control and split the ball, 2 — Choose roots and chord qualities, Feature Tutorials, Python environment on macOS, Reset or quit, Save, replay or use video, Spec Kit on macOS and Windows (+1 more)
+Cohesion: 0.50
+Nodes (4): dance2music, Pipeline commands, Repository layout, Scientific Media Runtime Dependencies
 
 ### Community 123 - "Anthony's Vision for dance2music"
-Cohesion: 0.13
-Nodes (15): 0. First task: persistent fist root lock, 1. A 3D ball between the hands, with two-ball modes, 2. Musician-oriented harmony: roots and qualities, 3. Chords as three-move magic spells, 4. A beginner game that teaches the magic chords, 5. Nearby closed fists split the central ball, 6. Ableton / Expressive Chords through a virtual MIDI cable, Anthony's Vision for dance2music (+7 more)
+Cohesion: 0.50
+Nodes (4): Controls, Headless validation and local exports, Run Anthony's Python instrument, Setup on a fresh machine
 
 ### Community 124 - "Tasks: Anthony's local Python instrument"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (11): Dependencies and execution order, Implementation strategy, Parallel examples per story, Phase 1: Setup, Phase 2: Foundational, Phase 3: US1 — Persistent root lock (P1, MVP), Phase 4: US2 — Temporary glow and two-ball mode (P2), Phase 5: US3 — Musical roots and qualities (P3) (+3 more)
 
 ### Community 126 - "Project Status"
-Cohesion: 0.14
-Nodes (13): 2026-10-04 - Anthony's vision and Python-first development, 2026-10-04 - Commit vision and governance documents locally, 2026-10-04 - Constitution: graphify, design decisions, and project languages, 2026-10-04 - Constitution: local work and task status, 2026-10-04 - Explain code behavior and the computer-vision boundary, 2026-10-04 - Review Joseph's ball and defer initial 3D work, 2026-10-05 - Commit and push Anthony's isolated branch, 2026-10-05 - Create concise feature tutorials (+5 more)
+Cohesion: 0.13
+Nodes (14): 2026-10-04 - Anthony's vision and Python-first development, 2026-10-04 - Commit vision and governance documents locally, 2026-10-04 - Constitution: graphify, design decisions, and project languages, 2026-10-04 - Constitution: local work and task status, 2026-10-04 - Explain code behavior and the computer-vision boundary, 2026-10-04 - Review Joseph's ball and defer initial 3D work, 2026-10-05 - Commit and push Anthony's isolated branch, 2026-10-05 - Create concise feature tutorials (+6 more)
 
 ### Community 129 - "Mn"
 Cohesion: 0.33
@@ -462,10 +462,14 @@ Nodes (6): Automated contracts, Models, native window, camera/video and playback
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: continue working where you last stopped yesterday, Source Nodes
 
+### Community 160 - "Hands"
+Cohesion: 0.13
+Nodes (8): J, d2(), fingerState(), GESTURES, Hand, HAND_EDGES, Hands, HS
+
 ## Knowledge Gaps
-- **393 isolated node(s):** `check-prerequisites.sh script`, `common.sh script`, `resolve-template.sh script`, `setup-plan.sh script`, `setup-tasks.sh script` (+388 more)
+- **396 isolated node(s):** `check-prerequisites.sh script`, `common.sh script`, `resolve-template.sh script`, `setup-plan.sh script`, `setup-tasks.sh script` (+391 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **93 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **82 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -473,14 +477,14 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `p` connect `KaTeX Rendering Styles` to `Offline Audio Synthesis`, `KaTeX Rendering Core`, `KaTeX Formula Parsing`, `draw`?**
   _High betweenness centrality (0.053) - this node is a cross-community bridge._
 - **Why does `_twofive()` connect `Offline Audio Synthesis` to `KaTeX Rendering Core`, `Offline Motion Processing`, `KaTeX Rendering Styles`?**
-  _High betweenness centrality (0.053) - this node is a cross-community bridge._
+  _High betweenness centrality (0.052) - this node is a cross-community bridge._
 - **Why does `draw()` connect `draw` to `Camera Display Controls`, `KaTeX Rendering Styles`, `Live Instrument Controls`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `handler()` (e.g. with `c()` and `m`) actually correct?**
   _`handler()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 10 inferred relationships involving `Controller` (e.g. with `Chord` and `Ball`) actually correct?**
   _`Controller` has 10 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 12 inferred relationships involving `Frame` (e.g. with `Controller` and `Dwell`) actually correct?**
+  _`Frame` has 12 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `check-prerequisites.sh script`, `common.sh script`, `resolve-template.sh script` to the rest of the system?**
-  _477 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Dance Music Methods` be split into smaller, more focused modules?**
-  _Cohesion score 0.08901515151515152 - nodes in this community are weakly interconnected._
+  _480 weakly-connected nodes found - possible documentation gaps or missing edges._
