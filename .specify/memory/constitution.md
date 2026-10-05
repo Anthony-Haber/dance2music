@@ -69,15 +69,20 @@ Authorization MUST apply only to the action and scope the user requested; permis
 updates or make local commits does not authorize a push. This preserves the user's control over
 when project work leaves the local workspace.
 
-### VII. Task Status Records
+### VII. Feature Implementation Status Records
 
-After each user-requested task, and before its final handoff, the agent MUST update `status.md`
-at the repository root. Each entry MUST identify the task, date, completion state, changes made,
-verification performed and its results, and any outstanding work or blockers. Existing task
-history MUST be preserved. A task is the actual unit of work requested by the user; individual
-commands and internal implementation steps MUST NOT receive separate task entries. Partial or
-blocked work MUST be recorded accurately rather than marked complete. This provides a persistent
-record of outcomes between sessions.
+Agents MUST update `status.md` at the repository root after feature implementation work,
+before its handoff. A feature is a coherent capability, such as one implemented idea in
+`ANTHONY_IDEAS.md`. Each entry MUST identify the feature, date, completion state, changes made,
+verification performed and its results, and any outstanding work or blockers. Partial or
+blocked implementation MUST be recorded accurately rather than marked complete. Existing
+history MUST be preserved. Individual commands and internal steps MUST NOT receive separate
+entries.
+
+Agents MUST NOT update `status.md` merely because the user sends a request. Questions,
+planning, documentation-only edits, constitution amendments, and Git operations MUST NOT
+create status entries unless the user explicitly requests one. This keeps the status history
+focused on implemented features and their remaining work.
 
 ### VIII. Graphify-First Codebase Navigation
 
@@ -165,9 +170,10 @@ Feature plans MUST separate Stage 1 local Python development from Stage 2 JavaSc
 Without explicit user authorization for Stage 2, the active implementation scope MUST end at
 Python validation and its documentation. Any proposed web adaptation MUST remain deferred.
 
-Task handoff MUST include the required `status.md` update and a check that any external project
-action had explicit user authorization. Local completion MUST NOT imply permission to publish
-the result.
+Feature implementation handoff MUST include the `status.md` update required by principle VII.
+Other requests MUST NOT trigger a status update unless explicitly requested. Every handoff MUST
+check that any external project action had explicit user authorization. Local completion MUST
+NOT imply permission to publish the result.
 
 Before merging or declaring implementation complete, the author MUST run the affected automated
 tests and configured formatting, lint, and type checks, and record the results. Changes to shared
@@ -201,4 +207,4 @@ Exceptions MUST record the affected rule, reason, risk, compensating verificatio
 condition or review date. The project maintainer MUST explicitly approve them; exceptions do not
 silently amend the constitution.
 
-**Version**: 1.4.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05
+**Version**: 2.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05
