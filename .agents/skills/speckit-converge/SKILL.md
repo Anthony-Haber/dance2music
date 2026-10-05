@@ -8,6 +8,22 @@ metadata:
 ---
 
 
+## Platform execution
+
+Use the native shell for this checkout: Bash on macOS/Linux and PowerShell on Windows.
+Both use the same `.specify/memory/constitution.md`, `.specify/templates/`, and `specs/`.
+Keep one shared skill; do not create platform-specific copies of governance or feature files.
+The initialization metadata records the original script choice; it does not override this rule.
+
+Run the setup command below from the repository root for the current platform:
+
+- macOS/Linux (Bash): `.specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks`
+- Windows (PowerShell): `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks`
+
+These commands come from Spec Kit's bundled command metadata. Use the official scripts;
+do not translate helpers by hand. Treat later references to "the platform setup command"
+as this selection, preserving the workflow's requirements and error handling.
+
 ## User Input
 
 ```text
@@ -94,7 +110,7 @@ skip constitution checks gracefully rather than failing.
 
 ### 1. Initialize Convergence Context
 
-Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
+Run the platform setup command once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
 
 - SPEC = FEATURE_DIR/spec.md
 - PLAN = FEATURE_DIR/plan.md

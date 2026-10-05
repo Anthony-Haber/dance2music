@@ -8,6 +8,22 @@ metadata:
 ---
 
 
+## Platform execution
+
+Use the native shell for this checkout: Bash on macOS/Linux and PowerShell on Windows.
+Both use the same `.specify/memory/constitution.md`, `.specify/templates/`, and `specs/`.
+Keep one shared skill; do not create platform-specific copies of governance or feature files.
+The initialization metadata records the original script choice; it does not override this rule.
+
+Run the setup command below from the repository root for the current platform:
+
+- macOS/Linux (Bash): `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks`
+- Windows (PowerShell): `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks`
+
+These commands come from Spec Kit's bundled command metadata. Use the official scripts;
+do not translate helpers by hand. Treat later references to "the platform setup command"
+as this selection, preserving the workflow's requirements and error handling.
+
 ## User Input
 
 ```text
@@ -54,7 +70,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-1. Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. Run the platform setup command from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Check checklists status** (if FEATURE_DIR/checklists/ exists):
    - Treat checklist markers as a read-only gate: scan checkbox state, report status, and ask before proceeding when needed; do NOT modify checklist files or markers

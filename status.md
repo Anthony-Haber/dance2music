@@ -210,3 +210,51 @@
   f40be3b73384acb8ab8049c65bd876855afbb3de and anthony-explorations was not created remotely.
 - Outstanding: Repository write access, or authentication with an authorized account,
   is required to retry the push. No remote changes occurred.
+
+## 2026-10-05 - Set up the local macOS Python environment
+
+- State: Complete.
+- Changes: Created ignored .venv with Python 3.11.16 and installed all packages from
+  requirements.txt. Added macOS setup and activation commands to FEATURE_TUTORIALS.md.
+- Verification: pip check reported no broken requirements. All ten direct requirements
+  imported successfully. Matplotlib built its initial font cache in a temporary directory;
+  sandbox font-cache warnings did not prevent imports.
+- Scope: Installed the main pipeline requirements; the separate instrument lock file,
+  development tools and model downloads were not part of this installation.
+- Local state: Environment and documentation remain local. No application code changed.
+- Outstanding: None for the requested environment setup; devices and full application
+  behavior were not tested.
+
+## 2026-10-05 - Share Spec Kit workflows across macOS and Windows
+
+- State: Implemented locally; macOS validated, Windows execution pending.
+- Task: Use native Bash and PowerShell helpers with the same constitution, templates,
+  skills and feature documents; complete the requested file-organization amendment.
+- Changes: Copied both official helper sets unchanged from installed specify-cli 1.1.0.
+  Updated ten shared skills to select upstream platform commands and registered the Bash
+  helpers in the shared-infrastructure manifest. Initialized the ignored local feature
+  pointer to specs/001-anthony-instrument. No feature documents were recreated.
+- Constitution: Updated 2.0.0 to 2.1.0 with principle XII (coherent file organization,
+  using original main as the reference) and shared native-shell Spec Kit requirements.
+  Preserved principles I-XI and the original ratification date. Existing repository
+  reorganization remains outside this implementation.
+- Documentation: Updated existing AGENTS.md and FEATURE_TUTORIALS.md; added no root files.
+  Installed declared requirements-dev.txt tools into the existing ignored .venv.
+- Verification: All twelve helpers match the installed official bundle byte for byte;
+  all six Bash helpers pass bash -n. On macOS Bash 3.2, nine contract tests passed using
+  the Specify CLI Python environment (including PyYAML); one cross-shell parity test was
+  skipped because PowerShell is unavailable. Tests cover shared templates and overrides,
+  composition/failure handling, feature paths, persistence, prerequisites, plan preservation,
+  feature creation and Unicode/UTF-8 feature-name limits. Ruff lint/format and mypy passed
+  for the new test module. Actual project template resolution, prerequisites, plan setup
+  and task setup succeeded. Constitution placeholders/version/dates, all ten skill YAML
+  frontmatters and script references were checked. Graphify was refreshed locally.
+- Validation limitation: The generic skill-creator validator rejects the existing Spec Kit
+  compatibility frontmatter key; that metadata was preserved, and YAML/references were
+  validated separately. Native Windows execution has not been run on this Mac.
+- Local state: All work remains local and uncommitted; previous environment documentation
+  edits were preserved. No publishing, pushes or project uploads occurred.
+- Review cleanup: Removed the temporary constitution Sync Impact Report before committing.
+- Outstanding: Run the same tests on Windows. No callable /compact exists in this session;
+  the user must invoke
+  it before the next feature-sized task.

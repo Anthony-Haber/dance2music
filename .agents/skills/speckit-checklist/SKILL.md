@@ -38,6 +38,22 @@ metadata:
 - An agent may assist with evaluating items only when explicitly asked by the reviewer.
 - `checklists/requirements.md` is a separate built-in spec-quality checklist maintained by `$speckit-specify` and `$speckit-clarify`; do not treat that exception as applying to custom checklists generated here.
 
+## Platform execution
+
+Use the native shell for this checkout: Bash on macOS/Linux and PowerShell on Windows.
+Both use the same `.specify/memory/constitution.md`, `.specify/templates/`, and `specs/`.
+Keep one shared skill; do not create platform-specific copies of governance or feature files.
+The initialization metadata records the original script choice; it does not override this rule.
+
+Run the setup command below from the repository root for the current platform:
+
+- macOS/Linux (Bash): `.specify/scripts/bash/check-prerequisites.sh --json --template checklist-template`
+- Windows (PowerShell): `.specify/scripts/powershell/check-prerequisites.ps1 -Json -Template checklist-template`
+
+These commands come from Spec Kit's bundled command metadata. Use the official scripts;
+do not translate helpers by hand. Treat later references to "the platform setup command"
+as this selection, preserving the workflow's requirements and error handling.
+
 ## User Input
 
 ```text
@@ -84,7 +100,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Execution Steps
 
-1. **Setup**: Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -Template checklist-template` from repo root and parse JSON for FEATURE_DIR, AVAILABLE_DOCS list, and TEMPLATE_CONTENT.
+1. **Setup**: Run the platform setup command from repo root and parse JSON for FEATURE_DIR, AVAILABLE_DOCS list, and TEMPLATE_CONTENT.
    - All file paths must be absolute.
    - For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 

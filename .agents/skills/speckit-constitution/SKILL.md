@@ -8,6 +8,22 @@ metadata:
 ---
 
 
+## Platform execution
+
+Use the native shell for this checkout: Bash on macOS/Linux and PowerShell on Windows.
+Both use the same `.specify/memory/constitution.md`, `.specify/templates/`, and `specs/`.
+Keep one shared skill; do not create platform-specific copies of governance or feature files.
+The initialization metadata records the original script choice; it does not override this rule.
+
+Run the setup command below from the repository root for the current platform:
+
+- macOS/Linux (Bash): `.specify/scripts/bash/resolve-template.sh constitution-template --json`
+- Windows (PowerShell): `.specify/scripts/powershell/resolve-template.ps1 constitution-template -Json`
+
+These commands come from Spec Kit's bundled command metadata. Use the official scripts;
+do not translate helpers by hand. Treat later references to "the platform setup command"
+as this selection, preserving the workflow's requirements and error handling.
+
 ## User Input
 
 ```text
@@ -79,7 +95,7 @@ preset/template resolution stack.
 
 Follow this execution flow:
 
-1. Run `.specify/scripts/powershell/resolve-template.ps1 constitution-template -Json` from the repository root and parse `TEMPLATE_CONTENT` as the active template.
+1. Run the platform setup command from the repository root and parse `TEMPLATE_CONTENT` as the active template.
    - The shared resolver applies project overrides, composing preset layers, and extension layers
      before the core template fallback. It MUST succeed before continuing.
    - If it fails, stop and report the resolution error; do not continue with only one contributing

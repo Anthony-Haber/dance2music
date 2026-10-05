@@ -139,6 +139,25 @@ not expose a way to invoke `/compact`, agents MUST state that limitation and ask
 the command; printing `/compact` or writing a summary MUST NOT be reported as executed compaction.
 This keeps conversation context focused between completed features without losing project state.
 
+### XII. Coherent File Organization
+
+New files MUST be grouped by purpose within the existing project structure. Agents MUST reuse
+an appropriate package, directory, or document before adding another location. New top-level
+files MUST have a project-wide entry-point, configuration, or navigation purpose that is
+recorded in the change rationale. Feature-specific implementation, helpers, tests, and design
+material MUST live with their corresponding package or established purpose-specific directory.
+
+The original main branch is the reference for a coherent, readable repository explorer.
+Changes MUST avoid scattering related files, duplicating instructions or authoritative records,
+and leaving temporary review or generated artifacts among maintained source files. Documents
+MUST have distinct purposes and link to authoritative content instead of copying it. Tool-required
+paths and the locations explicitly mandated by this constitution remain valid.
+
+Plans and reviews MUST check file placement and explain any new directory or top-level file.
+Existing clutter MUST be addressed through a scoped, authorized reorganization that preserves
+working commands, imports, links, and tool discovery; this principle alone does not authorize
+moving unrelated files. These rules keep navigation understandable as the project grows.
+
 ## Python and JavaScript Project Constraints
 
 The analysis and orchestration code uses Python; the web application uses JavaScript with HTML
@@ -159,6 +178,14 @@ Source clips belong in `videos/`, and generated datasets, figures, audio, and re
 `output/`; both directories MUST remain excluded from version control. Automated tests MUST use
 small synthetic or redistributable fixtures. Optional integrations such as the rope music engine
 MUST declare setup requirements and fail with actionable guidance when unavailable.
+
+Spec Kit MUST use its official Bash helpers on macOS/Linux and official PowerShell helpers
+on Windows, with one shared constitution, template stack, skill set, and feature document tree.
+Agents MUST select commands for the current platform rather than require another platform's
+shell or hand-translate helper logic. Portable project references MUST use repository-relative
+paths with forward slashes; machine-local feature selection MUST remain separate from shared
+feature documents. Both helper sets MUST be kept at compatible upstream versions and validated
+against the same observable contracts when changed.
 
 ## Development Workflow and Quality Gates
 
@@ -207,4 +234,4 @@ Exceptions MUST record the affected rule, reason, risk, compensating verificatio
 condition or review date. The project maintainer MUST explicitly approve them; exceptions do not
 silently amend the constitution.
 
-**Version**: 2.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05
+**Version**: 2.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05

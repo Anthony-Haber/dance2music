@@ -1,5 +1,43 @@
 # Feature Tutorials
 
+## Spec Kit on macOS and Windows
+
+Invoke the same `$speckit-constitution`, `$speckit-plan`, `$speckit-tasks`, and other
+Spec Kit skills on either platform. The shared skills select the official Bash helpers on
+macOS/Linux and PowerShell helpers on Windows. macOS does not require PowerShell.
+
+Both use `.specify/memory/constitution.md`, the templates under `.specify/templates/`,
+and feature documents under `specs/`. Both helper sets were copied unchanged from the
+installed `specify-cli` 1.1.0 bundle, keeping their logic at the same upstream version.
+Do not maintain separate Mac and Windows copies of these documents.
+
+The current feature is selected locally in ignored `.specify/feature.json`. This checkout
+selects `specs/001-anthony-instrument`. Use repository-relative paths with forward slashes
+for portability. Each checkout keeps its own selection while sharing feature documents.
+The `script: ps` initialization metadata records how this project was originally installed;
+the shared skills choose the native shell at execution time.
+
+When upgrading Spec Kit, refresh both official helper sets together and preserve the skills'
+platform selection and project amendments. Run `python -m unittest tests.test_speckit_scripts`
+to check the helpers available on that machine. Preset-composition checks also need PyYAML,
+which is included in the Specify CLI's own environment.
+
+## Python environment on macOS
+
+From the repository root, using Python 3.11:
+
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip check
+```
+
+Activate with `source .venv/bin/activate` in each new terminal; use `deactivate`
+to leave the environment. On macOS, use `.venv/bin/python` in place of the
+Windows `.venv/Scripts/python.exe` commands below. The native instrument's
+separate requirements and model setup are documented in the quickstart.
+
 ## Start the Python instrument
 
 Run from the repository root:

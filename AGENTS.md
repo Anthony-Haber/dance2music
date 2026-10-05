@@ -23,6 +23,15 @@ The initial Python prototype will reuse Joseph's glowing 2D ball design; depth/3
   and update `status.md` after each user-requested task.
 - Add or update concise usage instructions in `FEATURE_TUTORIALS.md` for each implemented feature.
 
+## Spec Kit platforms
+
+Use the official helpers in `.specify/scripts/bash/` on macOS/Linux and
+`.specify/scripts/powershell/` on Windows. Select the native command in each shared skill;
+initialization metadata is not a requirement to use PowerShell on every machine.
+Both platforms use the same constitution, templates, skills, and `specs/` documents.
+Copy official upstream helpers when updating them; do not hand-translate their logic.
+Keep related files together and justify new root-level files under constitution principle XII.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

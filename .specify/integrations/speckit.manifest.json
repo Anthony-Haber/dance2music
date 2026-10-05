@@ -1,19 +1,25 @@
 {
   "integration": "speckit",
-  "version": "1.0.13",
+  "version": "1.1.0",
   "installed_at": "2026-09-30T12:00:39.923590+00:00",
   "files": {
-    ".specify/scripts/powershell/check-prerequisites.ps1": "ef7fe740091441e5aeadccb8dc36b08d840f524513d79e2fcf258133ee6568b4",
-    ".specify/scripts/powershell/common.ps1": "8b188a9c3a2e979cfcb874acc4452175c00e9095cb0caef18374ea0cfbc384c0",
-    ".specify/scripts/powershell/create-new-feature.ps1": "916f79f0487151a2034cd2eb2aab2fc6fa12bc3e636cb35f311baf8c945902ab",
+    ".specify/scripts/powershell/check-prerequisites.ps1": "c7fa3dac16b9a71c0173dc6431072b83472b0e55177e08eb14be5a0ad8d6fa7a",
+    ".specify/scripts/powershell/common.ps1": "9837a02a1ca9e61a16a1ff7ec7429c95d8e1c87ec49400cc2807133bb89a5317",
+    ".specify/scripts/powershell/create-new-feature.ps1": "481c7368541a816b1679e5ed65fa9e5aea84b09f8be3a02ff8a340e3b48dd58a",
     ".specify/scripts/powershell/resolve-template.ps1": "e49c565a09902e4ebd4b5a51c4e014d5067fdee5b1592f15cb44ef31f430d745",
     ".specify/scripts/powershell/setup-plan.ps1": "3b8173f1553bbf67ae021af949a29e2d3e3bb35805be95e4ba8d0ab83173c66f",
-    ".specify/scripts/powershell/setup-tasks.ps1": "578c19c7fa196327c1c6791e3179accffab049fe62851961139d67bd699f336e",
+    ".specify/scripts/powershell/setup-tasks.ps1": "21b0acbc5f0789ca24b5834a8739c372b3694262627312abe209818f06c67f8c",
     ".specify/templates/checklist-template.md": "70bbc48e884fab372ffb09e83e78ff983e28b69caebf8cd9964a02b6836683ac",
     ".specify/templates/constitution-template.md": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
     ".specify/templates/plan-template.md": "a828ad6206526574ab3fc99be6d0154588cb1c9774c5919d71b81ab5b2dbffa0",
     ".specify/templates/spec-template.md": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e",
     ".specify/templates/tasks-template.md": "b0f527d41e546af0c31903e04f9b20965b6b497b573792198f663a64ce128863",
-    ".specify/.gitignore": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1"
+    ".specify/.gitignore": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1",
+    ".specify/scripts/bash/check-prerequisites.sh": "5e5e3dbfe29d8ca0a6f06de80fb2042cd3d26f42cff475b3a097c4aa0d70f16d",
+    ".specify/scripts/bash/common.sh": "53cb1c23e349db4586c272436ce35c6e2f36a9c0b5351a85e0b216d9887a26b7",
+    ".specify/scripts/bash/create-new-feature.sh": "972f03ed8ca5ee17b7baad6d56d821d46269d77abc337496beafb0fe85a725f2",
+    ".specify/scripts/bash/resolve-template.sh": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+    ".specify/scripts/bash/setup-plan.sh": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96",
+    ".specify/scripts/bash/setup-tasks.sh": "0f7d7e996ed4a26ab7bf09bf10540366ee402b930a4a9cbc0ee7bc6a8bd0013b"
   }
 }
