@@ -1,16 +1,16 @@
-# Graph Report - dance2music  (2026-10-04)
+# Graph Report - dance2music  (2026-10-05)
 
 ## Corpus Check
-- 62 files · ~86,541 words
+- 90 files · ~106,074 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 861 nodes · 1240 edges · 120 communities (50 shown, 70 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 39 edges (avg confidence: 0.62)
+- 1126 nodes · 1762 edges · 140 communities (65 shown, 75 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 88 edges (avg confidence: 0.56)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `65902010`
+- Built from commit: `39f3db70`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -130,30 +130,50 @@
 - [[_COMMUNITY_Rope Music Engine|Rope Music Engine]]
 - [[_COMMUNITY_SWAM MIDI Quartet|SWAM MIDI Quartet]]
 - [[_COMMUNITY_Vocabulary Sonification|Vocabulary Sonification]]
+- [[_COMMUNITY_Implementation Plan Anthony's local Python instrument|Implementation Plan: Anthony's local Python instrument]]
+- [[_COMMUNITY_handler|handler]]
+- [[_COMMUNITY_ControllerTests|ControllerTests]]
+- [[_COMMUNITY_Anthony's Vision for dance2music|Anthony's Vision for dance2music]]
+- [[_COMMUNITY_Tasks Anthony's local Python instrument|Tasks: Anthony's local Python instrument]]
+- [[_COMMUNITY_ANTHONY_IDEAS|ANTHONY_IDEAS.md]]
+- [[_COMMUNITY_Project Status|Project Status]]
+- [[_COMMUNITY_valid_point|valid_point]]
+- [[_COMMUNITY_Run Anthony's Python instrument|Run Anthony's Python instrument]]
+- [[_COMMUNITY_Mn|Mn]]
+- [[_COMMUNITY_setup_instrument_models.py|setup_instrument_models.py]]
+- [[_COMMUNITY_Decisions made during ideas 0–2 implementation|Decisions made during ideas 0–2 implementation]]
+- [[_COMMUNITY___init__.py|__init__.py]]
+- [[_COMMUNITY___init__.py|__init__.py]]
+- [[_COMMUNITY_Window|Window]]
+- [[_COMMUNITY_Q continue working where you last stopped yesterday|Q: continue working where you last stopped yesterday]]
+- [[_COMMUNITY_j|j]]
+- [[_COMMUNITY_Cr|Cr]]
+- [[_COMMUNITY_dt|dt]]
+- [[_COMMUNITY_Nr|Nr]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `handler()` - 30 edges
-2. `Vn` - 27 edges
-3. `Hn` - 25 edges
-4. `Engine` - 21 edges
-5. `$()` - 21 edges
-6. `O` - 18 edges
-7. `_twofive()` - 15 edges
-8. `p` - 15 edges
-9. `htmlBuilder()` - 15 edges
-10. `Dance2Music Methods` - 15 edges
+1. `Frame` - 45 edges
+2. `Controller` - 31 edges
+3. `handler()` - 30 edges
+4. `Vn` - 27 edges
+5. `Hn` - 25 edges
+6. `Config` - 21 edges
+7. `Engine` - 21 edges
+8. `$()` - 21 edges
+9. `Exports` - 18 edges
+10. `O` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `_twofive()` --indirect_call--> `stems()`  [INFERRED]
-  synths.py → motion.py
-- `_twofive()` --indirect_call--> `p`  [INFERRED]
-  synths.py → web/vendor/katex/katex.min.js
-- `_twofive()` --indirect_call--> `S()`  [INFERRED]
-  synths.py → web/vendor/katex/katex.min.js
-- `_twofive()` --indirect_call--> `W`  [INFERRED]
-  synths.py → web/vendor/katex/katex.min.js
-- `Scientific Media Runtime Dependencies` --conceptually_related_to--> `dance2music`  [INFERRED]
-  requirements.txt → README.md
+- `CliTests` --uses--> `Exports`  [INFERRED]
+  tests/test_instrument_cli.py → instrument/__main__.py
+- `CliTests` --uses--> `Controller`  [INFERRED]
+  tests/test_instrument_cli.py → instrument/controller.py
+- `ControllerTests` --uses--> `Controller`  [INFERRED]
+  tests/test_instrument_controller.py → instrument/controller.py
+- `HarmonyTests` --uses--> `Controller`  [INFERRED]
+  tests/test_instrument_harmony.py → instrument/controller.py
+- `ControllerTests` --uses--> `Hand`  [INFERRED]
+  tests/test_instrument_controller.py → instrument/models.py
 
 ## Import Cycles
 - None detected.
@@ -162,7 +182,7 @@
 - **Shared mathematical explanations** — web_about_standalone_methods, web_index_comparison_page, web_live_index_live_instrument, web_methods_methods [INFERRED 0.95]
 - **Movement to sound contracts** — readme_mediapipe_pose, web_methods_motion_cleaning, web_methods_savitzky_golay_derivatives, web_methods_laban_efforts, web_methods_synthesis_primitives [EXTRACTED 1.00]
 
-## Communities (120 total, 70 thin omitted)
+## Communities (140 total, 75 thin omitted)
 
 ### Community 0 - "Dance Music Methods"
 Cohesion: 0.09
@@ -170,15 +190,15 @@ Nodes (33): MediaPipe Pose, Standalone Methods Page, Dance Motion Sound Comparis
 
 ### Community 1 - "Offline Audio Synthesis"
 Cohesion: 0.08
-Nodes (45): find_video(), A clip by name: videos/ first, then ~/Downloads., breath(), ctrl(), ctrl_ar(), _draw_regions(), _draw_rules(), efforts() (+37 more)
+Nodes (46): find_video(), Where things live. Everything big stays out of git (see .gitignore)., A clip by name: videos/ first, then ~/Downloads., breath(), ctrl(), ctrl_ar(), _draw_regions(), _draw_rules() (+38 more)
 
 ### Community 2 - "Pose Sonification Pipeline"
-Cohesion: 0.11
-Nodes (32): Where things live. Everything big stays out of git (see .gitignore)., DanceContext, _fill_gaps(), limbs_music(), main(), music(), out_dir(), overlay() (+24 more)
+Cohesion: 0.12
+Nodes (31): DanceContext, _fill_gaps(), limbs_music(), main(), music(), out_dir(), overlay(), Linear interpolation across frames the tracker missed. (+23 more)
 
 ### Community 3 - "KaTeX Formula Parsing"
-Cohesion: 0.16
-Nodes (7): c(), handler(), Hr(), m, qr(), Vn, Yt()
+Cohesion: 0.08
+Nodes (10): c(), handler(), Hn, Hr(), m, Mn, Or(), qr() (+2 more)
 
 ### Community 4 - "Live Audio Harmony"
 Cohesion: 0.15
@@ -190,19 +210,23 @@ Nodes (15): P, BY_COUNT, ChordFollower, H, readFingers(), readPose(), readRegion
 
 ### Community 6 - "Live Instrument Controls"
 Cohesion: 0.07
-Nodes (25): ACTIONS, bounce, COL, custom, cv, DEFAULT_ACTIONS, DEG, drumMode (+17 more)
+Nodes (28): ACTIONS, bounce, COL, custom, cv, DEFAULT_ACTIONS, DEG, drumMode (+20 more)
+
+### Community 7 - "KaTeX Macro Expansion"
+Cohesion: 0.13
+Nodes (8): J, d2(), fingerState(), GESTURES, Hand, HAND_EDGES, Hands, HS
 
 ### Community 8 - "Live Motion Features"
-Cohesion: 0.11
-Nodes (13): clip(), EDGES, Features, lp(), OneEuro, PART_J, PARTS, periodicity() (+5 more)
+Cohesion: 0.15
+Nodes (12): clip(), EDGES, Features, lp(), OneEuro, PART_J, PARTS, periodicity() (+4 more)
 
 ### Community 9 - "Camera Display Controls"
 Cohesion: 0.20
 Nodes (18): $(), applyMix(), applySens(), exists(), listDevices(), loadLandmarker(), METERS, MODEL() (+10 more)
 
 ### Community 10 - "KaTeX Rendering Core"
-Cohesion: 0.13
-Nodes (10): $e(), It(), je(), N(), Or(), qt(), Rr(), Rt() (+2 more)
+Cohesion: 0.14
+Nodes (9): $e(), It(), je(), N(), qt(), Rr(), Rt(), S() (+1 more)
 
 ### Community 12 - "Offline Motion Processing"
 Cohesion: 0.11
@@ -220,25 +244,29 @@ Nodes (5): Implementation Plan Template, Feature Specification Template, Task Li
 Cohesion: 0.07
 Nodes (26): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+18 more)
 
+### Community 17 - "Hand Tracking Runtime"
+Cohesion: 0.12
+Nodes (14): Hand, Path, JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy., read_replay(), observations(), Any, NDArray, Point (+6 more)
+
 ### Community 18 - "KaTeX DOM Construction"
 Cohesion: 0.18
-Nodes (3): _, kt(), Q
+Nodes (3): kt(), Q, ut
 
 ### Community 19 - "Motion Sound Mapping"
 Cohesion: 0.24
 Nodes (9): loop(), applyPreset(), BASE, clip(), defaults(), DESTS, evaluate(), PRESETS (+1 more)
 
 ### Community 20 - "KaTeX Markup Serialization"
-Cohesion: 0.13
-Nodes (4): dt, K, toText(), ut
+Cohesion: 0.17
+Nodes (3): A, K, toText()
 
 ### Community 23 - "Hand Gesture Features"
-Cohesion: 0.24
-Nodes (7): J, d2(), fingerState(), GESTURES, Hand, HAND_EDGES, HS
+Cohesion: 0.13
+Nodes (20): ExitStack, camera_frames(), Exports, main(), Any, NDArray, Path, uint8 (+12 more)
 
 ### Community 24 - "KaTeX Node Rendering"
-Cohesion: 0.29
-Nodes (3): ct(), mt(), Z
+Cohesion: 0.12
+Nodes (13): Dwell, FistGate, Causal instrument state; no camera, drawing, sound or file effects., Return to initial chord/unlocked/merged; both hands must reopen to arm., Chord, Explicit musical vocabulary and absolute, path-independent selections., 12 chromatic sectors clockwise from screen right; centered hands hold root., Distinct chord pitches in MIDI [48,83], minimal movement with fixed voice count. (+5 more)
 
 ### Community 25 - "KaTeX Attribute Rendering"
 Cohesion: 0.07
@@ -247,6 +275,22 @@ Nodes (26): Dependencies & Execution Order, Format: `[ID] [P?] [Story] Descripti
 ### Community 27 - "KaTeX Element Attributes"
 Cohesion: 0.08
 Nodes (25): 1. Initialize Analysis Context, 2. Load Artifacts (Progressive Disclosure), 3. Build Semantic Models, 4. Detection Passes (Token-Efficient Analysis), 5. Severity Assignment, 6. Produce Compact Analysis Report, 7. Provide Next Actions, 8. Offer Remediation (+17 more)
+
+### Community 28 - "KaTeX Text Elements"
+Cohesion: 0.11
+Nodes (19): 1. The three existing ways to run the project, 2. What the computer-vision models provide, 3. What the project adds after computer vision, 4. Are we training our own AI?, 5. How much comes from the model, and how much are we doing?, 6. What our next work actually is, 7. Where to look for detail, Body pose (+11 more)
+
+### Community 29 - "KaTeX Markup Elements"
+Cohesion: 0.13
+Nodes (11): float32, Playback, Any, NDArray, Simple local chord synth; optional hardware playback is an explicit boundary., Four persistent oscillator slots, causal 60ms pitch and 30ms gain smoothing., Return mono float32 samples in [-0.25,0.25]; no device needed.          Missing, Optional sounddevice stream. Call close in finally; failures are surfaced. (+3 more)
+
+### Community 32 - "KaTeX Range Utility"
+Cohesion: 0.26
+Nodes (11): Config, Output, Particle, pixel(), NDArray, Point, uint8, Native adaptation of Joseph Bakarji's wrist-based glow and sparks.  Geometry is (+3 more)
+
+### Community 33 - "KaTeX Range Construction"
+Cohesion: 0.29
+Nodes (3): ct(), mt(), Z
 
 ### Community 40 - "Execution Steps"
 Cohesion: 0.12
@@ -257,8 +301,8 @@ Cohesion: 0.15
 Nodes (12): Assumptions, Edge Cases, Feature Specification: [FEATURE NAME], Functional Requirements, Key Entities *(include if feature involves data)*, Measurable Outcomes, Requirements *(mandatory)*, Success Criteria *(mandatory)* (+4 more)
 
 ### Community 42 - "Dance → the rope's music engine"
-Cohesion: 0.17
-Nodes (11): dance2music, Dance → the rope's music engine, For the Ableton side, Her vocabulary, discovered (`vocabulary.py`), How the dance becomes the three signals, ii–V–I from pose (`harmony.py`, demos `twofive`, `twofive_alt`), Motion, not pose: simple synths (`motion.py`, `synths.py`), Sonifying from the vocabulary (`sonify.py`) (+3 more)
+Cohesion: 0.22
+Nodes (9): Dance → the rope's music engine, For the Ableton side, Her vocabulary, discovered (`vocabulary.py`), How the dance becomes the three signals, ii–V–I from pose (`harmony.py`, demos `twofive`, `twofive_alt`), Motion, not pose: simple synths (`motion.py`, `synths.py`), Sonifying from the vocabulary (`sonify.py`), The music (+1 more)
 
 ### Community 43 - "SKILL.md"
 Cohesion: 0.18
@@ -273,8 +317,8 @@ Cohesion: 0.18
 Nodes (10): Checklist Format (REQUIRED), Completion Report, Done When, Mandatory Post-Execution Hooks, Outline, Phase Structure, Pre-Execution Checks, Task Generation Rules (+2 more)
 
 ### Community 46 - "Core Principles"
-Cohesion: 0.18
-Nodes (10): Core Principles, dance2music Constitution, Development Workflow and Quality Gates, Governance, I. Readable, Explicit Python, II. Meaningful Automated Tests, III. Numerical and Integration Correctness, IV. Maintainable Boundaries and Documentation (+2 more)
+Cohesion: 0.12
+Nodes (15): Core Principles, dance2music Constitution, Development Workflow and Quality Gates, Governance, I. Readable, Explicit Python, II. Meaningful Automated Tests, III. Numerical and Integration Correctness, IV. Maintainable Boundaries and Documentation (+7 more)
 
 ### Community 47 - "Core Principles"
 Cohesion: 0.18
@@ -341,28 +385,64 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 65 - "gestureActions"
-Cohesion: 0.67
-Nodes (3): gestureActions(), mapChanged(), renderMapping()
+Cohesion: 0.35
+Nodes (5): Controller, Persistent musical state driven by strictly increasing elapsed timestamps., Explicit temporary merge control, independent of chord and lock., Frame, VisualTests
+
+### Community 120 - "Implementation Plan: Anthony's local Python instrument"
+Cohesion: 0.14
+Nodes (12): Constitution check, Implementation Plan: Anthony's local Python instrument, Implementation strategy, Structure, Technical context, Timing and recovery choices, Feature: Anthony's local Python instrument, ideas 0–2, Required validation (+4 more)
+
+### Community 123 - "Anthony's Vision for dance2music"
+Cohesion: 0.17
+Nodes (12): 0. First task: persistent fist root lock, 1. A 3D ball between the hands, with two-ball modes, 2. Musician-oriented harmony: roots and qualities, 3. Chords as three-move magic spells, 4. A beginner game that teaches the magic chords, 5. Nearby closed fists split the central ball, 6. Ableton / Expressive Chords through a virtual MIDI cable, Anthony's Vision for dance2music (+4 more)
+
+### Community 124 - "Tasks: Anthony's local Python instrument"
+Cohesion: 0.17
+Nodes (11): Dependencies and execution order, Implementation strategy, Parallel examples per story, Phase 1: Setup, Phase 2: Foundational, Phase 3: US1 — Persistent root lock (P1, MVP), Phase 4: US2 — Temporary glow and two-ball mode (P2), Phase 5: US3 — Musical roots and qualities (P3) (+3 more)
+
+### Community 126 - "Project Status"
+Cohesion: 0.22
+Nodes (8): 2026-10-04 - Anthony's vision and Python-first development, 2026-10-04 - Commit vision and governance documents locally, 2026-10-04 - Constitution: graphify, design decisions, and project languages, 2026-10-04 - Constitution: local work and task status, 2026-10-04 - Explain code behavior and the computer-vision boundary, 2026-10-04 - Review Joseph's ball and defer initial 3D work, 2026-10-05 - Resume Anthony's local Python instrument implementation, Project Status
+
+### Community 127 - "valid_point"
+Cohesion: 0.16
+Nodes (10): Hand, Point, Device-independent contracts. Positions and radii use displayed image pixels., True when both pixel coordinates are finite., valid_point(), Repeatable scripted frames and JSONL replay, independent of camera/models., MediaPipe boundary. Models must already exist; all detection is local., Native CLI contracts, replay exports, tracking adapters and failure messages. (+2 more)
+
+### Community 128 - "Run Anthony's Python instrument"
+Cohesion: 0.50
+Nodes (4): Controls, Headless validation and local exports, Run Anthony's Python instrument, Setup on a fresh machine
+
+### Community 129 - "Mn"
+Cohesion: 0.33
+Nodes (6): Automated contracts, Models, native window, camera/video and playback, Remaining human acceptance, Resume audit and environment, Scripted replay, rendering and audio exports, Validation evidence: local Python instrument
+
+### Community 131 - "Decisions made during ideas 0–2 implementation"
+Cohesion: 0.50
+Nodes (4): Agent choices, provisional and open to revision, Confirmed by Anthony, Decisions made during ideas 0–2 implementation, Resume validation, 2026-10-05
+
+### Community 135 - "Q: continue working where you last stopped yesterday"
+Cohesion: 0.40
+Nodes (4): Answer, Outcome, Q: continue working where you last stopped yesterday, Source Nodes
 
 ## Knowledge Gaps
-- **288 isolated node(s):** `B`, `TRACKED`, `REF`, `HS`, `SIX` (+283 more)
+- **360 isolated node(s):** `B`, `TRACKED`, `REF`, `HS`, `SIX` (+355 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **75 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_twofive()` connect `Offline Audio Synthesis` to `KaTeX Rendering Core`, `Offline Motion Processing`, `KaTeX Rendering Styles`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
 - **Why does `p` connect `KaTeX Rendering Styles` to `Offline Audio Synthesis`, `KaTeX Rendering Core`, `KaTeX Formula Parsing`, `draw`?**
-  _High betweenness centrality (0.107) - this node is a cross-community bridge._
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Why does `_twofive()` connect `Offline Audio Synthesis` to `KaTeX Rendering Core`, `Offline Motion Processing`, `KaTeX Rendering Styles`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
 - **Why does `draw()` connect `draw` to `Camera Display Controls`, `KaTeX Rendering Styles`, `Live Instrument Controls`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
+- **Are the 12 inferred relationships involving `Frame` (e.g. with `Controller` and `Dwell`) actually correct?**
+  _`Frame` has 12 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 10 inferred relationships involving `Controller` (e.g. with `Chord` and `Ball`) actually correct?**
+  _`Controller` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 3 inferred relationships involving `handler()` (e.g. with `c()` and `m`) actually correct?**
   _`handler()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Where things live. Everything big stays out of git (see .gitignore).`, `A clip by name: videos/ first, then ~/Downloads.`, `MediaPipe pose per frame → landmarks.npz (T, 33, 4: x, y, z, vis).` to the rest of the system?**
-  _334 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Dance Music Methods` be split into smaller, more focused modules?**
-  _Cohesion score 0.08901515151515152 - nodes in this community are weakly interconnected._
-- **Should `Offline Audio Synthesis` be split into smaller, more focused modules?**
-  _Cohesion score 0.0815686274509804 - nodes in this community are weakly interconnected._
+  _441 weakly-connected nodes found - possible documentation gaps or missing edges._

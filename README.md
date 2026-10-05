@@ -30,8 +30,23 @@ Code only in git: clips go in `videos/`, everything generated lands in
 | `web/methods.html`, `web/about.html` | the math of everything, as a drawer and as a standalone page |
 | `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
+| `instrument/` | Anthony's native Python prototype: persistent root lock, glowing/split ball, 12 roots and six chord qualities |
 | `IDEAS.md` | ideas not built yet |
 | `ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
+| `explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |
+
+Anthony's ideas 0–2 now have a native Python prototype, separate from `live.py`:
+
+```powershell
+.venv/Scripts/python.exe -m instrument --demo
+.venv/Scripts/python.exe -m instrument --camera 0
+```
+
+See [the Python quickstart](specs/001-anthony-instrument/quickstart.md) for setup,
+gestures, headless replay, local exports and checks; [decisions](specs/001-anthony-instrument/decisions.md)
+records provisional choices for Anthony's review. True 3D and JavaScript translation remain deferred.
+The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
+model/device checks, measured latency and the remaining performer/listening review.
 
 ---
 

@@ -14,6 +14,20 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+venv/
+dist/
+build/
+*.egg-info/
+*.log
+.env*
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
 
 # live: optional offline MediaPipe copy (python live.py --offline)
 web/live/vendor/

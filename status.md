@@ -75,3 +75,72 @@
   the uncommitted state recorded at those tasks' handoffs; this entry supersedes that state.
 - Outstanding: Formal Python fist-toggle specification/planning and its remaining design decisions
   remain future work. JavaScript translation still requires explicit user instruction.
+
+## 2026-10-04 - Review Joseph's ball and defer initial 3D work
+
+- State: Complete.
+- Task: Identify Joseph Bakarji's ball work, compare it with Anthony's planned design, and assess
+  whether it can be used temporarily while 3D comes later.
+- Findings: Git history and blame attribute the current ball to Joseph's `0c019b6` commit dated
+  2026-10-01. It uses Canvas 2D, wrist midpoint/spacing, fire or chord-colored glow, sparks,
+  motion-energy flicker, and sphere-size sound mappings. The same commit adds pad timbres.
+  Depth, split/merge, rotation, and hold-time color interactions are not implemented by that ball.
+- Decision: Anthony explicitly chose to reuse Joseph's design temporarily in the Python prototype
+  and defer depth/3D work. This supersedes the earlier 3D-first starting point, while preserving
+  the future 3D/animator-asset vision and the other confirmed interaction decisions.
+- Changes: Updated `ANTHONY_IDEAS.md` with provenance, current behavior, reuse boundaries, new
+  design risks, and the revised starting point. Updated `AGENTS.md` to preserve that decision.
+- Verification: Used graphify followed by focused source reads, `git show`, and `git blame`;
+  checked document consistency and whitespace. This was a source review, not a runtime visual
+  or audio test. No executable behavior changed, so application tests and a code graph refresh
+  were not required.
+- Local state: Working on `anthony-explorations`; these documentation changes remain local and
+  uncommitted. No feature implementation, website translation, or push occurred.
+- Outstanding: Plan the Python adaptation and remaining gesture/MIDI details before implementation.
+  A later 3D renderer and any depth-dependent behavior still need dedicated design and validation.
+
+## 2026-10-04 - Explain code behavior and the computer-vision boundary
+
+- State: Complete.
+- Task: Create `explanation.md` explaining the existing code, what the CV models provide, and
+  what the project implements or still needs to build.
+- Changes: Added the explanation of the Python and browser paths, body/hand model outputs,
+  project motion/gesture/harmony/audio/ball logic, third-party dependencies, and the separate
+  vocabulary-clustering experiment. Included a responsibility table, a pipeline diagram, and
+  a table distinguishing planned work from implemented features. Linked it from README and AGENTS.
+- Verification: Used graphify queries/explain followed by focused reads of the relevant source;
+  checked model/application boundaries, document links, planned versus current behavior, and
+  whitespace. No runtime benchmark or effort measurement was performed, so no percentage of
+  model versus project work is claimed. This is documentation only; application tests and a
+  code graph refresh were not required.
+- Local state: Working on `anthony-explorations`; these and the prior ball-roadmap changes remain
+  local and uncommitted. No application source, feature behavior, or web translation changed.
+- Outstanding: The Python feature specification, implementation, and relevant runtime validation
+  remain future tasks. No documentation work remains for this request.
+
+## 2026-10-05 - Resume Anthony's local Python instrument implementation
+
+- State: Stage 1 implementation and engineering validation complete; performer acceptance pending.
+- Task: Continue yesterday's `$speckit-implement` work in `specs/001-anthony-instrument`.
+- Resume point: The full native prototype, feature documents and 24 tests were uncommitted;
+  tasks were unchecked and evidence.md was missing. Earlier status entries predated that work.
+- Changes: Verified and completed the existing root-only fist lock, split arbitration/persistence,
+  Joseph-inspired fire/light glow, 72-chord catalogue, smoothed local synth, camera/video/demo/replay
+  CLI, offline model setup and scoped development tooling. Corrected WAV event timing across
+  irregular gaps, configurable dead-zone feedback, malformed replay diagnostics, nonfinite
+  tracking-score handling and synth sample-rate validation. Added regression coverage, checked
+  completed tasks, created evidence.md, reconciled README/vision/explanation and verified ignores.
+- Verification: 28 tests and 11 subtests passed; lint/format/types and pip check passed. Exhaustive
+  5,184 chord transitions passed. The 450-frame replay exactly matched demo state; controller
+  p95 was 0.0572 ms (<5 ms). Inspected merged/locked/minor/split renders in fire/light styles.
+  Both local models loaded; native window, default audio stream and synthetic video checks passed.
+  Approved camera retry outside the sandbox processed 19 frames (inference p95 45.1 ms) with no
+  hands/body detected. This does not establish gesture usability or subjective audio quality.
+- Local state: This entry accompanies the task-plan's local implementation commit on
+  `anthony-explorations`. Refreshed the code graph with graphify update . (AST only, no API cost)
+  and reviewed the local diff. Code, evidence and generated graph stay local. Git staging/commit
+  needed approved access because the sandbox restricts Git metadata writes. No web feature logic,
+  push, upload or deployment.
+- Outstanding: Anthony's live gesture/threshold and listening review. 3D, spells, games, MIDI and
+  JavaScript translation remain separate future work. Prior dated graph snapshots and caches
+  unrelated to this resume remain unstaged; no historical task records were removed.

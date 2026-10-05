@@ -1,6 +1,6 @@
 # Anthony's Vision for dance2music
 
-Last updated: 2026-10-04. This is a living vision and planning document for Anthony to revise.
+Last updated: 2026-10-05. This is a living vision and planning document for Anthony to revise.
 It records desired behavior, existing capabilities, accepted decisions, and possible design flaws.
 Suggestions and open questions are not approved implementation choices.
 
@@ -19,11 +19,23 @@ The existing Python analysis/rendering pipeline and JavaScript live app are dist
 running `python live.py` starts a local web server; it does not run the live gesture logic in Python.
 New live features therefore need a genuine local Python implementation before any web translation.
 
+**Stage 1 implementation, 2026-10-04:** Ideas 0–2 now have a native Python prototype
+in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
+nearby-fist persistent split, and all 12 roots with six absolute quality gestures.
+Anthony approved those provisional mappings and keyboard M merge during implementation.
+See [quickstart](specs/001-anthony-instrument/quickstart.md),
+[spec/tasks](specs/001-anthony-instrument/tasks.md),
+[decisions for review](specs/001-anthony-instrument/decisions.md), and
+[validation evidence](specs/001-anthony-instrument/evidence.md).
+The original vision and design risks below remain relevant. Human gesture/listening
+acceptance is still pending; 3D, extra finger-pattern modes, spells, game and MIDI
+remain future work. The website has not been translated or changed by this feature.
+
 | Area | Existing capability | Proposed direction |
 | --- | --- | --- |
 | Python | Recorded-video pose/motion analysis, harmony, sound rendering, MIDI-file workflows | Local live prototype for the new interactions and MIDI output |
 | Live web app | Camera/video tracking, hand recognition, six chord regions, finger-count selection, synthesis and recording | Later translation of validated Python behavior, on explicit request |
-| Ball | One visual ball from the 2D wrist midpoint and spacing; sphere-size sound mappings | 3D interaction and modes with a ball attached to each hand |
+| Ball | One visual ball from the 2D wrist midpoint and spacing; sphere-size sound mappings | Reuse Joseph's visual design in Python first; two-ball interactions and later 3D |
 | Harmony | A predefined harmonic palette, dwell filtering, and voice leading | Independent root selection and gesture-driven chord-quality changes |
 | Fist | Default chord hold while the fist is recognized | Persistent root-lock toggle, with quality gestures still active |
 | Ableton | Existing offline MIDI described for the SWAM/rope workflow | A live single-note trigger per selected chord for Expressive Chords |
@@ -54,11 +66,13 @@ deployment, or upload. Existing web behavior is useful reference material while 
 | Lock lifecycle | A fist closure locks; a later fist closure unlocks. Reopening alone does not unlock. |
 | Locked harmony | Root selection stays fixed; chord-quality gestures remain active. |
 | Two-fist conflict | Nearby closed fists split the ball and suppress the chord-lock toggle. |
-| Initial 3D scope | A 3D object controlled using estimated depth, subject to tracking validation. |
+| Initial ball scope | Reuse Joseph's glowing 2D ball design in the local Python prototype; defer depth/3D work. |
 | Spell structure | Three moves recognized in a specific order. |
 | Split lifecycle | Two-ball mode persists after the hands open; a separate merge gesture is still to be designed. |
 
 These interaction decisions were explicitly confirmed by Anthony on 2026-10-04.
+The initial ball scope was revised after reviewing Joseph's implementation: the temporary 2D
+design supersedes the earlier decision to start with estimated-depth 3D. The future 3D vision remains.
 
 ## 0. First task: persistent fist root lock
 
@@ -99,8 +113,27 @@ tracking loss, and split gestures. The accepted behavior must be deterministic b
 finger patterns split it into two balls, one associated with each hand. The exact nearby-fist
 split gesture is described in idea 5; other finger patterns and mode mappings are still open.
 
-**Accepted starting point.** The first Python prototype uses a 3D object with estimated-depth
-control, not only a 3D appearance driven in the image plane. Its depth behavior must be validated.
+**Accepted starting point, revised 2026-10-04.** Reuse Joseph Bakarji's glowing 2D ball design
+as the temporary visual in the local Python prototype. Defer depth control and true 3D rendering
+until later. This replaces the earlier 3D-first starting point, while preserving the long-term
+3D and animator-supplied asset goals. Root locking, musical gestures, and MIDI can be developed
+without making the initial prototype depend on 3D.
+
+**What Joseph implemented.** Commit `0c019b6` on 2026-10-01 added the ball in the JavaScript
+live app: a 2D radial glow at the wrists' midpoint, radius equal to half their image-plane
+distance, a fire or chord-colored light style, and flicker/sparks driven partly by motion energy.
+The normalized sphere-size source can drive whole-instrument gain. The `Sphere` preset uses a
+cubic size curve; `Sphere, gentle` uses exponent 1.5; `Sphere + vowel` also maps hands' height to
+the choir vowel and sphere size to pad brightness. The same commit added five pad timbres.
+
+**Reuse boundary.** Reuse the visual concept, wrist geometry, and useful mappings. Its renderer
+is browser JavaScript using Canvas 2D, so the Python prototype needs a Python rendering adaptation;
+running `live.py` is not that adaptation. The current ball has no true depth control, split/merge
+state, rotation-driven effect, hold-duration color behavior, or animator-asset interface.
+
+For later planning, keep musical/gesture state independent of the drawing method so a future
+3D renderer can display the same instrument behavior. Depth-dependent interactions will still need
+their own validation when introduced; a 2D prototype cannot validate those by itself.
 
 **Future animated asset.** Anthony may obtain a finished 3D animation from an animator. The
 instrument should eventually drive that asset's expressive qualities, for example getting bigger
@@ -117,6 +150,10 @@ point, not a commitment that every new mode must use it.
 
 - A 3D-looking object and an object controlled with estimated depth are different designs.
   The current ball uses image-plane wrists; adding a shader alone does not add depth interaction.
+- The temporary 2D ball is useful for validating gestures and musical control, but cannot prove
+  that reach, depth collisions, or hand motion toward the camera work in a future 3D design.
+- The existing glow is rotationally symmetric, so spinning it alone may be visually invisible.
+  A rotation effect needs directional particles, markings, or a future asset with visible orientation.
 - Camera-estimated depth can be noisy, especially when hands overlap or move toward the camera.
   Calibration, confidence handling, smoothing, and coordinate conventions need validation.
 - Combining body and hand estimates without a shared frame can make balls drift or jump.
@@ -136,7 +173,7 @@ point, not a commitment that every new mode must use it.
 
 **Questions for design.** What does each ball control musically? Which finger patterns select
 which modes? What counts as holding the ball? What controls can a future animator's asset expose,
-and which renderer/asset format supports those controls in the approved stage?
+and which renderer/asset format supports those controls when the 3D stage is requested?
 
 ## 2. Musician-oriented harmony: roots and qualities
 
@@ -277,25 +314,23 @@ to be the harmonic root. Local synthesis can still use a full voicing independen
 channel should be used? Does the plugin expect a held note or a pulse? How should a repeated same
 chord and an unmapped chord behave? These details need confirmation, not a guessed plugin preset.
 
-## Planning boundaries and next feature
+## Implementation boundaries and next review
 
-The requested vision document can be reviewed now. This task does not implement any of these ideas
-or translate them into the web app.
+The active feature is [001-anthony-instrument](specs/001-anthony-instrument/spec.md).
+Its specification, plan, tasks, confirmed/provisional decisions and quickstart exist.
+Ideas 0–2 have a native Python implementation. On 2026-10-05 the resumed work passed
+28 automated tests, lint, formatting, types, offline model loading, native window
+and audio-stream smoke checks, and deterministic replay. Core replay p95 remained
+below the specified 5 ms budget. Details and limits are in
+[evidence.md](specs/001-anthony-instrument/evidence.md).
 
-Formal Spec Kit plan setup currently stops with:
+The short camera smoke exercised capture and inference with no hands or torso detected;
+it does not establish live gesture usability. Performer timing, all six gesture mappings
+and subjective listening still need Anthony's review. The thresholds and choices in
+decisions.md remain provisional. The original questions above describe risks and future
+choices; the current feature's confirmed answers are recorded in its spec and decisions.
 
-> Feature directory not found. Set SPECIFY_FEATURE_DIRECTORY or run the specify command to create
-> .specify/feature.json.
-
-No active feature specification exists, so a completed implementation plan, research decisions,
-data model, contracts, and executable quickstart cannot be claimed. Open design questions must be
-answered before dependent design is finalized. An idea list is not a substitute for those decisions.
-
-The next feature to specify is the local Python persistent fist root-lock toggle. Its scope needs
-to include enough hand input, musical state, and feedback to validate it outside the existing
-JavaScript application. The MIDI output adapter is high priority, but its inclusion in that first
-feature remains an explicit scope decision.
-
-After a feature specification and the remaining design decisions exist, use `$speckit-plan` for
-the Python implementation design, then `$speckit-tasks` for actionable tasks. Website translation
-remains a later stage requiring Anthony's explicit instruction.
+Ableton MIDI remains a high-priority next feature, after agreeing on the chord trigger
+table, port/channel and note lifecycle. Spells, the game, extra finger-pattern modes
+and 3D need their own specifications and decisions. Website translation requires
+Anthony's explicit instruction; no browser feature code changed in this implementation.
