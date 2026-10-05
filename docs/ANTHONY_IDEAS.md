@@ -23,10 +23,10 @@ New live features therefore need a genuine local Python implementation before an
 in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
 nearby-fist persistent split, and all 12 roots with six absolute quality gestures.
 Anthony approved those provisional mappings and keyboard M merge during implementation.
-See [quickstart](specs/001-anthony-instrument/quickstart.md),
-[spec/tasks](specs/001-anthony-instrument/tasks.md),
-[decisions for review](specs/001-anthony-instrument/decisions.md), and
-[validation evidence](specs/001-anthony-instrument/evidence.md).
+See [quickstart](../specs/001-anthony-instrument/quickstart.md),
+[spec/tasks](../specs/001-anthony-instrument/tasks.md),
+[decisions for review](../specs/001-anthony-instrument/decisions.md), and
+[validation evidence](../specs/001-anthony-instrument/evidence.md).
 The original vision and design risks below remain relevant. Human gesture/listening
 acceptance is still pending; 3D, extra finger-pattern modes, spells, game and MIDI
 remain future work. The website has not been translated or changed by this feature.
@@ -77,7 +77,7 @@ still requires an explicit request.
 - [x] Added line-specific errors for malformed replay observations.
 - [x] Rejected nonfinite tracking confidence and invalid synth sample rates.
 
-Evidence: [28 passing tests and device/replay checks](specs/001-anthony-instrument/evidence.md).
+Evidence: [28 passing tests and device/replay checks](../specs/001-anthony-instrument/evidence.md).
 Implementation commit: `6acfa55` (local).
 
 | Area | Original pipeline/browser capability | Anthony's direction |
@@ -89,9 +89,9 @@ Implementation commit: `6acfa55` (local).
 | Fist | Default chord hold while the fist is recognized | Persistent root-lock toggle, with quality gestures still active |
 | Ableton | Existing offline MIDI described for the SWAM/rope workflow | A live single-note trigger per selected chord for Expressive Chords |
 
-Source context: [README.md](README.md), [IDEAS.md](IDEAS.md), [live.py](live.py),
-[web/live/live.js](web/live/live.js), [web/live/hands.js](web/live/hands.js),
-[web/live/harmony.js](web/live/harmony.js), and [web/live/features.js](web/live/features.js).
+Source context: [README.md](../README.md), [IDEAS.md](../IDEAS.md), [live.py](../live.py),
+[web/live/live.js](../web/live/live.js), [web/live/hands.js](../web/live/hands.js),
+[web/live/harmony.js](../web/live/harmony.js), and [web/live/features.js](../web/live/features.js).
 These are references to current behavior, not instructions to modify the website now.
 
 ## Working stages
@@ -126,7 +126,7 @@ design supersedes the earlier decision to start with estimated-depth 3D. The fut
 ## 0. First task: persistent fist root lock
 
 **Status: DONE for the local Python prototype.** Implemented in
-[controller.py](instrument/controller.py), with timing, dropout and split-conflict
+[controller.py](../instrument/controller.py), with timing, dropout and split-conflict
 tests. Live timing/recognition review remains on the checklist above.
 
 **Vision.** Turn the existing fist hold into a toggle. The performer can select a root using a
@@ -189,8 +189,8 @@ cubic size curve; `Sphere, gentle` uses exponent 1.5; `Sphere + vowel` also maps
 the choir vowel and sphere size to pad brightness. The same commit added five pad timbres.
 
 **Reuse boundary.** The visual concept, wrist geometry and spacing-to-gain mapping
-have been adapted in [visuals.py](instrument/visuals.py) and
-[controller.py](instrument/controller.py). Joseph's original renderer is browser
+have been adapted in [visuals.py](../instrument/visuals.py) and
+[controller.py](../instrument/controller.py). Joseph's original renderer is browser
 JavaScript using Canvas 2D; running `live.py` is not the Python adaptation. His
 original browser ball has no split/merge state. The Python version adds that state
 but still has no true depth control, rotation-driven effect, hold-duration color
@@ -243,7 +243,7 @@ and which renderer/asset format supports those controls when the 3D stage is req
 ## 2. Musician-oriented harmony: roots and qualities
 
 **Status: DONE for the initial 72-chord Python catalogue.** Implemented in
-[harmony.py](instrument/harmony.py) and [audio.py](instrument/audio.py). Automated
+[harmony.py](../instrument/harmony.py) and [audio.py](../instrument/audio.py). Automated
 tests cover all 5,184 starting-to-target chord combinations. Live gesture and
 subjective listening review remain; broader vocabulary and Ableton output are deferred.
 
@@ -390,13 +390,13 @@ chord and an unmapped chord behave? These details need confirmation, not a guess
 
 ## Implementation boundaries and next review
 
-The active feature is [001-anthony-instrument](specs/001-anthony-instrument/spec.md).
+The active feature is [001-anthony-instrument](../specs/001-anthony-instrument/spec.md).
 Its specification, plan, tasks, confirmed/provisional decisions and quickstart exist.
 Ideas 0–2 have a native Python implementation. On 2026-10-05 the resumed work passed
 28 automated tests, lint, formatting, types, offline model loading, native window
 and audio-stream smoke checks, and deterministic replay. Core replay p95 remained
 below the specified 5 ms budget. Details and limits are in
-[evidence.md](specs/001-anthony-instrument/evidence.md).
+[evidence.md](../specs/001-anthony-instrument/evidence.md).
 
 The short camera smoke exercised capture and inference with no hands or torso detected;
 it does not establish live gesture usability. Performer timing, all six gesture mappings

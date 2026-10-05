@@ -8,13 +8,13 @@ and exact repository file path. Checkboxes are updated after verified completion
 ## Phase 1: Setup
 
 - [X] T001 Create feature specification and plan in specs/001-anthony-instrument/spec.md and plan.md.
-- [X] T002 Prepare isolated environment using requirements-instrument.txt and requirements-dev.txt.
+- [X] T002 Prepare isolated environment using requirements/instrument.txt and requirements/dev.txt.
 - [X] T003 [P] Configure scoped pytest, Ruff and mypy in pyproject.toml.
 
 ## Phase 2: Foundational
 
 - [X] T004 Define validated observations, timing configuration and output contracts in instrument/models.py.
-- [X] T005 Add offline model setup and tracking boundary in scripts/setup_instrument_models.py and instrument/tracking.py.
+- [X] T005 Add offline model setup and tracking boundary in instrument/setup_models.py and instrument/tracking.py.
 - [X] T006 Implement deterministic replay inputs in instrument/replay.py.
 
 ## Phase 3: US1 — Persistent root lock (P1, MVP)
@@ -54,7 +54,7 @@ state; check interval sets and locked-root quality changes; inspect/listen to re
 ## Phase 6: Polish and cross-cutting concerns
 
 - [X] T020 Run tests/lint/format/types, model smoke and latency validation; record commands/results in specs/001-anthony-instrument/evidence.md.
-- [X] T021 Document launch/setup/review choices in specs/001-anthony-instrument/quickstart.md, decisions.md, README.md, ANTHONY_IDEAS.md, explanation.md and status.md.
+- [X] T021 Document launch/setup/review choices in specs/001-anthony-instrument/quickstart.md, decisions.md, README.md, docs/ANTHONY_IDEAS.md, docs/explanation.md and status.md.
 - [X] T022 Refresh graphify-out/graph.json with graphify update ., review local diff and commit completed work on anthony-explorations.
 
 ## Dependencies and execution order

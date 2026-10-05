@@ -1,5 +1,26 @@
 # Feature Tutorials
 
+## Repository layout and moved commands
+
+Run all commands from the repository root. Guides and ideas live in `docs/`;
+feature specifications and evidence remain in `specs/`. The original pipeline
+commands and `python -m instrument` keep their existing entry points.
+
+The additional dependency files and model helper moved on 2026-10-05:
+
+| Previous path | Current path or command |
+| --- | --- |
+| `requirements-dev.txt` | `requirements/dev.txt` |
+| `requirements-instrument.txt` | `requirements/instrument.txt` |
+| `requirements-instrument-lock.txt` | `requirements/instrument-lock.txt` (tested Windows environment) |
+| `python scripts/setup_instrument_models.py` | `python -m instrument.setup_models` |
+
+After activating your environment, install development tools with
+`python -m pip install -r requirements/dev.txt`. For native instrument runtime
+dependencies use `requirements/instrument.txt`. Model setup remains explicit;
+`python -m instrument.setup_models --directory output/models` downloads and verifies
+the models, and `--help` shows its options without downloading anything.
+
 ## Spec Kit on macOS and Windows
 
 Invoke the same `$speckit-constitution`, `$speckit-plan`, `$speckit-tasks`, and other
@@ -50,7 +71,7 @@ Run from the repository root:
 
 Keep shoulders, hips and both hands visible. Open your hands for at least
 0.20 seconds before using fist controls. Add `--mute` to disable sound.
-Fresh-machine setup: [quickstart](specs/001-anthony-instrument/quickstart.md).
+Fresh-machine setup: [quickstart](../specs/001-anthony-instrument/quickstart.md).
 
 ## 0 — Lock a chord root
 

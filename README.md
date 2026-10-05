@@ -9,6 +9,27 @@ collaboration in the lab.
 Code only in git: clips go in `videos/`, everything generated lands in
 `output/` (both ignored).
 
+## Repository layout
+
+| Location | Purpose |
+| --- | --- |
+| Root Python entry points | Original recorded-video pipeline and local web server |
+| `instrument/` | Native Python instrument, including explicit model setup |
+| `web/` | Existing browser application |
+| `docs/` | [Tutorials](docs/FEATURE_TUTORIALS.md), [explanation](docs/explanation.md), [Anthony's vision](docs/ANTHONY_IDEAS.md), and [ideas](IDEAS.md) |
+| `requirements.txt`, `requirements/` | Main runtime dependencies; grouped development and instrument environments |
+| `tests/` | Instrument and Spec Kit contract tests |
+| `specs/` | Feature specifications, plans, decisions, and validation evidence |
+| `status.md` | Implementation history and remaining work |
+| `.specify/`, `.agents/`, `.claude/`, `.codex/` | Shared governance and agent/tool configuration |
+| `graphify-out/` | Generated knowledge graph and its cache |
+
+Run commands below from the repository root. See the
+[layout migration notes](docs/FEATURE_TUTORIALS.md#repository-layout-and-moved-commands)
+for relocated dependency files and the model setup command.
+
+## Pipeline commands
+
     python dance_pose.py track videos/<clip>.mp4   # pose → output/<clip>/landmarks.npz
     python motion.py                                 # kinematics + Efforts for every tracked clip
     python harmony.py                                # how often each chord rule fires
@@ -32,8 +53,8 @@ Code only in git: clips go in `videos/`, everything generated lands in
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
 | `instrument/` | Anthony's native Python prototype: persistent root lock, glowing/split ball, 12 roots and six chord qualities |
 | `IDEAS.md` | ideas not built yet |
-| `ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
-| `explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |
+| `docs/ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
+| `docs/explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |
 
 Anthony's ideas 0–2 now have a native Python prototype, separate from `live.py`:
 
@@ -47,7 +68,7 @@ gestures, headless replay, local exports and checks; [decisions](specs/001-antho
 records provisional choices for Anthony's review. True 3D and JavaScript translation remain deferred.
 The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
 model/device checks, measured latency and the remaining performer/listening review.
-For short feature instructions, see [Feature Tutorials](FEATURE_TUTORIALS.md).
+For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).
 
 ---
 

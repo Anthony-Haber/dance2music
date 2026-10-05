@@ -73,13 +73,13 @@ therefore cannot infer the exact moment that tracking disappeared between frames
 
 ```powershell
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements-instrument-lock.txt
-.venv/Scripts/python.exe scripts/setup_instrument_models.py
+.venv/Scripts/python.exe -m pip install -r requirements/instrument-lock.txt
+.venv/Scripts/python.exe -m instrument.setup_models
 ```
 
 The lock file reproduces the full tested Windows environment, including tools.
-For just runtime dependencies use requirements-instrument.txt; add
-requirements-dev.txt for development. Other Python/platform combinations require
+For just runtime dependencies use requirements/instrument.txt; add
+requirements/dev.txt for development. Other Python/platform combinations require
 separate validation. The model helper explicitly downloads two public artifacts
 into output/models, verifies their recorded SHA-256 hashes, and records provenance.
 It performs no project upload. Runtime never downloads models; you can provide
@@ -87,8 +87,8 @@ existing models with `--models PATH`. Subsequent runs work offline.
 
 ```powershell
 .venv/Scripts/python.exe -m pytest -q
-.venv/Scripts/ruff.exe check instrument tests scripts
-.venv/Scripts/ruff.exe format --check instrument tests scripts
+.venv/Scripts/ruff.exe check instrument tests
+.venv/Scripts/ruff.exe format --check instrument tests
 .venv/Scripts/mypy.exe
 ```
 

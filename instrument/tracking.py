@@ -84,7 +84,7 @@ class Tracker:
         for path in (gesture_path, pose_path):
             if not path.is_file():
                 raise FileNotFoundError(
-                    f"Missing local model {path}. Run python scripts/setup_instrument_models.py "
+                    f"Missing local model {path}. Run python -m instrument.setup_models "
                     "explicitly or supply --models with existing model files."
                 )
         os.environ.setdefault("MPLCONFIGDIR", str(Path("output/.matplotlib").resolve()))

@@ -144,7 +144,7 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             (Path(temporary) / "gesture_recognizer.task").write_bytes(b"corrupt model")
             process = subprocess.run(
-                [sys.executable, "scripts/setup_instrument_models.py", "--directory", temporary],
+                [sys.executable, "-m", "instrument.setup_models", "--directory", temporary],
                 capture_output=True,
                 text=True,
                 timeout=10,

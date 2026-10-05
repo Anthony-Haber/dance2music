@@ -10,8 +10,8 @@ files; NumPy rendering/synthesis; sounddevice optional playback. Pure state logi
 uses only the standard library. Model files and renders belong in ignored output/.
 No web search, uploads, remote Git actions or changes to JavaScript are in scope.
 
-New dependencies and tools are pinned in requirements-instrument.txt and
-requirements-dev.txt. Pytest, Ruff and mypy apply to the new instrument and tests;
+New dependencies and tools are pinned in requirements/instrument.txt and
+requirements/dev.txt. Pytest, Ruff and mypy apply to the new instrument and tests;
 unrelated legacy files are left alone. Runtime imports never open devices/download.
 An explicit setup helper downloads public model artifacts only when invoked.
 
@@ -25,9 +25,13 @@ An explicit setup helper downloads public model artifacts only when invoked.
 - `instrument/tracking.py`: local MediaPipe model/camera observation adaptation.
 - `instrument/replay.py`: repeatable scripted interaction without devices.
 - `instrument/__main__.py`: camera/video/demo/replay/headless CLI and cleanup.
-- `scripts/setup_instrument_models.py`: opt-in download to output/models.
+- `instrument/setup_models.py`: opt-in download to output/models.
 - `tests/test_instrument_*.py`: observable contracts and integration tests.
 - `specs/001-anthony-instrument/`: spec, plan, tasks, decisions, quickstart, evidence.
+
+The 2026-10-05 layout cleanup groups project guides in `docs/`, additional dependency
+files in `requirements/`, and the explicit model helper in `instrument/`. The helper
+is now invoked with `python -m instrument.setup_models`; its behavior is unchanged.
 
 ## Constitution check
 

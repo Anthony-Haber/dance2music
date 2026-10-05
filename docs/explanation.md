@@ -20,12 +20,12 @@ The Python pipeline analyzes a video and produces saved measurements, sound, MID
 
 | File | Responsibility |
 | --- | --- |
-| [dance_pose.py](dance_pose.py) | Read frames, run MediaPipe pose, save landmarks, derive rule-based movement signals, and support rope-engine rendering/overlays |
-| [motion.py](motion.py) | Clean position measurements and calculate motion features and sudden events |
-| [harmony.py](harmony.py) | Apply pose/region chord rules, timing requirements, and voice leading |
-| [synths.py](synths.py) | Render sound layers, stems, visual overlays, and the comparison page's generated material |
-| [vocabulary.py](vocabulary.py) | Discover groups of similar dance shapes from recorded pose windows |
-| [sonify.py](sonify.py) | Map those discovered shapes to musical choices and export MIDI with control lanes using the external rope engine |
+| [dance_pose.py](../dance_pose.py) | Read frames, run MediaPipe pose, save landmarks, derive rule-based movement signals, and support rope-engine rendering/overlays |
+| [motion.py](../motion.py) | Clean position measurements and calculate motion features and sudden events |
+| [harmony.py](../harmony.py) | Apply pose/region chord rules, timing requirements, and voice leading |
+| [synths.py](../synths.py) | Render sound layers, stems, visual overlays, and the comparison page's generated material |
+| [vocabulary.py](../vocabulary.py) | Discover groups of similar dance shapes from recorded pose windows |
+| [sonify.py](../sonify.py) | Map those discovered shapes to musical choices and export MIDI with control lanes using the external rope engine |
 
 The `motion.py`/`synths.py` route and the vocabulary/rope-engine route are related experiments,
 not one mandatory sequence in which every file must always run.
@@ -48,34 +48,34 @@ flowchart LR
     C --> B
 ```
 
-[live.py](live.py) serves these files on localhost. Starting `python live.py` does not move the
+[live.py](../live.py) serves these files on localhost. Starting `python live.py` does not move the
 browser's gesture, harmony, or ball logic into Python.
 
 ### Native live interaction in Python
 
-The separate [instrument/](instrument/) prototype implements Anthony's ideas 0–2 locally.
+The separate [instrument/](../instrument) prototype implements Anthony's ideas 0–2 locally.
 Run `.venv/Scripts/python.exe -m instrument --demo` for a scripted example or
 `--camera 0` for camera input. MediaPipe Tasks provide mirrored hand positions,
 gesture labels and torso geometry; the Python application supplies all musical behavior.
 
 | Module | Responsibility |
 | --- | --- |
-| [models.py](instrument/models.py) | Validated timestamped observations, configuration and immutable outputs |
-| [controller.py](instrument/controller.py) | Closure/rearm, split priority, persistent root lock and renderer-independent ball geometry |
-| [harmony.py](instrument/harmony.py) | Twelve root sectors, six absolute quality selections and bounded voice leading |
-| [visuals.py](instrument/visuals.py) | Joseph-inspired fire/light glow, sparks, root guides and visible lock/split feedback |
-| [audio.py](instrument/audio.py) | Device-free synthesis with pitch/gain smoothing and optional sounddevice playback |
-| [tracking.py](instrument/tracking.py) | Explicit local model loading and rejection of unreliable or invalid observations |
-| [replay.py](instrument/replay.py) | Deterministic demo and validated JSONL inputs without devices |
-| [__main__.py](instrument/__main__.py) | Camera/video/demo/replay commands, native window, diagnostics and resource cleanup |
+| [models.py](../instrument/models.py) | Validated timestamped observations, configuration and immutable outputs |
+| [controller.py](../instrument/controller.py) | Closure/rearm, split priority, persistent root lock and renderer-independent ball geometry |
+| [harmony.py](../instrument/harmony.py) | Twelve root sectors, six absolute quality selections and bounded voice leading |
+| [visuals.py](../instrument/visuals.py) | Joseph-inspired fire/light glow, sparks, root guides and visible lock/split feedback |
+| [audio.py](../instrument/audio.py) | Device-free synthesis with pitch/gain smoothing and optional sounddevice playback |
+| [tracking.py](../instrument/tracking.py) | Explicit local model loading and rejection of unreliable or invalid observations |
+| [replay.py](../instrument/replay.py) | Deterministic demo and validated JSONL inputs without devices |
+| [__main__.py](../instrument/__main__.py) | Camera/video/demo/replay commands, native window, diagnostics and resource cleanup |
 
 Runtime never downloads models. The explicit setup helper stores them in ignored
 `output/models`. The controller can be tested without model files, camera or audio.
 WAV exports apply each observation from its timestamp onward, including irregular
 frame gaps. The AVI preview uses a fixed frame rate and can differ from source timing.
-See [quickstart](specs/001-anthony-instrument/quickstart.md),
-[decisions](specs/001-anthony-instrument/decisions.md) and
-[validation evidence](specs/001-anthony-instrument/evidence.md).
+See [quickstart](../specs/001-anthony-instrument/quickstart.md),
+[decisions](../specs/001-anthony-instrument/decisions.md) and
+[validation evidence](../specs/001-anthony-instrument/evidence.md).
 
 ## 2. What the computer-vision models provide
 
@@ -95,8 +95,8 @@ motion features from 2D image positions. Other offline paths use the saved world
 The coordinates are estimates from the images, not measurements from a physical depth sensor.
 Occlusion, framing, and uncertainty still affect the application.
 
-Sources: [dance_pose.py](dance_pose.py), [web/live/live.js](web/live/live.js),
-[motion.py](motion.py), and [vocabulary.py](vocabulary.py).
+Sources: [dance_pose.py](../dance_pose.py), [web/live/live.js](../web/live/live.js),
+[motion.py](../motion.py), and [vocabulary.py](../vocabulary.py).
 
 ### Hands and built-in gestures
 
@@ -117,7 +117,7 @@ root, toggle it once, or split a ball is application behavior that we implement 
 The current finger count and continuous hand-openness values are calculated by project code from
 landmark distances. They are not direct outputs of a model that understands our musical controls.
 
-Source: [web/live/hands.js](web/live/hands.js).
+Source: [web/live/hands.js](../web/live/hands.js).
 
 ## 3. What the project adds after computer vision
 
@@ -139,7 +139,7 @@ This distinction matters: offline processing can use later video frames to impro
 measurement. A live instrument must respond using information available so far. Translating an
 offline algorithm into live code therefore requires a timing and behavior review.
 
-Sources: [motion.py](motion.py) and [web/live/features.js](web/live/features.js).
+Sources: [motion.py](../motion.py) and [web/live/features.js](../web/live/features.js).
 
 ### Calculating movement and rhythm
 
@@ -157,12 +157,12 @@ These are designed measurements, not MediaPipe labels for artistic intention, em
 physical force. Their names describe the interpretation chosen for the instrument.
 
 The live code also estimates rhythmic regularity and detects sudden movement events.
-[bounce.js](web/live/bounce.js) tracks hip bouncing with a Bayesian filter over tempo and phase.
+[bounce.js](../web/live/bounce.js) tracks hip bouncing with a Bayesian filter over tempo and phase.
 MediaPipe supplies hip positions; the project's filter decides whether those positions indicate
 a usable bounce pulse and estimates its timing.
 
-Sources: [motion.py](motion.py), [web/live/features.js](web/live/features.js),
-and [web/live/bounce.js](web/live/bounce.js).
+Sources: [motion.py](../motion.py), [web/live/features.js](../web/live/features.js),
+and [web/live/bounce.js](../web/live/bounce.js).
 
 ### Making hand recognition usable as a control
 
@@ -179,7 +179,7 @@ The current gesture-action code makes a fist hold the chord while shown. It does
 Anthony's persistent root-lock toggle yet. Detecting a label, stabilizing it, recognizing a new
 closure event, and updating musical state are separate responsibilities.
 
-Sources: [web/live/hands.js](web/live/hands.js) and [web/live/live.js](web/live/live.js).
+Sources: [web/live/hands.js](../web/live/hands.js) and [web/live/live.js](../web/live/live.js).
 
 ### Choosing harmony
 
@@ -191,7 +191,7 @@ MediaPipe does not output "G minor," decide that a quadrant means a dominant cho
 the performer wants the previous root held. Those meanings come from musical rules and state in
 the application.
 
-Sources: [harmony.py](harmony.py) and [web/live/harmony.js](web/live/harmony.js).
+Sources: [harmony.py](../harmony.py) and [web/live/harmony.js](../web/live/harmony.js).
 
 ### Mapping controls and producing sound
 
@@ -206,8 +206,8 @@ them. The Python renderer similarly uses established numerical/DSP tools and pro
 Some offline workflows also reuse the external rope project's performance engine, MIDI writer,
 and voice-leading tools. That is another dependency, separate from MediaPipe.
 
-Sources: [web/live/mapping.js](web/live/mapping.js), [web/live/audio.js](web/live/audio.js),
-[synths.py](synths.py), [dance_pose.py](dance_pose.py), and [sonify.py](sonify.py).
+Sources: [web/live/mapping.js](../web/live/mapping.js), [web/live/audio.js](../web/live/audio.js),
+[synths.py](../synths.py), [dance_pose.py](../dance_pose.py), and [sonify.py](../sonify.py).
 
 ### Drawing the ball and recording the result
 
@@ -222,15 +222,15 @@ the camera, and our geometry/rendering/mapping code creates the ball and its mus
 Recording combines the camera image, overlays, and the instrument's audio through browser recording
 facilities. This is application/platform work, not a vision-model capability.
 
-Sources: [web/live/live.js](web/live/live.js), [web/live/features.js](web/live/features.js),
-[web/live/mapping.js](web/live/mapping.js), and [web/live/recorder.js](web/live/recorder.js).
+Sources: [web/live/live.js](../web/live/live.js), [web/live/features.js](../web/live/features.js),
+[web/live/mapping.js](../web/live/mapping.js), and [web/live/recorder.js](../web/live/recorder.js).
 
 ## 4. Are we training our own AI?
 
 The pose and hand-recognition paths described above load existing MediaPipe models. They do not
 train a new neural pose model, a new fist recognizer, or a model that learns which chords we want.
 
-There is a separate data-driven experiment in [vocabulary.py](vocabulary.py). It builds feature
+There is a separate data-driven experiment in [vocabulary.py](../vocabulary.py). It builds feature
 windows from recorded dance, standardizes them, uses PCA, clusters them with k-means, and uses UMAP
 for a visual embedding. These standard algorithms discover groups of similar shapes; the project
 chooses the features and settings, interprets the groups, and assigns musical meanings.
@@ -289,8 +289,8 @@ work while allowing the gesture, harmony, and MIDI behavior to be developed.
 
 ## 7. Where to look for detail
 
-- [README.md](README.md): existing commands and project background.
-- [web/methods.html](web/methods.html): detailed formulas and documented experiments.
+- [README.md](../README.md): existing commands and project background.
+- [web/methods.html](../web/methods.html): detailed formulas and documented experiments.
 - [ANTHONY_IDEAS.md](ANTHONY_IDEAS.md): vision, accepted decisions, priorities, and design flaws.
-- [.specify/memory/constitution.md](.specify/memory/constitution.md): development rules.
-- [status.md](status.md): task outcomes and remaining work.
+- [.specify/memory/constitution.md](../.specify/memory/constitution.md): development rules.
+- [status.md](../status.md): task outcomes and remaining work.

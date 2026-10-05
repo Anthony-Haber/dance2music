@@ -258,3 +258,38 @@
 - Outstanding: Run the same tests on Windows. No callable /compact exists in this session;
   the user must invoke
   it before the next feature-sized task.
+
+## 2026-10-05 - Organize files by purpose
+
+- State: Complete locally.
+- Task: Apply constitution principle XII to the repository layout, using original main
+  as the reference for a coherent explorer and preserving the original pipeline commands.
+- Changes: Grouped three added guides and vision documents in docs/. Restored the original
+  IDEAS.md to the root following the user's clarification to retain main's original files.
+  Moved additional dependency files into requirements/ while retaining the main requirements.txt entry point.
+  Moved the instrument's model helper into instrument/setup_models.py and documented its
+  module command, python -m instrument.setup_models. Removed the empty scripts/ directory
+  and redundant .claude/CLAUDE.md; root CLAUDE.md now points to authoritative AGENTS.md.
+- Rationale: docs/ groups added human-facing guides; requirements/ groups the three additional
+  environments. The helper belongs with its instrument package. README, shared agent entry
+  points, project configuration, status.md and original executable pipeline entry points
+  retain their root-level navigation, tool-discovery and command roles. All eight root Python
+  files are byte-identical to origin/main, and every original main root entry exists.
+- Integration: Updated documentation links, agent guidance, feature artifacts, tracking
+  error instructions, the existing model-setup regression test and lint/type-check paths.
+  Constitution references now point to docs/ANTHONY_IDEAS.md; governance rules and version
+  are unchanged. Historical status entries retain the file names used at the time.
+- Usage: README describes the layout; docs/FEATURE_TUTORIALS.md records old-to-new paths
+  and commands. Additional installs use requirements/dev.txt, requirements/instrument.txt
+  or the tested Windows requirements/instrument-lock.txt.
+- Verification: Full pytest suite: 36 passed, 2 skipped, 13 subtests passed. The skips are
+  optional Spec Kit preset composition (PyYAML absent from .venv) and cross-shell parity
+  (PowerShell absent from this Mac). Ruff lint and formatting passed for instrument/tests;
+  mypy passed for all 10 instrument source files. Local documentation links were checked,
+  and the relocated model helper's --help succeeds without downloads. Moved dependency
+  files and model-helper code are byte-identical to their originals. Graphify was refreshed,
+  with preserved semantic provenance redirected to the moved source documents.
+- Local state: Changes remain local and uncommitted. No model downloads, publishing,
+  pushes or project uploads occurred during this reorganization.
+- Outstanding: None for the organization request. This session cannot invoke /compact;
+  the user must run it before the next feature-sized task.

@@ -15,13 +15,13 @@ triggers sent to Ableton's Expressive Chords through a virtual MIDI cable.
 The initial Python prototype will reuse Joseph's glowing 2D ball design; depth/3D work is deferred.
 
 - Read `README.md` for the existing pipeline and commands.
-- Read `explanation.md` for the boundary between computer-vision models and project behavior.
-- Read `ANTHONY_IDEAS.md` for the vision, priorities, accepted decisions, and possible design flaws.
+- Read `docs/explanation.md` for the boundary between computer-vision models and project behavior.
+- Read `docs/ANTHONY_IDEAS.md` for the vision, priorities, accepted decisions, and possible design flaws.
 - Follow `.specify/memory/constitution.md` for project governance. Develop and validate new features
   locally in Python first; translate them into the JavaScript website only on explicit user request.
 - Keep project work local until explicitly authorized otherwise, ask the user about design dilemmas,
   and update `status.md` after each user-requested task.
-- Add or update concise usage instructions in `FEATURE_TUTORIALS.md` for each implemented feature.
+- Add or update concise usage instructions in `docs/FEATURE_TUTORIALS.md` for each implemented feature.
 
 ## Spec Kit platforms
 

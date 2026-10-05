@@ -24,15 +24,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .specify/scripts/powershell/
 Python 3.14.0 in `.venv`; NumPy 2.4.1, OpenCV 5.0.0.93, MediaPipe 1.0.1,
 sounddevice 0.5.6, pytest 9.0.2, Ruff 0.14.10 and mypy 1.19.1. Runtime and
 development pins match the installed environment; the full Windows environment
-is recorded in requirements-instrument-lock.txt. `pip check` passed. Tests, model
+is recorded in requirements/instrument-lock.txt. `pip check` passed. Tests, model
 smoke, demo and replay used existing local resources without network downloads.
 
 ## Automated contracts
 
 ```powershell
 .venv/Scripts/python.exe -m pytest -q
-.venv/Scripts/ruff.exe check instrument tests scripts
-.venv/Scripts/ruff.exe format --check instrument tests scripts
+.venv/Scripts/ruff.exe check instrument tests
+.venv/Scripts/ruff.exe format --check instrument tests
 .venv/Scripts/mypy.exe
 .venv/Scripts/python.exe -m pip check
 ```

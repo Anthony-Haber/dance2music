@@ -73,7 +73,7 @@ when project work leaves the local workspace.
 
 Agents MUST update `status.md` at the repository root after feature implementation work,
 before its handoff. A feature is a coherent capability, such as one implemented idea in
-`ANTHONY_IDEAS.md`. Each entry MUST identify the feature, date, completion state, changes made,
+`docs/ANTHONY_IDEAS.md`. Each entry MUST identify the feature, date, completion state, changes made,
 verification performed and its results, and any outstanding work or blockers. Partial or
 blocked implementation MUST be recorded accurately rather than marked complete. Existing
 history MUST be preserved. Individual commands and internal steps MUST NOT receive separate
@@ -128,7 +128,7 @@ This separates experimentation from platform adaptation and avoids premature dup
 
 ### XI. Compact After Each Completed Feature
 
-After completing each feature-sized task, such as one implemented idea in `ANTHONY_IDEAS.md`,
+After completing each feature-sized task, such as one implemented idea in `docs/ANTHONY_IDEAS.md`,
 agents MUST run `/compact` before starting the next feature. Individual commands, tests,
 implementation steps, and checklist items do not each trigger compaction. Before compaction,
 agents MUST save the completed feature's outcome, verification, decisions, and outstanding work
