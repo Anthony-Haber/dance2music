@@ -192,3 +192,21 @@
   Checked version, dates, placeholders and whitespace. No executable behavior changed.
 - Local state: Documentation remains local and uncommitted; prior work is preserved.
 - Outstanding: This session has no callable `/compact` capability. No compaction was executed.
+
+## 2026-10-05 - Commit and push Anthony's isolated branch
+
+- State: Local commits complete; push blocked by GitHub write permissions.
+- Task: Commit and push the completed work while keeping it separate from main and others' work.
+- Decision: Stay on anthony-explorations, as explicitly requested. No new branch, merge,
+  pull, rebase, pull request or change to main was performed.
+- Changes: Committed feature completion notes, tutorials, project guidance and constitution
+  v1.4.0 as 3d73ddd, following implementation commit 6acfa55. Removed the constitution's
+  temporary review report before committing. Generated caches and historical graph edits
+  remain unstaged and preserved.
+- Verification: Reviewed staged file scope and passed git diff --cached --check. Pushed with
+  the explicit refspec HEAD:refs/heads/anthony-explorations and automatic tag pushes disabled.
+  GitHub rejected the push with HTTP 403: Anthony-Haber lacks write permission to
+  Music-Intelligence-Lab/dance2music. Remote branch inspection confirmed main remains at
+  f40be3b73384acb8ab8049c65bd876855afbb3de and anthony-explorations was not created remotely.
+- Outstanding: Repository write access, or authentication with an authorized account,
+  is required to retry the push. No remote changes occurred.
