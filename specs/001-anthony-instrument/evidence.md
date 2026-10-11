@@ -1,5 +1,65 @@
 # Validation evidence: local Python instrument
 
+## Ordered hand chord mappings, 2026-10-11
+
+- Verified Anthony's selected opposite-thumb meanings, paired-sign precedence,
+  quality dwell, root-lock preservation, and independence from hand tuple order
+  and screen position. Right Victory with left palm selects dim7; the reverse
+  selects m7b5. Both Victory signs currently hold quality.
+- Disabled love/heart for quality selection and fist rearming; low-confidence
+  labels cannot form a mapped pair. A reliable individual thumb shortcut remains
+  available when the opposite label is unreliable, under the existing policy.
+- All 96 starting musical states can reach all 96 destinations, including the
+  new diminished and half-diminished sevenths. Verified symbols, pitch classes,
+  complete note counts and bounded voice leading for every root and quality.
+- Final instrument suite: 62 passed, 20 subtests passed. Ruff lint/format and
+  mypy passed. Existing audio, tracking, CLI/replay and visual tests remain passing.
+- Synthetic 2400-frame 50Hz run across 12 roots and all eight mapped selections:
+  controller p95 0.0193ms and chord-change p95 0.206ms, below the 5ms budget.
+  Inputs/version/results recorded in output/anthony-instrument/ordered-hand-chords/summary.json.
+- Performer camera and listening acceptance for these new mappings remains pending.
+  No recognition model training or threshold changes. Catalogue/mapping changes
+  use existing modules and data flow; no graph refresh under constitution VIII.
+
+## Same fist gesture splits and merges, 2026-10-11
+
+- Added tests for split -> reopen -> merge -> reopen -> split, exactly one event
+  per held closure, chord/root-lock preservation, and gesture loss requiring
+  reopening before a merge. The merge assertions failed before the implementation.
+- Added integration coverage with alternating per-hand recognition, raw None
+  flicker after confirmation, and exact JSONL replay equality including merge events.
+- Final instrument suite: 58 passed, 16 subtests passed. Ruff lint/format, mypy and
+  targeted Git whitespace checks passed. No cameras or model downloads required.
+- Rendered/inspected output/anthony-instrument/fist-split-merge/comparison.png:
+  TWO BALLS -> ONE BALL -> TWO BALLS with the updated nearby-fist control hint.
+  Synthetic frames at 20ms intervals produce changes at 1.16, 2.96 and 4.76s,
+  approximately 0.36s from each raw closure, under the existing dwell plus frame
+  sampling. Controller p95 0.048ms (<5ms budget).
+- Live performer acceptance remains pending. Model confidence and distance/dwell
+  thresholds remain unchanged. This small mapping change does not change module
+  relationships or data flow; no graph refresh is required by constitution VIII.
+
+## Split after fist approach regression, 2026-10-11
+
+- Reproduced before correction: recognize open hands, close both while apart,
+  wait for root lock, then bring the held fists within 0.6 torso lengths. Both
+  fists remain confirmed but split stays false. The new regression failed before
+  the fix and passes afterward.
+- Corrected closure eligibility persists through completed lock arbitration while
+  the recognized fist is held. Tests cover alternating per-hand model observations,
+  persistent two-ball output, lock preservation, merge/reopen, startup and gesture loss.
+- All instrument tests: 55 passed, 16 subtests passed. Ruff lint/format and mypy
+  passed. Initial sandbox replay tests were blocked from writing temporary files;
+  the authorized rerun passed.
+- Inspected the synthetic rendered comparison in
+  output/anthony-instrument/split-after-approach/comparison.png: ONE BALL before
+  approach and two distinct wrist-anchored balls after split and reopening, with
+  ROOT LOCKED retained. Synthetic 20ms frame cadence; split occurs on the first
+  nearby frame at 2.0s after prior fist dwell. Controller p95 0.041ms (<5ms budget).
+- No live fist capture was performed; the controller fix does not establish model
+  recognition accuracy. Restart and retest the live approach. This is a minor
+  state correction, so the graph was not refreshed under constitution VIII.
+
 Validated on 2026-10-05 in `C:\Code\Github Serious\dance2music`, branch
 `anthony-explorations`. This is Stage 1 Python implementation evidence. Performer
 acceptance is separate and remains pending.
@@ -159,3 +219,119 @@ No threshold or approved mapping was changed without that review.
 
 3D/depth, animator controls, spells, games, Ableton MIDI and JavaScript translation
 remain outside this increment. All code and generated artifacts stayed local.
+
+## 2026-10-11 performer corrections
+
+Anthony reported poor hand tracking, a front-palm-dependent ball, low volume, quality
+reset on relaxation, None-labeled fists with visible finger lines, and an incomplete
+camera view. He requested whole-body detection like the website and ROOT LOCKED
+feedback. He chose both open palms held 1.5s to return to major and retained nearby
+fist split priority. Decisions and usage are updated in the companion documents.
+
+### Automated checks
+
+```powershell
+.venv/Scripts/python.exe -m pytest -q --ignore=tests/test_speckit_scripts.py
+.venv/Scripts/ruff.exe check instrument tests
+.venv/Scripts/ruff.exe format --check instrument tests
+.venv/Scripts/mypy.exe
+```
+
+49 instrument tests passed, with 32 subtests. Ruff lint/format passed; mypy passed
+for all ten source files. New coverage includes body-only ball/audio, missing-joint
+clearing, crop padding/remapping and overlap rejection, causal position smoothing,
+quality persistence and two-palm timing, complete 5,184 chord transitions, audible
+RMS/headroom/continuity, full-camera pixel preservation below the panel, lock-label
+confirmation, model cleanup, geometric fists/extended fingers/rotated hands, thumb
+and point exclusions, None-label rearming without major selection, and replay flags.
+
+An isolated copy of HEAD's instrument under ignored output reproduced all three
+reported regressions with the new tests: a left minor gesture was overridden by the
+right resting palm; ordinary spacing gave RMS 0.0098667 (-40.12 dBFS); a fist with
+curled 3D joints retained the model's None label. Pre-fix rendering also overwrote the
+upper camera rows. The corrected tests pass without changing the real checkout to
+the baseline. No reset, stash, commit, push or branch switch was used.
+
+The wider repository suite initially hit Windows' disabled PowerShell scripts. A
+rerun allowing scripts only in that test process reached 46 passes and 2 skips, but
+two existing Spec Kit tests failed on CRLF-versus-LF template strings. Those helpers
+and tests are unchanged; this unrelated issue remains. Instrument checks were run
+again after the later fist/full-view corrections, with the 49-test result above.
+
+### Device and rendered evidence
+
+- Native model smoke passed: both blank full-frame observations produced zero hands;
+  the final run measured 45.5 ms for two observations. Models/versions are unchanged.
+- Both real per-hand crop recognizers processed 20 blank observations with synthetic
+  body geometry. Crop-pair p95 after two warmup frames: 23.34 ms. This verifies crop
+  coordinates/model dispatch, not pose inference or gesture accuracy.
+- The final 15-second headless demo exported 450 frames, ended D/unlocked/split,
+  and retained the lock/unlock/split/chord sequence. Controller p95: 0.0836 ms
+  (below the spec's 5 ms replay budget); renderer p95: 8.65 ms. Camera-space input
+  was 960x720 and preview 960x830, preserving all input rows below the 110px panel.
+- A four-second muted camera check passed on Windows DirectShow/MJPEG: 41 frames,
+  actual capture 1280x720, preview 1280x830, controller p95 0.0646 ms, renderer
+  p95 6.87 ms, inference p95 45.86 ms. Body results and two wrists were present
+  in all 41 observations; reliable torso in 39. There were 16 detailed-hand
+  observations and one joint-fist match. No ground-truth accuracy is inferred.
+  The default Media Foundation backend had stopped supplying frames at the wider
+  mode; DirectShow resolved that observed failure. Camera access required the
+  authorized run outside the filesystem sandbox. Captures remain local and ignored.
+- Ordinary 140px wrist spacing / 160px torso now has gain 0.44553, sustained RMS
+  -19.29 dBFS, peak 0.27752: 20.83 dB above the pre-fix example. Maximum output
+  remains bounded at 0.7 and silence/continuity tests pass. --volume 0.5 halves
+  samples; zero master volume is silent. A sounddevice stream opened, rendered at
+  reduced check volume, released and closed successfully; subjective sound is pending.
+- Inspected synthetic body/wrist and confirmed geometric-fist/ROOT LOCKED previews.
+  Body edges and root guides are visible, controls occupy their own panel, and the
+  entire image remains beneath it. Native window sizing still needs performer review.
+
+Generated evidence lives in ignored output/anthony-instrument/: usability-demo/,
+body-tracking-smoke/, body-wrists-preview.png, fist-locked-preview.png,
+usability-audio.json and usability-crop-smoke.json. Graphify was refreshed with local
+AST extraction. The original browser and remote repositories were not modified.
+
+### Remaining acceptance
+
+Restart the Python instrument, frame shoulders/hips/wrists, and retest sideways
+palms, open-to-fist closure, persistent ROOT LOCKED, nearby split, every quality,
+two-palm major reset, larger/resizable view and listening volume. Landmark geometry
+is conservative and model finger estimates can still fail under occlusion, crossing
+or blur. The camera check has no ground-truth gesture sequence; unit tests and a
+single joint-fist match do not establish performer acceptance. Two unrelated Spec Kit
+newline failures remain outside this correction task.
+
+## Subsequent fist retest: web/main parity (2026-10-11)
+
+Anthony reported alternating closed-fist detection and requested web/main's method.
+The geometric fallback has been removed. The Python filter now matches upstream
+`origin/main` f40be3b's `web/live/hands.js` far-mode label confirmation, confidence
+threshold, missing-detection grace and alternating body-wrist crops. The local
+JavaScript source has no changes and matches that upstream version.
+
+- Regression tests exercise confirmed fist / raw None alternation, low confidence,
+  short and expired dropouts, one lock while held, deliberate reopening/unlocking,
+  nearby split versus separated locking, and replay equality. A Node parity test
+  executes the actual website Hand class over 150 observations and compares its
+  seen state, accepted label/score and candidate label/time with Python. Node is
+  optional; all other tests remain independent of JavaScript execution.
+- `.venv/Scripts/python.exe -m pytest -q --ignore=tests/test_speckit_scripts.py`:
+  51 passed, 16 subtests passed. Ruff checks and mypy passed. Unrelated existing
+  Windows Spec Kit newline failures were excluded, as documented above.
+- Native local model smoke passed: two blank frames took 24.04ms total. Real camera
+  check produced 15 frames at 1280x720, preview 1280x830, body landmarks in all
+  frames; inference p95 31.36ms, render 29.91ms, controller 0.0603ms (<5ms budget).
+  The sandbox denied initial camera access; the authorized rerun passed. Only one
+  frame had hand details, labeled None; this check contains no labeled fist trial
+  and does not measure recognition accuracy. Python still uses CPU and Lite pose.
+- Two-second headless demo: 60 frames, controller p95 0.0545ms, render 6.88ms.
+  Inspected `output/anthony-instrument/web-fist-parity/diagnostics.png`: confirmed
+  Closed_Fist and raw None are distinct, readable black labels, with ROOT LOCKED.
+  Camera evidence is in `output/anthony-instrument/web-fist-camera/` (ignored/local).
+
+The earlier geometric evidence is historical, superseded by this requested method.
+Confirmed labels now need 0.35s stability before changing, rather than exposing each
+raw classifier flip. A fist alternating continuously from its first appearance
+can still remain unconfirmed, as on the website. Restart and perform a deliberate
+open-to-fist trial to assess recognition on Anthony's actual movement. No push or
+website feature changes were made.

@@ -70,26 +70,49 @@ Run from the repository root:
 ```
 
 Keep shoulders, hips and both hands visible. Open your hands for at least
-0.20 seconds before using fist controls. Add `--mute` to disable sound.
+about 0.60 seconds before using fist controls (recognition plus rearming).
+Add `--mute` to disable sound.
+Whole-body joints are drawn, including visible legs and feet. The ball uses body
+wrists even when palms face sideways. Detailed hand recognition uses wrist crops
+for smaller hands; missing hand details do not hide a ball supported by body wrists.
+Add `--volume 0.5` to halve playback and exported WAV volume.
+Restart after code changes. Resize/maximize the native window to see the complete
+camera frame; the controls are above the image. Camera mode requests 1280x720.
+Use --camera-width / --camera-height to request another supported device mode.
+Hand diagnostic text and root notes use larger, bold black lettering with a light
+outline so they remain readable against the camera image and ball glow.
 Fresh-machine setup: [quickstart](../specs/001-anthony-instrument/quickstart.md).
 
 ## 0 — Lock a chord root
 
 1. Select a root using the ring below. Keep your hands apart.
 2. Close either fist and hold about **0.60 seconds** to lock the root.
+   The display confirms **ROOT LOCKED**; it stays visible when you reopen.
+   Detection matches web/main's **far** mode: alternating wrist crops, a 0.5
+   confidence threshold, and 0.35 seconds to confirm label changes. The first line
+   under a hand is the confirmed gesture; **raw** below shows the classifier result.
+   Brief raw None/fist alternation retains the last confirmed label. A new fist
+   must first be consistently recognized for 0.35s. Joint shape does not override
+   None. Missing detections are tolerated for 0.4s, then gesture actions cancel.
 3. Reopen. Move freely or change chord quality; the root stays locked.
 4. Close a fist again to unlock. Reopen between each toggle.
 
-Nearby two fists trigger split instead of lock.
+Nearby two fists toggle split/merge instead of root lock.
 
 ## 1 — Control and split the ball
 
 - Move both hands: the ball follows their midpoint.
 - Spread your hands: the ball grows and sound gets louder.
-- Bring both fists close together and hold **0.35 seconds** to split.
-  Keep wrist spacing within 0.6 times your shoulder-to-hip distance.
+- Start with open hands for about **0.60 seconds**, then close both fists and
+  bring them together. Keep wrist spacing within 0.6 times your shoulder-to-hip
+  distance. Both fists must be confirmed for **0.35 seconds**; they can be
+  recognized while apart and brought together afterward, even after root locking.
+  The top panel confirms **TWO BALLS**. Spread your hands to see them clearly.
 - Reopen: the two balls stay attached to your hands and share the chord.
-- Press **M** to merge; **S** to switch fire/light appearance.
+- Repeat the same nearby two-fist gesture to **merge into one ball**. Reopen
+  between gestures; holding fists produces only one change. The panel confirms
+  **ONE BALL** after merging. Both directions preserve the chord and root lock.
+- Press **M** to merge; reopen before another split. **S** switches fire/light appearance.
 
 ## 2 — Choose roots and chord qualities
 
@@ -100,15 +123,28 @@ Hold a quality gesture for **0.35 seconds**:
 
 | Gesture | Quality |
 | --- | --- |
-| Open palm | Major |
+| Both palms open continuously for **1.5 seconds** | Major |
 | Index pointing up | Minor |
-| Victory / V sign | Dominant seventh (7) |
+| Right Victory / V sign + left open palm | Diminished seventh (dim7) |
+| Left Victory / V sign + right open palm | Half-diminished seventh (m7b5) |
 | Thumb up | Major seventh (maj7) |
 | Thumb down | Minor seventh (m7) |
-| “I love you” sign | Minor-major seventh (m(maj7)) |
+| Right thumb up + left thumb down | Minor-major seventh (m(maj7)) |
+| Right thumb down + left thumb up | Dominant seventh (7) |
 
-Quality works while the root is locked. If hands disagree, the hand labeled **R**
-wins. Reopening with an open palm also selects major.
+Quality works while the root is locked and stays selected until a new deliberate
+gesture. A resting palm does not override the other hand. If two non-palm quality
+gestures disagree, an explicitly mapped pair takes priority; otherwise the body
+hand labeled **R** wins among supported single-hand shortcuts. Hand identity follows
+the body, including when hands cross; it does not mean the right side of the screen.
+Victory needs the opposite open palm. The love/heart sign is ignored entirely.
+Brief reopening holds the
+quality; both recognized palms held for 1.5 seconds explicitly return to major.
+
+The current catalogue has eight qualities across 12 roots (96 chords). Five usable
+chord signs per hand give 25 ordered pair slots, potentially 300 chords if every
+slot is assigned a different quality. Those 25 distinct qualities are not implemented:
+the remaining pair assignments need design decisions. Fists remain ball/lock controls.
 
 ## Save, replay or use video
 
@@ -124,4 +160,5 @@ wins. Reopening with an open palm also selects major.
 ## Reset or quit
 
 **R:** reset to C major, unlocked, one ball. **Q / Escape:** quit.
-Tracking loss mutes sound; reopen your hands after tracking returns.
+Body/wrist loss mutes sound; hand-detail loss preserves the body-driven ball and
+audio. Reopen your hands after gesture tracking returns before another fist toggle.

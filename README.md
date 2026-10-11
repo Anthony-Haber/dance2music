@@ -51,7 +51,7 @@ for relocated dependency files and the model setup command.
 | `web/methods.html`, `web/about.html` | the math of everything, as a drawer and as a standalone page |
 | `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
-| `instrument/` | Anthony's native Python prototype: persistent root lock, glowing/split ball, 12 roots and six chord qualities |
+| `instrument/` | Anthony's native Python prototype: persistent root lock, glowing/split ball, 12 roots and eight chord qualities |
 | `IDEAS.md` | ideas not built yet |
 | `docs/ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
 | `docs/explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |
@@ -62,6 +62,15 @@ Anthony's ideas 0–2 now have a native Python prototype, separate from `live.py
 .venv/Scripts/python.exe -m instrument --demo
 .venv/Scripts/python.exe -m instrument --camera 0
 ```
+
+Camera mode shows the body skeleton and uses body wrists for the ball even when
+palms face sideways. Detailed hand gestures select persistent chord qualities;
+both open palms held 1.5 seconds deliberately return to major. Confirmed fist
+locking shows ROOT LOCKED. Add `--volume 0.5` to halve the louder default audio.
+Restart after updates; resize/maximize the window for the complete camera view.
+Controls sit above the image. Hand detection follows web/main's far mode: alternating
+wrist crops and canned gesture labels confirmed for 0.35 seconds. The display shows
+the confirmed gesture and raw model result separately; joint shape never overrides None.
 
 See [the Python quickstart](specs/001-anthony-instrument/quickstart.md) for setup,
 gestures, headless replay, local exports and checks; [decisions](specs/001-anthony-instrument/decisions.md)

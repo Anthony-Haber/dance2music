@@ -13,14 +13,25 @@ depend on it; additional finger-pattern ball modes remain undefined.
 Anthony confirmed the following provisional mappings during this task:
 
 - All 12 roots through a 12-region ring; independent absolute quality gestures.
-- Open_Palm = major, Pointing_Up = minor, Victory = dominant seventh,
-  Thumb_Up = major seventh, Thumb_Down = minor seventh, ILoveYou = minor-major seventh.
-- Either hand toggles root locking; nearby two fists split instead of toggling.
-- Split persists. Keyboard M merges until a merge gesture is designed.
+- Both Open Palms held for 1.5 seconds = major (Anthony's 2026-10-11 revision).
+  Pointing_Up = minor, Thumb_Up = major seventh, Thumb_Down = minor seventh.
+  Right Thumb_Up + left Thumb_Down = minor-major seventh; the reverse = dominant seventh.
+  Right Victory + left Open_Palm = diminished seventh; the reverse = half-diminished seventh.
+  Ordered pairs override supported single-hand shortcuts. Love/heart is disabled.
+- Either hand toggles root locking; nearby two fists toggle split/merge instead.
+- Ball mode persists after reopening. Keyboard M also merges.
 - Stable reopening rearms; tracking loss requires reopening before another toggle.
 
 Record implementation choices separately in `decisions.md`. These defaults are
 reviewable and configurable rather than new permanent constitution rules.
+
+2026-10-11 performer feedback adds whole-body display and body-wrist ball control
+matching the website, pose-guided hand crops, audible ordinary-spacing volume,
+persistent gesture-selected quality, and explicit ROOT LOCKED confirmation.
+Follow-up feedback requires the complete camera frame in a resizable window with
+controls outside the image. Subsequent retesting found alternating fist detection and
+explicitly requires web/main far-mode canned labels and temporal stabilization,
+superseding the earlier joint fallback. Show raw and confirmed labels separately.
 
 ## US1 — Persistent root lock (P1, idea 0)
 
@@ -41,27 +52,37 @@ Acceptance:
 
 As a performer I see a glowing ball centered between tracked hands, sized by
 their separation, with fire/light styles, energy flicker and bounded sparks.
-Closing both fists near each other places two balls on the hands. Reopening
-keeps split mode; M explicitly merges. Geometry is independent of the renderer.
+Closing both fists near each other toggles one ball into two, or two back into one.
+Reopening preserves the mode and rearms the next gesture; holding fists toggles once.
+Both directions preserve the chord and root lock; M also merges.
+Geometry is independent of the renderer.
+Fists confirmed while apart remain eligible for split/merge when brought together
+after root-lock arbitration. That approach preserves the current lock state.
+Startup or reacquired fists require reopening; M clears eligibility until reopened.
 
 Acceptance: midpoint/radius match wrist geometry, split conserves combined disc
-area, lost hands hide their visuals and silence output, reacquisition preserves
+area, lost body/hand wrist positions hide their visuals and silence output,
+loss of detailed finger recognition alone leaves body-driven geometry/audio active,
+reacquisition preserves
 mode. No depth or true 3D is claimed. Render and inspect deterministic examples.
 
 ## US3 — Reachable roots and musical qualities (P3, idea 2)
 
-As a musician I can reach every one of 12 roots and six qualities (72 chords)
+As a musician I can reach every one of 12 roots and eight qualities (96 chords)
 from every starting chord, using region dwell and absolute quality selection.
 
-Acceptance: chord spelling/intervals match major, minor, 7, maj7, m7 and m(maj7);
+Acceptance: chord spelling/intervals match major, minor, 7, maj7, m7, m(maj7), dim7 and m7b5;
 quality choices never move a locked root; conflicting hand qualities have a
 documented deterministic policy. The prototype sounds chords locally and exposes
 the selected chord clearly. It does not send full chords to Expressive Chords.
+An ordinary open palm never overrides a non-palm quality gesture on the other hand.
+Brief reopening, neutral/unknown hands and tracking loss preserve quality. Returning
+to major requires both reliable open palms continuously for the configured 1.5s dwell.
 
 ## Required validation
 
 Automated tests are explicitly required by this spec for timing/state transitions,
-all 72 musical states, missing/invalid data, render geometry, and silent device-free
+all 96 musical states, missing/invalid data, render geometry, and silent device-free
 audio generation. A scripted native replay must exercise all three stories without
 camera/models/audio hardware; local model smoke validation must run separately.
 Measure core update latency (p95 < 5 ms on replay frames); record camera/model

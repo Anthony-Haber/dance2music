@@ -3,7 +3,7 @@
 import math
 from dataclasses import dataclass
 
-from instrument.harmony import QUALITY_GESTURES, Chord, root_region, voice_lead
+from instrument.harmony import Chord, gesture_quality, root_region, voice_lead
 from instrument.models import GESTURES, Ball, Config, Frame, Output
 
 
@@ -23,13 +23,18 @@ class FistGate:
     armed: bool = False
     closed_since: float | None = None
     open_since: float | None = None
+    closure_triggered: bool = False
 
-    def read(self, gesture: str | None, now: float, config: Config) -> bool:
+    def read(
+        self, gesture: str | None, now: float, config: Config, since: float | None = None
+    ) -> bool:
         if gesture is None:
             self.armed, self.closed_since, self.open_since = False, None, None
+            self.closure_triggered = False
             return False
         if gesture != "Closed_Fist":
             self.closed_since = None
+            self.closure_triggered = False
             if self.open_since is None:
                 self.open_since = now
             if now - self.open_since + 1e-9 >= config.reopen_s:
@@ -37,9 +42,14 @@ class FistGate:
             return False
         self.open_since = None
         if self.closed_since is None:
-            self.closed_since = now
+            # Camera labels already underwent the website's 350ms confirmation.
+            # Replays/synthetic raw labels retain the controller's normal dwell.
+            self.closed_since = min(now, since) if since is not None else now
         if self.armed and now - self.closed_since + 1e-9 >= config.close_s:
             self.armed = False
+            # Keep this closure eligible for a ball-mode toggle while held,
+            # even after its root-lock arbitration has completed.
+            self.closure_triggered = True
             return True
         return False
 
@@ -65,18 +75,20 @@ class Controller:
 
     def _clear_transients(self) -> None:
         self.gates = {"L": FistGate(), "R": FistGate()}
-        self.root_dwell, self.quality_dwell = Dwell(), Dwell()
+        self.root_dwell, self.quality_dwell, self.major_dwell = Dwell(), Dwell(), Dwell()
         self.pending_since: float | None = None
         self.pending_sides: set[str] = set()
         self.pending_root = self.chord.root
         self.split_requested = False
 
     def merge(self) -> None:
-        """Explicit temporary merge control, independent of chord and lock."""
+        """Keyboard merge control, independent of chord and lock."""
         self.split = False
         # A merge while both fists are held must not immediately split again.
         self.split_requested = False
         self.pending_since = None
+        for gate in self.gates.values():
+            gate.closure_triggered = False
 
     def update(self, frame: Frame) -> Output:
         now = frame.time_s
@@ -93,17 +105,17 @@ class Controller:
             side: (
                 hand.gesture
                 if torso_valid
-                and hand.confidence >= self.config.confidence_min
-                and hand.gesture in GESTURES
+                and (hand.confidence >= self.config.confidence_min and hand.gesture in GESTURES)
                 else None
             )
             for side, hand in hands.items()
         }
-        closures = {
-            side
-            for side, gate in self.gates.items()
-            if gate.read(gestures.get(side), now, self.config)
-        }
+        closures: set[str] = set()
+        for side, gate in self.gates.items():
+            gesture = gestures.get(side)
+            since = hands[side].gesture_since if side in hands else None
+            if gate.read(gesture, now, self.config, since):
+                closures.add(side)
         if self.pending_since is not None and (
             not torso_valid or any(gestures.get(side) is None for side in self.pending_sides)
         ):
@@ -122,16 +134,19 @@ class Controller:
         elif closures:
             self.pending_sides.update(closures)
         if nearby_fists:
-            if self.pending_since is not None or closures:
+            if self.pending_since is not None or any(
+                gate.closure_triggered for gate in self.gates.values()
+            ):
                 self.split_requested = True
             self.pending_since = None
             if self.split_requested and all(
                 gate.stable_closed(now, self.config.close_s) for gate in self.gates.values()
             ):
-                if not self.split:
-                    events.append("split")
-                self.split = True
+                self.split = not self.split
+                events.append("split" if self.split else "merge")
                 self.split_requested = False
+                for gate in self.gates.values():
+                    gate.closure_triggered = False
         else:
             self.split_requested = False
             if self.pending_since is not None and (
@@ -152,17 +167,17 @@ class Controller:
         else:
             self.root_dwell = Dwell()
         quality = self.chord.quality
-        raw_quality = next(
-            (
-                QUALITY_GESTURES[g]
-                for side in ("R", "L")
-                if (g := gestures.get(side)) in QUALITY_GESTURES
-            ),
-            None,
-        )
+        raw_quality = gesture_quality(gestures.get("L"), gestures.get("R"))
         selected_quality = self.quality_dwell.read(raw_quality, now, self.config.quality_dwell_s)
         if isinstance(selected_quality, str):
             quality = selected_quality
+        major = self.major_dwell.read(
+            "major" if all(gestures.get(side) == "Open_Palm" for side in ("L", "R")) else None,
+            now,
+            self.config.major_dwell_s,
+        )
+        if major is not None:
+            quality = "major"
         chord = Chord(root, quality)
         if chord != self.chord:
             events.append("chord")
@@ -193,7 +208,7 @@ class Controller:
             return (balls if self.split else ()), 0.0
         left, right = frame.hands
         radius = math.dist(left.wrist, right.wrist) / 2
-        normalized = min(1.0, radius / frame.torso_px / 1.5)
+        normalized = min(1.0, radius / frame.torso_px / self.config.gain_radius_torsos)
         gain = normalized**self.config.gain_exponent
         if self.split:
             balls = tuple(Ball(h.wrist, radius / math.sqrt(2), h.side) for h in frame.hands)

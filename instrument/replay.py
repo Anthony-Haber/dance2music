@@ -66,6 +66,9 @@ def read_replay(path: Path) -> Iterator[Frame]:
                         h.get("confidence", 0),
                         h.get("openness", 0),
                         tuple(tuple(p) for p in h.get("landmarks", [])),
+                        h.get("raw_gesture"),
+                        h.get("raw_confidence", 0),
+                        h.get("gesture_since"),
                     )
                     for h in data.get("hands", [])
                 )
@@ -75,6 +78,9 @@ def read_replay(path: Path) -> Iterator[Frame]:
                     tuple(data["torso_center"]) if data.get("torso_center") else None,
                     data.get("torso_px"),
                     data.get("energy", 0),
+                    tuple(
+                        tuple(p) if p is not None else None for p in data.get("pose_landmarks", [])
+                    ),
                 )
                 if frame.time_s <= previous:
                     raise ValueError("timestamps must strictly increase")

@@ -52,9 +52,36 @@ Additional animator controls, MIDI and three-move spells are outside this increm
 
 Initial dwell: closure 0.35 s, quality 0.35 s, root 0.35 s, reopen 0.20 s.
 Delay a single-fist action by 0.25 s to arbitrate a nearby second fist. Pause/cancel
-pending toggles when a nearby raw pair appears; require both stable before splitting.
+pending root toggles when a nearby raw pair appears; require both stable before
+toggling split/merge. A held pair changes mode once; reopen to rearm. Both directions
+preserve the chord and root lock. M remains an explicit merge shortcut.
 Dropouts and frame gaps > 0.20 s disarm gates and cancel pending actions while
 preserving chord/lock/mode. No extrapolated closure events. Split distance <= 0.6
 torso lengths, ring dead zone 0.25 torso lengths. Configuration exposes thresholds.
 The resulting deliberate fist latency is approximately 0.60 s plus frame sampling;
 this is a prototype safety/usability tradeoff, recorded for Anthony's review.
+
+## 2026-10-11 usability corrections
+
+Preserve the existing root-lock/split arbitration, with Anthony's explicit confirmation.
+Separate body wrist geometry from gesture labels; retain 33 optional body points for
+skeleton display and backward-compatible JSONL replay. Adapt the website's wrist crops
+locally in Python and measure camera inference separately from controller latency.
+Use website-filtered finger labels for actions, including its 0.4s missing-detection
+grace, and a causal 40ms body position filter. Ball geometry uses fresh body wrists.
+Persist quality after reopening; require both reliable palms for Anthony's chosen 1.5s
+major reset. Increase ordinary-spacing audio, retaining gain/pitch smoothing and peak
+headroom, with a master volume option for playback and export.
+
+Verify reported regressions against pre-fix HEAD, synthetic body/crop/replay boundaries,
+lock feedback, complete 96-chord reachability, audio RMS/bounds/continuity, native model
+loading, camera and playback boundaries, and representative rendered output. Tests and
+docs stay in their established directories. Read-only official model documentation may
+be consulted; all project changes and generated evidence stay local.
+
+An initial retest introduced 3D-joint fallback decisions. Subsequent retesting
+supersedes them: port web/main far-mode stabilization and alternating crops,
+with raw/confirmed diagnostics and replay metadata to avoid double fist dwell. Put
+controls in a separate 110px panel, preserve every camera pixel and use a resizable
+window. Request widescreen capture with optional width/height overrides; verify the
+Windows DirectShow/MJPEG boundary after Media Foundation rejects the wider mode.

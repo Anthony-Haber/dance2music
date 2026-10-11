@@ -23,11 +23,13 @@ from instrument.replay import demonstration, read_replay
 from instrument.tracking import Tracker
 from instrument.visuals import Renderer
 
+WINDOW_TITLE = "dance2music - Anthony's Python instrument"
+
 
 class Exports:
     """Incremental diagnostic exports; no unbounded audio/video buffers."""
 
-    def __init__(self, directory: Path, fps: int, stack: ExitStack) -> None:
+    def __init__(self, directory: Path, fps: int, stack: ExitStack, volume: float = 1.0) -> None:
         directory.mkdir(parents=True, exist_ok=True)
         self.directory, self.fps = directory, fps
         self.frames = stack.enter_context((directory / "frames.jsonl").open("w", encoding="utf-8"))
@@ -37,7 +39,7 @@ class Exports:
         self.audio.setnchannels(1)
         self.audio.setsampwidth(2)
         self.audio.setframerate(48000)
-        self.synth = Synth()
+        self.synth = Synth(volume=volume)
         self.writer: Any = None
         self.stack = stack
         self.saved: set[str] = set()
@@ -135,6 +137,10 @@ def scripted_frames(frames: Iterator[Frame]) -> Iterator[tuple[Frame, NDArray[np
 def run(args: argparse.Namespace) -> dict[str, Any]:
     if not math.isfinite(args.seconds) or args.seconds < 0 or not 1 <= args.fps <= 120:
         raise ValueError("seconds must be finite nonnegative and fps in [1,120]")
+    if not math.isfinite(args.volume) or not 0 <= args.volume <= 1:
+        raise ValueError("volume must be finite in [0,1]")
+    if args.camera_width <= 0 or args.camera_height <= 0:
+        raise ValueError("camera dimensions must be positive pixels")
     config = (
         Config(**json.loads(args.config.read_text(encoding="utf-8"))) if args.config else Config()
     )
@@ -145,7 +151,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         playback = None
         if not args.mute and not args.headless and not args.model_smoke:
             try:
-                playback = Playback(args.audio_device)
+                playback = Playback(args.audio_device, volume=args.volume)
             except Exception as error:
                 raise RuntimeError(f"Cannot start audio: {error}. Retry with --mute.") from error
             stack.callback(playback.close)
@@ -168,19 +174,27 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         else:
             tracker = Tracker(args.models)
             stack.callback(tracker.close)
-            capture = cv2.VideoCapture(str(args.video) if args.video else args.camera)
+            # DirectShow negotiates widescreen webcam modes more reliably than
+            # Windows' default Media Foundation backend, especially on USB cameras.
+            backend = cv2.CAP_DSHOW if sys.platform == "win32" and not args.video else cv2.CAP_ANY
+            capture = cv2.VideoCapture(str(args.video) if args.video else args.camera, backend)
             stack.callback(capture.release)
             if not capture.isOpened():
                 raise RuntimeError(
                     "Cannot open camera/video; check index, path and OS camera permissions"
                 )
             if not args.video:
-                capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc(*"MJPG"))
+                capture.set(cv2.CAP_PROP_FRAME_WIDTH, args.camera_width)
+                capture.set(cv2.CAP_PROP_FRAME_HEIGHT, args.camera_height)
             source = camera_frames(capture, tracker, args.video is not None, args.fps)
-        exporter = Exports(args.output, args.fps, stack) if args.output else None
+        exporter = (
+            Exports(args.output, args.fps, stack, volume=args.volume) if args.output else None
+        )
         if not args.headless:
             stack.callback(cv2.destroyAllWindows)
+            cv2.namedWindow(WINDOW_TITLE, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+            cv2.resizeWindow(WINDOW_TITLE, 960, 720)
         wall_start = time.perf_counter()
         first_timestamp = None
         for frame, image, inference_ms in source:
@@ -206,7 +220,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             if exporter:
                 exporter.write(frame, final, rendered)
             if not args.headless:
-                cv2.imshow("dance2music - Anthony's Python instrument", rendered)
+                cv2.imshow(WINDOW_TITLE, rendered)
                 key = cv2.waitKey(1) & 0xFF
                 if key in (ord("q"), 27):
                     break
@@ -216,12 +230,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     controller.reset()
                 elif key == ord("s"):
                     renderer.style = "light" if renderer.style == "fire" else "fire"
-                if (
-                    cv2.getWindowProperty(
-                        "dance2music - Anthony's Python instrument", cv2.WND_PROP_VISIBLE
-                    )
-                    < 1
-                ):
+                if cv2.getWindowProperty(WINDOW_TITLE, cv2.WND_PROP_VISIBLE) < 1:
                     break
         if final is None:
             raise ValueError("No input frames were processed")
@@ -234,6 +243,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "render_p95_ms": float(np.percentile(render_times, 95)),
         "inference_p95_ms": float(np.percentile(inference_times, 95)),
         "wall_seconds": time.perf_counter() - wall_start,
+        "source_size_px": [image.shape[1], image.shape[0]],
+        "preview_size_px": [rendered.shape[1], rendered.shape[0]],
     }
     if args.output:
         (args.output / "summary.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
@@ -252,12 +263,17 @@ def main() -> int:
         "--model-smoke", action="store_true", help="load models and infer two blank frames"
     )
     parser.add_argument("--camera", type=int, default=0)
+    parser.add_argument("--camera-width", type=int, default=1280, help="requested capture width")
+    parser.add_argument("--camera-height", type=int, default=720, help="requested capture height")
     parser.add_argument("--models", type=Path, default=Path("output/models"))
     parser.add_argument("--config", type=Path, help="JSON object overriding Config defaults")
     parser.add_argument("--style", choices=("fire", "light"), default="fire")
     parser.add_argument("--headless", action="store_true", help="disable window and audio devices")
     parser.add_argument("--mute", action="store_true")
     parser.add_argument("--audio-device", help="sounddevice output name or substring")
+    parser.add_argument(
+        "--volume", type=float, default=1.0, help="master volume in [0,1] (default 1)"
+    )
     parser.add_argument(
         "--seconds", type=float, default=0, help="stop after this source duration; 0=all"
     )

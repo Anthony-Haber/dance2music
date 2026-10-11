@@ -8,16 +8,27 @@ From the repository root, on the tested Windows / Python 3.14 workstation:
 .venv/Scripts/python.exe -m instrument --camera 0
 ```
 
-The demo plays a scripted 15-second sequence; camera mode responds to your hands.
-Add `--mute` to disable playback. Add `--style light` for chord-root-colored glow.
+The demo plays a scripted 15-second sequence; camera mode tracks your whole body
+and uses your wrists for the ball, plus detailed hand tracking for chord gestures.
+Add `--mute` to disable playback, or `--volume 0.5` to halve the default audio level.
+Add `--style light` for chord-root-colored glow.
+Restart the Python process after code updates. Resize or maximize the native window;
+it fits the entire frame while preserving its proportions. Controls occupy a separate
+panel above the feed. Camera mode requests 1280x720 (the device may negotiate another
+mode); override with --camera-width and --camera-height if needed. Diagnostics report
+source_size_px and preview_size_px; the latter includes the 110-pixel controls panel.
 Camera input is mirrored before inference and display. Keep shoulders, hips and
 both hands visible, with hands large enough in the image for reliable recognition.
-This initial tracker uses full-frame recognition; the browser's far-hand crop mode
-has not been adapted. Gesture and body confidence loss disables musical actions.
+The skeleton shows available body joints, including legs and feet. Hand recognition
+uses web/main far mode's alternating wrist-centered 256-pixel crops. Palms do not
+have to face the camera for the ball or sound: reliable body wrists suffice. A 40ms causal position
+filter reduces jitter; uncertain joints disappear immediately. Gesture recognition
+still depends on visible finger details. Reliable shoulders and hips provide torso
+scale; missing torso or either wrist mutes sound. No body pose is fabricated.
 
 ## Controls
 
-- Start with recognized open/non-fist hands for at least 0.20 seconds to arm.
+- Start with open/non-fist hands for about 0.60 seconds to recognize and arm.
 - Move the hands' midpoint into a root sector: C at screen right, then C#, D,
   Eb, E, F, F#, G, Ab, A, Bb, B clockwise. Hold 0.35 seconds. The center dead
   zone holds your root. Root labels are guides; sectors extend beyond the labels.
@@ -25,26 +36,50 @@ has not been adapted. Gesture and body confidence loss disables musical actions.
   for a nearby second fist. One deliberate closure toggles root locking. Reopen
   stably before the next toggle. Root is captured at stable closure, not after
   the arbitration delay. Both distant fists count as one action in that window.
-- Change quality: Open Palm = major, Pointing Up = minor, Victory = 7,
-  Thumb Up = maj7, Thumb Down = m7, ILoveYou = m(maj7). Hold 0.35 seconds.
-  The right model-labeled hand wins conflicting quality gestures. Root remains
-  fixed while locked; quality stays editable. Open Palm reopening also selects major.
+  The HUD shows ROOT LOCKING... while pending and ROOT LOCKED after confirmation;
+  ROOT LOCKED stays visible after reopening until another deliberate fist toggle.
+  Canned labels at confidence >=0.5 must persist for 0.35 seconds before a change
+  is accepted, exactly as web/main. The confirmed label appears above the raw
+  classifier result. Brief raw alternation retains the confirmed label; joint
+  shape never turns None into a fist. This replaces the earlier joint fallback.
+- Change quality: Pointing Up = minor, Thumb Up = maj7, Thumb Down = m7.
+  Right thumb up + left thumb down = m(maj7); the reversed pair = dominant 7.
+  Right Victory + left open palm = dim7; left Victory + right open palm = m7b5.
+  Love/heart is disabled. Hold 0.35 seconds
+  after gesture recognition (about 0.70 seconds total).
+  Either hand works; a resting palm on the other hand cannot override it. The
+  mapped ordered pair wins first; otherwise the body-labeled right hand wins
+  conflicting supported single-hand quality shortcuts. Crossing hands preserves
+  their body identities. The quality
+  persists through relaxed hands, unknown gestures and tracking loss. To return
+  to major, hold BOTH recognized Open Palms continuously for 1.5 seconds.
+  Root remains fixed while locked; quality stays editable.
 - Close both fists within 0.6 torso lengths to split. The split takes priority
-  and preserves the lock state. Reopening keeps two balls. M explicitly merges.
+  and preserves the lock state. Fists confirmed while apart can also be brought
+  together afterward to split, including after root locking. The HUD says TWO BALLS;
+  spread your hands to see both. Reopen, then repeat the same nearby two-fist
+  gesture to merge: the HUD returns to ONE BALL. Holding fists changes mode once;
+  reopening alone preserves it. Both directions preserve the chord and root lock.
+  M also merges and requires reopening before another split.
 - R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
-- Tracking loss silences sound with a short fade, hides unavailable visuals,
-  cancels pending actions, and preserves chord/lock/split. Reopen to rearm after loss.
+- Body/wrist loss silences sound with a short fade and hides unavailable visuals.
+  Hand-detail loss retains the last detection for up to 0.4 seconds, as in web/main,
+  then cancels pending gesture actions while body wrists can keep the ball/sound active.
+  Both preserve chord/lock/split. Reopen to rearm after gesture loss.
 
-The sphere gain follows wrist radius / torso length / 1.5, clamped to [0,1],
-raised to exponent 1.5 (Joseph's gentle mapping). Split shares that gain, so it
-does not double loudness. `--config` can override the dataclass defaults, e.g.:
+The sphere gain follows wrist radius / torso length / 0.75, clamped to [0,1],
+raised to exponent 1.5. The smaller reference radius and higher synth level make
+ordinary hand spacing about 21 dB louder than the original prototype. Closing the
+hands still fades toward silence. Split shares the gain and does not double it.
+`--volume` scales both playback and WAV exports in [0,1]. `--config` can override
+the dataclass defaults, e.g.:
 
 ```json
-{"close_s": 0.35, "arbitration_s": 0.25, "split_torsos": 0.6, "gain_exponent": 3.0}
+{"major_dwell_s": 1.5, "gain_radius_torsos": 0.75, "gain_exponent": 1.5}
 ```
 
 All durations are seconds; proximity/dead-zone values are torso lengths. Frame
-gaps above 0.20 seconds reset gesture candidates, so slow inference may require
+gaps above 0.20 seconds reset controller gesture candidates, so slow inference may require
 tuning `max_gap_s` and the dwell values together after a real performer trial.
 The visible central dead-zone guide uses the same configured threshold as root selection.
 
@@ -59,7 +94,14 @@ The visible central dead-zone guide uses the same configured threshold as root s
 
 Headless mode never opens a display or audio device. Exports include frames.jsonl,
 states.jsonl, preview.avi, chords.wav, representative PNGs and summary.json.
-Only processed observations are replayed, not camera images. All artifacts remain
+Only processed observations are replayed, not camera images. Optional pose_landmarks
+contains 33 pixel points, with null for unavailable joints; older replays without
+that field remain valid. Camera hands store confirmed gesture/confidence plus
+raw_gesture/raw_confidence and gesture_since (candidate start, elapsed seconds),
+so replay does not apply closure dwell twice. Older raw-label replays still work;
+obsolete fist_closed/fingers_open flags are ignored, so old joint-only None
+closures intentionally no longer cause actions.
+All artifacts remain
 local and ignored by Git. CLI output reports separate controller, renderer and
 inference p95 times. Inference is zero in synthetic replay because no CV model runs.
 Diagnostic AVI uses fixed `--fps`; camera stalls can make it diverge from real

@@ -96,9 +96,20 @@ editing. Read `graphify-out/GRAPH_REPORT.md` only for broad architecture reviews
 queries provide insufficient context. Dirty graph files MUST NOT be a reason to skip graphify.
 If the graph or tool is unavailable, the graph is the subject of a stale-output investigation,
 or the user explicitly requests another approach, agents MUST record the reason and use focused
-source searches. After modifying code, agents MUST run `graphify update .` to refresh the graph
-locally using AST extraction without API cost. This reduces unnecessary browsing while keeping
-codebase relationships available for future tasks.
+source searches.
+
+Agents MUST run `graphify update .` once after completing a major feature implementation,
+before its handoff, using local AST extraction without API cost. Intermediate edits within
+that feature MUST NOT each trigger a refresh. A major feature introduces a new coherent
+capability or substantially changes an existing capability's architecture, module relationships,
+or data flow. File count or the number of edits alone does not make work a major feature.
+
+Agents MUST NOT run `graphify update .` for minor fixes, styling adjustments, parameter tuning,
+documentation-only changes, or routine refactoring that does not substantially change those
+relationships. Such changes can remain unrefreshed until the next completed major feature.
+Graphify-first navigation still applies; agents MUST verify relevant graph results against
+current source when intervening minor changes could make them stale. This keeps graph navigation
+useful while avoiding repeated refresh work for small changes.
 
 ### IX. User Decisions on Design Dilemmas
 
@@ -234,4 +245,4 @@ Exceptions MUST record the affected rule, reason, risk, compensating verificatio
 condition or review date. The project maintainer MUST explicitly approve them; exceptions do not
 silently amend the constitution.
 
-**Version**: 2.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-05
+**Version**: 3.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-11

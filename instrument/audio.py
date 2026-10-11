@@ -11,16 +11,19 @@ from numpy.typing import NDArray
 class Synth:
     """Four persistent oscillator slots, causal 60ms pitch and 30ms gain smoothing."""
 
-    def __init__(self, sample_rate: int = 48000) -> None:
+    def __init__(self, sample_rate: int = 48000, volume: float = 1.0) -> None:
         if not isinstance(sample_rate, int) or sample_rate < 8000:
             raise ValueError("Sample rate must be an integer >= 8000 Hz")
+        if not math.isfinite(volume) or not 0 <= volume <= 1:
+            raise ValueError("Volume must be finite in [0,1]")
         self.sample_rate = sample_rate
+        self.volume = volume
         self.phases = np.zeros(4)
         self.frequencies = np.full(4, 261.625565)
         self.amplitudes = np.zeros(4)
 
     def render(self, samples: int, notes: tuple[int, ...], gain: float) -> NDArray[np.float32]:
-        """Return mono float32 samples in [-0.25,0.25]; no device needed.
+        """Return mono float32 samples in [-0.7,0.7]; no device needed.
 
         Missing tracking supplies gain=0; release takes 30ms to avoid a click.
         Notes are MIDI integers; an empty tuple releases all oscillator slots.
@@ -37,7 +40,7 @@ class Synth:
         target_amplitude = np.zeros(4)
         for index, note in enumerate(notes):
             target_frequency[index] = 440 * 2 ** ((note - 69) / 12)
-            target_amplitude[index] = 0.18 * gain / len(notes)
+            target_amplitude[index] = 0.7 * self.volume * gain / len(notes)
         steps = np.arange(1, samples + 1, dtype=np.float64)[:, None] / self.sample_rate
         frequencies = target_frequency + (self.frequencies - target_frequency) * np.exp(
             -steps / 0.060
@@ -57,10 +60,10 @@ class Synth:
 class Playback:
     """Optional sounddevice stream. Call close in finally; failures are surfaced."""
 
-    def __init__(self, device: str | int | None = None) -> None:
+    def __init__(self, device: str | int | None = None, volume: float = 1.0) -> None:
         import sounddevice as sd
 
-        self.synth = Synth()
+        self.synth = Synth(volume=volume)
         self.latest: tuple[tuple[int, ...], float] = ((), 0.0)
         self.error: str | None = None
         self.stream = sd.OutputStream(

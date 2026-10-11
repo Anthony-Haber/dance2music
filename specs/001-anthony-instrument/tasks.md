@@ -82,3 +82,26 @@ Existing implementation and test files were verified against the feature before
 checking their tasks. Yesterday's initial red-test logs were not preserved; current
 checks and new regressions demonstrated to fail before correction are documented
 in evidence.md. Engineering completion does not claim performer acceptance.
+
+## Performer corrections: 2026-10-11
+
+- [X] T023 Preserve and draw the body pose; use body wrists for ball/audio and adapt
+  the website's wrist crops for fresh detailed gestures, with causal position smoothing.
+- [X] T024 Persist quality through neutral hands; use Anthony's two-palm 1.5s major
+  selection and preserve his nearby-fist split priority with explicit lock feedback.
+- [X] T025 Raise ordinary-spacing volume with retained smoothing/headroom and a
+  master volume option for playback and WAV; verify regressions and audible RMS.
+- [X] T026 Add conservative 3D joint fist/open-hand arming when the model says None,
+  retaining raw scores and replay flags; exclude thumb/point signs and missing joints.
+  Superseded by Anthony's subsequent request in T029.
+- [X] T027 Show the complete camera frame below a separate controls panel in a
+  resizable window; verify widescreen capture on the native Windows backend.
+- [X] T028 Run feature tests/checks, replay and model/camera/audio boundaries, inspect
+  representative previews, record evidence/status/tutorials, and update Graphify locally.
+
+Performer retesting remains an acceptance step. These corrections authorize no push
+or browser translation; existing broader Spec Kit failures are recorded separately.
+
+- [X] T029 Replace geometric fist fallback with web/main far-mode canned gesture
+  stabilization and alternating crops; show raw/confirmed labels, preserve existing
+  musical decisions, verify JavaScript parity and replay/controller integration.

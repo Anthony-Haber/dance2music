@@ -1,6 +1,6 @@
 # Anthony's Vision for dance2music
 
-Last updated: 2026-10-05. This is a living vision and planning document for Anthony to revise.
+Last updated: 2026-10-11. This is a living vision and planning document for Anthony to revise.
 It records desired behavior, existing capabilities, accepted decisions, and possible design flaws.
 Suggestions and open questions are not approved implementation choices.
 
@@ -21,7 +21,7 @@ New live features therefore need a genuine local Python implementation before an
 
 **Stage 1 implementation, 2026-10-04:** Ideas 0–2 now have a native Python prototype
 in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
-nearby-fist persistent split, and all 12 roots with six absolute quality gestures.
+nearby-fist split/merge, and all 12 roots with eight absolute quality selections.
 Anthony approved those provisional mappings and keyboard M merge during implementation.
 See [quickstart](../specs/001-anthony-instrument/quickstart.md),
 [spec/tasks](../specs/001-anthony-instrument/tasks.md),
@@ -41,8 +41,8 @@ It does not mean the full future vision or performer acceptance is complete.
 - [x] **1 — Agreed temporary 2D ball and basic two-ball mode:** Joseph-inspired
   fire/light glow, wrist geometry, sparks, persistent nearby-fist split and M merge.
   True 3D remains deferred as agreed.
-- [x] **2 — Initial musical catalogue:** all 12 roots × six absolute qualities
-  (72 chords), bounded voice leading, visible chord feedback and local synthesis.
+- [x] **2 — Initial musical catalogue:** all 12 roots × eight absolute qualities
+  (96 chords), bounded voice leading, visible chord feedback and local synthesis.
 
 ### What still needs fixing or review
 
@@ -57,16 +57,16 @@ The following concrete limitations and acceptance work remain:
   0.60-second fist response, 0.35-second dwell, 0.20-second rearm/gap limits and
   0.6-torso split distance. Their current values are provisional.
 - [ ] **Distant/occluded hands:** assess recognition when hands are small, close
-  together or crossing. The tracker uses full-frame recognition; the browser's
-  far-hand crop mode has not been adapted to Python.
+  together or crossing. Wrist-centered crops now follow the browser approach;
+  gesture accuracy with a performer still needs review.
 - [ ] **Musical feel and listening:** review local synth sound/volume, the dense
-  12-sector root ring and the right-hand quality priority. Opening with Open_Palm
-  selects major, so reopening can change a minor chord back to major; this is the
-  current documented mapping, not a failing test.
+  12-sector root ring and right-hand priority for conflicting non-palm gestures.
+  Volume was raised after feedback. Quality now persists through brief reopening;
+  both open palms held 1.5s deliberately return to major, as Anthony selected.
 
 **Deferred additions, rather than fixes to implemented scope:** true 3D/depth,
-animator assets, rotation/hold-time effects, extra finger-pattern modes, a merge
-gesture, broader chord vocabulary, and separate musical roles for the two balls.
+animator assets, rotation/hold-time effects, extra finger-pattern modes,
+broader chord vocabulary, and separate musical roles for the two balls.
 Ableton MIDI, spells and the game remain ideas 6, 3 and 4. JavaScript translation
 still requires an explicit request.
 
@@ -76,6 +76,23 @@ still requires an explicit request.
 - [x] Made the visible dead-zone guide match configured root selection.
 - [x] Added line-specific errors for malformed replay observations.
 - [x] Rejected nonfinite tracking confidence and invalid synth sample rates.
+- [x] Added whole-body overlay and body-wrist ball/audio control, including sideways palms.
+- [x] Adapted the website's wrist-centered crops for detailed hand gestures in Python.
+- [x] Preserved quality through neutral hands; both palms 1.5s explicitly select major.
+- [x] Raised ordinary-spacing volume and added --volume; clarified ROOT LOCKED feedback.
+- [x] Matched web/main far-mode canned gesture detection and stabilization; removed the joint fallback.
+- [x] Preserved the full camera frame below a separate controls panel in a resizable window.
+
+**Performer note, 2026-10-11:** Anthony observed that original main detected his whole
+body and hands perpendicular to the camera, while the first Python prototype showed
+only hand details and needed front-facing palms for the ball. He also reported poor
+hand tracking and very low volume. The corrections above address those testing
+barriers; his original comparison remains recorded without claiming measured accuracy.
+During retesting he confirmed visible finger lines on None-labeled fists and requested
+the camera's entire view. The separate controls panel preserves the camera view.
+His next retest found alternating fist labels and explicitly requested web/main's
+method; canned classification and 0.35s stabilization now replace the joint fallback.
+Detailed finger accuracy still needs performer acceptance.
 
 Evidence: [28 passing tests and device/replay checks](../specs/001-anthony-instrument/evidence.md).
 Implementation commit: `6acfa55` (local).
@@ -114,10 +131,10 @@ deployment, or upload. Existing web behavior is useful reference material while 
 | Remaining ideas | Preserve all ideas below; their relative implementation order is not yet agreed |
 | Lock lifecycle | A fist closure locks; a later fist closure unlocks. Reopening alone does not unlock. |
 | Locked harmony | Root selection stays fixed; chord-quality gestures remain active. |
-| Two-fist conflict | Nearby closed fists split the ball and suppress the chord-lock toggle. |
+| Two-fist conflict | Nearby closed fists toggle split/merge and suppress the chord-lock toggle. |
 | Initial ball scope | Reuse Joseph's glowing 2D ball design in the local Python prototype; defer depth/3D work. |
 | Spell structure | Three moves recognized in a specific order. |
-| Split lifecycle | Two-ball mode persists after the hands open; a separate merge gesture is still to be designed. |
+| Split lifecycle | Mode persists after opening; repeat nearby closed fists to merge, reopening between gestures (2026-10-11 revision). |
 
 These interaction decisions were explicitly confirmed by Anthony on 2026-10-04.
 The initial ball scope was revised after reviewing Joseph's implementation: the temporary 2D
@@ -167,7 +184,8 @@ tracking loss, and split gestures. The accepted behavior must be deterministic b
 
 **Status: DONE for the agreed temporary 2D Python scope; full 3D vision deferred.**
 Implemented glow, fire/light styles, energy flicker, bounded sparks, persistent
-hand-anchored split and keyboard M merge. Both balls share one chord and gain;
+hand-anchored split, the same nearby-fist gesture to merge, and keyboard M merge.
+Both balls share one chord and gain;
 splitting conserves their combined area and does not double loudness. Label
 placement needs cleanup; tracking usability still needs a performer trial.
 
@@ -274,10 +292,16 @@ and plugin voicings remain outside the agreed initial catalogue.
 - Broad harmonic access conflicts with a small, memorable gesture vocabulary. Expert freedom and
   beginner restrictions may need distinct modes rather than a single crowded mapping.
 
-**Current answers.** Twelve chromatic root sectors and six absolute quality gestures
-provide the initial catalogue; Open_Palm major, Pointing_Up minor, Victory 7,
-Thumb_Up maj7, Thumb_Down m7 and ILoveYou m(maj7). The right model-labeled hand
-wins conflicting quality selections. Wider catalogues, alternative root navigation
+**Current answers.** Twelve chromatic root sectors and eight absolute quality selections
+provide the initial catalogue; both Open Palms held 1.5s select major, Pointing_Up minor,
+Thumb_Up maj7 and Thumb_Down m7. Right thumb up + left thumb down selects m(maj7);
+the reverse selects dominant 7. Right Victory + left palm selects dim7, left Victory
++ right palm selects m7b5. Love/heart is disabled at Anthony's request. Quality persists
+between deliberate selections. Explicit ordered pairs win, then the right body-labeled
+hand wins conflicting supported single-hand shortcuts. Five signs per hand provide
+25 possible pair slots (up to 300 chords across 12 roots); assigning a different quality
+to every slot remains future design work.
+Wider catalogues, alternative root navigation
 and missing Expressive Chords mapping behavior require later design decisions.
 
 ## 3. Chords as three-move magic spells
@@ -335,8 +359,9 @@ spell at, or otherwise defeat a target? Which harmonic freedoms are introduced a
 one attached to each fist/hand. This is the concrete split gesture for the mode in idea 1.
 
 **Accepted rule.** The split gesture suppresses the chord-lock toggle. It must not silently
-change the locked root or chord quality. Two-ball mode remains active after the hands open;
-a separate merge gesture will be designed later. Reopening alone does not merge the balls.
+change the locked root or chord quality. Mode remains active after the hands open.
+Anthony's 2026-10-11 revision uses the same nearby two-fist gesture to merge again.
+Reopen between gestures; held fists change mode once. Reopening alone does not merge.
 
 **Possible design flaws.**
 
@@ -352,9 +377,10 @@ a separate merge gesture will be designed later. Reopening alone does not merge 
 - Splitting changes how musical energy is distributed. Two visuals must not imply two unrelated
   chord triggers unless that is explicitly designed.
 
-**Questions for design.** What gesture merges the balls again? Do both balls share a chord or
+**Questions for design.** Do both balls share a chord or
 have distinct musical roles? What happens if one
-hand leaves the frame? The exact distance, dwell, and merge policy remain open.
+hand leaves the frame? Distance and dwell remain provisional for performer review;
+the merge gesture is confirmed above.
 
 ## 6. Ableton / Expressive Chords through a virtual MIDI cable
 

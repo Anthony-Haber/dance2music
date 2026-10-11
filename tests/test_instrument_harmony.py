@@ -3,7 +3,14 @@
 import math
 import unittest
 
-from instrument.harmony import QUALITY_GESTURES, Chord, root_region, voice_lead
+from instrument.harmony import (
+    INTERVALS,
+    QUALITY_GESTURES,
+    QUALITY_PAIRS,
+    Chord,
+    root_region,
+    voice_lead,
+)
 from instrument.models import Frame, Hand
 
 
@@ -16,6 +23,8 @@ class HarmonyTests(unittest.TestCase):
             "major7": (0, 4, 7, 11),
             "minor7": (0, 3, 7, 10),
             "minor_major7": (0, 3, 7, 11),
+            "half_diminished7": (0, 3, 6, 10),
+            "diminished7": (0, 3, 6, 9),
         }
         symbols = set()
         for root in range(12):
@@ -28,8 +37,10 @@ class HarmonyTests(unittest.TestCase):
                 self.assertEqual({n % 12 for n in notes}, set(chord.pitch_classes))
                 self.assertTrue(all(48 <= n <= 83 for n in notes))
                 symbols.add(chord.symbol)
-        self.assertEqual(len(symbols), 72)
+        self.assertEqual(len(symbols), 96)
         self.assertEqual(Chord(7, "minor_major7").symbol, "Gm(maj7)")
+        self.assertEqual(Chord(0, "half_diminished7").symbol, "Cm7b5")
+        self.assertEqual(Chord(0, "diminished7").symbol, "Cdim7")
 
     def test_root_regions_and_dead_zone(self) -> None:
         for root in range(12):
@@ -47,14 +58,22 @@ class HarmonyTests(unittest.TestCase):
         from instrument.controller import Controller
         from tests.test_instrument_controller import sample
 
+        selections = [
+            ("Open_Palm", gesture, quality) for gesture, quality in QUALITY_GESTURES.items()
+        ] + [(left, right, quality) for (left, right), quality in QUALITY_PAIRS.items()]
         for start_root in range(12):
-            for start_quality in QUALITY_GESTURES.values():
+            for start_quality in INTERVALS:
                 for target_root in range(12):
-                    for gesture, target_quality in QUALITY_GESTURES.items():
+                    for left, right, target_quality in selections:
                         controller = Controller(initial=Chord(start_root, start_quality))
                         for index in range(11):
                             output = controller.update(
-                                sample(index * 0.05, root=target_root, right=gesture)
+                                sample(
+                                    index * 0.16,
+                                    root=target_root,
+                                    right=right,
+                                    left=left,
+                                )
                             )
                         self.assertEqual(
                             (output.root, output.quality), (target_root, target_quality)
@@ -63,7 +82,7 @@ class HarmonyTests(unittest.TestCase):
     def test_voice_leading_preserves_notes_across_voice_count_changes(self) -> None:
         previous = ()
         for root in range(12):
-            for quality in QUALITY_GESTURES.values():
+            for quality in INTERVALS:
                 chord = Chord(root, quality)
                 previous = voice_lead(previous, chord)
                 self.assertEqual({n % 12 for n in previous}, set(chord.pitch_classes))

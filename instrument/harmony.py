@@ -14,6 +14,8 @@ INTERVALS = {
     "major7": (0, 4, 7, 11),
     "minor7": (0, 3, 7, 10),
     "minor_major7": (0, 3, 7, 11),
+    "half_diminished7": (0, 3, 6, 10),
+    "diminished7": (0, 3, 6, 9),
 }
 SUFFIXES = {
     "major": "",
@@ -22,15 +24,33 @@ SUFFIXES = {
     "major7": "maj7",
     "minor7": "m7",
     "minor_major7": "m(maj7)",
+    "half_diminished7": "m7b5",
+    "diminished7": "dim7",
 }
 QUALITY_GESTURES = {
     "Open_Palm": "major",
     "Pointing_Up": "minor",
-    "Victory": "dominant7",
     "Thumb_Up": "major7",
     "Thumb_Down": "minor7",
-    "ILoveYou": "minor_major7",
 }
+# Ordered keys are (left body hand, right body hand), independent of screen position.
+QUALITY_PAIRS = {
+    ("Thumb_Down", "Thumb_Up"): "minor_major7",
+    ("Thumb_Up", "Thumb_Down"): "dominant7",
+    ("Open_Palm", "Victory"): "diminished7",
+    ("Victory", "Open_Palm"): "half_diminished7",
+}
+
+
+def gesture_quality(left: str | None, right: str | None) -> str | None:
+    """Explicit ordered pairs override existing single-hand quality shortcuts."""
+    paired = QUALITY_PAIRS.get((left, right)) if left is not None and right is not None else None
+    if paired is not None:
+        return paired
+    return next(
+        (QUALITY_GESTURES[g] for g in (right, left) if g in QUALITY_GESTURES and g != "Open_Palm"),
+        None,
+    )
 
 
 @dataclass(frozen=True)

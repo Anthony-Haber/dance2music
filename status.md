@@ -293,3 +293,148 @@
   pushes or project uploads occurred during this reorganization.
 - Outstanding: None for the organization request. This session cannot invoke /compact;
   the user must run it before the next feature-sized task.
+
+## 2026-10-11 - Check upstream main for updates
+
+- State: Complete; anthony-explorations already contains the latest upstream main.
+- Task: Fetch main from Music-Intelligence-Lab/dance2music while keeping exploration work local.
+- Verification: Fetched origin/main successfully. Upstream main is f40be3b
+  (Live: record and download (video + sound, or sound only)). Git ancestry checks confirm
+  anthony-explorations contains all upstream main commits, with 15 additional local commits
+  and zero missing upstream commits. The working tree was clean before this status entry.
+- Local state: No merge was needed. Neither local branch was moved; no push was performed.
+- Outstanding: None for synchronizing the current exploration branch with upstream main.
+
+## 2026-10-11 - Correct Python instrument performer testing barriers
+
+- State: Implemented and validated locally; performer retest pending.
+- Task: Restore whole-body camera feedback and sideways-palm ball control, improve
+  hand tracking/volume, persist chord quality, show ROOT LOCKED, recognize None-labeled
+  fists with visible finger joints, and show the complete camera view.
+- Decisions: Anthony chose two recognized open palms held 1.5s to return to major
+  and retained nearby paired fists for split; either fist or two separated fists
+  toggle the root lock. Reopening retains the lock and current quality.
+- Changes: Added body skeleton and body-wrist geometry, website-style wrist crops,
+  causal 40ms position smoothing, conservative 3D finger-joint fist/open-hand arming
+  without invented classifier scores, replay support, louder ordinary-spacing sound
+  and --volume. Moved controls above the entire camera image; made the window resizable;
+  requested 1280x720 with width/height overrides and Windows DirectShow/MJPEG capture.
+- Verification: 49 instrument tests and 32 subtests passed; Ruff lint/format and mypy
+  passed. Three regressions fail on isolated pre-fix HEAD and pass after correction;
+  pre-fix controls obscured camera rows, now preserved pixel for pixel. Model smoke,
+  both real crop recognizers, 450-frame demo, camera capture and playback passed.
+  Final camera: 41 frames at 1280x720, full preview 1280x830, two wrists in all frames,
+  reliable torso in 39; inference p95 45.86ms. Demo controller p95 0.0836ms. Ordinary
+  spacing measured 20.83dB louder with peak 0.27752 and tested output bounds.
+- Documentation: Recorded original-main comparison and follow-up feedback in the
+  vision/decisions; updated spec, plan, tasks, quickstart, tutorials, README and evidence.
+  Inspected representative body and ROOT LOCKED previews; Graphify refreshed locally.
+- Local state: Work remains uncommitted on anthony-explorations. No push, upload,
+  deployment or browser changes. Earlier upstream-check status entry is preserved.
+- Outstanding: Retest live gesture reliability, full window sizing and subjective
+  sound. Two unchanged Spec Kit tests fail on Windows template newline expectations;
+  details are in specs/001-anthony-instrument/evidence.md. This session cannot invoke
+  /compact; project governance requires the user to run it before the next feature.
+
+## 2026-10-11 - Improve hand diagnostic and root-note text readability
+
+- State: Complete locally.
+- Changes: Made labels under the hands and root notes around the circle larger and
+  bold black, with a light outline for contrast against camera footage and ball glow.
+  Added a concise note to docs/FEATURE_TUTORIALS.md.
+- Verification: All 7 visual tests passed; Ruff lint/format and mypy passed. Rendered
+  and inspected output/anthony-instrument/text-readability.png. Graphify refreshed locally.
+- Local state: Changes remain uncommitted on anthony-explorations; nothing was pushed.
+- Outstanding: Restart the Python instrument to load the updated display.
+
+## 2026-10-11 - Match web/main fist recognition and stabilization
+
+- State: Implemented locally; live performer acceptance pending.
+- Changes: Removed the added joint-shape fist/open-hand fallback. Ported web/main
+  far-mode canned-label confidence threshold (0.5), confirmation (0.35s), missing
+  detection grace (0.4s) and alternating wrist crops. Accepted fist dwell counts
+  toward controller timing once; persistent root lock, nearby split priority and
+  quality choices are preserved. Bold black diagnostics show confirmed/raw labels
+  separately. Replay metadata retains both; obsolete geometry flags are ignored.
+- Verification: 51 tests and 16 subtests passed, including direct execution of the
+  website's JavaScript filter across 150 observations, flicker/lock/split/replay and
+  fresh body-wrist requirements. Ruff and mypy passed. Model smoke, headless demo
+  and authorized 1280x720 camera check passed; camera inference p95 31.36ms and
+  controller 0.0603ms. Inspected the diagnostic preview. No deliberate fist was
+  captured in the camera check, so it does not establish recognition accuracy.
+- Documentation: Updated tutorials, quickstart, vision, model explanation and spec
+  decisions/tasks/evidence. Refreshed Graphify locally.
+- Local state: Changes remain uncommitted on anthony-explorations; nothing pushed.
+- Outstanding: Restart and retest open-to-fist gestures. Body model remains Lite;
+  parity applies to web far-mode hand detection/filtering, not the whole runtime.
+  Previously recorded unrelated Windows Spec Kit failures remain outside this task.
+
+## 2026-10-11 - Fix split after bringing confirmed fists together
+
+- State: Corrected locally; live performer retest pending.
+- Task: Anthony reported both confirmed hands showing Closed_Fist while ONE BALL
+  remained. Reproduced a controller defect when closure occurred apart, root-lock
+  arbitration completed, and the held fists then approached each other.
+- Changes: Preserve the current closure's split eligibility while its recognized
+  fist stays held. Bringing confirmed fists within the existing 0.6-torso distance
+  can now split after locking. Split preserves the lock; opening, loss, reset,
+  split and M clear the eligibility. M still requires reopening before another split.
+- Verification: The approach regression failed before the fix and passes afterward.
+  All instrument tests: 55 passed, 16 subtests passed, including alternating camera
+  label cadence, merge/reopen, startup and gesture loss. Ruff lint/format and mypy
+  passed. Sandbox temporary-file failures were resolved by an authorized test rerun.
+  Inspected output/anthony-instrument/split-after-approach/comparison.png: one ball
+  before approach, two separate wrist balls after reopening, ROOT LOCKED retained.
+  Synthetic 20ms cadence split on the first nearby frame; controller p95 0.041ms.
+- Documentation: Updated tutorials, quickstart, spec, decisions and evidence.
+- Local state: Prior uncommitted work preserved; no push or website changes.
+  Graph not refreshed for this minor controller fix, per constitution VIII.
+- Outstanding: Restart Python and retest live. Model accuracy and thresholds were
+  not changed or validated by the synthetic controller regression.
+
+## 2026-10-11 - Merge using the same two-fist gesture
+
+- State: Implemented and validated locally; live performer retest pending.
+- Decision: Anthony requested the same action for merging as for splitting,
+  superseding the deferred separate merge gesture.
+- Changes: Nearby confirmed fists toggle one ball into two or two into one.
+  Reopening rearms; held fists change mode once. Both directions preserve the
+  chord and root lock and suppress pending root toggles. M remains a merge shortcut.
+  Updated the on-screen hint, tutorials, explanation, vision and feature documents.
+- Verification: New merge assertions failed before the change and pass afterward.
+  Final instrument suite: 58 passed, 16 subtests passed, including three successive
+  toggle cycles, loss/reopen, raw flicker, alternating hand inference and JSONL replay.
+  Ruff lint/format, mypy and targeted whitespace checks passed. Inspected the
+  two -> one -> two preview at output/anthony-instrument/fist-split-merge/comparison.png.
+  Synthetic controller p95 0.048ms; each nearby closure changed mode in about 0.36s.
+- Local state: Prior work preserved; no pushes or website changes. No module/data-flow
+  changes, so no graph refresh for this small mapping change under constitution VIII.
+- Outstanding: Restart Python and retest live; this does not measure model accuracy.
+
+## 2026-10-11 - Ordered hand chord selection without love/heart
+
+- State: Selected mappings implemented and validated locally; the complete pair
+  catalogue remains a design task, and live performer/listening retest is pending.
+- Decisions: Anthony chose right thumb up + left thumb down for minor-major 7,
+  the reverse for dominant 7; right Victory + left palm for dim7, left Victory
+  + right palm for m7b5. He excluded the love/heart sign entirely.
+- Changes: Ordered body-hand pairs take priority over supported single-hand
+  shortcuts, preserve root lock and existing dwell, and add correct dim7/m7b5
+  intervals, symbols and local voicings. ILoveYou cannot select quality or rearm
+  fist controls. Crossing hands retains body identity. Both Victory signs hold quality.
+  Updated the on-screen quality hint before commit to reflect the new mappings.
+- Capacity: Five non-fist signs per hand yield 25 pair slots, potentially 300
+  chords at 12 roots once every slot has a distinct assigned quality. Current
+  implemented catalogue is eight qualities x 12 roots = 96 chords. Remaining
+  assignments require user decisions; existing shortcuts have not been replaced
+  with an invented 25-quality catalogue.
+- Verification: 62 tests and 20 subtests passed; Ruff lint/format and mypy passed.
+  After correcting the help text, all seven visual tests and its lint/format checks passed.
+  Reachability covers every start/destination among all 96 chords. Synthetic
+  2400-frame run: controller p95 0.0193ms, chord-change p95 0.206ms (<5ms budget).
+  See output/anthony-instrument/ordered-hand-chords/summary.json and feature evidence.
+- Local state: Prior work preserved; no pushes or JavaScript changes. This extends
+  existing mapping/catalogue tables within unchanged modules/data flow; no graph
+  refresh for a minor mapping change under constitution VIII.
+- Outstanding: Restart Python to try the new signs. Live gesture reliability,
+  listening acceptance and the remaining pair assignments are not yet validated.

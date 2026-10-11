@@ -1,11 +1,11 @@
-"""Device-independent contracts. Positions and radii use displayed image pixels."""
+"""Device-independent contracts. Positions/radii use camera pixels, excluding HUD rows."""
 
 from dataclasses import dataclass
 from math import isfinite
 
 Point = tuple[float, float]
 GESTURES = frozenset(
-    {"Closed_Fist", "Open_Palm", "Pointing_Up", "Victory", "Thumb_Up", "Thumb_Down", "ILoveYou"}
+    {"Closed_Fist", "Open_Palm", "Pointing_Up", "Victory", "Thumb_Up", "Thumb_Down"}
 )
 
 
@@ -22,6 +22,9 @@ class Hand:
     confidence: float = 0.0
     openness: float = 0.0
     landmarks: tuple[Point, ...] = ()
+    raw_gesture: str | None = None
+    raw_confidence: float = 0.0
+    gesture_since: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.gesture, str):
@@ -36,15 +39,30 @@ class Hand:
             len(self.landmarks) != 21 or not all(valid_point(p) for p in self.landmarks)
         ):
             raise ValueError("Hand landmarks must be empty or 21 finite image points")
+        if self.raw_gesture is not None and not isinstance(self.raw_gesture, str):
+            raise ValueError("Raw hand gesture must be a string or None")
+        if not isfinite(self.raw_confidence) or not 0 <= self.raw_confidence <= 1:
+            raise ValueError("Raw hand confidence must be finite in [0, 1]")
+        if self.gesture_since is not None and (
+            not isfinite(self.gesture_since) or self.gesture_since < 0
+        ):
+            raise ValueError("Gesture candidate time must be finite nonnegative seconds")
 
 
 @dataclass(frozen=True)
 class Frame:
+    """Fresh elapsed-time observation; body points are 33 image pixels / missing None.
+
+    Empty pose_landmarks is valid for synthetic input and pre-body-overlay replays.
+    Hands may contain body wrists without finger landmarks or gesture confidence.
+    """
+
     time_s: float
     hands: tuple[Hand, ...] = ()
     torso_center: Point | None = None
     torso_px: float | None = None
     energy: float = 0.0
+    pose_landmarks: tuple[Point | None, ...] = ()
 
     def __post_init__(self) -> None:
         if not isfinite(self.time_s) or self.time_s < 0:
@@ -57,6 +75,11 @@ class Frame:
             raise ValueError("Torso length must be finite positive pixels or None")
         if not isfinite(self.energy) or not 0 <= self.energy <= 1:
             raise ValueError("Energy must be finite in [0, 1]")
+        if self.pose_landmarks and (
+            len(self.pose_landmarks) != 33
+            or any(p is not None and not valid_point(p) for p in self.pose_landmarks)
+        ):
+            raise ValueError("Pose landmarks must be empty or 33 finite image points / None")
 
 
 @dataclass(frozen=True)
@@ -66,11 +89,13 @@ class Config:
     arbitration_s: float = 0.25
     root_dwell_s: float = 0.35
     quality_dwell_s: float = 0.35
+    major_dwell_s: float = 1.5
     max_gap_s: float = 0.20
     confidence_min: float = 0.5
     split_torsos: float = 0.6
     dead_zone_torsos: float = 0.25
     gain_exponent: float = 1.5
+    gain_radius_torsos: float = 0.75
 
     def __post_init__(self) -> None:
         for name in (
@@ -79,10 +104,12 @@ class Config:
             "arbitration_s",
             "root_dwell_s",
             "quality_dwell_s",
+            "major_dwell_s",
             "max_gap_s",
             "split_torsos",
             "dead_zone_torsos",
             "gain_exponent",
+            "gain_radius_torsos",
         ):
             value = getattr(self, name)
             if not isfinite(value) or value <= 0:

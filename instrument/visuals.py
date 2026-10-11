@@ -1,7 +1,8 @@
 """Native adaptation of Joseph Bakarji's wrist-based glow and sparks.
 
 Geometry is supplied by the controller; replacing this renderer does not change
-gesture or harmony semantics. BGR uint8 images have shape (height,width,3).
+gesture or harmony semantics. BGR uint8 inputs have shape (height,width,3);
+outputs add HUD_HEIGHT rows above the entire camera frame without changing its scale.
 """
 
 import colorsys
@@ -39,10 +40,38 @@ HAND_EDGES = (
     (18, 19),
     (19, 20),
 )
+BODY_EDGES = (
+    (11, 12),
+    (11, 13),
+    (13, 15),
+    (12, 14),
+    (14, 16),
+    (11, 23),
+    (12, 24),
+    (23, 24),
+    (23, 25),
+    (25, 27),
+    (24, 26),
+    (26, 28),
+    (27, 29),
+    (29, 31),
+    (28, 30),
+    (30, 32),
+)
+HUD_HEIGHT = 110
 
 
 def pixel(point: Point) -> tuple[int, int]:
     return round(point[0]), round(point[1])
+
+
+def _label(image: NDArray[np.uint8], text: str, anchor: Point, scale: float) -> None:
+    """Bold black labels with a light outline for contrast against camera/glow."""
+    position = pixel(anchor)
+    cv2.putText(
+        image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 4, cv2.LINE_AA
+    )
+    cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 2, cv2.LINE_AA)
 
 
 def root_color(root: int) -> tuple[int, int, int]:
@@ -78,6 +107,14 @@ class Renderer:
         if image.ndim != 3 or image.shape[2] != 3 or image.dtype != np.uint8:
             raise ValueError("Renderer expects a uint8 HxWx3 BGR image")
         out = image.copy()
+        if frame.pose_landmarks:
+            for first, second in BODY_EDGES:
+                a, b = frame.pose_landmarks[first], frame.pose_landmarks[second]
+                if a is not None and b is not None:
+                    cv2.line(out, pixel(a), pixel(b), (190, 190, 100), 2, cv2.LINE_AA)
+            for point in frame.pose_landmarks:
+                if point is not None:
+                    cv2.circle(out, pixel(point), 3, (220, 220, 130), -1, cv2.LINE_AA)
         dt = (
             0 if self.previous_time is None else min(0.1, max(0, frame.time_s - self.previous_time))
         )
@@ -129,8 +166,10 @@ class Renderer:
         out = cv2.add(out, particle_layer).astype(np.uint8)
         self.particles = [p for p in self.particles if p.age < p.life][-300:]
         self._guides(out, frame, state, color)
-        self._hud(out, frame, state, latency_ms)
-        return out
+        # Controls occupy their own rows; never conceal the camera's head/upper body.
+        panel = np.zeros((HUD_HEIGHT, image.shape[1], 3), dtype=np.uint8)
+        self._hud(panel, frame, state, latency_ms)
+        return np.concatenate((panel, out), axis=0)
 
     def _glow(
         self, image: NDArray[np.uint8], center: Point, radius: float, color: tuple[int, int, int]
@@ -182,16 +221,7 @@ class Renderer:
                     center[0] + radius * math.cos(angle),
                     center[1] + radius * math.sin(angle),
                 )
-                cv2.putText(
-                    image,
-                    name,
-                    pixel(anchor),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
-                    root_color(root) if root == state.root else (150, 150, 150),
-                    1,
-                    cv2.LINE_AA,
-                )
+                _label(image, name, anchor, 0.6)
             cv2.circle(
                 image,
                 pixel(center),
@@ -210,31 +240,39 @@ class Renderer:
                     cv2.LINE_AA,
                 )
             cv2.circle(image, pixel(hand.wrist), 5, color, -1)
-            label = f"{hand.side}: {hand.gesture} {hand.confidence:.2f}"
-            cv2.putText(
-                image,
-                label,
-                pixel((hand.wrist[0] + 8, hand.wrist[1] + 20)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (230, 230, 230),
-                1,
-                cv2.LINE_AA,
+            label = (
+                f"{hand.side}: {hand.gesture} {hand.confidence:.2f}"
+                if hand.landmarks
+                else f"{hand.side}: body wrist"
             )
+            _label(image, label, (hand.wrist[0] + 8, hand.wrist[1] + 20), 0.5)
+            if hand.landmarks and hand.raw_gesture is not None:
+                _label(
+                    image,
+                    f"raw: {hand.raw_gesture} {hand.raw_confidence:.2f}",
+                    (hand.wrist[0] + 8, hand.wrist[1] + 40),
+                    0.5,
+                )
 
-    @staticmethod
-    def _hud(image: NDArray[np.uint8], frame: Frame, state: Output, latency_ms: float) -> None:
+    def _hud(
+        self, image: NDArray[np.uint8], frame: Frame, state: Output, latency_ms: float
+    ) -> None:
         cv2.rectangle(image, (0, 0), (image.shape[1], 110), (18, 18, 24), -1)
-        text = (
-            f"{state.symbol}   {'ROOT LOCKED' if state.locked else 'ROOT FREE'}"
-            f"   {'TWO BALLS' if state.split else 'ONE BALL'}"
+        lock_status = (
+            "ROOT LOCKED"
+            if state.locked
+            else "ROOT LOCKING..."
+            if state.pending_lock
+            else "ROOT FREE"
         )
+        text = f"{state.symbol}   {lock_status}   {'TWO BALLS' if state.split else 'ONE BALL'}"
         cv2.putText(
             image, text, (16, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (150, 230, 180), 2, cv2.LINE_AA
         )
-        status = "TRACKING READY" if state.gain > 0 else "TRACKING INCOMPLETE / SILENT"
+        status = "BODY / WRISTS READY" if state.balls else "BODY / WRISTS INCOMPLETE"
+        status += f"   gain {state.gain:.0%}"
         if state.pending_lock:
-            status += "   deciding fist / split"
+            status += "   deciding fist / ball mode"
         cv2.putText(
             image,
             f"{status}   {latency_ms:.1f} ms processing",
@@ -246,8 +284,12 @@ class Renderer:
             cv2.LINE_AA,
         )
         for y, line in (
-            (78, "M merge | R reset | S fire/light | Q quit"),
-            (99, "Palm major | Point minor | Victory 7 | Thumb up maj7 | down m7 | Love m(maj7)"),
+            (78, "Nearby fists split/merge | M merge | R reset | S fire/light | Q quit"),
+            (
+                99,
+                f"Palms {self.config.major_dwell_s:g}s major | Point minor | R V dim7 | L V m7b5 | "
+                "R up/L down m(maj7), reversed 7 | Up maj7 | Down m7",
+            ),
         ):
             cv2.putText(
                 image,

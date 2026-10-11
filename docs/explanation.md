@@ -1,6 +1,6 @@
 # How dance2music works
 
-Last reviewed: 2026-10-05. This describes the code currently in this repository and separates
+Last reviewed: 2026-10-11. This describes the code currently in this repository and separates
 existing behavior from Anthony's planned features.
 
 MediaPipe supplies estimates of where the body and hands are, plus a small set of hand-gesture
@@ -55,14 +55,24 @@ browser's gesture, harmony, or ball logic into Python.
 
 The separate [instrument/](../instrument) prototype implements Anthony's ideas 0–2 locally.
 Run `.venv/Scripts/python.exe -m instrument --demo` for a scripted example or
-`--camera 0` for camera input. MediaPipe Tasks provide mirrored hand positions,
-gesture labels and torso geometry; the Python application supplies all musical behavior.
+`--camera 0` for camera input. MediaPipe Tasks provide the full body pose and gesture
+labels from wrist-centered crops. Body wrists drive the ball even with sideways palms
+or missing finger recognition; the display draws available body joints and legs.
+The Python application supplies all musical behavior. Quality persists until another
+deliberate selection; both open palms held for 1.5s return to major. Fist confirmation
+shows ROOT LOCKED, which persists after reopening. Nearby fists toggle split/merge
+with priority over root locking; reopening rearms the next gesture.
+Hand detection follows web/main far mode: alternating 256px wrist crops, canned
+labels at confidence >=0.5, 0.35s label confirmation and 0.4s detection-loss tolerance.
+Joint geometry does not override labels. Confirmed and raw labels are shown separately;
+accepted fist dwell also counts toward controller closure timing.
+The resizable preview fits the complete frame with controls in a separate panel above it.
 
 | Module | Responsibility |
 | --- | --- |
 | [models.py](../instrument/models.py) | Validated timestamped observations, configuration and immutable outputs |
 | [controller.py](../instrument/controller.py) | Closure/rearm, split priority, persistent root lock and renderer-independent ball geometry |
-| [harmony.py](../instrument/harmony.py) | Twelve root sectors, six absolute quality selections and bounded voice leading |
+| [harmony.py](../instrument/harmony.py) | Twelve root sectors, eight absolute quality selections and bounded voice leading |
 | [visuals.py](../instrument/visuals.py) | Joseph-inspired fire/light glow, sparks, root guides and visible lock/split feedback |
 | [audio.py](../instrument/audio.py) | Device-free synthesis with pitch/gain smoothing and optional sounddevice playback |
 | [tracking.py](../instrument/tracking.py) | Explicit local model loading and rejection of unreliable or invalid observations |
@@ -271,8 +281,8 @@ The following separates implemented Python behavior from future directions recor
 | Area | Current Python behavior or remaining work |
 | --- | --- |
 | Persistent fist root lock | Implemented: deliberate closure toggles root-only lock; reopening rearms; quality remains editable |
-| Musician-oriented harmony | Implemented: all 12 roots and six qualities, 72 reachable chords; broader catalogues remain future work |
-| Two-ball split | Implemented: nearby stable fists suppress lock, split persists, M merges; a merge gesture remains future work |
+| Musician-oriented harmony | Implemented: all 12 roots and eight qualities, 96 reachable chords; ordered thumb/Victory pairs distinguish hands, love/heart disabled in Python; broader catalogues remain future work |
+| Two-ball mode | Implemented: nearby stable fists toggle split/merge and suppress lock; reopen between gestures, M also merges |
 | Three-move spells | Ordered-sequence recognition, progress, timing, cancellation, and musical actions |
 | Beginner game | Challenges, interaction rules, fair feedback, and lessons tied to the instrument's vocabulary |
 | Expressive Chords output | A live Python MIDI adapter sending one configured trigger note per chord, with verified note lifecycle and cleanup |

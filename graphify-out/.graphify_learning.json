@@ -1,5 +1,102 @@
 {
-  "generated_at": "2026-10-05T04:23:58.577754+00:00",
-  "nodes": {},
+  "generated_at": "2026-10-11T17:55:54.832934+00:00",
+  "nodes": {
+    "instrument_audio_synth": {
+      "code_fingerprint": "a782021edc802e5aa18a3d92ebbe79dc59f3e236f1e7af34180161942d37d180",
+      "label": "Synth",
+      "last": "2026-10-05T04:48:08.181036+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-05T04:48:08.181036+00:00",
+          "outcome": "useful",
+          "q": "continue working where you last stopped yesterday"
+        }
+      ],
+      "score": 0.8596161,
+      "source_file": "instrument/audio.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "instrument_controller_controller": {
+      "code_fingerprint": "6d57afd909dde8b77bd44b7c7449195fd39933db208bcff7c258f497e0569a26",
+      "label": "Controller",
+      "last": "2026-10-05T04:48:08.181036+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-05T04:48:08.181036+00:00",
+          "outcome": "useful",
+          "q": "continue working where you last stopped yesterday"
+        }
+      ],
+      "score": 0.8596161,
+      "source_file": "instrument/controller.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "instrument_controller_fistgate": {
+      "code_fingerprint": "6d57afd909dde8b77bd44b7c7449195fd39933db208bcff7c258f497e0569a26",
+      "label": "FistGate",
+      "last": "2026-10-11T17:29:28.741486+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-11T17:29:28.741486+00:00",
+          "outcome": "useful",
+          "q": "the fist detection is very bad what should a fist look like and is the code doing the calculation or the model knows what a fist looks like"
+        }
+      ],
+      "score": 0.999575941,
+      "source_file": "instrument/controller.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "instrument_tracking_gesturestate": {
+      "code_fingerprint": "d685e71a75185f1331aa41d87b9d355fee04f5124b63337d30295b35a7a73ab5",
+      "label": "GestureState",
+      "last": "2026-10-11T17:29:28.741486+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-11T17:29:28.741486+00:00",
+          "outcome": "useful",
+          "q": "the fist detection is very bad what should a fist look like and is the code doing the calculation or the model knows what a fist looks like"
+        }
+      ],
+      "score": 0.999575941,
+      "source_file": "instrument/tracking.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "instrument_tracking_tracker": {
+      "code_fingerprint": "d685e71a75185f1331aa41d87b9d355fee04f5124b63337d30295b35a7a73ab5",
+      "label": "Tracker",
+      "last": "2026-10-05T04:48:08.181036+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-05T04:48:08.181036+00:00",
+          "outcome": "useful",
+          "q": "continue working where you last stopped yesterday"
+        }
+      ],
+      "score": 0.8596161,
+      "source_file": "instrument/tracking.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "instrument_visuals_renderer": {
+      "code_fingerprint": "cf5b56bea2d1fb16b95c77f46f635408d89da875a50e3bf0512ec19ecb523345",
+      "label": "Renderer",
+      "last": "2026-10-05T04:48:08.181036+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-05T04:48:08.181036+00:00",
+          "outcome": "useful",
+          "q": "continue working where you last stopped yesterday"
+        }
+      ],
+      "score": 0.8596161,
+      "source_file": "instrument/visuals.py",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
   "version": 1
 }
