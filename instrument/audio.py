@@ -7,9 +7,11 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from instrument.harmony import MAX_VOICES
+
 
 class Synth:
-    """Four persistent oscillator slots, causal 60ms pitch and 30ms gain smoothing."""
+    """Catalogue-sized persistent slots, 60ms pitch and 30ms gain smoothing."""
 
     def __init__(self, sample_rate: int = 48000, volume: float = 1.0) -> None:
         if not isinstance(sample_rate, int) or sample_rate < 8000:
@@ -18,9 +20,9 @@ class Synth:
             raise ValueError("Volume must be finite in [0,1]")
         self.sample_rate = sample_rate
         self.volume = volume
-        self.phases = np.zeros(4)
-        self.frequencies = np.full(4, 261.625565)
-        self.amplitudes = np.zeros(4)
+        self.phases = np.zeros(MAX_VOICES)
+        self.frequencies = np.full(MAX_VOICES, 261.625565)
+        self.amplitudes = np.zeros(MAX_VOICES)
 
     def render(self, samples: int, notes: tuple[int, ...], gain: float) -> NDArray[np.float32]:
         """Return mono float32 samples in [-0.7,0.7]; no device needed.
@@ -30,14 +32,16 @@ class Synth:
         """
         if not isinstance(samples, int) or samples < 0:
             raise ValueError("Sample count must be a nonnegative integer")
-        if len(notes) > 4 or any(not isinstance(n, int) or not 0 <= n <= 127 for n in notes):
-            raise ValueError("Use up to four valid integer MIDI notes")
+        if len(notes) > MAX_VOICES or any(
+            not isinstance(n, int) or not 0 <= n <= 127 for n in notes
+        ):
+            raise ValueError(f"Use up to {MAX_VOICES} valid integer MIDI notes")
         if not math.isfinite(gain) or not 0 <= gain <= 1:
             raise ValueError("Gain must be finite in [0,1]")
         if samples == 0:
             return np.empty(0, dtype=np.float32)
         target_frequency = self.frequencies.copy()
-        target_amplitude = np.zeros(4)
+        target_amplitude = np.zeros(MAX_VOICES)
         for index, note in enumerate(notes):
             target_frequency[index] = 440 * 2 ** ((note - 69) / 12)
             target_amplitude[index] = 0.7 * self.volume * gain / len(notes)

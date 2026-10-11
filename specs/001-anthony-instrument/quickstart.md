@@ -42,15 +42,19 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   is accepted, exactly as web/main. The confirmed label appears above the raw
   classifier result. Brief raw alternation retains the confirmed label; joint
   shape never turns None into a fist. This replaces the earlier joint fallback.
-- Change quality: Pointing Up = minor, Thumb Up = maj7, Thumb Down = m7.
-  Right thumb up + left thumb down = m(maj7); the reversed pair = dominant 7.
-  Right Victory + left open palm = dim7; left Victory + right open palm = m7b5.
-  Love/heart is disabled. Hold 0.35 seconds
+- Change quality with both hands using the approved 25-cell table in
+  [chord-map.md](chord-map.md) or [Feature Tutorials](../../docs/FEATURE_TUTORIALS.md).
+  Point = index finger up, other three fingers curled, thumb tucked. With left palm,
+  right Point = minor, right thumb up = maj7, right thumb down = m7, right V = dim7.
+  Left V + right palm = m7b5. Right up + left down = m(maj7); reversed thumbs = 7.
+  Left Point + right palm now = m6, left thumb up + right palm = 6, left thumb down
+  + right palm = 6/9; both V signs = aug. These replace the old redundant shortcuts.
+  All 25 pairs have different qualities (300 chords across 12 roots); extensions
+  play fuller five/six-note voicings. Love/heart is disabled. Hold 0.35 seconds
   after gesture recognition (about 0.70 seconds total).
-  Either hand works; a resting palm on the other hand cannot override it. The
-  mapped ordered pair wins first; otherwise the body-labeled right hand wins
-  conflicting supported single-hand quality shortcuts. Crossing hands preserves
-  their body identities. The quality
+  Both recognized non-fist signs are required. Unknown/low-confidence/missing
+  signs or fists cannot select a quality; they hold the previous quality.
+  Crossing hands preserves their body identities. The quality
   persists through relaxed hands, unknown gestures and tracking loss. To return
   to major, hold BOTH recognized Open Palms continuously for 1.5 seconds.
   Root remains fixed while locked; quality stays editable.

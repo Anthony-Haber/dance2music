@@ -287,8 +287,8 @@ class Renderer:
             (78, "Nearby fists split/merge | M merge | R reset | S fire/light | Q quit"),
             (
                 99,
-                f"Palms {self.config.major_dwell_s:g}s major | Point minor | R V dim7 | L V m7b5 | "
-                "R up/L down m(maj7), reversed 7 | Up maj7 | Down m7",
+                f"25 hand pairs | Point = index up | Palms {self.config.major_dwell_s:g}s major | "
+                "Use both hands; unknown holds quality",
             ),
         ):
             cv2.putText(

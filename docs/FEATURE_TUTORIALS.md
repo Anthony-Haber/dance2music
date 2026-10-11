@@ -119,32 +119,32 @@ Nearby two fists toggle split/merge instead of root lock.
 Move your hands' midpoint toward a labeled root and hold **0.35 seconds**.
 C is on the right; the 12 roots run clockwise. The central circle holds your root.
 
-Hold a quality gesture for **0.35 seconds**:
+Use both hands to select a cell; hold the pair for **0.35 seconds** after recognition.
+Rows are your **right** hand, columns your **left** hand. Examples use root C:
 
-| Gesture | Quality |
-| --- | --- |
-| Both palms open continuously for **1.5 seconds** | Major |
-| Index pointing up | Minor |
-| Right Victory / V sign + left open palm | Diminished seventh (dim7) |
-| Left Victory / V sign + right open palm | Half-diminished seventh (m7b5) |
-| Thumb up | Major seventh (maj7) |
-| Thumb down | Minor seventh (m7) |
-| Right thumb up + left thumb down | Minor-major seventh (m(maj7)) |
-| Right thumb down + left thumb up | Dominant seventh (7) |
+| Right / Left | Open palm | Point | V | Thumb up | Thumb down |
+| --- | --- | --- | --- | --- | --- |
+| Open palm | C | Cm6 | Cm7b5 | C6 | C6/9 |
+| Point | Cm | Cm11 | Cm9 | Cm13 | Cm6/9 |
+| V | Cdim7 | C7b9 | Caug | C7#9 | C7sus4 |
+| Thumb up | Cmaj7 | Cmaj9 | Cmaj7#11 | Cmaj13 | Cm(maj7) |
+| Thumb down | Cm7 | C9 | Csus4 | C7 | C13 |
 
-Quality works while the root is locked and stays selected until a new deliberate
-gesture. A resting palm does not override the other hand. If two non-palm quality
-gestures disagree, an explicitly mapped pair takes priority; otherwise the body
-hand labeled **R** wins among supported single-hand shortcuts. Hand identity follows
-the body, including when hands cross; it does not mean the right side of the screen.
-Victory needs the opposite open palm. The love/heart sign is ignored entirely.
-Brief reopening holds the
-quality; both recognized palms held for 1.5 seconds explicitly return to major.
+**Point:** index pointing up, middle/ring/little fingers curled, thumb tucked.
+**V:** Victory sign. Hand identity follows your body, including when hands cross;
+the labels **L/R** do not mean the left/right side of the screen. Camera recognition
+also needs about 0.35 seconds of a stable sign before the pair dwell begins.
 
-The current catalogue has eight qualities across 12 roots (96 chords). Five usable
-chord signs per hand give 25 ordered pair slots, potentially 300 chords if every
-slot is assigned a different quality. Those 25 distinct qualities are not implemented:
-the remaining pair assignments need design decisions. Fists remain ball/lock controls.
+Both recognized non-fist signs are required. Missing, uncertain, low-confidence or
+heart/love signs hold the quality; fists retain ball/lock controls. Brief reopening
+holds the quality; **both open palms held 1.5 seconds** select major. Quality remains
+editable while the root is locked. The root ring still works independently when unlocked.
+
+The catalogue contains **25 qualities × 12 roots = 300 selectable chords**. Extended
+chords use five or six notes; thirteenths include ninths and omit the natural eleventh.
+Compared with the earlier shortcuts, left Point with right palm now selects m6,
+left thumb up selects 6, left thumb down selects 6/9, and both V signs select augmented.
+See the [approved map and tone sets](../specs/001-anthony-instrument/chord-map.md).
 
 ## Save, replay or use video
 

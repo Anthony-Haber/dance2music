@@ -2,7 +2,6 @@
 
 import math
 from dataclasses import dataclass
-from itertools import permutations
 
 from instrument.models import Frame
 
@@ -16,6 +15,24 @@ INTERVALS = {
     "minor_major7": (0, 3, 7, 11),
     "half_diminished7": (0, 3, 6, 10),
     "diminished7": (0, 3, 6, 9),
+    "major6": (0, 4, 7, 9),
+    "minor6": (0, 3, 7, 9),
+    "major69": (0, 4, 7, 9, 14),
+    "minor69": (0, 3, 7, 9, 14),
+    "major9": (0, 4, 7, 11, 14),
+    "minor9": (0, 3, 7, 10, 14),
+    "dominant9": (0, 4, 7, 10, 14),
+    # Fuller 13ths include 9 and 13, omitting the natural 11th.
+    "major13": (0, 4, 7, 11, 14, 21),
+    "minor13": (0, 3, 7, 10, 14, 21),
+    "dominant13": (0, 4, 7, 10, 14, 21),
+    "minor11": (0, 3, 7, 10, 14, 17),
+    "sus4": (0, 5, 7),
+    "dominant7sus4": (0, 5, 7, 10),
+    "augmented": (0, 4, 8),
+    "dominant7b9": (0, 4, 7, 10, 13),
+    "dominant7sharp9": (0, 4, 7, 10, 15),
+    "major7sharp11": (0, 4, 7, 11, 18),
 }
 SUFFIXES = {
     "major": "",
@@ -26,31 +43,44 @@ SUFFIXES = {
     "minor_major7": "m(maj7)",
     "half_diminished7": "m7b5",
     "diminished7": "dim7",
+    "major6": "6",
+    "minor6": "m6",
+    "major69": "6/9",
+    "minor69": "m6/9",
+    "major9": "maj9",
+    "minor9": "m9",
+    "dominant9": "9",
+    "major13": "maj13",
+    "minor13": "m13",
+    "dominant13": "13",
+    "minor11": "m11",
+    "sus4": "sus4",
+    "dominant7sus4": "7sus4",
+    "augmented": "aug",
+    "dominant7b9": "7b9",
+    "dominant7sharp9": "7#9",
+    "major7sharp11": "maj7#11",
 }
-QUALITY_GESTURES = {
-    "Open_Palm": "major",
-    "Pointing_Up": "minor",
-    "Thumb_Up": "major7",
-    "Thumb_Down": "minor7",
-}
-# Ordered keys are (left body hand, right body hand), independent of screen position.
+MAX_VOICES = max(len(intervals) for intervals in INTERVALS.values())
+CHORD_SIGNS = ("Open_Palm", "Pointing_Up", "Victory", "Thumb_Up", "Thumb_Down")
+# Rows are RIGHT body hand, columns LEFT; pair keys remain (left, right).
+QUALITY_ROWS = (
+    ("major", "minor6", "half_diminished7", "major6", "major69"),
+    ("minor", "minor11", "minor9", "minor13", "minor69"),
+    ("diminished7", "dominant7b9", "augmented", "dominant7sharp9", "dominant7sus4"),
+    ("major7", "major9", "major7sharp11", "major13", "minor_major7"),
+    ("minor7", "dominant9", "sus4", "dominant7", "dominant13"),
+)
 QUALITY_PAIRS = {
-    ("Thumb_Down", "Thumb_Up"): "minor_major7",
-    ("Thumb_Up", "Thumb_Down"): "dominant7",
-    ("Open_Palm", "Victory"): "diminished7",
-    ("Victory", "Open_Palm"): "half_diminished7",
+    (left, right): quality
+    for right, row in zip(CHORD_SIGNS, QUALITY_ROWS, strict=True)
+    for left, quality in zip(CHORD_SIGNS, row, strict=True)
 }
 
 
 def gesture_quality(left: str | None, right: str | None) -> str | None:
-    """Explicit ordered pairs override existing single-hand quality shortcuts."""
-    paired = QUALITY_PAIRS.get((left, right)) if left is not None and right is not None else None
-    if paired is not None:
-        return paired
-    return next(
-        (QUALITY_GESTURES[g] for g in (right, left) if g in QUALITY_GESTURES and g != "Open_Palm"),
-        None,
-    )
+    """Only complete ordered pairs select a quality; uncertain/fist signs hold it."""
+    return QUALITY_PAIRS.get((left, right)) if left is not None and right is not None else None
 
 
 @dataclass(frozen=True)
@@ -85,23 +115,69 @@ def root_region(frame: Frame, dead_zone_torsos: float) -> int | None:
     return int(math.floor(angle / (math.pi / 6) + 0.5)) % 12
 
 
+def _assignment_costs(moves: tuple[tuple[int, ...], ...], maximum: int) -> list[int]:
+    """Minimum remaining total movement for each assigned-pitch bit mask.
+
+    A mask's bit count identifies the next oscillator. Child masks are larger,
+    so descending masks compute every suffix before its parent in O(n * 2**n).
+    The movement limit lets reconstruction preserve maximum-movement tie breaks.
+    """
+    count = len(moves)
+    full = (1 << count) - 1
+    costs = [10000] * (full + 1)
+    costs[full] = 0
+    for mask in range(full - 1, -1, -1):
+        row = moves[mask.bit_count()]
+        remaining = full ^ mask
+        while remaining:
+            bit = remaining & -remaining
+            column = bit.bit_length() - 1
+            if row[column] <= maximum:
+                costs[mask] = min(costs[mask], row[column] + costs[mask | bit])
+            remaining ^= bit
+    return costs
+
+
 def voice_lead(previous: tuple[int, ...], chord: Chord) -> tuple[int, ...]:
     """Distinct chord pitches in MIDI [48,83], minimal movement with fixed voice count.
 
     A changed voice count uses root position to avoid silently adding or dropping
-    chord tones. Same-count transitions search all pitch-class assignments.
+    chord tones. Same-count transitions minimize total movement, then largest
+    individual movement, then the oscillator note tuple, without factorial search.
     """
     if len(previous) != len(chord.pitch_classes):
         return tuple(48 + chord.root + interval for interval in INTERVALS[chord.quality])
-    best: tuple[tuple[int, int, tuple[int, ...]], tuple[int, ...]] | None = None
-    for order in permutations(chord.pitch_classes):
-        notes = tuple(
-            min((n for n in range(48, 84) if n % 12 == pc), key=lambda n: (abs(n - old), n))
-            for pc, old in zip(order, previous, strict=True)
+    candidates = tuple(
+        tuple(
+            min(range(48 + (pc - 48) % 12, 84, 12), key=lambda n: (abs(n - old), n))
+            for pc in chord.pitch_classes
         )
-        moves = tuple(abs(a - b) for a, b in zip(notes, previous, strict=True))
-        cost = (sum(moves), max(moves), notes)
-        if best is None or cost < best[0]:
-            best = cost, notes
-    assert best is not None
-    return best[1]
+        for old in previous
+    )
+    moves = tuple(
+        tuple(abs(note - old) for note in row)
+        for old, row in zip(previous, candidates, strict=True)
+    )
+    lower, upper = 0, max(max(row) for row in moves)
+    optimum = _assignment_costs(moves, upper)[0]
+    while lower < upper:
+        middle = (lower + upper) // 2
+        if _assignment_costs(moves, middle)[0] == optimum:
+            upper = middle
+        else:
+            lower = middle + 1
+    costs = _assignment_costs(moves, lower)
+    mask = 0
+    notes = []
+    for row, choices in enumerate(candidates):
+        eligible = (
+            column
+            for column in range(len(previous))
+            if not mask & (1 << column)
+            and moves[row][column] <= lower
+            and moves[row][column] + costs[mask | (1 << column)] == costs[mask]
+        )
+        column = min(eligible, key=lambda column: choices[column])
+        notes.append(choices[column])
+        mask |= 1 << column
+    return tuple(notes)

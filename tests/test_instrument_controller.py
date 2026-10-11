@@ -4,6 +4,7 @@ import math
 import unittest
 
 from instrument.controller import Controller
+from instrument.harmony import QUALITY_PAIRS, Chord
 from instrument.models import Config, Frame, Hand
 
 
@@ -53,11 +54,10 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(unlocked.root, 7)
         self.assertEqual(self.hold(0.5, root=2, right="Pointing_Up").root, 2)
 
-    def test_quality_on_either_hand_persists_until_deliberate_change(self) -> None:
-        # A resting right palm must not mask a left-hand quality gesture.
-        self.assertEqual(self.hold(0.5, left="Pointing_Up").quality, "minor")
-        self.assertEqual(self.hold(1.4).quality, "minor")
-        self.assertEqual(self.hold(0.5, right="None").quality, "minor")
+    def test_ordered_palm_pairs_persist_until_deliberate_change(self) -> None:
+        self.assertEqual(self.hold(0.5, left="Pointing_Up").quality, "minor6")
+        self.assertEqual(self.hold(1.4).quality, "minor6")
+        self.assertEqual(self.hold(0.5, right="None").quality, "minor6")
         self.assertEqual(self.hold(0.5, right="Victory").quality, "diminished7")
         self.assertEqual(self.hold(0.5, left="None", right="Open_Palm").quality, "diminished7")
         self.assertEqual(self.hold(1.4).quality, "diminished7")
@@ -120,7 +120,7 @@ class ControllerTests(unittest.TestCase):
                     100,
                 )
             )
-        self.assertEqual(output.quality, "major7")
+        self.assertEqual(output.quality, "minor")
 
     def test_victory_handedness_selects_diminished_and_half_diminished(self) -> None:
         for left, right, quality, symbol, pitch_classes in (
@@ -131,9 +131,7 @@ class ControllerTests(unittest.TestCase):
                 result = self.hold(0.5, left=left, right=right)
                 self.assertEqual((result.quality, result.symbol), (quality, symbol))
                 self.assertEqual({note % 12 for note in result.notes}, pitch_classes)
-        self.assertEqual(
-            self.hold(0.5, left="Victory", right="Victory").quality, "half_diminished7"
-        )
+        self.assertEqual(self.hold(0.5, left="Victory", right="Victory").quality, "augmented")
 
     def test_love_gesture_cannot_select_quality_or_rearm_fists(self) -> None:
         self.hold(0.5, right="Pointing_Up")
@@ -261,14 +259,37 @@ class ControllerTests(unittest.TestCase):
         self.assertFalse(lost.pending_lock)
         self.assertFalse(self.hold(0.8, left="Closed_Fist").locked)
 
-    def test_right_quality_wins_conflict_and_missing_pose_is_silent(self) -> None:
+    def test_pair_selects_extended_chord_and_missing_pose_is_silent(self) -> None:
         output = self.hold(0.5, left="Pointing_Up", right="Thumb_Up")
-        self.assertEqual(output.quality, "major7")
+        self.assertEqual(output.quality, "major9")
+        self.assertEqual(len(output.notes), 5)
         self.t += 0.01
         frame = sample(self.t)
         output = self.controller.update(Frame(self.t, frame.hands))
         self.assertEqual(output.gain, 0)
         self.assertEqual(output.balls, ())
+
+    def test_incomplete_pair_cancels_quality_dwell_and_holds_chord(self) -> None:
+        self.hold(0.5, right="Thumb_Up")
+        self.assertEqual(self.hold(0.2, left="Pointing_Up", right="Thumb_Up").quality, "major7")
+        self.assertEqual(self.hold(0.5, left="None", right="Thumb_Up").quality, "major7")
+        self.assertEqual(self.hold(0.34, left="Pointing_Up", right="Thumb_Up").quality, "major7")
+        self.assertEqual(self.hold(0.03, left="Pointing_Up", right="Thumb_Up").quality, "major9")
+        for sign in ("None", "ILoveYou", "Closed_Fist"):
+            result = self.hold(0.5, left=sign, right="Pointing_Up")
+            self.assertEqual(result.quality, "major9")
+
+    def test_every_pair_changes_quality_without_moving_locked_root(self) -> None:
+        self.hold(0.5)
+        self.hold(0.8, left="Closed_Fist")
+        for (left, right), quality in QUALITY_PAIRS.items():
+            result = self.hold(1.6 if quality == "major" else 0.5, left=left, right=right, root=2)
+            with self.subTest(left=left, right=right):
+                self.assertTrue(result.locked)
+                self.assertEqual((result.root, result.quality), (7, quality))
+                self.assertEqual(
+                    {n % 12 for n in result.notes}, set(Chord(7, quality).pitch_classes)
+                )
 
     def test_split_does_not_retrigger_after_merge_while_fists_held(self) -> None:
         self.hold(0.5, near=True)

@@ -21,8 +21,8 @@ New live features therefore need a genuine local Python implementation before an
 
 **Stage 1 implementation, 2026-10-04:** Ideas 0–2 now have a native Python prototype
 in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
-nearby-fist split/merge, and all 12 roots with eight absolute quality selections.
-Anthony approved those provisional mappings and keyboard M merge during implementation.
+nearby-fist split/merge, and all 12 roots with 25 ordered hand-pair quality selections.
+Anthony approved the complete pair map and fuller five/six-note voicings on 2026-10-11.
 See [quickstart](../specs/001-anthony-instrument/quickstart.md),
 [spec/tasks](../specs/001-anthony-instrument/tasks.md),
 [decisions for review](../specs/001-anthony-instrument/decisions.md), and
@@ -41,8 +41,8 @@ It does not mean the full future vision or performer acceptance is complete.
 - [x] **1 — Agreed temporary 2D ball and basic two-ball mode:** Joseph-inspired
   fire/light glow, wrist geometry, sparks, persistent nearby-fist split and M merge.
   True 3D remains deferred as agreed.
-- [x] **2 — Initial musical catalogue:** all 12 roots × eight absolute qualities
-  (96 chords), bounded voice leading, visible chord feedback and local synthesis.
+- [x] **2 — Musical catalogue:** all 12 roots × 25 absolute qualities
+  (300 chords), bounded voice leading, visible chord feedback and local synthesis.
 
 ### What still needs fixing or review
 
@@ -260,9 +260,9 @@ and which renderer/asset format supports those controls when the 3D stage is req
 
 ## 2. Musician-oriented harmony: roots and qualities
 
-**Status: DONE for the initial 72-chord Python catalogue.** Implemented in
+**Status: DONE for the approved 300-chord Python catalogue.** Implemented in
 [harmony.py](../instrument/harmony.py) and [audio.py](../instrument/audio.py). Automated
-tests cover all 5,184 starting-to-target chord combinations. Live gesture and
+tests cover all 90,000 starting-to-target chord combinations. Live gesture and
 subjective listening review remain; broader vocabulary and Ableton output are deferred.
 
 **Vision.** Make harmonic actions musically understandable and avoid being trapped in the current
@@ -270,12 +270,13 @@ fixed palette. From whichever chord is active, the performer should have a path 
 in the chosen musical vocabulary. Select a root through regions or another agreed method;
 use gestures to change its quality independently.
 
-Anthony's examples include G becoming minor, minor-major or dominant. The initial
-catalogue now implements major, minor, dominant seventh, major seventh, minor
-seventh and minor-major seventh. "Minor-major" means m(maj7) in this scope, so
+Anthony's examples include G becoming minor, minor-major or dominant. The approved
+catalogue includes triads, sevenths, sixths, ninths, thirteenths, suspended and altered
+chords; see the [complete map and tone sets](../specs/001-anthony-instrument/chord-map.md).
+"Minor-major" means m(maj7) in this scope, so
 G -> Gm -> Gm(maj7) -> G7 is reachable through absolute quality gestures while
-root locking prevents region-driven root changes. Other extensions/inversions
-and plugin voicings remain outside the agreed initial catalogue.
+root locking prevents region-driven root changes. Further alterations, inversions
+and plugin voicings remain outside the agreed catalogue.
 
 **Possible design flaws.**
 
@@ -292,17 +293,16 @@ and plugin voicings remain outside the agreed initial catalogue.
 - Broad harmonic access conflicts with a small, memorable gesture vocabulary. Expert freedom and
   beginner restrictions may need distinct modes rather than a single crowded mapping.
 
-**Current answers.** Twelve chromatic root sectors and eight absolute quality selections
-provide the initial catalogue; both Open Palms held 1.5s select major, Pointing_Up minor,
-Thumb_Up maj7 and Thumb_Down m7. Right thumb up + left thumb down selects m(maj7);
-the reverse selects dominant 7. Right Victory + left palm selects dim7, left Victory
-+ right palm selects m7b5. Love/heart is disabled at Anthony's request. Quality persists
-between deliberate selections. Explicit ordered pairs win, then the right body-labeled
-hand wins conflicting supported single-hand shortcuts. Five signs per hand provide
-25 possible pair slots (up to 300 chords across 12 roots); assigning a different quality
-to every slot remains future design work.
-Wider catalogues, alternative root navigation
-and missing Expressive Chords mapping behavior require later design decisions.
+**Current answers.** Twelve chromatic root sectors and 25 approved ordered hand pairs
+provide 300 selectable chords. Both reliable signs select an exact cell; uncertain,
+missing, fist and love/heart signs hold quality. Both palms held 1.5s select major.
+Right thumb up + left thumb down selects m(maj7); the reverse selects dominant 7.
+Right Victory + left palm selects dim7; left Victory + right palm selects m7b5.
+Point means index up with other fingers curled and thumb tucked. The approved map
+changes left-hand shortcuts with right palm to m6, 6 and 6/9, and both V signs to aug.
+Extensions sound in fuller five/six-note voicings, with both ninth and thirteenth in
+13th chords. Root lock remains independent of quality. Wider catalogues, alternative
+root navigation and Expressive Chords mapping behavior need later design decisions.
 
 ## 3. Chords as three-move magic spells
 

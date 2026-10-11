@@ -105,3 +105,21 @@ or browser translation; existing broader Spec Kit failures are recorded separate
 - [X] T029 Replace geometric fist fallback with web/main far-mode canned gesture
   stabilization and alternating crops; show raw/confirmed labels, preserve existing
   musical decisions, verify JavaScript parity and replay/controller integration.
+
+## Complete hand-pair catalogue: 2026-10-11
+
+This approved expansion supersedes the original six-quality US3 scope above.
+Engineering completion is separate from performer acceptance.
+
+- [X] T030 Record Anthony's approved 25-cell map, changed redundant shortcuts,
+  complete-pair input policy and fuller five/six-note voicings in chord-map.md.
+- [X] T031 Define 25 qualities and exact ordered pairs; enforce pair dwell,
+  incomplete-pair quality hold, independent root lock and 1.5s major reset.
+- [X] T032 Implement six-voice smoothed synthesis and bounded assignment voice
+  leading, preserving the exhaustive algorithm's musical cost priorities.
+- [X] T033 Validate all 300 chords/90,000 transitions, locked-root quality changes,
+  stabilized pair recognition, replay, pitch sets, symbols and audio transitions.
+- [X] T034 Run instrument tests/lint/format/types and synthetic audio/visual/latency
+  evidence; inspect previews and update tutorials, decisions, evidence and status.
+- [X] T035 Refresh Graphify once locally after this major capability expansion.
+- [ ] T036 Performer camera/listening acceptance for all 25 pairs and fuller voicings.

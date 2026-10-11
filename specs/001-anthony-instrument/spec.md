@@ -13,6 +13,11 @@ depend on it; additional finger-pattern ball modes remain undefined.
 Anthony confirmed the following provisional mappings during this task:
 
 - All 12 roots through a 12-region ring; independent absolute quality gestures.
+- Anthony's approved complete 25-cell ordered hand map and fuller voicings are
+  defined in chord-map.md, superseding the earlier single-sign shortcuts below.
+  Both reliable non-fist signs are required for quality selection; incomplete,
+  unknown, low-confidence, heart or fist pairs hold quality. Root navigation is
+  independent and remains active unless locked. Both palms retain the 1.5s reset.
 - Both Open Palms held for 1.5 seconds = major (Anthony's 2026-10-11 revision).
   Pointing_Up = minor, Thumb_Up = major seventh, Thumb_Down = minor seventh.
   Right Thumb_Up + left Thumb_Down = minor-major seventh; the reverse = dominant seventh.
@@ -68,21 +73,24 @@ mode. No depth or true 3D is claimed. Render and inspect deterministic examples.
 
 ## US3 — Reachable roots and musical qualities (P3, idea 2)
 
-As a musician I can reach every one of 12 roots and eight qualities (96 chords)
+As a musician I can reach every one of 12 roots and 25 qualities (300 chords)
 from every starting chord, using region dwell and absolute quality selection.
 
-Acceptance: chord spelling/intervals match major, minor, 7, maj7, m7, m(maj7), dim7 and m7b5;
-quality choices never move a locked root; conflicting hand qualities have a
-documented deterministic policy. The prototype sounds chords locally and exposes
+Acceptance: symbols and tone sets match the complete map in chord-map.md, including
+6, 6/9, 9, 11, 13, suspended, augmented and altered qualities. Every tone in the
+chosen three-to-six-note voicing sounds; 13ths include 9 and 13 and omit natural 11.
+Quality choices never move a locked root; ordered hand pairs replace conflict priority.
+The prototype sounds chords locally and exposes
 the selected chord clearly. It does not send full chords to Expressive Chords.
-An ordinary open palm never overrides a non-palm quality gesture on the other hand.
+An open palm is an explicit member of the ordered pair, so left and right shortcuts
+can differ. A non-palm pair must stay unchanged for quality dwell to select it.
 Brief reopening, neutral/unknown hands and tracking loss preserve quality. Returning
 to major requires both reliable open palms continuously for the configured 1.5s dwell.
 
 ## Required validation
 
 Automated tests are explicitly required by this spec for timing/state transitions,
-all 96 musical states, missing/invalid data, render geometry, and silent device-free
+all 300 musical states, missing/invalid data, render geometry, and silent device-free
 audio generation. A scripted native replay must exercise all three stories without
 camera/models/audio hardware; local model smoke validation must run separately.
 Measure core update latency (p95 < 5 ms on replay frames); record camera/model

@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 from instrument.audio import Synth
+from instrument.harmony import INTERVALS, Chord, voice_lead
 
 
 class AudioTests(unittest.TestCase):
@@ -56,6 +57,29 @@ class AudioTests(unittest.TestCase):
             (100, (128,), 1),
             (100, (60,), float("nan")),
             (100, (60,), -1),
+            (100, (48, 50, 52, 53, 55, 57, 59), 1),
         ):
             with self.assertRaises(ValueError):
                 synth.render(samples, notes, gain)
+
+    def test_full_catalogue_audio_and_six_to_three_voice_release(self) -> None:
+        synth = Synth()
+        previous = ()
+        for root in range(12):
+            for quality in INTERVALS:
+                notes = voice_lead(previous, Chord(root, quality))
+                sound = synth.render(2048, notes, 0.8)
+                self.assertTrue(np.isfinite(sound).all())
+                self.assertGreater(float(np.std(sound)), 0.005)
+                self.assertLessEqual(float(np.max(np.abs(sound))), 0.7)
+                previous = notes
+        synth.render(48000, voice_lead((), Chord(0, "dominant13")), 1)
+        source = Synth()
+        six = (48, 52, 55, 58, 62, 69)
+        whole = source.render(4096, six, 0.7)
+        chunked = Synth()
+        chunks = np.concatenate([chunked.render(1024, six, 0.7) for _ in range(4)])
+        np.testing.assert_allclose(whole, chunks, atol=2e-6)
+        three = chunked.render(24000, (48, 52, 55), 0.7)
+        self.assertLess(abs(float(three[0] - chunks[-1])), 0.03)
+        self.assertLess(float(np.max(chunked.amplitudes[3:])), 1e-6)

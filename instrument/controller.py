@@ -168,6 +168,9 @@ class Controller:
             self.root_dwell = Dwell()
         quality = self.chord.quality
         raw_quality = gesture_quality(gestures.get("L"), gestures.get("R"))
+        # Both palms retain their slower deliberate reset, independent of pair dwell.
+        if raw_quality == "major":
+            raw_quality = None
         selected_quality = self.quality_dwell.read(raw_quality, now, self.config.quality_dwell_s)
         if isinstance(selected_quality, str):
             quality = selected_quality

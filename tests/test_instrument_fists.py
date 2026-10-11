@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from instrument.controller import Controller
-from instrument.harmony import Chord
+from instrument.harmony import QUALITY_PAIRS, Chord
 from instrument.models import Frame, Hand
 from instrument.replay import read_replay
 from instrument.tracking import GestureState, observations
@@ -21,6 +21,35 @@ def raw_hand(label: str, score: float = 0.99) -> Hand:
 
 
 class FistTests(unittest.TestCase):
+    def test_complete_chord_map_with_alternating_confirmation_flicker_and_replay(self) -> None:
+        controller = Controller(initial=Chord(7, "major"))
+        detectors = {side: GestureState() for side in ("L", "R")}
+        frames, outputs = [], []
+        selections = list(QUALITY_PAIRS.items())
+        for index in range(len(selections) * 60):
+            t = index * 0.04
+            (left, right), quality = selections[index // 60]
+            side = ("L", "R")[index % 2]
+            label = left if side == "L" else right
+            if index % 60 > 30 and index % 9 == 0:
+                label = "None"
+            detectors[side].update(replace(raw_hand(label), side=side), t)
+            hands = tuple(
+                replace(detector.hand or Hand(s, (100, 240)), wrist=(160 + i * 320, 240))
+                for i, (s, detector) in enumerate(detectors.items())
+            )
+            frame = Frame(t, hands, (320, 240), 100)
+            frames.append(frame)
+            outputs.append(controller.update(frame))
+            if index % 60 == 59:
+                self.assertEqual((outputs[-1].root, outputs[-1].quality), (7, quality))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "frames.jsonl"
+            path.write_text("".join(json.dumps(asdict(f)) + "\n" for f in frames), encoding="utf-8")
+            restored = list(read_replay(path))
+        replay = Controller(initial=Chord(7, "major"))
+        self.assertEqual([replay.update(frame) for frame in restored], outputs)
+
     def test_joint_shape_does_not_override_canned_none(self) -> None:
         result = SimpleNamespace(
             hand_landmarks=[[SimpleNamespace(x=0.5, y=0.5) for _ in range(21)]],

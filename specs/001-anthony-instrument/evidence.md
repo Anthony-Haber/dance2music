@@ -1,5 +1,42 @@
 # Validation evidence: local Python instrument
 
+## Complete 25-pair jazz catalogue, 2026-10-11
+
+- Verified the approved 25 cells and independent interval definitions across all
+  12 roots: 300 distinct chord identifiers, all 90,000 start/destination controller
+  transitions, complete pitch-class sets, note counts and MIDI bounds. Every quality
+  also changes correctly with a locked G root while incoming root navigation is ignored.
+- Covered complete-pair dwell/cancellation, missing/uncertain/fist/heart input holding
+  quality, both-palm 1.5s reset, ordered hand identity, alternating hand recognition
+  with raw-label flicker and exact JSONL replay equality for all 25 cells.
+- Compared the optimized voice leader with exhaustive permutations for 96 seeded
+  random cases (seed 19, 24 cases each for three through six voices), preserving
+  all three musical cost priorities. All 300 chords render finite, audible, bounded
+  audio; six-voice chunk continuity and six-to-three slot release pass.
+- Full instrument suite: **68 passed, 45 subtests passed**, in 12.88s:
+  `.venv/Scripts/python.exe -m pytest tests/test_instrument_audio.py tests/test_instrument_cli.py tests/test_instrument_controller.py tests/test_instrument_fists.py tests/test_instrument_harmony.py tests/test_instrument_tracking.py tests/test_instrument_visuals.py -q -p no:cacheprovider`.
+  Ruff lint/format and mypy pass. Temporary-file tests ran with authorized sandbox
+  escalation; numerical and integration tests require no camera, network or audio device.
+- Generated reproducible synthetic evidence with
+  `output/anthony-instrument/jazz-catalogue/validate_catalogue.py`: 25 ordered pairs
+  at root C, 25Hz, 2s major and 1.4s each other selection, 890 frames/35.6s,
+  renderer seed 4, master volume 0.6, NumPy 2.4.1 and OpenCV 5.0.0. Each endpoint
+  selects its exact quality. Exports: `frames.jsonl`, `states.jsonl`, `chords.wav`,
+  `preview.avi`, `contact-sheet.png`, `first.png`, `minor.png`, `final.png`, `summary.json`.
+  Inspected the 25-panel contact sheet and final C13 preview; chord text and six
+  tones are present. A subsequent HUD wording correction says unknown holds quality,
+  since unlocked root selection remains independent.
+- Synthetic controller p95 **0.104ms**, chord-change p95 **0.145ms** and six-voice
+  change p95 **0.303ms**, under the 5ms core budget. The isolated six-voice benchmark
+  uses 12 roots × four six-note qualities × 30 changes. These are computational
+  timings; camera inference and playback latency were not measured.
+- Live gesture accuracy and subjective listening acceptance remain pending.
+  No gesture model training or confidence changes. Completed one local AST graph
+  refresh for the new voice-leading architecture and audio/harmony dependency:
+  1,342 nodes, 2,206 edges, 150 communities, no LLM/API cost. The relative-path CLI
+  invocation reported no files; retrying with the absolute repository path succeeded.
+  No website translation or external publication is included.
+
 ## Ordered hand chord mappings, 2026-10-11
 
 - Verified Anthony's selected opposite-thumb meanings, paired-sign precedence,

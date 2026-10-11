@@ -1,5 +1,27 @@
 # Decisions made during ideas 0–2 implementation
 
+## Complete 25-cell catalogue and fuller sound, 2026-10-11
+
+Anthony approved the [25-cell ordered hand map](chord-map.md), including changed
+left-hand shortcuts with right palm (Point = m6, thumb up = 6, thumb down = 6/9)
+and both Victory signs = augmented. This yields 25 qualities across 12 roots,
+300 selectable chord identifiers. Point means index up, other fingers curled and
+thumb tucked. Body-side hand identity determines each cell, including crossed hands.
+
+Both reliable non-fist signs are required; missing/unknown/low-confidence/fist/heart
+pairs hold quality. This replaces all single-hand fallback and priority rules below.
+The ordinary quality dwell remains 0.35s after model confirmation; both palms retain
+the separate 1.5s major reset. Fists still control root lock and ball mode. Root
+selection remains independent, so an unlocked root can change while quality is held.
+
+Anthony chose fuller five/six-note voicings for extensions rather than compact
+omissions. All explicitly defined tones sound; thirteenths include ninths and omit
+the natural eleventh. Six persistent oscillator slots preserve smooth transitions.
+Bounded assignment replaces factorial voice-leading search while retaining its
+total-movement, maximum-movement and note-order priorities. No new gesture training,
+threshold changes, dependencies, MIDI or JavaScript translation are included.
+Earlier eight/six-quality and incomplete-pair shortcut decisions below are historical.
+
 ## Ordered hand chord selections, 2026-10-11
 
 Anthony requested different meanings for left/right signs and all possible pairings.

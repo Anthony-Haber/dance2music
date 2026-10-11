@@ -438,3 +438,32 @@
   refresh for a minor mapping change under constitution VIII.
 - Outstanding: Restart Python to try the new signs. Live gesture reliability,
   listening acceptance and the remaining pair assignments are not yet validated.
+
+## 2026-10-11 - Complete 25-pair jazz chord catalogue
+
+- State: Approved map implemented and validated locally; performer camera/listening
+  acceptance remains pending. This completes the next catalogue step in Python.
+- Decisions: Anthony approved all 25 cells, changed left-hand shortcuts, complete
+  recognized pairs and fuller five/six-note voicings. Point = index up with other
+  fingers curled and thumb tucked. Ordered thumb/Victory meanings are preserved.
+- Changes: 25 qualities × 12 roots = 300 selectable chords, including sixths,
+  ninths, thirteenths, m11, suspended, augmented and altered chords. Both reliable
+  signs select an exact cell; incomplete/unknown/fist/heart pairs hold quality.
+  Both palms retain the 1.5s major reset. Root selection and fist controls remain
+  independent. Six oscillator slots sound every defined tone; bounded assignment
+  replaces factorial voice leading while preserving its musical priorities.
+- Verification: 68 tests and 45 subtests passed, including all 90,000 start/target
+  transitions, exact exhaustive-search parity for seeded three-to-six voice cases,
+  all 300 chord audio outputs, locked roots, gesture stabilization and JSONL replay.
+  Ruff lint/format and mypy pass. Inspected the 25-cell contact sheet and C13 preview.
+  Synthetic controller p95 0.104ms, chord-change p95 0.145ms and six-voice change
+  p95 0.303ms (<5ms budget); inputs and artifacts are recorded in feature evidence
+  and output/anthony-instrument/jazz-catalogue/summary.json.
+- Documentation: Updated approved chord chart, tutorials, quickstart, vision,
+  explanation, spec, plan, decisions, tasks and validation evidence.
+- Local state: No new push or JavaScript changes. Completed one local AST graph
+  refresh (1,342 nodes, 2,206 edges, 150 communities, no API cost) for the changed
+  voicing architecture/audio dependencies; absolute-path CLI retry succeeded.
+- Outstanding: Restart Python and retest both-hand combinations on camera; listen
+  to the fuller extensions. Automated results do not establish model accuracy or
+  performer acceptance. Additional jazz alterations, MIDI and spells remain future work.

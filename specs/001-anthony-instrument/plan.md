@@ -43,6 +43,20 @@ Only Stage 1 Python is authorized. Stage 2 JavaScript remains deferred.
 
 ## Implementation strategy
 
+### Approved expansion, 2026-10-11
+
+The [approved 25-cell map](chord-map.md) supersedes earlier six/eight-quality
+shortcuts. Keep catalogue intervals, symbols, ordered pairs and maximum voice
+capacity authoritative in instrument/harmony.py. Require both reliable non-fist
+signs through existing controller dwell; retain the separate 1.5s palm reset and
+independent root/fist controls. Expand audio to six persistent oscillator slots
+with the existing smoothing and headroom. Use bounded bit-mask assignment costs
+for voice leading, preserving total movement, maximum movement and note-tuple ties.
+Validate all 300 states/90,000 transitions, exhaustive-search parity, stabilized
+gesture replay, locked roots and all chord audio; measure against the 5ms core budget.
+Keep artifacts under output/anthony-instrument/jazz-catalogue and design records
+under this spec. Refresh the graph once after completion. No web port or MIDI work.
+
 Establish contracts and replay first. Deliver US1 lock/arbitration, US2 visuals,
 then US3 full harmony and sound. Integrate native tracking and CLI, run tests/checks,
 model smoke tests and scripted rendering/audio evidence, update graph/docs and commit.
@@ -74,7 +88,7 @@ major reset. Increase ordinary-spacing audio, retaining gain/pitch smoothing and
 headroom, with a master volume option for playback and export.
 
 Verify reported regressions against pre-fix HEAD, synthetic body/crop/replay boundaries,
-lock feedback, complete 96-chord reachability, audio RMS/bounds/continuity, native model
+lock feedback, complete 300-chord reachability, audio RMS/bounds/continuity, native model
 loading, camera and playback boundaries, and representative rendered output. Tests and
 docs stay in their established directories. Read-only official model documentation may
 be consulted; all project changes and generated evidence stay local.
