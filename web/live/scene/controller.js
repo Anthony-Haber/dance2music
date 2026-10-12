@@ -3,6 +3,7 @@ import {SceneRenderer} from './renderer.js';
 import {TouchInteractions,touchPose,touchBounds,TOUCH_SETTINGS} from './touch.js';
 import {compositingDepth} from './occlusion.js';
 import {PersonMaskReader} from './person-mask.js';
+import {SurfaceDrag} from './drag.js';
 const empty=()=>({objects:[],surfaces:[]});
 export class SceneController {
   constructor({canvas=document.createElement('canvas'),onStatus=()=>{},onChange=()=>{},workerFactory=()=>new Worker(new URL('./worker.js',import.meta.url),{type:'module'}),rendererFactory=(T,loss)=>new SceneRenderer(T,loss)}={}) {
@@ -12,6 +13,7 @@ export class SceneController {
     this.maskReader=new PersonMaskReader();
     this.thumb=document.createElement('canvas');this.thumb.width=160;this.thumb.height=120;this.tg=this.thumb.getContext('2d',{willReadFrequently:true});
     this.visibility=()=>{
+      this.endDrag(true);
       this.latest=null;this.interactions.reset();this.touchEvents=[];this.clear();
       if(!document.hidden&&this.worker){
         if(this.state==='scanning')this.rescan('Scanning after returning to this tab…');
@@ -96,13 +98,14 @@ export class SceneController {
         this.latest={...result,aligned:true,inverse:normalize(result.depth,this.scan.normalization,alignment)};
         // Keep raw aligned depth for robust limb sampling. Display suppression
         // is applied separately, never fed back into contact detection.
-        this.publishTouches(this.interactions.update(this.scan.objects,this.latest,result.touchPose,this.currentTouchPose,performance.now()));
+        this.publishTouches(this.interactions.update(this.touchObjects(),this.latest,result.touchPose,this.currentTouchPose,performance.now()));
       }
     }
     if((this.unreliableSince&&performance.now()-this.unreliableSince>2000)||(this.changedSince&&performance.now()-this.changedSince>2500))this.rescan('Scene changed — rescanning…');
   }
   rescan(message='Scanning surfaces (0/3)…') {
     if(!this.renderer||!this.worker)return;
+    this.endDrag(true);
     this.generation++;this.frames=[];this.latest=null;this.reference=null;this.scan=empty();this.snapshot=null;this.renderer.setScan(this.scan);this.clear();
     this.interactions.reset();this.touchEvents=[];
     this.unreliableSince=0;this.changedSince=0;this.scanStart=performance.now();this.nextInference=0;this.lastVideoTime=-1;
@@ -112,7 +115,37 @@ export class SceneController {
   // Called INSIDE MediaPipe's callback; mask data is callback-owned.
   observePose(landmarks,now){
     this.currentTouchPose=this.worker?touchPose(landmarks,now):null;
-    if(this.latest?.aligned)this.publishTouches(this.interactions.observe(this.scan.objects,this.currentTouchPose,now));
+    if(this.latest?.aligned)this.publishTouches(this.interactions.observe(this.touchObjects(),this.currentTouchPose,now));
+  }
+  touchObjects(){return this.scan.objects.filter(o=>o.id!==this.drag?.original.id);}
+  pick(x,y,now=performance.now()) {
+    if(this.state!=='active'||x<0||x>1||y<0||y>1||!this.visible(now).some(Boolean))return null;
+    return this.renderer?.pick(x,y,this.visible(now))||null;
+  }
+  beginDrag(x,y) {
+    if(this.drag)return false;
+    const hit=this.pick(x,y);if(!hit)return false;
+    const object=this.scan.objects.find(o=>o.id===hit.id);
+    if(!this.scan.surfaces.some(s=>s.runs?.length))return false;
+    this.drag=new SurfaceDrag(this.scan,object,hit.point);
+    this.interactions.states.delete(object.id);this.touchEvents=this.touchEvents.filter(e=>e.object_id!==object.id);
+    this.renderer.clearTouch(object.id);return true;
+  }
+  moveDrag(x,y) {
+    if(!this.drag||!this.visible(performance.now()).some(Boolean))return false;
+    const target=this.drag.target(x,y);if(!target)return false;
+    this.placeObject(target);return true;
+  }
+  placeObject(object) {
+    this.scan={...this.scan,objects:this.scan.objects.map(o=>o.id===object.id?object:o)};
+    if(this.snapshot)this.snapshot={...this.snapshot,objects:this.scan.objects};
+    this.renderer?.moveObject(object);this.onChange();
+  }
+  endDrag(cancel=false) {
+    if(!this.drag)return;
+    const original=this.drag.original;this.drag=null;
+    if(cancel)this.placeObject(original);
+    this.interactions.states.delete(original.id);this.onDragEnd?.();
   }
   publishTouches(events){
     for(const event of events){this.renderer?.touch(event);this.touchEvents.push({...event,generation:this.generation});}
@@ -182,6 +215,11 @@ export class SceneController {
       for(const object of this.scan.objects){const b=touchBounds(object,w,h);this.ctx.strokeRect(b.left,b.top,b.right-b.left,b.bottom-b.top);}
       for(const p of this.currentTouchPose?.points||[]){this.ctx.fillStyle=this.interactions.points.some(q=>q.joint===p.joint)?'#70edff':'#ffd76a';this.ctx.beginPath();this.ctx.arc(p.x*w,p.y*h,4,0,Math.PI*2);this.ctx.fill();}
     }
+    if(this.drag&&visible.some(Boolean)) {
+      const object=this.scan.objects.find(o=>o.id===this.drag.original.id),b=touchBounds(object,w,h);
+      this.ctx.strokeStyle=this.drag.valid?'#70edff':'#ffb369';this.ctx.lineWidth=2;
+      this.ctx.strokeRect(b.left-3,b.top-3,b.right-b.left+6,b.bottom-b.top+6);
+    }
     return this.canvas;
   }
   clear(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
@@ -190,6 +228,7 @@ export class SceneController {
   metrics(){return `scan ${((this.scanMs||0)/1000).toFixed(1)} s · depth ${Math.round(this.depthLatency||0)} ms · ${((this.rateTimes||[]).filter(t=>t>performance.now()-2000).length/2).toFixed(1)} Hz · ${this.suppressed||0} stale hidden · ${this.interactions.count} touches · ${this.interactions.reason} · pose budget ${Math.round(this.baseline||0)} fps`;}
   fail(message){this.stop();this.status('failed','3D unavailable: '+message+'. Music can continue.');this.onChange();}
   stop() {
+    this.endDrag(true);
     this.generation++;this.worker?.terminate();this.worker=null;
     clearTimeout(this.timeout);clearTimeout(this.inferTimeout);cancelAnimationFrame(this.raf);
     this.renderer?.dispose();this.renderer=null;this.latest=null;this.reference=null;this.frames=[];this.person=null;this.displayDepth=null;

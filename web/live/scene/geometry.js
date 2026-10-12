@@ -171,7 +171,13 @@ export function reconstruct(frames) {
   for(const patch of accepted.slice(0,12)) {
     const id=surfaces.length, boundary=[];
     for(const i of patch.indices) if(!patch.mask[i-1]||!patch.mask[i+1]||!patch.mask[i-w]||!patch.mask[i+w])boundary.push([i%w,Math.floor(i/w)]);
-    surfaces.push({id,kind:patch.kind,normal:patch.normal,plane:patch.plane,boundary});
+    // Compact exact interiors (including holes) support later mouse placement.
+    const runs=[];
+    for(const i of patch.indices.slice().sort((a,b)=>a-b)) {
+      const last=runs[runs.length-1];
+      if(last&&last[0]+last[1]===i&&i%w!==0)last[1]++;else runs.push([i,1]);
+    }
+    surfaces.push({id,kind:patch.kind,normal:patch.normal,plane:patch.plane,boundary,runs});
     const distances=new Float32Array(w*h);
     for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;if(patch.mask[i])distances[i]=1+Math.min(distances[i-1],distances[i-w]);}
     for(let y=h-2;y>0;y--)for(let x=w-2;x>0;x--){const i=y*w+x;if(patch.mask[i])distances[i]=Math.min(distances[i],1+distances[i+1],1+distances[i+w]);}

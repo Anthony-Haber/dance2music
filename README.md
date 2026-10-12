@@ -43,6 +43,8 @@ place up to three shapes. This optional feature targets Chrome on Apple Silicon
 and live cameras. It uses local WebGPU depth and segmentation models; no inference
 server, camera movement, or calibration is needed. Music starts after the scan.
 **Show surfaces** and **Rescan** help inspect placement. Stop to change the option.
+Drag a visible shape with the mouse to reposition it on a detected floor or
+tabletop; Esc cancels the drag. Rescan and a new session reset the layout.
 Objects use estimated depth occlusion. Stale depth hides objects; motion suppresses
 uncertain pixels. Placement and room scale are approximate.
 With **Touch effects** on, reach toward a shape with a hand or foot to make it

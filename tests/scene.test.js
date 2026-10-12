@@ -4,6 +4,7 @@ import {SceneController} from '../web/live/scene/controller.js';
 import {compositingDepth} from '../web/live/scene/occlusion.js';
 import {PersonMaskReader} from '../web/live/scene/person-mask.js';
 import {TouchInteractions,touchPose,touchDepth,distanceToObject,TOUCH_SETTINGS} from '../web/live/scene/touch.js';
+import {SurfaceDrag} from '../web/live/scene/drag.js';
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 export function fixture({scale=1,offset=0,table=true,person=false}={}) {
   const width=96,height=72,n=width*height,depth=new Float32Array(n),labels=new Uint8Array(n),confidence=new Float32Array(n).fill(.99),rgb=new Uint8Array(n).fill(128);
@@ -27,6 +28,10 @@ export async function runGeometryTests() {
   assert(scan.objects[0].shape==='cube'&&scan.objects.length<=3,'bounded deterministic objects');
   assert(scan.surfaces[scan.objects[0].surface].kind==='table','tabletop placement is preferred');
   assert(JSON.stringify(scan.objects)===JSON.stringify(reconstruct([f,f,f]).objects),'scale invariant placement');
+  for(const object of scan.objects){
+    const p=project(object.position,f.width,f.height),drag=new SurfaceDrag(scan,object,object.position);
+    assert(drag.target((p[0]+.5)/f.width,(p[1]+.5)/f.height),'reconstructed interior runs support actual initial placements');
+  }
   assert(scan.surfaces.every(s=>s.normal[1]>.72),'table legs rejected');
   const p=ray(17,42,96,72).map(v=>v*3),uv=project(p,96,72),mirrored=project(p,96,72,true);
   assert(Math.abs(uv[0]-17)<1e-6&&Math.abs(uv[1]-42)<1e-6&&Math.abs(mirrored[0]-78)<1e-6,'projection and mirror');

@@ -12,6 +12,23 @@ locations. Uncertain surfaces are rejected. **Show surfaces** displays accepted
 boundaries and placement points; **Rescan** is optional. Objects remain anchored
 when someone moves or leaves the view.
 
+Drag a visible shape with the mouse to reposition it. The cursor becomes a hand
+over a selectable shape. It follows the detected floor or tabletop, retaining
+its size and the point where you grabbed it; it can move between accepted
+surfaces. The entire footprint must fit. If the cursor points to an invalid
+destination, the shape settles at the closest fitting position on screen. It
+slides along surface edges and around holes instead of sticking at its previous
+position. Dragging beyond the camera view uses the nearest image edge.
+**Show surfaces** reveals the accepted areas. **Esc**, losing pointer capture,
+switching windows, changing mirroring, or resizing cancels an unfinished drag.
+Dropped placements remain anchored for this session; **Rescan**, camera changes,
+and starting a new session generate a new automatic layout.
+
+Mouse positioning does not play a touch note. Hand/foot interaction pauses for
+the shape being dragged and resumes at its new location after release. The
+other shapes and music continue. Picking respects depth occlusion, so an object
+hidden behind a person or furniture cannot be grabbed through that obstruction.
+
 **Touch effects** is enabled by default and can be toggled during a session; the
 selection is remembered. Shapes gently pulse at rest, brighten when a hand or
 foot approaches, and release colored sparks, a surface ripple, and a short note
@@ -114,6 +131,13 @@ transforms, scan generation/time/duration, and debug selection. Full depth maps
 and person masks are never written per frame. Existing recording schema v1 is
 unchanged.
 
+Accepted surfaces include compact `runs` of `[start_index, length]` in row-major
+source coordinates, preserving exact interiors and holes for mouse placement.
+These are scan geometry, not per-frame masks. Moving an object updates its
+support, centre, surface, normal, and projected point in configuration snapshots;
+`placement: "manual"` distinguishes a moved shape. Earlier snapshots stay
+immutable, and recorded video uses the same moving scene layer as the preview.
+
 ## Touch effects
 
 Pose wrist/index and ankle/heel/toe landmarks are copied with each depth input.
@@ -185,6 +209,13 @@ is tested with supported RGBA8 conversion and restoration of MediaPipe's GL
 state. Audio tests decode the recorded output and check the actual chord-note
 frequencies, including when the movement instrument gate is zero. These are controlled tests;
 touch accuracy in a particular room still depends on the camera and model depth.
+
+Drag tests exercise actual app pointer events in both mirror modes, letterbox
+coordinates, GPU ray picking and foreground occlusion, surface/footprint holes,
+tabletop transfer, nearest-position drops, sliding along edges, cancellation,
+resize, Stop, and Rescan. They
+also check changed recording configurations and hand contacts at the new position
+instead of the old one.
 
 On 2026-10-12, Chrome 147.0.7727.56 on the available Apple Silicon/Metal-3
 Mac with a Logitech BRIO at 1280 × 720 and the full pose model produced:

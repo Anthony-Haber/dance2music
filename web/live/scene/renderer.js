@@ -15,7 +15,7 @@ export class SceneRenderer {
     this.camera=new THREE.PerspectiveCamera(60,4/3,.01,100);
     this.scene.add(new THREE.HemisphereLight(0xffffff,0x554466,2));
     const light=new THREE.DirectionalLight(0xffffff,2.3);light.position.set(-2,4,2);this.scene.add(light);
-    this.groups=[];this.effects=[];this.touchEnabled=true;this.sprite=particleSprite(THREE);
+    this.groups=[];this.effects=[];this.meshes=[];this.raycaster=new THREE.Raycaster();this.touchEnabled=true;this.sprite=particleSprite(THREE);
     this.target=new THREE.WebGLRenderTarget(1,1,{depthBuffer:true});
     this.target.depthTexture=new THREE.DepthTexture(1,1,THREE.UnsignedIntType);
     this.depth=new THREE.DataTexture(new Float32Array([1]),1,1,THREE.RedFormat,THREE.FloatType);this.depth.needsUpdate=true;
@@ -57,7 +57,7 @@ export class SceneRenderer {
   setScan(scan) {
     const T=this.T;
     for(const group of this.groups){this.scene.remove(group);group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
-    this.groups=[];this.effects=[];
+    this.groups=[];this.effects=[];this.meshes=[];
     for(const object of scan.objects) {
       const group=new T.Group(), s=object.size;
       const geometry=object.shape==='cube'?new T.BoxGeometry(s,s,s):object.shape==='sphere'?new T.SphereGeometry(s/2,20,12):new T.CylinderGeometry(s/2,s/2,s,20);
@@ -66,13 +66,31 @@ export class SceneRenderer {
       // Cheap contact shadow lies on the support plane, with its own depth.
       const shadow=new T.Mesh(new T.CircleGeometry(s*.48,24),new T.MeshBasicMaterial({color:0x161020,transparent:true,opacity:.22,depthWrite:true}));
       shadow.rotation.x=-Math.PI/2;shadow.position.y=.002;group.add(shadow);
-      const [u,v]=basis(object.normal);
-      const orientation=new T.Matrix4().makeBasis(new T.Vector3(...u),new T.Vector3(...object.normal),new T.Vector3(...v).negate());
-      group.position.fromArray(object.support);group.quaternion.setFromRotationMatrix(orientation);
+      this.placeGroup(group,object);
       const effect=new TouchEffects(T,group,mesh,object,this.sprite);effect.setEnabled(this.touchEnabled);this.effects.push(effect);
       group.traverse(child=>{if(child.material)this.occludeMaterial(child.material);});
-      this.scene.add(group);this.groups.push(group);
+      this.scene.add(group);this.groups.push(group);this.meshes.push(mesh);
     }
+  }
+  placeGroup(group,object) {
+    const T=this.T,[u,v]=basis(object.normal);
+    const orientation=new T.Matrix4().makeBasis(new T.Vector3(...u),new T.Vector3(...object.normal),new T.Vector3(...v).negate());
+    group.position.fromArray(object.support);group.quaternion.setFromRotationMatrix(orientation);
+  }
+  moveObject(object) {
+    const i=this.effects.findIndex(e=>e.object.id===object.id);if(i<0)return;
+    this.placeGroup(this.groups[i],object);this.effects[i].object=object;
+  }
+  clearTouch(id){const e=this.effects.find(e=>e.object.id===id);if(e)e.started=-Infinity;}
+  pick(x,y,visible) {
+    this.scene.updateMatrixWorld(true);this.camera.updateMatrixWorld(true);
+    this.raycaster.setFromCamera(new this.T.Vector2(x*2-1,1-y*2),this.camera);
+    const {data,width,height}=this.depth.image;
+    const inv=data[Math.min(height-1,Math.floor(y*height))*width+Math.min(width-1,Math.floor(x*width))];
+    if(!(inv>.01))return null;
+    const hits=this.raycaster.intersectObjects(this.meshes.filter((_,i)=>visible[i]),false);
+    const hit=hits.find(h=>-h.point.z<=1/inv+.015);
+    return hit?{id:this.effects[this.meshes.indexOf(hit.object)].object.id,point:hit.point.toArray()}:null;
   }
   setDepth(data,width,height) {
     this.depth.image={data,width,height};this.depth.needsUpdate=true;

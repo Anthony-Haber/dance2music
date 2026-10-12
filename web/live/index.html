@@ -18,6 +18,7 @@
            justify-content: center; overflow: hidden; min-height: 60vh; }
   #stage video, #stage canvas { position: absolute; max-width: 100%; max-height: 100%; }
   #stage .mirror { transform: scaleX(-1); }
+  #c { touch-action: none; user-select: none; }
   #badge { position: absolute; top: 18px; right: 22px; text-align: right; pointer-events: none; }
   #badge b { display: block; font-size: 44px; font-weight: 600; line-height: 1; }
   #badge span { color: var(--dim); font-size: 18px; }
@@ -111,6 +112,8 @@
   <label class="mic-option"><input type="checkbox" id="sceneObjects">3D objects</label>
   <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
   <div id="sceneControls" hidden>
+    <p class="note">Drag a shape with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <div class="status" id="sceneDragStatus" role="status" aria-live="polite" hidden></div>
     <label class="mic-option"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
     <div class="note">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
     <label class="mic-option"><input type="checkbox" id="sceneDebug">Show surfaces</label>

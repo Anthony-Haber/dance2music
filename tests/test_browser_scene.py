@@ -151,6 +151,63 @@ def live_controls(context, origin):
     page.close()
     print('PASS live scene controls, cancellation/fallback, and live contact-to-chord audio metadata in recording',flush=True)
 
+def drag_controls(context, origin):
+    page=context.new_page()
+    page.route('**/vision_bundle.mjs',lambda r:r.fulfill(body=(ROOT/'tests/vision-fixture.js').read_text(),content_type='text/javascript'))
+    page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
+    page.goto(origin+'/web/live/')
+    page.evaluate('''async()=>{
+      const {SceneController}=await import('/web/live/scene/controller.js');
+      const {installDragFixture}=await import('/tests/scene-drag.test.js');
+      SceneController.prototype.start=function(video){return installDragFixture(this,video);};
+    }''')
+    page.locator('#res').select_option('640x480');page.locator('#sceneObjects').check();page.locator('#go').click()
+    page.wait_for_function("document.querySelector('#go').textContent==='Stop'")
+    page.wait_for_timeout(150)
+    def position(): return page.evaluate('dragScene.scan.objects[0].support')
+    def centre():
+        return page.evaluate('''async()=>{
+          const {project}=await import('/web/live/scene/geometry.js'),o=dragScene.scan.objects[0],r=document.querySelector('#c').getBoundingClientRect();
+          const p=project(o.position,160,120,document.querySelector('#mirror').value==='1');
+          return [r.left+(p[0]+.5)/160*r.width,r.top+(p[1]+.5)/120*r.height];
+        }''')
+    def begin():
+        x,y=centre();page.mouse.move(x,y);assert page.locator('#c').evaluate("e=>e.style.cursor")=='grab'
+        page.mouse.down();assert page.evaluate('!!dragScene.drag');return x,y
+    original=position()
+    page.locator('#rec').click();page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+    x,y=begin();page.mouse.move(x-60,y,steps=8);page.mouse.up()
+    moved=position();assert moved[0]>original[0]+.2,'mirrored mouse drag moves toward matching image location'
+    assert page.evaluate("dragScene.scan.objects[0].placement==='manual' && dragScene.touchObjects().length===1")
+    # Mouse placement never fires a musical contact by itself.
+    assert page.evaluate('dragScene.interactions.count===0 && !dragScene.takeTouchEvents().length')
+    x,y=begin();page.mouse.move(x+30,y,steps=3);page.keyboard.press('Escape');page.mouse.up()
+    assert position()==moved,'Escape restores previous transform'
+    x,y=begin();box=page.locator('#c').bounding_box();page.mouse.move(box['x']+box['width']+30,y,steps=3)
+    assert 'Nearest fitting position' in page.locator('#sceneDragStatus').inner_text()
+    page.mouse.up();snapped=position();assert snapped[0]<original[0]-.2,'invalid drop moves to the closest fitting position by the dragged image edge'
+    page.locator('#mirror').select_option('0');page.wait_for_timeout(60)
+    x,y=begin();page.mouse.move(x+25,y,steps=3);page.mouse.up();assert position()[0]>snapped[0],'unmirrored dragging follows cursor'
+    before_cancel=position();x,y=begin();page.mouse.move(x-25,y,steps=3)
+    page.locator('#c').dispatch_event('pointercancel',{'pointerId':1});page.mouse.up();assert position()==before_cancel,'pointer cancellation restores transform'
+    x,y=begin();page.mouse.move(x-25,y,steps=3);page.set_viewport_size({'width':1100,'height':760});page.wait_for_timeout(100);page.mouse.up()
+    assert position()==before_cancel and not page.evaluate('!!dragScene.drag'),'resize cancels safely'
+    page.wait_for_timeout(150)
+    with page.expect_download() as download: page.locator('#rec').click()
+    with zipfile.ZipFile(io.BytesIO(Path(download.value.path()).read_bytes())) as archive:
+        manifest=json.loads(archive.read('manifest.json'))
+    configs=[c['settings']['scene']['scan']['objects'][0] for c in manifest['configurations'] if c['settings'].get('scene',{}).get('scan')]
+    assert any(o.get('placement')=='manual' and o['support']==before_cancel for o in configs),'recording saves changed placements'
+    assert configs[0]['support']==original,'earlier recording snapshot stays immutable'
+    x,y=begin();page.mouse.move(x-15,y,steps=3);page.keyboard.press('Space');page.mouse.up()
+    assert page.locator('#go').inner_text()=='Start' and not page.evaluate('!!dragScene.drag') and page.locator('#c').evaluate("e=>e.style.cursor")==''
+    page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Stop'");page.wait_for_timeout(100)
+    x,y=begin();page.mouse.move(x-15,y,steps=3);page.evaluate("document.querySelector('#sceneRescan').click()");page.mouse.up()
+    assert not page.evaluate('!!dragScene.drag') and not page.evaluate('dragScene.scan.objects.length'),'rescan invalidates the drag and placements'
+    page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Start'")
+    page.evaluate("localStorage.removeItem('d2m:sceneObjects')");page.close()
+    print('PASS actual app mouse dragging, mirror modes, nearest-position drop beyond image edge, Escape/cancel/resize/stop, no mouse-triggered notes, and recording placement snapshots',flush=True)
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--real-models',action='store_true');parser.add_argument('--camera',action='store_true');parser.add_argument('--resolution',default='640x480',choices=['640x480','1280x720']);parser.add_argument('--output',type=Path,default=Path('/private/tmp/d2m-scene-validation'));args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=ROOT));threading.Thread(target=server.serve_forever,daemon=True).start()
@@ -172,7 +229,10 @@ def main():
             for test in ['runGeometryTests','runRendererTests','runPersonMaskTests','runTouchTests','runTouchEffectsTests','runMotionOcclusionTests','runTouchControllerTests','runTouchAudioTests','runLifecycleTests','runSceneRecordingTests']:
                 for name in page.evaluate('(async name=>{const m=await import("/tests/scene.test.js");return await m[name]();})',test): print('PASS',name,flush=True)
             (args.output/'touch-effects.png').write_bytes(base64.b64decode(page.evaluate('touchEffectPreview').split(',',1)[1]))
-            if not args.camera: live_controls(context,origin)
+            for name in page.evaluate('(async()=>{const m=await import("/tests/scene-drag.test.js");return m.runDragTests();})'): print('PASS',name,flush=True)
+            if not args.camera:
+                live_controls(context,origin)
+                drag_controls(context,origin)
             if args.real_models: real_models(page,origin,args.camera,args.output,args.resolution)
             # MediaPipe 1.0.1 attempts telemetry; it is blocked too and is not
             # an asset dependency. Any other external request is a failure.

@@ -31,6 +31,11 @@ particles, and ripples as the preview, and its audio includes chord-based contac
 notes. `scene.touch` records interaction settings; Mix has an objects fader.
 See [3D objects](3d-objects.md) for assumptions and scene validation.
 
+Mouse-dragged object positions appear in the composited video and configuration
+snapshots. Moved objects have `placement: "manual"` with updated support, centre,
+orientation, and surface; earlier snapshots keep their original transforms.
+Mouse dragging itself emits no musical touch event.
+
 This format preserves evidence for a future Zones importer. **It is not yet
 directly loadable in `soniqflow-m5stack-python`'s `scripts/zones_app.py`.** This
 change adds no importer and modifies no Zones source files.

@@ -7,6 +7,7 @@ export class TouchEffects {
     const s=object.size,color=mesh.material.color;
     // Distant shapes still need a burst that can be seen across the room.
     this.spread=Math.max(s,-(object.position?.[2]??object.support[2])*.12);
+    this.ringSpread=this.spread;
     mesh.material.emissive.copy(color);mesh.material.roughness=.4;mesh.material.metalness=.12;
     this.glow=new T.Mesh(mesh.geometry.clone(),new T.MeshBasicMaterial({color,side:T.BackSide,transparent:true,opacity:.07,depthWrite:true}));
     this.glow.position.copy(mesh.position);this.glow.scale.setScalar(1.12);group.add(this.glow);
@@ -26,6 +27,7 @@ export class TouchEffects {
     this.group.updateWorldMatrix(true,false);
     this.origin.fromArray(event.position);this.group.worldToLocal(this.origin);
     const s=this.object.size;
+    this.spread=Math.max(s,-(this.object.position?.[2]??this.object.support[2])*.12);
     // Launch above and around the shape, so a shoe covering the contact point
     // cannot hide the entire burst. Real foreground depth still occludes sparks.
     this.origin.clamp(new this.T.Vector3(-s*.2,s*.65,-s*.2),new this.T.Vector3(s*.2,s*1.15,s*.2));
@@ -51,7 +53,7 @@ export class TouchEffects {
     const alive=this.enabled&&age>=0&&age<duration;
     this.ring.visible=alive;
     if(alive) {
-      this.ring.scale.setScalar(1+age*3);this.ring.material.opacity=(1-age/duration)*.9;
+      this.ring.scale.setScalar((1+age*3)*this.spread/this.ringSpread);this.ring.material.opacity=(1-age/duration)*.9;
       for(let i=0;i<this.count;i++) {
         const k=i*3;
         this.positions[k]=this.origin.x+this.starts[k]+this.velocities[k]*age;

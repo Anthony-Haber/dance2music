@@ -7,6 +7,7 @@ import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
 import { SceneController } from './scene/controller.js';
+import { ScenePointerControls } from './scene/drag.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
 
@@ -315,6 +316,9 @@ function gestureActions(t) {
 let lastPreset = 'Moving = sound';
 
 const mirror = () => $('mirror').value === '1';
+const scenePointer=new ScenePointerControls(cv,scene,{mirror,onHint:message=>{
+  $('sceneDragStatus').textContent=message;$('sceneDragStatus').hidden=!message;
+}});
 
 // ── drawing ─────────────────────────────────────────────────────────
 const COL = { lhand: '#ffaa50', rhand: '#5ab4ff', lfoot: '#78dc78', rfoot: '#f078c8', head: '#ddd' };
@@ -673,7 +677,7 @@ $('source').onchange = () => { store.set('source', $('source').value);
   lockSessionOptions(); changeSource(); };
 $('cam').onchange = () => { store.set('cam', $('cam').value); changeSource(); };
 $('res').onchange = () => { store.set('res', $('res').value); changeSource(); };
-$('mirror').onchange = () => { store.set('mirror', $('mirror').value); recordConfiguration(); };
+$('mirror').onchange = () => { scenePointer.cancel();store.set('mirror', $('mirror').value); recordConfiguration(); };
 $('model').onchange = async () => { store.set('model', $('model').value);
   if (running) try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); } };
 $('out').onchange = async () => { store.set('out', $('out').value);
