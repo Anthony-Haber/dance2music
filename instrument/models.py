@@ -158,3 +158,5 @@ class Output:
     interval_candidate: int | None = None
     root_armed: bool = False
     root_feedback: str = "CENTER BOTH HANDS TO ARM"
+    ball_owner: str | None = None
+    pending_transfer: str | None = None

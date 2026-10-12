@@ -23,6 +23,7 @@ def demonstration(fps: int = 30, root_mode: str = "interval") -> Iterator[Frame]
         left, right = "Open_Palm", "Open_Palm"
         if 2 <= t < 3 or 7 <= t < 8:
             left = "Closed_Fist"
+            right = "Pointing_Up"  # Palm opposite a fist now transfers instead of locking.
         if 4 <= t < 7:
             right = "Pointing_Up"
         if 10 <= t < 12:

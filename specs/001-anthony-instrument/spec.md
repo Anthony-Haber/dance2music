@@ -23,7 +23,9 @@ Anthony confirmed the following provisional mappings during this task:
   Right Thumb_Up + left Thumb_Down = minor-major seventh; the reverse = dominant seventh.
   Right Victory + left Open_Palm = diminished seventh; the reverse = half-diminished seventh.
   Ordered pairs override supported single-hand shortcuts. Love/heart is disabled.
-- Either hand toggles root locking; nearby two fists toggle split/merge instead.
+- Fist + non-palm (or distant two fists) toggles root locking; fist + palm
+  transfers ownership from palm to fist. Nearby two fists split midpoint balls,
+  or merge split/owned balls to midpoint. All require closure/rearm safeguards.
 - Ball mode persists after reopening. Keyboard M also merges.
 - Stable reopening rearms; tracking loss requires reopening before another toggle.
 
@@ -54,6 +56,19 @@ Acceptance:
    reset is available and visible lock feedback is always displayed.
 
 ## US2 — Joseph's temporary ball and persistent split (P2, idea 1)
+
+The approved 2026-10-12 extension adds persistent one-hand transfer: a fist opposite
+an open palm assigns the single ball to the fist hand, including from split mode.
+It captures body-relative radius and gain, and leaves chord/root lock unchanged.
+Only the owning wrist and torso are needed to render/sound; loss hides/mutes and
+recovery restores ownership. Nearby two closed fists merge ownership to midpoint,
+using the same merge gesture as split mode. M/reset also clear ownership. Changed,
+uncertain or lost transfer pairs cancel pending actions. Reopen before retrying.
+Acceptance includes both body identities/crossings, one action per closure,
+split priority, nearby-fist owned merge, captured size/gain, loss and exact replay.
+Split transfer adds visible areas: squared receiver radius equals the sum of both
+prior squared radii. It removes the donor ball, retains shared gain and does not
+repeatedly accumulate energy while held. Anthony confirmed this rule on 2026-10-12.
 
 As a performer I see a glowing ball centered between tracked hands, sized by
 their separation, with fire/light styles, energy flicker and bounded sparks.

@@ -73,7 +73,9 @@ class VisualTests(unittest.TestCase):
         source = np.zeros((480, 640, 3), dtype=np.uint8)
         for index in range(101):
             t = index * 0.02
-            frame = sample(t, left="Closed_Fist" if 0.3 <= t < 1.4 else "Open_Palm")
+            frame = sample(
+                t, left="Closed_Fist" if 0.3 <= t < 1.4 else "Open_Palm", right="Pointing_Up"
+            )
             state = controller.update(frame)
             if index in (35, 55, 95):
                 with patch("instrument.visuals.cv2.putText", wraps=cv2.putText) as write:

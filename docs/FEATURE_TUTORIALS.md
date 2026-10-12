@@ -1,5 +1,14 @@
 # Feature Tutorials
 
+Start here for the current native Python instrument:
+
+- [Change roots: interval map, octaves and T mode switch](#relative-roots-and-switching-modes)
+- [Transfer the ball from palm to fist](#transfer-the-ball-to-one-hand)
+- [Split and merge the ball](#1--control-and-split-the-ball)
+- [Lock a root](#0--lock-a-chord-root)
+- [Choose chord qualities](#2--choose-roots-and-chord-qualities)
+- [Run on macOS](#native-instrument-on-macos)
+
 ## Repository layout and moved commands
 
 Run all commands from the repository root. Guides and ideas live in `docs/`;
@@ -47,26 +56,79 @@ identities even when the hands cross.
 
 ## Relative roots and switching modes
 
-**T** switches between the new default **INTERVAL** mode and the original **MIDPOINT**
-root ring. Keep the instrument window focused. To start with the ring directly:
+**The root changes are implemented in the native Python instrument.** The default
+is **INTERVAL**: each hand's position selects a signed change from the current root.
+**T** switches to the original **MIDPOINT** root ring and back. Restart the instrument
+after updates, focus its window, and check the top panel says **ROOT: INTERVAL**.
 
 ```bash
-.venv/bin/python -m instrument --camera 0 --root-mode midpoint
+.venv/bin/python -m instrument --camera 0 --root-mode interval
 ```
 
-In interval mode, hold wrists in the **L CENTER / R CENTER** circles for 0.20s.
-Then hold a direction pair for 0.35s: left hand left + right hand up = fifth up;
-both up = octave up; both down = octave down. Every move uses the current root.
-Return **both** hands to their center circles before the next change; holding a
-pose never repeats it. The top panel shows directions, candidate interval and target.
-See the [complete map and recovery rules](../specs/001-anthony-instrument/relative-root.md).
-Finger signs still choose chord quality. Root lock freezes root and octave in both
-modes; switching modes preserves current sound. R resets register/chord while
-retaining the active mode. Old replay files retain midpoint behavior.
+### First try: C → G → D
+
+1. Press **R** to reset to C3, unlocked. Use open palms or your chosen quality signs;
+   avoid fists while choosing intervals because they perform ball/lock actions.
+2. Put each wrist inside its own **L CENTER / R CENTER** circle, around chest height,
+   and hold **both** there for **0.20 seconds**. Wait for **READY — MOVE BOTH HANDS**.
+3. Move the **left hand left** from its circle and the **right hand up** from its
+   circle. Hold both directions for **0.35 seconds**. The root becomes **G3** (+7).
+4. Return **both** wrists to center for 0.20s. Repeat the same pair: G3 becomes
+   **D4** (+7 again). Every change uses the current root, so the moves accumulate.
+5. Center again, then move **both hands up** for an octave up, or **both hands down**
+   for an octave down. These shift the sounding notes by exactly 12 semitones.
+
+Use the **LEFT HAND / RIGHT HAND** readouts for hand identity. Movement directions
+follow the mirrored camera image and are measured from each hand's own center;
+crossing your hands does not swap their identities. Move clearly along one axis:
+diagonal positions are ambiguous. The top panel shows the recognized directions,
+signed interval, target note and hold progress.
+
+### Complete relative root map
+
+Rows are the **left hand's position**; columns are the **right hand's position**.
+Numbers are semitones from the current root. These are position directions,
+independent of the finger-sign table used for chord qualities below.
+
+| Left hand / Right hand | Left | Right | Up | Down |
+| --- | --- | --- | --- | --- |
+| Left | Fourth down **−5** | Fourth up **+5** | Fifth up **+7** | Fifth down **−7** |
+| Right | Whole step down **−2** | Whole step up **+2** | Half step up **+1** | Half step down **−1** |
+| Up | Minor third down **−3** | Minor third up **+3** | Octave up **+12** | Tritone down **−6** |
+| Down | Major third down **−4** | Major third up **+4** | Tritone up **+6** | Octave down **−12** |
+
+From C, +1 through +6 reach C#, D, Eb, E, F, F#; −1 through −6 reach B, Bb, A,
+Ab, G, F#. C plus these changes covers **all 12 root notes**. For example, left
+hand right + right hand down takes **C3 → B2** (−1), crossing into the lower octave.
+A fifth up (+7) and fourth down (−5) share a note name one octave apart; a fifth
+down (−7) reaches a different note name.
+
+### Repeating, switching and recovery
+
+- Return **both** hands to center before every interval. Holding a pair, or moving
+  directly to a different pair, never repeats a change. One-hand ball ownership
+  does not change this: interval controls still need both wrists.
+- Root lock freezes root and octave in both modes; quality remains editable.
+  Fist + non-palm or two distant fists toggles lock. **Fist + palm transfers to the fist.**
+- Missing wrists/body points, fist controls or tracking gaps cancel pending
+  intervals. Return to center after recovery. A register-limit warning refuses
+  the change; center and choose an interval toward the playable range.
+- **T** preserves root/register/quality/lock and ball ownership. In **MIDPOINT**,
+  move the hands' midpoint to a labeled sector and hold 0.35s. Press T again for
+  intervals, then center both hands to rearm. To start with the ring directly,
+  use `--root-mode midpoint`.
+- **R** resets chord/register/lock/ball while retaining the active root mode.
+  Old replay files without mode metadata use midpoint root selection; old fist+palm
+  lock recordings now use the current transfer behavior.
+
+The [design reference](../specs/001-anthony-instrument/relative-root.md) records
+zone thresholds, register bounds and replay details. The automated checks cover
+all 16 pairs at every root, all 300 chords, signed/octave sound changes and recovery.
+Live camera recognition and performer comfort still need a trial.
 
 **Split/merge:** reopen to arm, then close both fists within **1.0 torso length**
-(previously 0.6). Hold until recognized; reopen before repeating to merge. This wider
-threshold applies to both directions; fists farther apart still toggle root lock.
+(previously 0.6). From midpoint this splits; from split or owned mode it merges to
+midpoint. Hold until recognized; reopen before repeating. Fists farther apart toggle root lock.
 If a custom `--config` supplies `split_torsos`, it overrides this new default.
 
 ## Spec Kit on macOS and Windows
@@ -134,7 +196,8 @@ Fresh-machine setup: [quickstart](../specs/001-anthony-instrument/quickstart.md)
 ## 0 — Lock a chord root
 
 1. Select a root with interval controls above, or press T to use the ring. Keep your hands apart.
-2. Close either fist and hold about **0.60 seconds** to lock the root.
+2. Close either fist while the other hand shows a non-palm sign (such as Point),
+   or close both fists while apart. Hold about **0.60 seconds** to lock the root.
    The display confirms **ROOT LOCKED**; it stays visible when you reopen.
    Detection matches web/main's **far** mode: alternating wrist crops, a 0.5
    confidence threshold, and 0.35 seconds to confirm label changes. The first line
@@ -143,9 +206,9 @@ Fresh-machine setup: [quickstart](../specs/001-anthony-instrument/quickstart.md)
    must first be consistently recognized for 0.35s. Joint shape does not override
    None. Missing detections are tolerated for 0.4s, then gesture actions cancel.
 3. Reopen. Move freely or change chord quality; the root stays locked.
-4. Close a fist again to unlock. Reopen between each toggle.
+4. Repeat that fist/non-palm or distant two-fist gesture to unlock. Reopen between toggles.
 
-Nearby two fists toggle split/merge instead of root lock.
+Nearby two fists split/merge instead of root lock; fist + palm transfers the ball.
 
 ## 1 — Control and split the ball
 
@@ -160,7 +223,47 @@ Nearby two fists toggle split/merge instead of root lock.
 - Repeat the same nearby two-fist gesture to **merge into one ball**. Reopen
   between gestures; holding fists produces only one change. The panel confirms
   **ONE BALL** after merging. Both directions preserve the chord and root lock.
-- Press **M** to merge; reopen before another split. **S** switches fire/light appearance.
+- Press **M** to return to the midpoint; reopen before another split or transfer.
+  **S** switches fire/light appearance.
+
+### Transfer the ball to one hand
+
+1. Reopen to arm. Close one fist while the other hand shows **Open Palm**.
+   Hold about **0.60 seconds** (0.35s confirmed closure + 0.25s arbitration).
+   The ball transfers **from the palm to the closed fist**; the panel shows
+   **ONE BALL: LEFT/RIGHT HAND** for the fist hand.
+2. Relax or move the owning hand: the ball stays attached to its wrist. Size and
+   loudness are captured at transfer; changing the other hand's distance has no
+   effect. Radius follows torso scale if you move toward/away from the camera.
+   The other wrist can leave view. Missing owning wrist or torso hides/mutes the
+   ball; tracking recovery restores it without changing ownership.
+3. Reopen, then reverse fist/palm to transfer to the other fist hand. This also collects
+   two split balls into that fist. Transfer preserves root lock and chord;
+   normal root/quality controls remain available afterward.
+4. To return to the midpoint, **close both fists and bring them within 1.0 torso
+   length**. This is the same merge gesture used for split balls. Held fists merge
+   once; reopen before the next action. From midpoint, the next nearby two-fist
+   closure splits into two balls. **M** also returns to midpoint; **R** resets.
+
+Both labels must be reliable. If the pair changes or tracking drops during
+arbitration, transfer cancels; reopen before retrying. Nearby fists take priority
+over a pending transfer. Fist + palm does **not** toggle root lock.
+
+### Collect energy from split balls
+
+Start in **TWO BALLS**, then reopen to arm. Keep the donating hand an **open palm**
+and close the receiving hand into a **fist**. Hold about 0.60s: the palm's ball
+disappears and the fist's ball grows to contain both. The HUD changes to
+**ONE BALL: LEFT/RIGHT HAND**. This works in either direction.
+
+The balls' **visible areas add**, conserving their combined energy. The new radius
+is `sqrt(receiver_radius² + donor_radius²)`: two radius-40 balls become one of
+radius about **57**. Two equal balls produce a receiver about **1.41×** their
+individual radius. Their existing shared loudness stays the same.
+
+Size and loudness are captured once at transfer; continuing to hold the pair
+does not repeatedly grow the ball. Reopen before another action. Both nearby
+closed fists return the collected ball to midpoint, using the same merge control.
 
 ## 2 — Choose roots and chord qualities
 

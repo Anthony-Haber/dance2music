@@ -116,6 +116,7 @@ class Renderer:
         self.particles: list[Particle] = []
         self.previous_time: float | None = None
         self.previous_split: bool | None = None
+        self.previous_owner: str | None = None
 
     def draw(
         self, image: NDArray[np.uint8], frame: Frame, state: Output, latency_ms: float = 0
@@ -136,9 +137,14 @@ class Renderer:
             0 if self.previous_time is None else min(0.1, max(0, frame.time_s - self.previous_time))
         )
         self.previous_time = frame.time_s
-        if not state.balls or state.split != self.previous_split:
+        if (
+            not state.balls
+            or state.split != self.previous_split
+            or state.ball_owner != self.previous_owner
+        ):
             self.particles.clear()
         self.previous_split = state.split
+        self.previous_owner = state.ball_owner
         color = root_color(state.root)
         for ball in state.balls:
             flicker = (
@@ -355,12 +361,19 @@ class Renderer:
         _label(image, f"{state.symbol}   {lock_status}", (16, 36), 1.0, (150, 230, 180))
         status = "BODY / WRISTS READY" if state.balls else "BODY / WRISTS INCOMPLETE"
         mode = "TWO BALLS" if state.split else "ONE BALL"
+        if state.ball_owner is not None:
+            side = "LEFT" if state.ball_owner == "L" else "RIGHT"
+            mode = f"ONE BALL: {side} HAND"
+            status = f"{side} HAND READY" if state.balls else f"{side} HAND / BODY NOT SEEN"
+        if state.pending_transfer is not None:
+            side = "LEFT" if state.pending_transfer == "L" else "RIGHT"
+            status = f"TRANSFERRING TO {side} HAND..."
         _label(image, f"{mode} | gain {state.gain:.0%} | {latency_ms:.1f} ms", (16, 68), 0.65)
         _label(image, status, (16, 100), 0.65)
         for y, line in (
-            (132, "Nearby fists: split/merge | M: merge"),
+            (132, "Fist+palm: transfer | Near fists: split/merge"),
             (164, "T: root mode | R: reset | S: style | Q: quit"),
-            (196, "25 hand pairs | Point: index up"),
+            (196, "M: midpoint | 25 pairs | Point: index up"),
             (
                 228,
                 f"Both hands | Palms {self.config.major_dwell_s:g}s: major | Unknown: hold",

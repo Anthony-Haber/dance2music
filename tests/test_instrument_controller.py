@@ -75,9 +75,9 @@ class ControllerTests(unittest.TestCase):
 
     def test_lock_quality_unlock_and_fresh_dwell(self) -> None:
         self.assertEqual(self.hold(0.5).root, 7)
-        locked = self.hold(0.8, left="Closed_Fist")
+        locked = self.hold(0.8, left="Closed_Fist", right="Pointing_Up")
         self.assertTrue(locked.locked)
-        self.assertTrue(self.hold(1, left="Closed_Fist").locked)
+        self.assertTrue(self.hold(1, left="Closed_Fist", right="Pointing_Up").locked)
         moved = self.hold(0.6, root=2, right="Pointing_Up")
         self.assertEqual((moved.root, moved.quality, moved.locked), (7, "minor", True))
         unlocked = self.hold(0.65, root=2, left="Closed_Fist", right="Pointing_Up")
@@ -106,7 +106,7 @@ class ControllerTests(unittest.TestCase):
 
     def test_ordered_thumb_pairs_select_distinct_sevenths_while_root_locked(self) -> None:
         self.hold(0.5)
-        self.hold(0.8, left="Closed_Fist")
+        self.hold(0.8, left="Closed_Fist", right="Pointing_Up")
         self.assertTrue(self.controller.locked)
         for left, right, quality, symbol, pitch_classes in (
             ("Thumb_Down", "Thumb_Up", "minor_major7", "Gm(maj7)", {7, 10, 2, 6}),
@@ -193,23 +193,23 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(result.events, ())
 
     def test_startup_fist_and_loss_cannot_create_closure(self) -> None:
-        self.assertFalse(self.hold(1, left="Closed_Fist").locked)
+        self.assertFalse(self.hold(1, left="Closed_Fist", right="Pointing_Up").locked)
         self.hold(0.4)
-        self.assertTrue(self.hold(0.8, left="Closed_Fist").locked)
+        self.assertTrue(self.hold(0.8, left="Closed_Fist", right="Pointing_Up").locked)
         self.t += 0.01
         missing = self.controller.update(Frame(self.t))
         self.assertEqual(missing.gain, 0)
-        self.assertTrue(self.hold(1, left="Closed_Fist").locked)
+        self.assertTrue(self.hold(1, left="Closed_Fist", right="Pointing_Up").locked)
         self.hold(0.4)
-        self.assertFalse(self.hold(0.8, left="Closed_Fist").locked)
+        self.assertFalse(self.hold(0.8, left="Closed_Fist", right="Pointing_Up").locked)
 
     def test_flicker_and_unknown_do_not_toggle_or_rearm(self) -> None:
         self.hold(0.5)
-        self.hold(0.2, left="Closed_Fist")
+        self.hold(0.2, left="Closed_Fist", right="Pointing_Up")
         self.assertFalse(self.hold(0.3).locked)
-        self.assertTrue(self.hold(0.8, left="Closed_Fist").locked)
+        self.assertTrue(self.hold(0.8, left="Closed_Fist", right="Pointing_Up").locked)
         self.hold(0.4, left="None")
-        self.assertTrue(self.hold(0.8, left="Closed_Fist").locked)
+        self.assertTrue(self.hold(0.8, left="Closed_Fist", right="Pointing_Up").locked)
 
     def test_far_two_fists_coalesce(self) -> None:
         self.hold(0.5)
@@ -255,7 +255,7 @@ class ControllerTests(unittest.TestCase):
 
     def test_near_split_preserves_existing_lock(self) -> None:
         self.hold(0.5)
-        self.hold(0.8, left="Closed_Fist")
+        self.hold(0.8, left="Closed_Fist", right="Pointing_Up")
         self.hold(0.5, near=True)
         output = self.hold(0.8, left="Closed_Fist", right="Closed_Fist", near=True)
         self.assertTrue(output.locked)
@@ -263,11 +263,13 @@ class ControllerTests(unittest.TestCase):
 
     def test_low_score_gap_reset_and_invalid_timing(self) -> None:
         self.hold(0.5)
-        self.assertFalse(self.hold(0.8, left="Closed_Fist", score=0.1).locked)
+        self.assertFalse(self.hold(0.8, left="Closed_Fist", right="Pointing_Up", score=0.1).locked)
         self.hold(0.4)
-        self.hold(0.4, left="Closed_Fist")
+        self.hold(0.4, left="Closed_Fist", right="Pointing_Up")
         self.t += 2
-        self.assertFalse(self.controller.update(sample(self.t, left="Closed_Fist")).locked)
+        self.assertFalse(
+            self.controller.update(sample(self.t, left="Closed_Fist", right="Pointing_Up")).locked
+        )
         with self.assertRaises(ValueError):
             self.controller.update(sample(self.t))
         self.controller.reset()
@@ -283,12 +285,12 @@ class ControllerTests(unittest.TestCase):
 
     def test_pending_closure_is_cancelled_by_low_confidence(self) -> None:
         self.hold(0.5)
-        pending = self.hold(0.4, left="Closed_Fist")
+        pending = self.hold(0.4, left="Closed_Fist", right="Pointing_Up")
         self.assertTrue(pending.pending_lock)
-        lost = self.hold(0.3, left="Closed_Fist", score=0.1)
+        lost = self.hold(0.3, left="Closed_Fist", right="Pointing_Up", score=0.1)
         self.assertFalse(lost.locked)
         self.assertFalse(lost.pending_lock)
-        self.assertFalse(self.hold(0.8, left="Closed_Fist").locked)
+        self.assertFalse(self.hold(0.8, left="Closed_Fist", right="Pointing_Up").locked)
 
     def test_pair_selects_extended_chord_and_missing_pose_is_silent(self) -> None:
         output = self.hold(0.5, left="Pointing_Up", right="Thumb_Up")
@@ -312,7 +314,7 @@ class ControllerTests(unittest.TestCase):
 
     def test_every_pair_changes_quality_without_moving_locked_root(self) -> None:
         self.hold(0.5)
-        self.hold(0.8, left="Closed_Fist")
+        self.hold(0.8, left="Closed_Fist", right="Pointing_Up")
         for (left, right), quality in QUALITY_PAIRS.items():
             result = self.hold(1.6 if quality == "major" else 0.5, left=left, right=right, root=2)
             with self.subTest(left=left, right=right):

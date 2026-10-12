@@ -48,7 +48,8 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
 - In **midpoint mode**, move the hands' midpoint into a root sector: C at screen right, then C#, D,
   Eb, E, F, F#, G, Ab, A, Bb, B clockwise. Hold 0.35 seconds. The center dead
   zone holds your root. Root labels are guides; sectors extend beyond the labels.
-- Close either fist for 0.35 seconds; the controller waits another 0.25 seconds
+- Close either fist while the other hand shows a non-palm sign, or close both
+  fists while apart, for 0.35 seconds; the controller waits another 0.25 seconds
   for a nearby second fist. One deliberate closure toggles root locking. Reopen
   stably before the next toggle. Root is captured at stable closure, not after
   the arbitration delay. Both distant fists count as one action in that window.
@@ -80,17 +81,33 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   spread your hands to see both. Reopen, then repeat the same nearby two-fist
   gesture to merge: the HUD returns to ONE BALL. Holding fists changes mode once;
   reopening alone preserves it. Both directions preserve the chord and root lock.
-  M also merges and requires reopening before another split.
+  M also merges and requires reopening before another split or transfer.
+- **Fist + open palm transfers from palm to fist** after closure/arbitration,
+  without toggling root lock. The ball stays attached after relaxing; the HUD
+  identifies its owner. Size (in torso units) and loudness are captured at transfer.
+  Reopen and reverse the pair to transfer back, including collecting split balls.
+  In split mode the fist absorbs the palm ball's area: two radius-40 balls become
+  one of radius ~57. Shared gain is retained; held gestures cannot repeatedly grow it.
+  **Both closed fists within 1.0 torso length merge an owned ball to midpoint**,
+  using the same merge gesture as split mode. M returns to midpoint; R resets.
+  Missing owner/torso hides and mutes the ball; the other wrist is optional.
+  Pair changes/loss during arbitration cancel transfer; reopen to retry.
+  Older recordings using fist+palm for root lock now replay as transfers;
+  record fist/non-palm or distant two fists for lock/unlock with this version.
+  Saved old state logs can therefore differ even though frame files remain readable.
+  The receiver is now the fist; recordings made with the earlier palm receiver
+  likewise replay with the corrected ownership direction.
 - T switches root mode; R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
 - Body/wrist loss silences sound with a short fade and hides unavailable visuals.
   Hand-detail loss retains the last detection for up to 0.4 seconds, as in web/main,
   then cancels pending gesture actions while body wrists can keep the ball/sound active.
-  Both preserve chord/lock/split. Reopen to rearm after gesture loss.
+  Both preserve chord/lock/ball mode/owner. Reopen to rearm after gesture loss.
 
 The sphere gain follows wrist radius / torso length / 0.75, clamped to [0,1],
 raised to exponent 1.5. The smaller reference radius and higher synth level make
 ordinary hand spacing about 21 dB louder than the original prototype. Closing the
-hands still fades toward silence. Split shares the gain and does not double it.
+hands still fades toward silence in midpoint/split modes. Split shares the gain
+and does not double it. One-hand mode retains the captured gain.
 `--volume` scales both playback and WAV exports in [0,1]. `--config` can override
 the dataclass defaults, e.g.:
 

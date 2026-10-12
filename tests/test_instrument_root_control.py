@@ -84,6 +84,66 @@ class RootControlTests(unittest.TestCase):
         self.hold()
         self.assertEqual(self.hold("right", "right").root_midi, 57)
 
+    def test_tutorial_fifths_accumulate_and_downward_intervals_preserve_register(self) -> None:
+        initial = self.hold()
+        fifth = self.hold("left", "up")
+        self.assertEqual((fifth.symbol, fifth.root_midi), ("Gaug", 55))
+        self.hold()
+        second_fifth = self.hold("left", "up")
+        self.assertEqual((second_fifth.symbol, second_fifth.root_midi), ("Daug", 62))
+        self.assertEqual(second_fifth.notes, tuple(n + 14 for n in initial.notes))
+        self.hold()
+        down = self.hold("right", "down")
+        self.assertEqual((down.root, down.root_midi), (1, 61))
+        self.hold()
+        octave_down = self.hold("down", "down")
+        self.assertEqual((octave_down.root, octave_down.root_midi), (1, 49))
+        self.assertEqual(octave_down.notes, tuple(n + 1 for n in initial.notes))
+
+    def test_interval_octave_and_mode_changes_preserve_fist_owned_ball_and_lock(self) -> None:
+        self.hold()
+        for _ in range(20):
+            self.t += 0.04
+            frame = position_frame(self.t)
+            frame = replace(
+                frame,
+                hands=(
+                    replace(frame.hands[0], gesture="Closed_Fist"),
+                    replace(frame.hands[1], gesture="Open_Palm"),
+                ),
+            )
+            attached = self.controller.update(frame)
+        self.assertEqual(attached.ball_owner, "L")
+        self.assertFalse(attached.locked)
+        self.hold()
+        fifth = self.hold("left", "up")
+        self.assertEqual(fifth.notes, tuple(n + 7 for n in attached.notes))
+        self.hold()
+        octave = self.hold("up", "up")
+        self.assertEqual(octave.notes, tuple(n + 19 for n in attached.notes))
+        self.assertEqual((octave.root_midi, octave.ball_owner), (67, "L"))
+        self.assertEqual(octave.gain, attached.gain)
+        self.assertEqual(octave.balls[0].radius, attached.balls[0].radius)
+        self.controller.toggle_root_mode()
+        midpoint = self.hold()
+        self.assertEqual(midpoint.root_mode, "midpoint")
+        self.assertEqual(midpoint.notes, octave.notes)
+        self.assertEqual(midpoint.ball_owner, "L")
+        for _ in range(20):
+            self.t += 0.04
+            frame = position_frame(self.t)
+            frame = replace(
+                frame, hands=(replace(frame.hands[0], gesture="Closed_Fist"), frame.hands[1])
+            )
+            locked = self.controller.update(frame)
+        self.assertTrue(locked.locked)
+        self.controller.toggle_root_mode()
+        self.hold()
+        blocked = self.hold("down", "down")
+        self.assertEqual(blocked.notes, octave.notes)
+        self.assertEqual(blocked.ball_owner, "L")
+        self.assertTrue(blocked.locked)
+
     def test_all_catalogue_chords_transpose_without_losing_quality_or_tones(self) -> None:
         for quality in INTERVALS:
             for root in range(12):

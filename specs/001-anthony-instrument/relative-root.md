@@ -12,6 +12,10 @@ Replay frame metadata takes precedence over startup mode. This is native Python 
 Each position is relative to that hand's own chest-height origin. Directions use
 mirrored screen axes; hand identity follows corrected body joints across crossings.
 Finger signs still select chord quality independently.
+The full map and C → G → D walkthrough are also in
+[Feature Tutorials](../../docs/FEATURE_TUTORIALS.md#relative-roots-and-switching-modes).
+One-hand ball mode still needs both wrists for intervals; fist+palm transfers to
+the fist and blocks interval input until both hands return to neutral.
 
 | Left-hand direction / right-hand direction | Left | Right | Up | Down |
 | --- | --- | --- | --- | --- |

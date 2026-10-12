@@ -1,6 +1,6 @@
 # Anthony's Vision for dance2music
 
-Last updated: 2026-10-11. This is a living vision and planning document for Anthony to revise.
+Last updated: 2026-10-12. This is a living vision and planning document for Anthony to revise.
 It records desired behavior, existing capabilities, accepted decisions, and possible design flaws.
 Suggestions and open questions are not approved implementation choices.
 
@@ -23,6 +23,10 @@ New live features therefore need a genuine local Python implementation before an
 in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
 nearby-fist split/merge, and all 12 roots with 25 ordered hand-pair quality selections.
 Anthony approved the complete pair map and fuller five/six-note voicings on 2026-10-11.
+On 2026-10-12, he added relative interval root control with T switching modes,
+and persistent fist+palm transfer to one hand. Nearby closed fists merge an owned
+ball back to midpoint, using the same gesture as split-ball merge; proximity is
+now 1.0 torso length. Transfer retains captured size/gain and preserves root lock.
 See [quickstart](../specs/001-anthony-instrument/quickstart.md),
 [spec/tasks](../specs/001-anthony-instrument/tasks.md),
 [decisions for review](../specs/001-anthony-instrument/decisions.md), and
@@ -36,10 +40,11 @@ remain future work. The website has not been translated or changed by this featu
 Checked means the agreed **local Python prototype scope is implemented and tested**.
 It does not mean the full future vision or performer acceptance is complete.
 
-- [x] **0 — Persistent fist root lock:** either hand toggles root-only lock;
+- [x] **0 — Persistent fist root lock:** fist + non-palm or distant two fists toggles root-only lock;
   reopening rearms, quality remains editable, and nearby split takes priority.
 - [x] **1 — Agreed temporary 2D ball and basic two-ball mode:** Joseph-inspired
-  fire/light glow, wrist geometry, sparks, persistent nearby-fist split and M merge.
+  fire/light glow, wrist geometry, sparks, nearby-fist split/merge, persistent
+  one-hand transfer and M return to midpoint.
   True 3D remains deferred as agreed.
 - [x] **2 — Musical catalogue:** all 12 roots × 25 absolute qualities
   (300 chords), bounded voice leading, visible chord feedback and local synthesis.
@@ -55,7 +60,7 @@ The following concrete limitations and acceptance work remain:
   it verified capture/inference, not gesture usability.
 - [ ] **Timing and proximity tuning after that trial:** review the approximately
   0.60-second fist response, 0.35-second dwell, 0.20-second rearm/gap limits and
-  0.6-torso split distance. Their current values are provisional.
+  1.0-torso split distance. Their current values need performer validation.
 - [ ] **Distant/occluded hands:** assess recognition when hands are small, close
   together or crossing. Wrist-centered crops now follow the browser approach;
   gesture accuracy with a performer still needs review.

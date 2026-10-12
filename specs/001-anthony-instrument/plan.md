@@ -43,6 +43,20 @@ Only Stage 1 Python is authorized. Stage 2 JavaScript remains deferred.
 
 ## Implementation strategy
 
+### One-hand transfer, 2026-10-12
+
+Add persistent owner/captured normalized radius/gain to the pure controller, and
+append owner/pending-transfer metadata to outputs. Use the fist as receiver, per
+Anthony's direction correction. Arbitrate fist+palm against nearby fists using
+existing timing, cancel changed/lost pairs, and consume
+each closure once. Keep geometry and gain usable with only the owning wrist;
+M/reset/nearby-fist merge clear ownership. First verify existing two-fist split/merge;
+then cover owned-to-midpoint with the same gesture. Display owner/progress in the HUD
+and clear particle trails on owner changes. Test both identities, split/lock
+priority, loss/recovery, captured geometry, replay and rendering; measure p95
+against the 5ms core budget and inspect previews. Update usage/status/evidence and
+refresh the local AST graph once. No new top-level files or website changes.
+
 ### Approved expansion, 2026-10-11
 
 The [approved 25-cell map](chord-map.md) supersedes earlier six/eight-quality

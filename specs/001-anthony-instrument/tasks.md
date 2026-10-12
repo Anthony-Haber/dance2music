@@ -140,3 +140,21 @@ Engineering completion is separate from performer acceptance.
   and update feature status.
 - [ ] T043 Performer camera/listening trial for relative directions, threshold
   comfort, far-readable HUD and wider split/merge.
+
+## Persistent hand transfer: 2026-10-12
+
+- [X] T044 Record approved ownership persistence, captured size/gain and unchanged
+  lock; confirm nearby fists merge owned balls to midpoint like split-ball merge.
+- [X] T045 First verify current nearby-fist split/merge, including staggered and
+  held closures. Implement transfer arbitration, cancellation and one-hand geometry.
+- [X] T046 Display owner/pending transfer/loss and clear old particle trails;
+  update root-lock fixtures/demo to use non-palm signs for locking.
+- [X] T047 Test identity/crossing, transfer back, split consolidation, common merge,
+  proximity boundaries, one-action closures, loss/recovery and exact exported replay.
+- [X] T048 Run tests/lint/format/types, inspect previews, measure core latency,
+  record evidence/tutorial/status and refresh the local AST graph once.
+- [ ] T049 Performer camera trial for transfer and nearby two-fist return, plus
+  listening acceptance for retained loudness when the other hand leaves view.
+- [X] T050 Confirm approved area-conserving split-energy collection in both
+  directions at four sizes; verify one-time growth, donor removal and common merge,
+  update energy-transfer tutorial and evidence, and run final validation.

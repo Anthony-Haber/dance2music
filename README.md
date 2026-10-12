@@ -51,7 +51,7 @@ for relocated dependency files and the model setup command.
 | `web/methods.html`, `web/about.html` | the math of everything, as a drawer and as a standalone page |
 | `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
-| `instrument/` | Anthony's native Python prototype: persistent root lock, glowing/split ball, 12 roots and 25 chord qualities |
+| `instrument/` | Anthony's native Python prototype: root lock, glowing/split/one-hand ball, 12 roots and 25 chord qualities |
 | `IDEAS.md` | ideas not built yet |
 | `docs/ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
 | `docs/explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |

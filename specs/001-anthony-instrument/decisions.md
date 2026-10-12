@@ -1,5 +1,33 @@
 # Decisions made during ideas 0–2 implementation
 
+## Persistent one-hand transfer, 2026-10-12
+
+Anthony accepted persistent ownership and captured size/gain after requesting
+fist + palm alongside split/merge. He then explicitly corrected the direction:
+the ball must transfer **from palm to fist**, superseding the initial palm receiver.
+After reopening to arm, a confirmed
+fist opposite an open palm transfers the single ball to the fist's body hand ID.
+This consumes the closure without toggling root lock. Keep the 0.35s closure and
+0.25s arbitration window so nearby fists can still take priority. A changing or
+lost transfer pair cancels the action; reopen before retrying.
+
+Ownership persists after relaxing and across tracking loss. M restores the midpoint;
+nearby fists merge the owned ball back to midpoint, just as they merge split balls.
+Anthony explicitly confirmed this common return gesture: both fists must be closed
+and within 1.0 torso length. From midpoint, the next nearby closure splits the ball.
+Reset clears ownership. A transfer from split consolidates both balls into the
+fist hand. Capture radius in torso units and gain at transfer, preserving apparent
+body-relative size and loudness without requiring the other wrist. A missing owner
+or torso hides the ball and mutes it; recovery resumes the same owner and values.
+Fist + a recognized non-palm sign (or two distant fists) still toggles root lock.
+Transfer preserves chord and lock; root and quality controls otherwise keep working.
+
+Anthony explicitly confirmed area conservation for split-ball energy transfer:
+add the two visible disc areas, not their radii. New radius is
+`sqrt(receiver_radius² + donor_radius²)`; two radius-40 balls yield radius ~57.
+The donor disappears, the receiver belongs to the fist, and shared gain is retained.
+Capture once per deliberate closure; held gestures cannot repeatedly inflate energy.
+
 ## Relative root control and mode switch, 2026-10-12
 
 Anthony approved the [signed interval map](relative-root.md) as the default instead

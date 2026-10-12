@@ -1,5 +1,85 @@
 # Validation evidence: local Python instrument
 
+## Split-ball energy collection, 2026-10-12
+
+- Anthony approved combining visible areas, preserving the existing split-energy
+  rule. Current runtime already collects both split balls into the fist using
+  `sqrt(sum(radius²))`; no new radius/gain behavior was needed.
+- Added 8 public-gesture cases: both receivers at gaps 60/90/180/300px with a
+  100px torso. Each starts with actual nearby-fist split and reopening, transfers
+  palm → fist, verifies donor removal and exact combined squared radius, retains
+  gain/notes, holds for 2s without repeated growth, then uses nearby fists to merge.
+- Final suite: **121 passed, 2 optional skips, 242 subtests passed**. Ruff lint/format,
+  mypy and whitespace checks pass. Both receiver previews inspected/generated in
+  `output/anthony-instrument/energy-transfer/`: two radius-31.82 balls become one
+  of radius 45.00; gain stays 0.465. This illustrates the approved area rule.
+- Tutorial and design/spec/quickstart explicitly explain split-energy collection
+  and radius-40 + radius-40 → radius ~57. Gesture-model and audio-device behavior
+  are unchanged; live camera/listening acceptance remains pending. Local AST graph
+  refreshed after the additional validation cases; no API cost or external actions.
+
+## Root recheck and palm-to-fist correction, 2026-10-12
+
+- Anthony requested clearer root tutorials and a complete verification, then
+  corrected transfer direction to palm → fist. Updated receiver binding, symmetric
+  ownership/loss/UI tests and all current usage/spec/decision references. Earlier
+  hand-transfer evidence below records the superseded palm receiver behavior.
+- Expanded Feature Tutorials with top navigation, the complete 16-cell position
+  map, C3 → G3 → D4 example, signed downward/octave steps, rearming, T switching,
+  recovery and one-hand-mode interaction. Checked all 16 published cells against
+  the implemented map; they match. Design reference links back to this tutorial.
+- Full final suite: **113 passed, 2 optional skips, 242 subtests passed**. Ruff
+  lint/format, mypy and whitespace checks pass. New integration checks verify
+  cumulative fifths/downward register changes and signed/octave/T/lock controls
+  while the ball belongs to a fist. Existing cases cover all 192 pair/root cases,
+  all 4,800 catalogue transpositions, real audio octaves, bounds, dropouts and T/t.
+- Reproduced the previous receiver binding in an isolated copy of the controller:
+  L fist used to produce R ownership, R fist L ownership; corrected code produces
+  ownership of the closed fist in both cases. No working files were reverted.
+- Two full 15-second native headless demos (20Hz) passed: interval ends at A3,
+  midpoint at D3; lock/unlock/quality/split events occur. All **600 exported states**
+  replay exactly with recorded configuration. Core p95 0.0304/0.0320ms, below 5ms.
+- Corrected transfer replay: 380 frames/50Hz, events transfer:L, transfer:R, merge,
+  split, merge; all states replay exactly. Owning-wrist-only WAV segments remain
+  non-silent. Inspected corrected fist-owner and root/split previews. Artifacts
+  are under `output/anthony-instrument/root-review/`; no audible acceptance claimed.
+- Local model smoke passed (two blank frames 19.15ms, zero detected hands expected).
+  This confirms model loading/inference, not camera gesture recognition. Live
+  camera, comfort, end-to-end latency and listening acceptance remain pending.
+- Local AST graph refreshed after the correction: 1,432 nodes, 2,449 edges,
+  154 communities, no API cost.
+
+## Persistent hand transfer and shared merge, 2026-10-12
+
+- First ran existing nearby-fist split/merge cases: 7 tests and 3 subtests passed,
+  covering 0.9/1.0 torso proximity, staggered confirmation, held fists approaching
+  and repeated reopen cycles. Anthony then confirmed owned balls must use that
+  same nearby two-fist gesture to merge to midpoint, rather than directly split.
+- Final suite: **111 passed, 2 optional tests skipped, 242 subtests passed**.
+  Transfer adds 20 cases for both identities, crossing/reordered observations,
+  captured size/gain, missing other wrist, owner/torso loss/recovery, transfer back,
+  preserved lock, M/reset, split consolidation, common merge and 1.0-torso boundary,
+  one-action closures, changed/uncertain/lost pairs, gaps and both root-mode replays.
+  Ruff lint/format, mypy and whitespace checks pass.
+- Native CLI exported a 380-frame, 7.6-second replay at 50Hz, including right-only
+  and left-only tracking. All exported output states replay exactly. Events are
+  transfer:R, transfer:L, merge, split, merge; final state is unlocked midpoint C.
+  AVI/WAV/frame/state exports and inspected pending/owner/merged/split previews
+  are under `output/anthony-instrument/hand-transfer/`.
+  Exported WAV remains non-silent during right-only tracking (1.25–1.55s, RMS
+  0.1315) and left-only tracking (2.85–3.15s, RMS 0.1341); not manually listened to.
+- Inspected 640px owner/midpoint previews: ownership and ready status remain
+  readable, the owner ball stays visible with the other hand absent, and nearby
+  fists return it to a single midpoint ball. Owner changes clear old spark trails.
+- Pure controller benchmark: 30 repeats of the same 380 frames (11,400 total,
+  no randomness), p95 **0.0078ms**, maximum **0.1461ms**, within the **5ms** budget.
+  CLI export p95 core 0.0327ms and render 2.852ms; this excludes live CV inference.
+  Python 3.11.17, NumPy 2.4.1, OpenCV 5.0.0; parameters/sequence/events/metrics are
+  recorded in validation.json and export/summary.json in that artifact directory.
+- Local AST graph refreshed once: 1,425 nodes, 2,439 edges, 155 communities, no API cost.
+  Local implementation only. Automated tests establish gesture-label behavior;
+  live camera recognition, performer comfort and listening acceptance remain pending.
+
 ## Relative root modes and wider split, 2026-10-12
 
 - Approved behavior is recorded in [relative-root.md](relative-root.md): interval

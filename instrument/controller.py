@@ -74,6 +74,8 @@ class Controller:
         self.mode_changed = False
         self.notes = voice_lead((), self.chord)
         self.locked = self.split = False
+        self.ball_owner: str | None = None
+        self.owned_radius_torsos = self.owned_gain = 0.0
         self.last_time: float | None = None
         self._clear_transients()
 
@@ -82,6 +84,7 @@ class Controller:
         self.root_dwell, self.quality_dwell, self.major_dwell = Dwell(), Dwell(), Dwell()
         self.interval_selector = IntervalSelector()
         self.pending_since: float | None = None
+        self.pending_transfer: str | None = None
         self.pending_sides: set[str] = set()
         self.pending_root = self.chord.root
         self.pending_root_midi = self.root_midi
@@ -102,9 +105,11 @@ class Controller:
     def merge(self) -> None:
         """Keyboard merge control, independent of chord and lock."""
         self.split = False
+        self.ball_owner = None
         # A merge while both fists are held must not immediately split again.
         self.split_requested = False
         self.pending_since = None
+        self.pending_transfer = None
         for gate in self.gates.values():
             gate.closure_triggered = False
 
@@ -150,10 +155,28 @@ class Controller:
             and math.dist(hands["L"].wrist, hands["R"].wrist)
             <= self.config.split_torsos * frame.torso_px
         )
+        transfer_target = (
+            "L"
+            if gestures.get("L") == "Closed_Fist" and gestures.get("R") == "Open_Palm"
+            else "R"
+            if gestures.get("R") == "Closed_Fist" and gestures.get("L") == "Open_Palm"
+            else None
+        )
+        if self.pending_since is not None and (
+            transfer_target != self.pending_transfer
+            or (
+                self.pending_transfer is not None
+                and any(gestures.get(side) != "Closed_Fist" for side in self.pending_sides)
+            )
+        ):
+            # A different pair during arbitration requires a fresh closure.
+            # Nearby fists still use the held closure's split eligibility below.
+            self.pending_since = None
         if closures and self.pending_since is None:
             self.pending_since, self.pending_root = now, self.chord.root
             self.pending_root_midi = self.root_midi
             self.pending_sides = set(closures)
+            self.pending_transfer = transfer_target
             self.root_dwell = Dwell()
         elif closures:
             self.pending_sides.update(closures)
@@ -166,7 +189,10 @@ class Controller:
             if self.split_requested and all(
                 gate.stable_closed(now, self.config.close_s) for gate in self.gates.values()
             ):
-                self.split = not self.split
+                # The same nearby-fist gesture returns either attached mode
+                # (one owning hand or two split hands) to the midpoint.
+                self.split = False if self.ball_owner is not None else not self.split
+                self.ball_owner = None
                 events.append("split" if self.split else "merge")
                 self.split_requested = False
                 for gate in self.gates.values():
@@ -176,13 +202,17 @@ class Controller:
             if self.pending_since is not None and (
                 now - self.pending_since + 1e-9 >= self.config.arbitration_s
             ):
-                self.locked = not self.locked
-                if self.locked:
-                    self.chord = Chord(self.pending_root, self.chord.quality)
-                    self.root_midi = self.pending_root_midi
+                if self.pending_transfer is not None:
+                    self._transfer(frame, self.pending_transfer)
+                    events.append(f"transfer:{self.pending_transfer}")
+                else:
+                    self.locked = not self.locked
+                    if self.locked:
+                        self.chord = Chord(self.pending_root, self.chord.quality)
+                        self.root_midi = self.pending_root_midi
+                    events.append("lock" if self.locked else "unlock")
                 self.pending_since = None
                 self.root_dwell = Dwell()
-                events.append("lock" if self.locked else "unlock")
         raw_root = None
         root = self.chord.root
         transposed = False
@@ -265,18 +295,37 @@ class Controller:
             gain,
             tuple(events),
             raw_root,
-            self.pending_since is not None or self.split_requested,
+            (self.pending_since is not None and self.pending_transfer is None)
+            or self.split_requested,
             root_mode=self.root_mode,
             root_midi=self.root_midi,
             hand_directions=self.interval_selector.directions,
             interval_candidate=self.interval_selector.candidate,
             root_armed=self.interval_selector.armed,
             root_feedback=self.interval_selector.feedback,
+            ball_owner=self.ball_owner,
+            pending_transfer=self.pending_transfer if self.pending_since is not None else None,
         )
+
+    def _transfer(self, frame: Frame, owner: str) -> None:
+        """Capture combined ball area and loudness, independent of the other wrist."""
+        balls, gain = self._geometry(frame)
+        if frame.torso_px is None or not balls:
+            return
+        radius = math.sqrt(sum(ball.radius**2 for ball in balls))
+        self.owned_radius_torsos = radius / frame.torso_px
+        self.owned_gain = gain
+        self.ball_owner, self.split = owner, False
 
     def _geometry(self, frame: Frame) -> tuple[tuple[Ball, ...], float]:
         if frame.torso_px is None or frame.torso_center is None:
             return (), 0.0
+        if self.ball_owner is not None:
+            owner = next((hand for hand in frame.hands if hand.side == self.ball_owner), None)
+            if owner is None:
+                return (), 0.0
+            ball = Ball(owner.wrist, self.owned_radius_torsos * frame.torso_px, owner.side)
+            return (ball,), self.owned_gain
         if len(frame.hands) != 2:
             balls = tuple(Ball(h.wrist, frame.torso_px * 0.12, h.side) for h in frame.hands)
             return (balls if self.split else ()), 0.0

@@ -243,6 +243,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "final_chord": final.symbol,
         "locked": final.locked,
         "split": final.split,
+        "ball_owner": final.ball_owner,
         "root_mode": final.root_mode,
         "root_midi": final.root_midi,
         "config": asdict(config),
