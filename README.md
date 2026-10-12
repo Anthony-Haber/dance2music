@@ -32,6 +32,12 @@ Code only in git: clips go in `videos/`, everything generated lands in
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
 | `IDEAS.md` | ideas not built yet |
 
+Browser **Record** now downloads one ZIP with the video (or sound only), raw
+33-point body pose, detailed hands when enabled, timestamps, and model/session
+metadata. It preserves data for later embedding and other offline analysis.
+The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
+describe the files and tests. Direct import into Zones requires a future importer.
+
 ---
 
 # Dance → the rope's music engine
