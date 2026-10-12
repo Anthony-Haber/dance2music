@@ -123,3 +123,20 @@ Engineering completion is separate from performer acceptance.
   evidence; inspect previews and update tutorials, decisions, evidence and status.
 - [X] T035 Refresh Graphify once locally after this major capability expansion.
 - [ ] T036 Performer camera/listening acceptance for all 25 pairs and fuller voicings.
+
+## Relative roots and wider split: 2026-10-12
+
+- [X] T037 Record approved interval map, default mode, T switch, neutral/dwell,
+  register limits, replay compatibility and wider split distance.
+- [X] T038 Implement body-relative direction pairs, one-step rearming, lock/recovery
+  guards, exact signed transposition and register-aware quality voicing.
+- [X] T039 Integrate T/CLI root mode, recorded mode changes, top-panel previews,
+  neutral guides and updated demo; retain midpoint input and legacy replay.
+- [X] T040 Demonstrate wider-split regression failure and fix default proximity to
+  1.0 torso length, preserving one-action closure and separated-fist arbitration.
+- [X] T041 Test map/catalogue reachability, real octave frequencies, dwell/recovery,
+  registers, mode-key/replay and split/merge boundaries; run lint/format/types.
+- [X] T042 Inspect final previews, record latency and evidence, refresh AST graph,
+  and update feature status.
+- [ ] T043 Performer camera/listening trial for relative directions, threshold
+  comfort, far-readable HUD and wider split/merge.

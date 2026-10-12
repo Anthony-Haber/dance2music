@@ -21,6 +21,54 @@ dependencies use `requirements/instrument.txt`. Model setup remains explicit;
 `python -m instrument.setup_models --directory output/models` downloads and verifies
 the models, and `--help` shows its options without downloading anything.
 
+## Native instrument on macOS
+
+From the repository root, use `.venv/bin/python` (Windows uses `.venv/Scripts/python.exe`):
+
+```bash
+.venv/bin/python -m pip install -r requirements/instrument.txt -r requirements/dev.txt
+.venv/bin/python -m instrument.setup_models
+.venv/bin/python -m instrument --model-smoke
+.venv/bin/python -m instrument --camera 0
+```
+
+Model setup downloads and verifies both files in `output/models`; it is needed once
+before camera mode. The macOS runtime requirements select MediaPipe 1.1.0, validated
+with Python 3.11.17; 1.0.1 aborted during model initialization on this Mac.
+For a scripted demo use `--demo` instead of `--camera 0`. Press Q or Escape to quit.
+Restart after updates to see the larger chord, root and gesture labels with dark
+outlines and shadows. Controls occupy a 450-pixel panel above the full camera frame.
+At the very top, **LEFT HAND** and **RIGHT HAND** show each confirmed gesture in
+large text. The smaller **Seeing:** line shows the current model label and confidence;
+it can differ while recognition waits for a stable gesture. **UNKNOWN** means no
+gesture is confirmed, **Wrist only; no gesture** means body tracking has no hand
+details, and **NOT SEEN** means that hand is absent. Readouts follow corrected hand
+identities even when the hands cross.
+
+## Relative roots and switching modes
+
+**T** switches between the new default **INTERVAL** mode and the original **MIDPOINT**
+root ring. Keep the instrument window focused. To start with the ring directly:
+
+```bash
+.venv/bin/python -m instrument --camera 0 --root-mode midpoint
+```
+
+In interval mode, hold wrists in the **L CENTER / R CENTER** circles for 0.20s.
+Then hold a direction pair for 0.35s: left hand left + right hand up = fifth up;
+both up = octave up; both down = octave down. Every move uses the current root.
+Return **both** hands to their center circles before the next change; holding a
+pose never repeats it. The top panel shows directions, candidate interval and target.
+See the [complete map and recovery rules](../specs/001-anthony-instrument/relative-root.md).
+Finger signs still choose chord quality. Root lock freezes root and octave in both
+modes; switching modes preserves current sound. R resets register/chord while
+retaining the active mode. Old replay files retain midpoint behavior.
+
+**Split/merge:** reopen to arm, then close both fists within **1.0 torso length**
+(previously 0.6). Hold until recognized; reopen before repeating to merge. This wider
+threshold applies to both directions; fists farther apart still toggle root lock.
+If a custom `--config` supplies `split_torsos`, it overrides this new default.
+
 ## Spec Kit on macOS and Windows
 
 Invoke the same `$speckit-constitution`, `$speckit-plan`, `$speckit-tasks`, and other
@@ -79,13 +127,13 @@ Add `--volume 0.5` to halve playback and exported WAV volume.
 Restart after code changes. Resize/maximize the native window to see the complete
 camera frame; the controls are above the image. Camera mode requests 1280x720.
 Use --camera-width / --camera-height to request another supported device mode.
-Hand diagnostic text and root notes use larger, bold black lettering with a light
-outline so they remain readable against the camera image and ball glow.
+Hand diagnostic text and root notes use larger, light lettering with a dark
+outline and shadow so they remain readable against the camera image and ball glow.
 Fresh-machine setup: [quickstart](../specs/001-anthony-instrument/quickstart.md).
 
 ## 0 — Lock a chord root
 
-1. Select a root using the ring below. Keep your hands apart.
+1. Select a root with interval controls above, or press T to use the ring. Keep your hands apart.
 2. Close either fist and hold about **0.60 seconds** to lock the root.
    The display confirms **ROOT LOCKED**; it stays visible when you reopen.
    Detection matches web/main's **far** mode: alternating wrist crops, a 0.5
@@ -104,7 +152,7 @@ Nearby two fists toggle split/merge instead of root lock.
 - Move both hands: the ball follows their midpoint.
 - Spread your hands: the ball grows and sound gets louder.
 - Start with open hands for about **0.60 seconds**, then close both fists and
-  bring them together. Keep wrist spacing within 0.6 times your shoulder-to-hip
+  bring them together. Keep wrist spacing within 1.0 times your shoulder-to-hip
   distance. Both fists must be confirmed for **0.35 seconds**; they can be
   recognized while apart and brought together afterward, even after root locking.
   The top panel confirms **TWO BALLS**. Spread your hands to see them clearly.
@@ -116,7 +164,8 @@ Nearby two fists toggle split/merge instead of root lock.
 
 ## 2 — Choose roots and chord qualities
 
-Move your hands' midpoint toward a labeled root and hold **0.35 seconds**.
+The default is [relative interval control](#relative-roots-and-switching-modes).
+Press **T** for midpoint mode: move the midpoint toward a labeled root and hold **0.35 seconds**.
 C is on the right; the 12 roots run clockwise. The central circle holds your root.
 
 Use both hands to select a cell; hold the pair for **0.35 seconds** after recognition.
@@ -132,13 +181,16 @@ Rows are your **right** hand, columns your **left** hand. Examples use root C:
 
 **Point:** index pointing up, middle/ring/little fingers curled, thumb tucked.
 **V:** Victory sign. Hand identity follows your body, including when hands cross;
-the labels **L/R** do not mean the left/right side of the screen. Camera recognition
-also needs about 0.35 seconds of a stable sign before the pair dwell begins.
+the labels **L/R** do not mean the left/right side of the screen. The live pose-side
+assignments were swapped on 2026-10-12 at Anthony's request to correct reversed
+controls in his mirrored view. Restart camera mode for the corrected labels and
+chord combinations. Existing replay files keep their recorded hand identities.
+Camera recognition also needs about 0.35 seconds of a stable sign before the pair dwell begins.
 
 Both recognized non-fist signs are required. Missing, uncertain, low-confidence or
 heart/love signs hold the quality; fists retain ball/lock controls. Brief reopening
 holds the quality; **both open palms held 1.5 seconds** select major. Quality remains
-editable while the root is locked. The root ring still works independently when unlocked.
+editable while the root is locked. Root controls work independently when unlocked.
 
 The catalogue contains **25 qualities × 12 roots = 300 selectable chords**. Extended
 chords use five or six notes; thirteenths include ninths and omit the natural eleventh.

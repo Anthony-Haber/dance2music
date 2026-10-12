@@ -8,7 +8,7 @@ import time
 import wave
 from collections.abc import Iterator
 from contextlib import ExitStack
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +63,7 @@ class Exports:
             self._write_audio_until(target, self.last_state)
 
     def write(self, frame: Frame, state: Output, image: NDArray[np.uint8]) -> None:
-        self.frames.write(json.dumps(asdict(frame)) + "\n")
+        self.frames.write(json.dumps(asdict(replace(frame, root_mode=state.root_mode))) + "\n")
         self.states.write(json.dumps(asdict(state)) + "\n")
         if self.writer is None:
             self.writer = cv2.VideoWriter(
@@ -144,6 +144,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     config = (
         Config(**json.loads(args.config.read_text(encoding="utf-8"))) if args.config else Config()
     )
+    if args.root_mode:
+        config = replace(config, root_mode=args.root_mode)
     controller, renderer = Controller(config), Renderer(args.style, config=config)
     core_times, render_times, inference_times = [], [], []
     final: Output | None = None
@@ -168,7 +170,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 "two_frame_ms": (time.perf_counter() - start) * 1000,
             }
         if args.demo:
-            source = scripted_frames(demonstration(args.fps))
+            source = scripted_frames(demonstration(args.fps, config.root_mode))
         elif args.replay:
             source = scripted_frames(read_replay(args.replay))
         else:
@@ -230,6 +232,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     controller.reset()
                 elif key == ord("s"):
                     renderer.style = "light" if renderer.style == "fire" else "fire"
+                elif key in (ord("t"), ord("T")):
+                    controller.toggle_root_mode()
                 if cv2.getWindowProperty(WINDOW_TITLE, cv2.WND_PROP_VISIBLE) < 1:
                     break
         if final is None:
@@ -239,6 +243,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "final_chord": final.symbol,
         "locked": final.locked,
         "split": final.split,
+        "root_mode": final.root_mode,
+        "root_midi": final.root_midi,
+        "config": asdict(config),
         "core_p95_ms": float(np.percentile(core_times, 95)),
         "render_p95_ms": float(np.percentile(render_times, 95)),
         "inference_p95_ms": float(np.percentile(inference_times, 95)),
@@ -267,6 +274,11 @@ def main() -> int:
     parser.add_argument("--camera-height", type=int, default=720, help="requested capture height")
     parser.add_argument("--models", type=Path, default=Path("output/models"))
     parser.add_argument("--config", type=Path, help="JSON object overriding Config defaults")
+    parser.add_argument(
+        "--root-mode",
+        choices=("interval", "midpoint"),
+        help="starting root control mode (default interval)",
+    )
     parser.add_argument("--style", choices=("fire", "light"), default="fire")
     parser.add_argument("--headless", action="store_true", help="disable window and audio devices")
     parser.add_argument("--mute", action="store_true")

@@ -8,7 +8,7 @@ from pathlib import Path
 from instrument.models import Frame, Hand
 
 
-def demonstration(fps: int = 30) -> Iterator[Frame]:
+def demonstration(fps: int = 30, root_mode: str = "interval") -> Iterator[Frame]:
     """15-second sequence: root, lock, locked minor, unlock, near split, reopen.
 
     Coordinates use a 960x720 image with a 160-pixel torso; no CV claim is made.
@@ -27,11 +27,22 @@ def demonstration(fps: int = 30) -> Iterator[Frame]:
             right = "Pointing_Up"
         if 10 <= t < 12:
             left = right = "Closed_Fist"
+        wrists = ((midpoint[0] - gap / 2, midpoint[1]), (midpoint[0] + gap / 2, midpoint[1]))
+        if root_mode == "interval":
+            # Chest origins: L=(528,360), R=(432,360). Neutral, then fifth up;
+            # after unlock return to neutral and perform a whole step up.
+            wrists = ((528.0, 360.0), (432.0, 360.0))
+            if 1 <= t < 7:
+                wrists = ((432.0, 360.0), (432.0, 264.0))
+            elif 8.5 <= t < 10:
+                wrists = ((624.0, 360.0), (528.0, 360.0))
+            elif 10 <= t < 12:
+                wrists = ((450.0, 360.0), (510.0, 360.0))
         yield Frame(
             t,
             (
-                Hand("L", (midpoint[0] - gap / 2, midpoint[1]), left, 0.99),
-                Hand("R", (midpoint[0] + gap / 2, midpoint[1]), right, 0.99),
+                Hand("L", wrists[0], left, 0.99),
+                Hand("R", wrists[1], right, 0.99),
             ),
             (480, 360),
             160,
@@ -81,6 +92,9 @@ def read_replay(path: Path) -> Iterator[Frame]:
                     tuple(
                         tuple(p) if p is not None else None for p in data.get("pose_landmarks", [])
                     ),
+                    # Older recordings used only the midpoint ring. Explicit null
+                    # leaves controller/config choice intact for synthetic fixtures.
+                    data.get("root_mode", "midpoint"),
                 )
                 if frame.time_s <= previous:
                     raise ValueError("timestamps must strictly increase")

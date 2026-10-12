@@ -1,5 +1,41 @@
 # Validation evidence: local Python instrument
 
+## Relative root modes and wider split, 2026-10-12
+
+- Approved behavior is recorded in [relative-root.md](relative-root.md): interval
+  default, T mode switch, one step per neutral/dwell cycle, exact signed register
+  movement, preserved quality/fist controls and 1.0-torso split/merge proximity.
+- Final `.venv/bin/python -m pytest -q`: **91 passed, 2 skipped, 242 subtests passed**.
+  Skips require optional Node and PowerShell. All instrument/test Ruff lint/format
+  checks and mypy (11 source files) pass; whitespace check passes.
+- Relative tests cover 16 pairs x 12 starting roots (192 cases), every pitch class,
+  all 4,800 catalogue-chord/interval transpositions, exact signed note movement,
+  held-pose suppression, neutral dwell, diagonal flicker, missing joints/wrists,
+  long gaps, locked quality changes, actual octave oscillator frequency doubling,
+  MIDI limits and old/new mode-aware replay. Original exhaustive midpoint catalogue
+  transitions and zero-register voicing parity remain covered.
+- Mocked native-window keyboard integration exercises both T and t, exports all
+  three effective modes and reproduces their notes/register on replay. Three-second
+  interval demo exports 90 frames; all 90 state records replay exactly. A separate
+  midpoint demo completes successfully. No camera/model/audio device is needed.
+- Wider-distance split regression failed at 0.9 and 1.0 torso lengths before the
+  change and passes afterward. It verifies one split then one merge, no nearby
+  root-lock toggle, and retained separated-fist locking at 1.2 torso lengths.
+- Synthetic 5,760-frame run: controller p95 **0.0074ms**, maximum **0.349ms**, below
+  the 5ms budget. Inputs are 10 rounds x 16 pairs x 36 frames, 40ms per frame, with
+  no randomness. Python 3.11.17/macOS arm64; dependency versions and metrics are in
+  `output/anthony-instrument/relative-root/summary.json`. This excludes CV inference.
+- Inspected pending/applied/neutral previews at 640px and 1280px widths and the
+  midpoint preview. The top panel displays signed targets/progress; both mode
+  guides retain the whole camera image. Artifacts and scripted frame/state records
+  are in `output/anthony-instrument/relative-root/`. `intervals.wav` contains C3
+  major, fifth-up G3 and octave-up G4 for performer listening; it has not been
+  listened to on the live system.
+- Completed local AST graph refresh: 1,397 nodes, 2,355 edges, 148 communities,
+  no API cost. All changes/artifacts remain local; no website translation or push.
+- Performer camera/gesture comfort, new split threshold, live latency and listening
+  acceptance remain pending. Automated geometry checks do not measure model accuracy.
+
 ## Complete 25-pair jazz catalogue, 2026-10-11
 
 - Verified the approved 25 cells and independent interval definitions across all

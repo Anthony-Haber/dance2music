@@ -16,6 +16,7 @@ from numpy.typing import NDArray
 
 from instrument.harmony import ROOT_NAMES
 from instrument.models import Config, Frame, Output, Point
+from instrument.root_control import hand_origins, interval_name
 
 HAND_EDGES = (
     (0, 1),
@@ -58,20 +59,36 @@ BODY_EDGES = (
     (28, 30),
     (30, 32),
 )
-HUD_HEIGHT = 110
+HAND_READOUT_HEIGHT = 110
+ROOT_STATUS_HEIGHT = 100
+HUD_HEIGHT = 240 + HAND_READOUT_HEIGHT + ROOT_STATUS_HEIGHT
 
 
 def pixel(point: Point) -> tuple[int, int]:
     return round(point[0]), round(point[1])
 
 
-def _label(image: NDArray[np.uint8], text: str, anchor: Point, scale: float) -> None:
-    """Bold black labels with a light outline for contrast against camera/glow."""
+def _label(
+    image: NDArray[np.uint8],
+    text: str,
+    anchor: Point,
+    scale: float,
+    color: tuple[int, int, int] = (255, 255, 255),
+) -> None:
+    """Bold text with a dark shadow and outline for contrast against camera/glow."""
     position = pixel(anchor)
     cv2.putText(
-        image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), 4, cv2.LINE_AA
+        image,
+        text,
+        (position[0] + 2, position[1] + 2),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        scale,
+        (0, 0, 0),
+        6,
+        cv2.LINE_AA,
     )
-    cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, (0, 0, 0), 6, cv2.LINE_AA)
+    cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, color, 2, cv2.LINE_AA)
 
 
 def root_color(root: int) -> tuple[int, int, int]:
@@ -213,7 +230,20 @@ class Renderer:
     def _guides(
         self, image: NDArray[np.uint8], frame: Frame, state: Output, color: tuple[int, int, int]
     ) -> None:
-        if frame.torso_center is not None and frame.torso_px is not None:
+        if state.root_mode == "interval" and frame.torso_px is not None:
+            for side, origin in hand_origins(frame).items():
+                cv2.circle(
+                    image,
+                    pixel(origin),
+                    round(frame.torso_px * self.config.interval_neutral_torsos),
+                    (160, 160, 160),
+                    1,
+                    cv2.LINE_AA,
+                )
+                radius = frame.torso_px * self.config.interval_neutral_torsos
+                label_x = origin[0] + radius + 8 if side == "L" else origin[0] - radius - 100
+                _label(image, f"{side} CENTER", (label_x, origin[1] + 6), 0.5)
+        elif frame.torso_center is not None and frame.torso_px is not None:
             center, radius = frame.torso_center, frame.torso_px * 1.2
             for root, name in enumerate(ROOT_NAMES):
                 angle = root * math.pi / 6
@@ -221,7 +251,7 @@ class Renderer:
                     center[0] + radius * math.cos(angle),
                     center[1] + radius * math.sin(angle),
                 )
-                _label(image, name, anchor, 0.6)
+                _label(image, name, anchor, 0.9)
             cv2.circle(
                 image,
                 pixel(center),
@@ -242,22 +272,79 @@ class Renderer:
             cv2.circle(image, pixel(hand.wrist), 5, color, -1)
             label = (
                 f"{hand.side}: {hand.gesture} {hand.confidence:.2f}"
-                if hand.landmarks
+                if hand.landmarks or hand.gesture != "None"
                 else f"{hand.side}: body wrist"
             )
-            _label(image, label, (hand.wrist[0] + 8, hand.wrist[1] + 20), 0.5)
+            _label(image, label, (hand.wrist[0] + 8, hand.wrist[1] + 26), 0.7)
             if hand.landmarks and hand.raw_gesture is not None:
                 _label(
                     image,
                     f"raw: {hand.raw_gesture} {hand.raw_confidence:.2f}",
-                    (hand.wrist[0] + 8, hand.wrist[1] + 40),
-                    0.5,
+                    (hand.wrist[0] + 8, hand.wrist[1] + 54),
+                    0.7,
                 )
 
     def _hud(
         self, image: NDArray[np.uint8], frame: Frame, state: Output, latency_ms: float
     ) -> None:
-        cv2.rectangle(image, (0, 0), (image.shape[1], 110), (18, 18, 24), -1)
+        image[:] = (18, 18, 24)
+        hands = {hand.side: hand for hand in frame.hands}
+        column_width = image.shape[1] // 2
+        for column, (side, name) in enumerate((("L", "LEFT HAND"), ("R", "RIGHT HAND"))):
+            x = column * column_width + 16
+            hand = hands.get(side)
+            tint = (255, 220, 150) if side == "L" else (150, 220, 255)
+            _label(image, name, (x, 24), 0.65, tint)
+            gesture = (
+                "NOT SEEN"
+                if hand is None
+                else "UNKNOWN"
+                if hand.gesture == "None"
+                else hand.gesture.replace("_", " ").upper()
+            )
+            # Enlarge on wide camera feeds, fitting each label within its own column.
+            scale = min(1.8, max(0.95, image.shape[1] / 640 * 0.95))
+            text_width = cv2.getTextSize(gesture, cv2.FONT_HERSHEY_SIMPLEX, scale, 2)[0][0]
+            scale *= min(1.0, max(1, column_width - 40) / max(1, text_width))
+            _label(image, gesture, (x, 66), scale, tint)
+            raw = (
+                "No hand detected"
+                if hand is None
+                else f"Seeing: {hand.raw_gesture.replace('_', ' ')} {hand.raw_confidence:.0%}"
+                if hand.raw_gesture is not None
+                else "Seeing: unavailable"
+                if hand.landmarks
+                else "Wrist only; no gesture"
+            )
+            _label(image, raw, (x, 94), 0.5)
+        # Keep the existing controls below the prominent gesture readouts.
+        image = image[HAND_READOUT_HEIGHT:]
+        root_note = f"{ROOT_NAMES[state.root]}{state.root_midi // 12 - 1}"
+        if state.root_mode == "interval":
+            _label(image, f"ROOT: INTERVAL | {root_note} | T: MIDPOINT", (16, 26), 0.65)
+            left, right = (
+                direction.upper() if direction else "MISSING" for direction in state.hand_directions
+            )
+            _label(image, f"LEFT: {left} | RIGHT: {right}", (16, 56), 0.65)
+            feedback = state.root_feedback
+            if state.root_armed and state.interval_candidate is not None:
+                target = state.root_midi + state.interval_candidate
+                target_note = f"{ROOT_NAMES[target % 12]}{target // 12 - 1}"
+                feedback = (
+                    f"{interval_name(state.interval_candidate)}: {root_note} -> {target_note}"
+                    f" | {feedback}"
+                )
+            feedback_width = cv2.getTextSize(feedback, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0][0]
+            feedback_scale = 0.6 * min(1.0, max(1, image.shape[1] - 40) / max(1, feedback_width))
+            _label(image, feedback, (16, 88), feedback_scale)
+        else:
+            _label(image, f"ROOT: MIDPOINT | {root_note} | T: INTERVAL", (16, 26), 0.65)
+            _label(image, "Move hand midpoint around the root ring", (16, 56), 0.6)
+            midpoint_target = (
+                ROOT_NAMES[state.root_candidate] if state.root_candidate is not None else "HOLD"
+            )
+            _label(image, f"TARGET: {midpoint_target}", (16, 88), 0.6)
+        image = image[ROOT_STATUS_HEIGHT:]
         lock_status = (
             "ROOT LOCKED"
             if state.locked
@@ -265,39 +352,18 @@ class Renderer:
             if state.pending_lock
             else "ROOT FREE"
         )
-        text = f"{state.symbol}   {lock_status}   {'TWO BALLS' if state.split else 'ONE BALL'}"
-        cv2.putText(
-            image, text, (16, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (150, 230, 180), 2, cv2.LINE_AA
-        )
+        _label(image, f"{state.symbol}   {lock_status}", (16, 36), 1.0, (150, 230, 180))
         status = "BODY / WRISTS READY" if state.balls else "BODY / WRISTS INCOMPLETE"
-        status += f"   gain {state.gain:.0%}"
-        if state.pending_lock:
-            status += "   deciding fist / ball mode"
-        cv2.putText(
-            image,
-            f"{status}   {latency_ms:.1f} ms processing",
-            (16, 55),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.45,
-            (210, 210, 210),
-            1,
-            cv2.LINE_AA,
-        )
+        mode = "TWO BALLS" if state.split else "ONE BALL"
+        _label(image, f"{mode} | gain {state.gain:.0%} | {latency_ms:.1f} ms", (16, 68), 0.65)
+        _label(image, status, (16, 100), 0.65)
         for y, line in (
-            (78, "Nearby fists split/merge | M merge | R reset | S fire/light | Q quit"),
+            (132, "Nearby fists: split/merge | M: merge"),
+            (164, "T: root mode | R: reset | S: style | Q: quit"),
+            (196, "25 hand pairs | Point: index up"),
             (
-                99,
-                f"25 hand pairs | Point = index up | Palms {self.config.major_dwell_s:g}s major | "
-                "Use both hands; unknown holds quality",
+                228,
+                f"Both hands | Palms {self.config.major_dwell_s:g}s: major | Unknown: hold",
             ),
         ):
-            cv2.putText(
-                image,
-                line,
-                (16, y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.40,
-                (170, 170, 180),
-                1,
-                cv2.LINE_AA,
-            )
+            _label(image, line, (16, y), 0.6, (210, 210, 220))

@@ -2,6 +2,7 @@
 
 import math
 import unittest
+from dataclasses import replace
 
 from instrument.controller import Controller
 from instrument.harmony import QUALITY_PAIRS, Chord
@@ -31,8 +32,38 @@ def sample(
 
 
 class ControllerTests(unittest.TestCase):
+    def test_wider_nearby_fists_split_and_merge_once_without_locking(self) -> None:
+        for gap in (90, 100, 120):
+            with self.subTest(gap=gap):
+                controller = Controller()
+                events = []
+                for index in range(120):
+                    t = index * 0.02
+                    closed = 0.4 <= t < 1.2 or t >= 1.6
+                    frame = sample(
+                        t,
+                        left="Closed_Fist" if closed else "Open_Palm",
+                        right="Closed_Fist" if closed else "Open_Palm",
+                    )
+                    frame = replace(
+                        frame,
+                        hands=tuple(
+                            replace(h, wrist=(320 + sign * gap / 2, 240))
+                            for h, sign in zip(frame.hands, (-1, 1), strict=True)
+                        ),
+                    )
+                    output = controller.update(frame)
+                    events.extend(output.events)
+                    if index == 55:
+                        self.assertEqual(output.split, gap <= 100)
+                        self.assertEqual(output.locked, gap > 100)
+                self.assertFalse(output.split)
+                self.assertFalse(output.locked)
+                self.assertEqual(events.count("split"), int(gap <= 100))
+                self.assertEqual(events.count("merge"), int(gap <= 100))
+
     def setUp(self) -> None:
-        self.controller = Controller()
+        self.controller = Controller(Config(root_mode="midpoint"))
         self.t = 0.0
 
     def hold(self, seconds: float, **kwargs: object):

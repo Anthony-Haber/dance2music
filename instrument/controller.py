@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from instrument.harmony import Chord, gesture_quality, root_region, voice_lead
 from instrument.models import GESTURES, Ball, Config, Frame, Output
+from instrument.root_control import ROOT_MIDI_MAX, ROOT_MIDI_MIN, IntervalSelector
 
 
 @dataclass
@@ -68,6 +69,9 @@ class Controller:
     def reset(self) -> None:
         """Return to initial chord/unlocked/merged; both hands must reopen to arm."""
         self.chord = self.initial
+        self.root_midi = 48 + self.chord.root
+        self.root_mode = getattr(self, "root_mode", self.config.root_mode)
+        self.mode_changed = False
         self.notes = voice_lead((), self.chord)
         self.locked = self.split = False
         self.last_time: float | None = None
@@ -76,10 +80,24 @@ class Controller:
     def _clear_transients(self) -> None:
         self.gates = {"L": FistGate(), "R": FistGate()}
         self.root_dwell, self.quality_dwell, self.major_dwell = Dwell(), Dwell(), Dwell()
+        self.interval_selector = IntervalSelector()
         self.pending_since: float | None = None
         self.pending_sides: set[str] = set()
         self.pending_root = self.chord.root
+        self.pending_root_midi = self.root_midi
         self.split_requested = False
+
+    def set_root_mode(self, mode: str) -> None:
+        """Switch root input without changing the current chord, register or lock."""
+        if mode not in {"interval", "midpoint"}:
+            raise ValueError("Root mode must be interval or midpoint")
+        if mode != self.root_mode:
+            self.root_mode, self.mode_changed = mode, True
+            self.root_dwell = Dwell()
+            self.interval_selector = IntervalSelector()
+
+    def toggle_root_mode(self) -> None:
+        self.set_root_mode("midpoint" if self.root_mode == "interval" else "interval")
 
     def merge(self) -> None:
         """Keyboard merge control, independent of chord and lock."""
@@ -92,6 +110,8 @@ class Controller:
 
     def update(self, frame: Frame) -> Output:
         now = frame.time_s
+        if frame.root_mode is not None:
+            self.set_root_mode(frame.root_mode)
         if self.last_time is not None:
             if now <= self.last_time:
                 raise ValueError("Controller frame timestamps must strictly increase")
@@ -99,6 +119,9 @@ class Controller:
                 self._clear_transients()
         self.last_time = now
         events: list[str] = []
+        if self.mode_changed:
+            events.append(f"root_mode:{self.root_mode}")
+            self.mode_changed = False
         hands = {h.side: h for h in frame.hands}
         torso_valid = frame.torso_center is not None and frame.torso_px is not None
         gestures = {
@@ -129,6 +152,7 @@ class Controller:
         )
         if closures and self.pending_since is None:
             self.pending_since, self.pending_root = now, self.chord.root
+            self.pending_root_midi = self.root_midi
             self.pending_sides = set(closures)
             self.root_dwell = Dwell()
         elif closures:
@@ -155,17 +179,53 @@ class Controller:
                 self.locked = not self.locked
                 if self.locked:
                     self.chord = Chord(self.pending_root, self.chord.quality)
+                    self.root_midi = self.pending_root_midi
                 self.pending_since = None
                 self.root_dwell = Dwell()
                 events.append("lock" if self.locked else "unlock")
-        raw_root = root_region(frame, self.config.dead_zone_torsos)
+        raw_root = None
         root = self.chord.root
-        if not self.locked and self.pending_since is None and not self.split_requested:
-            selected = self.root_dwell.read(raw_root, now, self.config.root_dwell_s)
-            if isinstance(selected, int):
-                root = selected
+        transposed = False
+        root_allowed = not self.locked and self.pending_since is None and not self.split_requested
+        if self.root_mode == "midpoint":
+            raw_root = root_region(frame, self.config.dead_zone_torsos)
+            if root_allowed:
+                selected = self.root_dwell.read(raw_root, now, self.config.root_dwell_s)
+                if isinstance(selected, int):
+                    target = self.root_midi + selected - self.chord.root
+                    if ROOT_MIDI_MIN <= target <= ROOT_MIDI_MAX:
+                        root, self.root_midi = selected, target
+            else:
+                self.root_dwell = Dwell()
         else:
-            self.root_dwell = Dwell()
+            fist_active = any(
+                hand.gesture == "Closed_Fist"
+                or (
+                    hand.raw_gesture == "Closed_Fist"
+                    and hand.raw_confidence >= self.config.confidence_min
+                )
+                for hand in frame.hands
+            )
+            blocked = (
+                "ROOT LOCKED"
+                if self.locked
+                else "FIST CONTROL"
+                if not root_allowed or fist_active
+                else None
+            )
+            step = self.interval_selector.read(frame, self.config, blocked)
+            if self.interval_selector.candidate is not None:
+                raw_root = (root + self.interval_selector.candidate) % 12
+            if step is not None:
+                target = self.root_midi + step
+                notes = tuple(note + step for note in self.notes)
+                if ROOT_MIDI_MIN <= target <= ROOT_MIDI_MAX and all(0 <= n <= 127 for n in notes):
+                    self.root_midi, self.notes = target, notes
+                    root = target % 12
+                    transposed = True
+                    events.append(f"interval:{step:+d}")
+                else:
+                    self.interval_selector.feedback = "REGISTER LIMIT - RETURN TO CENTER"
         quality = self.chord.quality
         raw_quality = gesture_quality(gestures.get("L"), gestures.get("R"))
         # Both palms retain their slower deliberate reset, independent of pair dwell.
@@ -182,10 +242,15 @@ class Controller:
         if major is not None:
             quality = "major"
         chord = Chord(root, quality)
-        if chord != self.chord:
+        if chord != self.chord or transposed:
             events.append("chord")
-        if chord != self.chord or {n % 12 for n in self.notes} != set(chord.pitch_classes):
-            self.notes = voice_lead(self.notes, chord)
+        if (
+            (chord != self.chord and not transposed)
+            or quality != self.chord.quality
+            or {n % 12 for n in self.notes} != set(chord.pitch_classes)
+        ):
+            shift = self.root_midi - (48 + chord.root)
+            self.notes = voice_lead(self.notes, chord, shift)
         self.chord = chord
         balls, gain = self._geometry(frame)
         return Output(
@@ -201,6 +266,12 @@ class Controller:
             tuple(events),
             raw_root,
             self.pending_since is not None or self.split_requested,
+            root_mode=self.root_mode,
+            root_midi=self.root_midi,
+            hand_directions=self.interval_selector.directions,
+            interval_candidate=self.interval_selector.candidate,
+            root_armed=self.interval_selector.armed,
+            root_feedback=self.interval_selector.feedback,
         )
 
     def _geometry(self, frame: Frame) -> tuple[tuple[Ball, ...], float]:

@@ -16,8 +16,17 @@ Restart the Python process after code updates. Resize or maximize the native win
 it fits the entire frame while preserving its proportions. Controls occupy a separate
 panel above the feed. Camera mode requests 1280x720 (the device may negotiate another
 mode); override with --camera-width and --camera-height if needed. Diagnostics report
-source_size_px and preview_size_px; the latter includes the 110-pixel controls panel.
-Camera input is mirrored before inference and display. Keep shoulders, hips and
+source_size_px and preview_size_px; the latter includes the 450-pixel controls panel.
+Larger text uses a dark outline and shadow for readability over the camera feed.
+The top LEFT HAND / RIGHT HAND readouts show confirmed gestures in large text;
+Seeing shows each raw model result and confidence. UNKNOWN, wrist-only and NOT SEEN
+states distinguish missing gestures from missing hands.
+Camera input is mirrored before inference and display. Live hand labels and chord
+controls swap the pose-side assignments: L uses wrist 16, R uses wrist 15, with
+matching elbow crops. This follows Anthony's requested left/right correction;
+crossing hands preserves their identities. Existing JSONL replays retain their
+recorded L/R labels; record a new camera session for corrected hand assignments.
+Keep shoulders, hips and
 both hands visible, with hands large enough in the image for reliable recognition.
 The skeleton shows available body joints, including legs and feet. Hand recognition
 uses web/main far mode's alternating wrist-centered 256-pixel crops. Palms do not
@@ -29,7 +38,14 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
 ## Controls
 
 - Start with open/non-fist hands for about 0.60 seconds to recognize and arm.
-- Move the hands' midpoint into a root sector: C at screen right, then C#, D,
+- **Interval mode is now the default. T toggles interval / midpoint mode.** Hold
+  both wrists in the L CENTER / R CENTER circles for 0.20s, then hold a directional
+  pair for 0.35s to move the current root once. Return both hands to center to rearm.
+  Left hand left + right hand up = fifth up; both up/down = octave up/down.
+  See the [full interval map](relative-root.md). Finger signs still choose quality;
+  root lock freezes interval and octave changes. The top panel shows the candidate
+  change and its progress. R resets register/chord while retaining the active mode.
+- In **midpoint mode**, move the hands' midpoint into a root sector: C at screen right, then C#, D,
   Eb, E, F, F#, G, Ab, A, Bb, B clockwise. Hold 0.35 seconds. The center dead
   zone holds your root. Root labels are guides; sectors extend beyond the labels.
 - Close either fist for 0.35 seconds; the controller waits another 0.25 seconds
@@ -58,14 +74,14 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   persists through relaxed hands, unknown gestures and tracking loss. To return
   to major, hold BOTH recognized Open Palms continuously for 1.5 seconds.
   Root remains fixed while locked; quality stays editable.
-- Close both fists within 0.6 torso lengths to split. The split takes priority
+- Close both fists within 1.0 torso lengths to split. The split takes priority
   and preserves the lock state. Fists confirmed while apart can also be brought
   together afterward to split, including after root locking. The HUD says TWO BALLS;
   spread your hands to see both. Reopen, then repeat the same nearby two-fist
   gesture to merge: the HUD returns to ONE BALL. Holding fists changes mode once;
   reopening alone preserves it. Both directions preserve the chord and root lock.
   M also merges and requires reopening before another split.
-- R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
+- T switches root mode; R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
 - Body/wrist loss silences sound with a short fade and hides unavailable visuals.
   Hand-detail loss retains the last detection for up to 0.4 seconds, as in web/main,
   then cancels pending gesture actions while body wrists can keep the ball/sound active.

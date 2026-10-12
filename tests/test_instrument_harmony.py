@@ -14,7 +14,7 @@ from instrument.harmony import (
     root_region,
     voice_lead,
 )
-from instrument.models import Frame, Hand
+from instrument.models import Config, Frame, Hand
 
 
 class HarmonyTests(unittest.TestCase):
@@ -111,7 +111,9 @@ class HarmonyTests(unittest.TestCase):
         for start_root in range(12):
             for start_quality in INTERVALS:
                 for target_root, target_quality, frames in targets:
-                    controller = Controller(initial=Chord(start_root, start_quality))
+                    controller = Controller(
+                        Config(root_mode="midpoint"), initial=Chord(start_root, start_quality)
+                    )
                     for frame in frames:
                         output = controller.update(frame)
                     self.assertEqual((output.root, output.quality), (target_root, target_quality))

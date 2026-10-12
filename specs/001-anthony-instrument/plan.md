@@ -64,6 +64,18 @@ Additional animator controls, MIDI and three-move spells are outside this increm
 
 ## Timing and recovery choices
 
+The [2026-10-12 relative-root increment](relative-root.md) supersedes midpoint-only
+root input: add a pure root-control module for body-relative zones and one-step
+rearming; keep the controller authoritative for mode/register/lock. Use exact signed
+transposition for interval changes and register-aware bounded voicing for quality
+changes. Append mode metadata to frame/replay contracts; CLI T switches modes and
+exports effective mode. Show neutral guides and pending intervals in the native HUD.
+Retain original midpoint behavior for old recordings and explicit midpoint mode.
+Increase split proximity to 1.0 torso length per Anthony's request. Test all signed
+pairs/roots/catalogue chords, audio octave ratios, recovery, keyboard/replay and
+wider split arbitration; inspect previews and measure controller p95 <5ms. Refresh
+the AST graph once after completion. No new top-level files or website changes.
+
 Initial dwell: closure 0.35 s, quality 0.35 s, root 0.35 s, reopen 0.20 s.
 Delay a single-fist action by 0.25 s to arbitrate a nearby second fist. Pause/cancel
 pending root toggles when a nearby raw pair appears; require both stable before

@@ -2,19 +2,59 @@
 
 import math
 import unittest
+from dataclasses import replace
 from unittest.mock import patch
 
 import cv2
 import numpy as np
 
 from instrument.controller import Controller
-from instrument.models import Config, Frame
+from instrument.models import Config, Frame, Hand
 from instrument.visuals import HUD_HEIGHT, Renderer
 from tests.test_instrument_controller import sample
 from tests.test_instrument_tracking import body_result
 
 
 class VisualTests(unittest.TestCase):
+    def test_top_readouts_keep_confirmed_and_raw_gestures_with_the_correct_hand(self) -> None:
+        # Reversed tuple/screen order must not exchange left and right readouts.
+        hands = (
+            Hand("R", (100, 240), "Thumb_Up", 0.98, raw_gesture="Thumb_Down", raw_confidence=0.7),
+            Hand("L", (500, 240), "Victory", 0.99, raw_gesture="Open_Palm", raw_confidence=0.9),
+        )
+        frame = replace(sample(0), hands=hands)
+        image = np.zeros((480, 640, 3), dtype=np.uint8)
+        with patch("instrument.visuals.cv2.putText", wraps=cv2.putText) as write:
+            Renderer().draw(image, frame, Controller().update(frame))
+        top = {
+            (call.args[2][0], call.args[1])
+            for call in write.call_args_list
+            if call.args[0].shape[0] == HUD_HEIGHT and call.args[2][1] < 110
+        }
+        self.assertIn((16, "LEFT HAND"), top)
+        self.assertIn((16, "VICTORY"), top)
+        self.assertIn((16, "Seeing: Open Palm 90%"), top)
+        self.assertIn((336, "RIGHT HAND"), top)
+        self.assertIn((336, "THUMB UP"), top)
+        self.assertIn((336, "Seeing: Thumb Down 70%"), top)
+
+    def test_top_readouts_clear_lost_hands_and_distinguish_body_wrist_only(self) -> None:
+        renderer = Renderer()
+        source = np.zeros((480, 640, 3), dtype=np.uint8)
+        frame = sample(0, left="Victory", right="Thumb_Up")
+        renderer.draw(source, frame, Controller().update(frame))
+        missing = Frame(0.04, (Hand("L", (300, 240)),))
+        with patch("instrument.visuals.cv2.putText", wraps=cv2.putText) as write:
+            renderer.draw(source, missing, Controller().update(missing))
+        top = {
+            call.args[1]
+            for call in write.call_args_list
+            if call.args[0].shape[0] == HUD_HEIGHT and call.args[2][1] < 110
+        }
+        self.assertTrue({"UNKNOWN", "Wrist only; no gesture", "NOT SEEN"}.issubset(top))
+        self.assertNotIn("VICTORY", top)
+        self.assertNotIn("THUMB UP", top)
+
     def test_full_body_overlay_includes_legs_with_no_hand_details(self) -> None:
         from instrument.tracking import body_hands, pose_observations, torso_geometry
 
@@ -46,7 +86,7 @@ class VisualTests(unittest.TestCase):
                     self.assertIn("ROOT LOCKED", text)
 
     def test_dead_zone_guide_matches_configured_controller_boundary(self) -> None:
-        config = Config(dead_zone_torsos=0.5)
+        config = Config(root_mode="midpoint", dead_zone_torsos=0.5)
         frame = Frame(0, torso_center=(320, 240), torso_px=100)
         state = Controller(config).update(frame)
         source = np.zeros((480, 640, 3), dtype=np.uint8)

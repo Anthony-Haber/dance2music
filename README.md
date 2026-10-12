@@ -68,6 +68,10 @@ palms face sideways. Detailed hand gestures select persistent chord qualities;
 both open palms held 1.5 seconds deliberately return to major. Confirmed fist
 locking shows ROOT LOCKED. Add `--volume 0.5` to halve the louder default audio.
 Restart after updates; resize/maximize the window for the complete camera view.
+Native Python root control now starts in interval mode; **T** switches to the
+original midpoint ring. Center both wrists to arm, then hold a directional pair
+to transpose once. Both up/down moves an octave; fist root lock freezes pitch.
+See the [approved interval map](specs/001-anthony-instrument/relative-root.md).
 Controls sit above the image. Hand detection follows web/main's far mode: alternating
 wrist crops and canned gesture labels confirmed for 0.35 seconds. The display shows
 the confirmed gesture and raw model result separately; joint shape never overrides None.

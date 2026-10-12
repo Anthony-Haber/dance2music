@@ -237,6 +237,15 @@ Sources: [web/live/live.js](../web/live/live.js), [web/live/features.js](../web/
 
 ## 4. Are we training our own AI?
 
+Anthony's native Python instrument now defaults to project-defined relative root
+controls: body-relative wrist direction pairs select signed intervals, with one
+change per neutral/rearm cycle. Both hands up/down transpose the sounding chord
+by an octave. T switches to the original midpoint root ring; finger labels still
+choose chord quality. These musical mappings and timing rules live in
+[root_control.py](../instrument/root_control.py) and
+[controller.py](../instrument/controller.py), rather than the MediaPipe models.
+See the [approved map and controls](../specs/001-anthony-instrument/relative-root.md).
+
 The pose and hand-recognition paths described above load existing MediaPipe models. They do not
 train a new neural pose model, a new fist recognizer, or a model that learns which chords we want.
 

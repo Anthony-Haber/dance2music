@@ -63,8 +63,11 @@ class Frame:
     torso_px: float | None = None
     energy: float = 0.0
     pose_landmarks: tuple[Point | None, ...] = ()
+    root_mode: str | None = None  # Optional recorded keyboard mode, applied before this frame.
 
     def __post_init__(self) -> None:
+        if self.root_mode not in {None, "interval", "midpoint"}:
+            raise ValueError("Root mode must be interval, midpoint or None")
         if not isfinite(self.time_s) or self.time_s < 0:
             raise ValueError("Frame time must be finite nonnegative seconds")
         if len({hand.side for hand in self.hands}) != len(self.hands):
@@ -84,6 +87,10 @@ class Frame:
 
 @dataclass(frozen=True)
 class Config:
+    root_mode: str = "interval"
+    interval_neutral_torsos: float = 0.25
+    interval_axis_ratio: float = 1.25
+    interval_rearm_s: float = 0.20
     close_s: float = 0.35
     reopen_s: float = 0.20
     arbitration_s: float = 0.25
@@ -92,13 +99,19 @@ class Config:
     major_dwell_s: float = 1.5
     max_gap_s: float = 0.20
     confidence_min: float = 0.5
-    split_torsos: float = 0.6
+    split_torsos: float = 1.0
     dead_zone_torsos: float = 0.25
     gain_exponent: float = 1.5
     gain_radius_torsos: float = 0.75
 
     def __post_init__(self) -> None:
+        if self.root_mode not in {"interval", "midpoint"}:
+            raise ValueError("Root mode must be interval or midpoint")
+        if not isfinite(self.interval_axis_ratio) or self.interval_axis_ratio <= 1:
+            raise ValueError("Interval axis ratio must be finite and > 1")
         for name in (
+            "interval_neutral_torsos",
+            "interval_rearm_s",
             "close_s",
             "reopen_s",
             "arbitration_s",
@@ -139,3 +152,9 @@ class Output:
     events: tuple[str, ...] = ()
     root_candidate: int | None = None
     pending_lock: bool = False
+    root_mode: str = "interval"
+    root_midi: int = 48
+    hand_directions: tuple[str | None, str | None] = (None, None)
+    interval_candidate: int | None = None
+    root_armed: bool = False
+    root_feedback: str = "CENTER BOTH HANDS TO ARM"

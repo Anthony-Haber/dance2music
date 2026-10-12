@@ -1,5 +1,136 @@
 # Project Status
 
+## 2026-10-12 - Relative root modes and wider split/merge
+
+- State: Engineering complete locally; performer camera/listening acceptance pending.
+- Task: Implement the approved separate-hand interval map as default, retain the
+  midpoint selector behind a keyboard switch, and widen the split distance.
+- Decisions: T switches modes while preserving chord/register/lock/ball state;
+  R retains the mode while resetting musical state. Neutral rearm is 0.20s,
+  pair dwell 0.35s; chest origins and thresholds are documented in relative-root.md.
+- Changes: Added pure body-relative interval selection, exact signed transposition
+  and real octave controls, root MIDI/register-aware voicing, lock/recovery guards,
+  T/CLI mode selection, effective mode recording/replay, updated demo, neutral
+  guides and top-panel target/progress. Default split/merge distance increased from
+  0.6 to 1.0 torso lengths. Preserved original midpoint and legacy replay behavior.
+- Verification: 91 tests and 242 subtests passed; two optional Node/PowerShell tests
+  skipped. Coverage includes all 16 signed pairs at all 12 roots, 4,800 catalogue
+  transpositions, octave audio frequency ratios, rearming/loss/bounds, mode-key
+  replay and wider split regression (failed before adjustment, passes afterward).
+  Ruff lint/format, mypy and whitespace checks passed. All 90 exported demo states
+  replay exactly. Synthetic 5,760-frame controller p95 0.0074ms (<5ms budget).
+  Inspected narrow/wide interval and midpoint previews; audio sample exported for
+  listening under output/anthony-instrument/relative-root. Live inference not measured.
+- Documentation: Updated approved map, tutorials, quickstart, README, explanation,
+  decisions, spec, plan, tasks and evidence. New files stay with instrument/tests/spec.
+- Local state: Previous work preserved; no push or website changes. Local AST graph
+  refreshed (1,397 nodes, 2,355 edges). Session exposes no compaction invocation;
+  user must run /compact before the next feature under constitution XI.
+- Outstanding: Restart Python, center both wrists, try signed intervals/T/octaves
+  and retest nearby fists; automated results do not establish performer acceptance.
+
+## 2026-10-12 - Relative root-control proposal
+
+- State: Design proposal only; awaiting Anthony's choice before implementation.
+- Task: Recommend separate-hand interval controls reaching all 12 pitch classes,
+  with signed movement and two-hands-up/down octave controls.
+- Proposal: Four body-relative direction zones per hand; left chooses an interval
+  family and right chooses signed movement. Reserve both up/down for +/-12, and
+  opposite vertical directions for +/-6. Seconds, thirds, fourths and fifths fill
+  the remaining pairs. Require stable dwell and neutral rearming for one step per
+  gesture. Proposed replacement of the midpoint selector retains fist root lock.
+- Verification: Reviewed current midpoint root selection, lock gating and bounded
+  voice leading. Signed +/-1 through +/-6 cover every nonzero pitch class; +/-7
+  adds fifth gestures. Actual octave shifts need explicit register state because
+  current root is only 0–11 and voice leading uses a fixed MIDI register.
+- Outstanding: Confirm control mode and mapping before Python implementation;
+  body zones and timing need performer validation. No executable code changed.
+
+## 2026-10-12 - Prominent top hand readouts
+
+- State: Complete locally; live distance-readability trial pending.
+- Task: Display what each hand sees at the top for reading from farther away.
+- Changes: Added LEFT HAND / RIGHT HAND columns with large confirmed gestures and
+  current raw model labels/confidence underneath. Label size grows for wider feeds
+  and fits within each column. Explicit unknown, wrist-only and missing-hand states
+  clear prior readings on loss. Expanded the panel to 350 pixels, preserving the
+  full camera image; updated tutorials and quickstart.
+- Verification: 16 visual/CLI tests and 6 subtests passed, covering corrected hand
+  identities, confirmed versus raw labels and loss. Ruff lint/format and mypy passed.
+  Inspected `output/anthony-instrument/hand-readouts/preview.png` at 640px width.
+  Whitespace check passed; local AST graph refreshed (1,352 nodes, 2,116 edges).
+- Local state: Changes remain uncommitted; no push or JavaScript changes.
+- Outstanding: Restart camera mode and check readability at performer distance.
+
+## 2026-10-12 - Flip live hand controls
+
+- State: Complete locally; performer confirmation pending.
+- Task: Swap reversed left/right hand labels and musical controls in camera mode.
+- Changes: Shared mirrored-body mapping assigns L to wrist/elbow 16/14 and R to
+  15/13 for body wrists and gesture crops. Hand identities remain stable when
+  crossing. Recorded replay IDs remain as saved. Updated tutorials, quickstart
+  and decisions with Anthony's requested correction and replay behavior.
+- Verification: New ordered-chord/crossed-hand/replay regression failed before
+  the fix and passes afterward. 77 tests and 47 subtests passed; two optional
+  tests skipped. Ruff lint/format, mypy and whitespace checks passed. Local AST
+  graph refresh completed (1,348 nodes, 2,089 edges).
+- Local state: Changes remain uncommitted; no push or JavaScript changes.
+- Outstanding: Restart camera mode and confirm physical left/right chord controls.
+
+## 2026-10-12 - Larger outlined instrument text
+
+- State: Complete locally; live readability trial pending.
+- Task: Make instrument text larger and add a shadow/outline.
+- Changes: Enlarged chord/status, root, gesture and help text; added white or colored
+  text with a black outline and offset shadow. Expanded the controls panel to 240
+  pixels and split help across shorter lines, preserving the entire camera frame.
+  Updated tutorials and quickstart.
+- Verification: 14 visual/CLI tests and 6 subtests passed; Ruff lint/format and mypy
+  passed. Inspected `output/anthony-instrument/text-readability/preview.png` on a
+  bright background. Local AST graph refresh completed (1,346 nodes, 2,083 edges).
+- Local state: Changes remain uncommitted; no push or JavaScript changes.
+- Outstanding: Restart the instrument to see the new text on the live feed.
+
+## 2026-10-12 - Prepare camera models on macOS
+
+- State: Model setup and macOS dependency fix complete; camera trial pending.
+- Task: Resolve missing local models when starting the native instrument.
+- Changes: Downloaded both MediaPipe models to ignored `output/models`, verified
+  their pinned SHA-256 hashes and wrote provenance. Upgraded local MediaPipe from
+  1.0.1 to 1.1.0 after reproducing a native Metal initialization abort, including
+  with an explicit CPU delegate. Added platform-specific runtime pins and Mac
+  commands in `docs/FEATURE_TUTORIALS.md`; Windows retains its existing pin.
+- Verification: MediaPipe 1.1.0 passed `--model-smoke` with both models and two
+  synthetic frames (17.33ms total). 76 tests and 47 subtests passed, with two optional
+  skips. Pip reports no broken requirements; whitespace check passed.
+- Local state: Changes remain local; model files are ignored. No push performed.
+- Outstanding: Camera startup reports no attached video input devices;
+  `system_profiler SPCameraDataType` returned no devices on this Mac. Connect/enable
+  a webcam or iPhone Continuity Camera and grant the terminal camera permission,
+  then retry. Performer camera/audio trial remains pending.
+
+## 2026-10-12 - Install local test dependencies
+
+- State: Complete.
+- Task: Install dependencies so tests can run on this Mac.
+- Changes: Installed `requirements.txt`, `requirements/instrument.txt` and
+  `requirements/dev.txt` into the existing Python 3.11.17 `.venv`; aligned NumPy
+  to 2.4.1 and added PyYAML 6.0.3 for the optional preset-composition test.
+- Verification: 76 tests and 47 subtests passed; two optional tests skipped because
+  Node and PowerShell are unavailable. Pip dependency check, Ruff lint/format and
+  mypy passed. Run tests with `.venv/bin/python -m pytest -q`.
+- Local state: Only this status record is changed in tracked files; no push performed.
+- Outstanding: Optional JavaScript and cross-shell parity checks require Node and
+  PowerShell respectively. Camera/audio device behavior was not tested.
+
+## 2026-10-12 - Pull latest changes
+
+- State: Complete.
+- Task: Pull the latest remote changes.
+- Verification: `git pull --ff-only` succeeded on `anthony-explorations` and reported
+  already up to date at `89c7815`. The working tree was clean before the pull.
+- Local state: This status entry is uncommitted; no push was performed.
+
 ## 2026-10-04 - Constitution: local work and task status
 
 - State: Complete.

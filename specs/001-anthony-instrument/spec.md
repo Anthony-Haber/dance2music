@@ -74,7 +74,11 @@ mode. No depth or true 3D is claimed. Render and inspect deterministic examples.
 ## US3 — Reachable roots and musical qualities (P3, idea 2)
 
 As a musician I can reach every one of 12 roots and 25 qualities (300 chords)
-from every starting chord, using region dwell and absolute quality selection.
+from every starting chord, using signed interval controls or midpoint-region dwell
+and absolute quality selection. The [approved interval map](relative-root.md) is
+the default; T switches to the original midpoint mode without changing musical state.
+Intervals apply once after neutral rearming and pair dwell; both up/down transpose
+every sounding voice by an octave. Root lock freezes pitch class and register.
 
 Acceptance: symbols and tone sets match the complete map in chord-map.md, including
 6, 6/9, 9, 11, 13, suspended, augmented and altered qualities. Every tone in the

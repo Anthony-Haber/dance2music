@@ -1,5 +1,7 @@
 """Native CLI contracts, replay exports, tracking adapters and failure messages."""
 
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -10,10 +12,11 @@ from contextlib import ExitStack
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 
-from instrument.__main__ import Exports
+from instrument.__main__ import Exports, main
 from instrument.controller import Controller
 from instrument.models import Frame
 from instrument.replay import read_replay
@@ -21,6 +24,37 @@ from instrument.tracking import observations, torso_geometry
 
 
 class CliTests(unittest.TestCase):
+    def test_t_key_switches_root_modes_and_exports_replayable_mode_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            argv = ["instrument", "--demo", "--mute", "--fps", "100", "--output", temporary]
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(patch("sys.argv", argv))
+                for name in ("namedWindow", "resizeWindow", "imshow", "destroyAllWindows"):
+                    stack.enter_context(patch(f"instrument.__main__.cv2.{name}"))
+                stack.enter_context(
+                    patch("instrument.__main__.cv2.getWindowProperty", return_value=1)
+                )
+                stack.enter_context(
+                    patch(
+                        "instrument.__main__.cv2.waitKey",
+                        side_effect=[ord("T"), ord("t"), ord("q")],
+                    )
+                )
+                stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+                self.assertEqual(main(), 0)
+            frames = list(read_replay(Path(temporary) / "frames.jsonl"))
+            self.assertEqual([f.root_mode for f in frames], ["interval", "midpoint", "interval"])
+            recorded = [
+                json.loads(line)
+                for line in (Path(temporary) / "states.jsonl").read_text().splitlines()
+            ]
+            replay = Controller()
+            for frame, state in zip(frames, recorded, strict=True):
+                output = replay.update(frame)
+                self.assertEqual(output.root_mode, state["root_mode"])
+                self.assertEqual(output.root_midi, state["root_midi"])
+                self.assertEqual(list(output.notes), state["notes"])
+
     def test_exported_audio_changes_at_observation_time_after_irregular_gap(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary)

@@ -138,18 +138,25 @@ def _assignment_costs(moves: tuple[tuple[int, ...], ...], maximum: int) -> list[
     return costs
 
 
-def voice_lead(previous: tuple[int, ...], chord: Chord) -> tuple[int, ...]:
-    """Distinct chord pitches in MIDI [48,83], minimal movement with fixed voice count.
+def voice_lead(previous: tuple[int, ...], chord: Chord, register_shift: int = 0) -> tuple[int, ...]:
+    """Distinct chord pitches in shifted MIDI [48,83], clipped to MIDI [0,127].
 
     A changed voice count uses root position to avoid silently adding or dropping
     chord tones. Same-count transitions minimize total movement, then largest
     individual movement, then the oscillator note tuple, without factorial search.
+    register_shift must be whole octaves; zero preserves the original voicings.
     """
+    if not isinstance(register_shift, int) or register_shift % 12:
+        raise ValueError("Register shift must be an integer number of semitones in whole octaves")
+    root_position = tuple(48 + register_shift + chord.root + i for i in INTERVALS[chord.quality])
+    if any(not 0 <= note <= 127 for note in root_position):
+        raise ValueError("Chord register exceeds MIDI range")
     if len(previous) != len(chord.pitch_classes):
-        return tuple(48 + chord.root + interval for interval in INTERVALS[chord.quality])
+        return root_position
+    low, high = max(0, 48 + register_shift), min(127, 83 + register_shift)
     candidates = tuple(
         tuple(
-            min(range(48 + (pc - 48) % 12, 84, 12), key=lambda n: (abs(n - old), n))
+            min(range(low + (pc - low) % 12, high + 1, 12), key=lambda n: (abs(n - old), n))
             for pc in chord.pitch_classes
         )
         for old in previous

@@ -64,6 +64,42 @@ def fake_tracker() -> Tracker:
 
 
 class TrackingTests(unittest.TestCase):
+    def test_mirrored_body_sides_select_ordered_chords_even_when_hands_cross(self) -> None:
+        tracker = fake_tracker()
+        controller = Controller()
+        image = np.zeros((480, 640, 3), dtype=np.uint8)
+        for side, gesture in (("L", "Thumb_Down"), ("R", "Thumb_Up")):
+            tracker.crops[side].recognize_for_video.return_value = SimpleNamespace(
+                hand_landmarks=[[SimpleNamespace(x=0.5, y=0.5) for _ in range(21)]],
+                handedness=[[]],
+                gestures=[[SimpleNamespace(category_name=gesture, score=0.99)]],
+            )
+        frame = tracker.detect(image, 0)
+        hands = {hand.side: hand for hand in frame.hands}
+        self.assertEqual(hands["L"].wrist, (512, 240))
+        self.assertEqual(hands["R"].wrist, (128, 240))
+        controller.update(frame)
+        for index in range(1, 30):
+            frame = tracker.detect(image, index * 0.04)
+            state = controller.update(frame)
+        self.assertEqual(state.quality, "minor_major7")
+        # Follow the same body joints across the screen, rather than sorting by x.
+        pose = tracker.pose.detect_for_video.return_value.pose_landmarks[0]
+        for first, second in ((13, 14), (15, 16)):
+            pose[first].x, pose[second].x = pose[second].x, pose[first].x
+        for index in range(30, 60):
+            frame = tracker.detect(image, index * 0.04)
+            state = controller.update(frame)
+        hands = {hand.side: hand for hand in frame.hands}
+        self.assertLess(hands["L"].wrist[0], hands["R"].wrist[0])
+        self.assertEqual(hands["L"].gesture, "Thumb_Down")
+        self.assertEqual(hands["R"].gesture, "Thumb_Up")
+        self.assertEqual(state.quality, "minor_major7")
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "frames.jsonl"
+            path.write_text(json.dumps(asdict(frame)) + "\n", encoding="utf-8")
+            self.assertEqual(list(read_replay(path)), [frame])
+
     def test_model_cleanup_releases_all_tasks_when_one_close_fails(self) -> None:
         tracker = fake_tracker()
         tracker.resources = ExitStack()
@@ -82,7 +118,7 @@ class TrackingTests(unittest.TestCase):
         frame = tracker.detect(np.zeros((480, 640, 3), dtype=np.uint8), 0)
         self.assertEqual(len(frame.pose_landmarks), 33)
         self.assertIsNotNone(frame.pose_landmarks[27])
-        self.assertEqual(tuple(h.wrist for h in frame.hands), ((128, 240), (512, 240)))
+        self.assertEqual(tuple(h.wrist for h in frame.hands), ((512, 240), (128, 240)))
         self.assertTrue(all(h.gesture == "None" and h.confidence == 0 for h in frame.hands))
         state = Controller().update(frame)
         self.assertEqual(state.balls[0].center, (320, 240))
@@ -103,7 +139,7 @@ class TrackingTests(unittest.TestCase):
         tracker.pose.detect_for_video.return_value.pose_landmarks[0][15].visibility = 0.1
         missing = tracker.detect(image, 0.04)
         self.assertIsNone(missing.pose_landmarks[15])
-        self.assertEqual(tuple(h.side for h in missing.hands), ("R",))
+        self.assertEqual(tuple(h.side for h in missing.hands), ("L",))
         self.assertEqual(controller.update(missing).balls, ())
         tracker.pose.detect_for_video.return_value = SimpleNamespace(pose_landmarks=[])
         state = controller.update(tracker.detect(image, 0.08))
@@ -124,7 +160,7 @@ class TrackingTests(unittest.TestCase):
         )
         hand = observations(result, 100, 100, side="L", box=box)[0]
         self.assertEqual(hand.wrist, (5, 50))
-        pose = tuple((5.0, 50.0) if j == 15 else None for j in range(33))
+        pose = tuple((5.0, 50.0) if j == 16 else None for j in range(33))
         merged = body_hands(pose, (hand,))
         self.assertEqual((merged[0].side, merged[0].gesture), ("L", "Victory"))
 
@@ -143,7 +179,7 @@ class TrackingTests(unittest.TestCase):
             self.assertEqual(left.gesture, "Closed_Fist" if index >= 10 else "None")
         self.assertEqual(left.raw_gesture, "Closed_Fist")
         self.assertEqual(left.gesture_since, 0)
-        self.assertAlmostEqual(left.landmarks[0][0], 128 + 0.35 * (128 - 192))
+        self.assertAlmostEqual(left.landmarks[0][0], 512 + 0.35 * (512 - 448))
 
     def test_position_filter_is_causal_and_clears_missing_joints_and_long_gaps(self) -> None:
         tracker = fake_tracker()
@@ -157,7 +193,7 @@ class TrackingTests(unittest.TestCase):
         self.assertEqual(tracker._smooth_pose(moved, 0.3), moved)
 
     def test_cached_hand_details_do_not_replace_missing_body_wrists(self) -> None:
-        pose = tuple((100.0, 240.0) if j == 16 else None for j in range(33))
+        pose = tuple((100.0, 240.0) if j == 15 else None for j in range(33))
         detailed = (Hand("L", (200, 240), "Closed_Fist", 0.99),)
         hands = body_hands(pose, detailed)
         self.assertEqual(tuple(h.side for h in hands), ("R",))

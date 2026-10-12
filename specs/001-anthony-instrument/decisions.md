@@ -1,5 +1,25 @@
 # Decisions made during ideas 0–2 implementation
 
+## Relative root control and mode switch, 2026-10-12
+
+Anthony approved the [signed interval map](relative-root.md) as the default instead
+of midpoint selection, while requesting a keyboard switch between both modes.
+T toggles modes, preserving musical/lock/ball state. Both-up/down changes actual
+register by +/-12, rather than wrapping pitch class. Fist lock freezes both.
+Neutral rearming makes each pose apply once; torso-normalized separate-hand positions
+provide distance-independent controls. Initial neutral/axis/timing parameters and
+MIDI bounds are documented in the map; performer validation remains pending.
+Anthony also requested a wider split distance: default 1.0 torso length replaces 0.6.
+
+## Swap live hand assignments, 2026-10-12
+
+Anthony reported his left hand appearing as right and requested flipping hand logic.
+For mirrored camera/video input, L now follows pose wrist/elbow 16/14 and R follows
+15/13. A shared mapping applies to both wrist geometry and gesture crops, so labels
+and ordered chord controls agree. Assignments follow joints across crossed hands;
+they do not depend on screen position. Recorded JSONL hand IDs are preserved, so
+older recordings keep their prior interpretation. Live performer confirmation is pending.
+
 ## Complete 25-cell catalogue and fuller sound, 2026-10-11
 
 Anthony approved the [25-cell ordered hand map](chord-map.md), including changed

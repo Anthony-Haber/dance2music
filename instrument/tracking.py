@@ -18,6 +18,9 @@ CROP_TORSOS = 1.1
 CROP_MIN_PX = 64
 CROP_REACH = 0.35
 POSITION_TAU_S = 0.04
+# Input is mirrored. Swap the pose's side labels for the performer's controls;
+# retain joint identity when hands cross instead of assigning sides by screen x.
+BODY_HAND_JOINTS = (("L", 16, 14), ("R", 15, 13))  # side, wrist, elbow
 
 
 GESTURE_MIN = 0.5
@@ -169,10 +172,10 @@ def hand_crop(
 
 
 def body_hands(pose: tuple[Point | None, ...], detailed: tuple[Hand, ...]) -> tuple[Hand, ...]:
-    """Use body wrists for ball geometry, and website-filtered details for gestures."""
+    """Use mirrored performer wrists and filtered details for ball/gesture controls."""
     found = {hand.side: hand for hand in detailed}
     hands: list[Hand] = []
-    for side, joint in (("L", 15), ("R", 16)):
+    for side, joint, _ in BODY_HAND_JOINTS:
         wrist = pose[joint] if pose else None
         hand = found.get(side)
         if wrist is not None:
@@ -272,7 +275,7 @@ class Tracker:
         raw_pose = pose_observations(pose_result, width, height)
         pose = self._smooth_pose(raw_pose, time_s)
         # Website far mode alternates pose-guided crops, one recognizer per side.
-        side, wrist_joint, elbow_joint = (("L", 15, 13), ("R", 16, 14))[self.crop_index % 2]
+        side, wrist_joint, elbow_joint = BODY_HAND_JOINTS[self.crop_index % 2]
         self.crop_index += 1
         detected = None
         wrist = pose[wrist_joint] if pose else None
