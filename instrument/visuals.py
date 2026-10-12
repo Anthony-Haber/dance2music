@@ -2,7 +2,8 @@
 
 Geometry is supplied by the controller; replacing this renderer does not change
 gesture or harmony semantics. BGR uint8 inputs have shape (height,width,3);
-outputs add HUD_HEIGHT rows above the entire camera frame without changing its scale.
+Outputs add HUD_HEIGHT rows (plus MIDI_STATUS_HEIGHT when enabled) above the entire
+camera frame without changing its scale.
 """
 
 import colorsys
@@ -62,6 +63,7 @@ BODY_EDGES = (
 HAND_READOUT_HEIGHT = 110
 ROOT_STATUS_HEIGHT = 100
 HUD_HEIGHT = 240 + HAND_READOUT_HEIGHT + ROOT_STATUS_HEIGHT
+MIDI_STATUS_HEIGHT = 44
 
 
 def pixel(point: Point) -> tuple[int, int]:
@@ -119,7 +121,12 @@ class Renderer:
         self.previous_owner: str | None = None
 
     def draw(
-        self, image: NDArray[np.uint8], frame: Frame, state: Output, latency_ms: float = 0
+        self,
+        image: NDArray[np.uint8],
+        frame: Frame,
+        state: Output,
+        latency_ms: float = 0,
+        midi_status: str | None = None,
     ) -> NDArray[np.uint8]:
         """Return an independent rendered image; caller's input is never modified."""
         if image.ndim != 3 or image.shape[2] != 3 or image.dtype != np.uint8:
@@ -190,8 +197,13 @@ class Renderer:
         self.particles = [p for p in self.particles if p.age < p.life][-300:]
         self._guides(out, frame, state, color)
         # Controls occupy their own rows; never conceal the camera's head/upper body.
-        panel = np.zeros((HUD_HEIGHT, image.shape[1], 3), dtype=np.uint8)
+        panel_height = HUD_HEIGHT + (MIDI_STATUS_HEIGHT if midi_status is not None else 0)
+        panel = np.zeros((panel_height, image.shape[1], 3), dtype=np.uint8)
         self._hud(panel, frame, state, latency_ms)
+        if midi_status is not None:
+            text_width = cv2.getTextSize(midi_status, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)[0][0]
+            scale = 0.65 * min(1.0, max(1, image.shape[1] - 32) / max(1, text_width))
+            _label(panel, midi_status, (16, HUD_HEIGHT + 30), scale, (150, 230, 180))
         return np.concatenate((panel, out), axis=0)
 
     def _glow(

@@ -1,5 +1,47 @@
 # Validation evidence: local Python instrument
 
+## First held-root Ableton MIDI output, 2026-10-12
+
+- Anthony chose the current root and hold-while-active behavior. Implemented the
+  process-owned `dance2music - Notes to Ableton` source, plus explicit IAC/loopMIDI
+  destination selection/listing, channel/velocity defaults, P pause/resume, MIDI HUD
+  and byte logs. `dance2music - Chords to Ableton` is reserved and not created.
+  No quality/chord tones or plugin mapping is sent in this first stage.
+- **161 passed, 2 optional skips, 242 subtests passed** (`.venv/bin/python -m pytest -q`).
+  Forty new cases cover held monophony and Off-before-On order, octaves, quality/
+  lock/split/transfer independence, actual controller/ownership loss/recovery,
+  channel/velocity/pitch boundaries, lazy/missing dependencies, exact/unique port
+  names, listing, device failures, Ctrl-C/loop/Q cleanup, P persistence, headless
+  timing, JSONL cleanup and renderer geometry. Core tests open no MIDI devices.
+  Ruff check and format pass (24 files); mypy passes (12 sources); diff check passes.
+- Installed pinned **python-rtmidi 1.5.8** in existing macOS arm64 **Python 3.11.17**
+  `.venv`. CoreMIDI creation in the restricted agent sandbox aborted with -10833;
+  the authorized normal desktop check succeeded, listing existing ARIA_IN/ARIA_OUT
+  destinations. They were not selected or renamed. Normal Terminal is the supported
+  launch context; the optional native library cannot recover that sandbox abort.
+- Real dedicated CoreMIDI loopback received exact Note On 48, Off 48/On 55,
+  loss Off 55, recovery On 60, exit Off 60 and channel-1 All Notes Off. A repeated
+  root sent no duplicate. The native source disappeared after cleanup. No hardware
+  output or existing IAC destination received these test messages. Reproducible
+  script/result: `output/anthony-instrument/midi-check/verify.py` and `coremidi.json`.
+- Thirty device-free 15s demo repetitions (**13,500 frames**) measured
+  controller-plus-MIDI p95 **0.00734ms**, below the **5ms** budget. Fixture is
+  demonstration(30), renderer seed 0; `latency.json` records parameters. This is
+  adapter/computation latency, not camera-to-Ableton audio latency.
+- Real CLI: `.venv/bin/python -m instrument --demo --headless --midi --seconds 15
+  --output output/anthony-instrument/midi-check/demo` processed 450 frames in
+  **14.997s**. MIDI roots **48 → 55 → 57**, seven total messages including final
+  Note Off/All Notes Off. MIDI update p95 **0.00221ms**, controller **0.0672ms**,
+  renderer **3.981ms**. Preview 960x1214 retains all 960x720 source pixels below
+  450px HUD plus 44px MIDI row. Inspected `midi-hud.png`: cable/channel/NOTE/P
+  status is readable and occupies its own row. Logs match held-note lifecycle.
+- Documentation includes the macOS command, automatic source names, Ableton Track/
+  monitoring steps, demo, existing IAC route, pause and troubleshooting. Real
+  Ableton routing/listening, live gesture latency, and Windows/Linux MIDI remain
+  unverified; engineering checks do not establish those acceptance results.
+  No website changes, commit or push. Local AST graph refreshed once: 1,522 nodes,
+  2,699 edges, 155 communities; no API cost.
+
 ## Split-ball energy collection, 2026-10-12
 
 - Anthony approved combining visible areas, preserving the existing split-energy

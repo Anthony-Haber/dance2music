@@ -18,6 +18,7 @@ from numpy.typing import NDArray
 
 from instrument.audio import Playback, Synth
 from instrument.controller import Controller
+from instrument.midi import MidiNotes, MidiPort, output_ports
 from instrument.models import Config, Frame, Output
 from instrument.replay import demonstration, read_replay
 from instrument.tracking import Tracker
@@ -135,6 +136,13 @@ def scripted_frames(frames: Iterator[Frame]) -> Iterator[tuple[Frame, NDArray[np
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    if args.list_midi_ports:
+        return {"midi_destinations": output_ports()}
+    if not 1 <= args.midi_channel <= 16 or not 1 <= args.midi_velocity <= 127:
+        raise ValueError("MIDI channel must be in [1,16] and velocity in [1,127]")
+    midi_enabled = args.midi or args.midi_port is not None
+    if args.model_smoke and midi_enabled:
+        raise ValueError("Use --demo --midi to test MIDI; --model-smoke only tests CV models")
     if not math.isfinite(args.seconds) or args.seconds < 0 or not 1 <= args.fps <= 120:
         raise ValueError("seconds must be finite nonnegative and fps in [1,120]")
     if not math.isfinite(args.volume) or not 0 <= args.volume <= 1:
@@ -147,9 +155,30 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if args.root_mode:
         config = replace(config, root_mode=args.root_mode)
     controller, renderer = Controller(config), Renderer(args.style, config=config)
-    core_times, render_times, inference_times = [], [], []
+    core_times, render_times, inference_times, midi_times = [], [], [], []
     final: Output | None = None
     with ExitStack() as stack:
+        midi = None
+        if midi_enabled:
+            midi_log = None
+            if args.output:
+                args.output.mkdir(parents=True, exist_ok=True)
+                midi_log = stack.enter_context(
+                    (args.output / "midi.jsonl").open("w", encoding="utf-8")
+                )
+
+            def record_midi(timestamp: float, message: list[int]) -> None:
+                if midi_log is not None:
+                    midi_log.write(json.dumps({"time_s": timestamp, "bytes": message}) + "\n")
+
+            midi = MidiNotes(
+                MidiPort(args.midi_port), args.midi_channel, args.midi_velocity, record_midi
+            )
+            stack.callback(midi.close)
+            print(
+                f"MIDI ready: {midi.port.name} | channel {midi.channel} | held root note",
+                file=sys.stderr,
+            )
         playback = None
         if not args.mute and not args.headless and not args.model_smoke:
             try:
@@ -205,16 +234,26 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             elapsed = frame.time_s - first_timestamp
             if args.seconds and elapsed >= args.seconds:
                 break
-            # Playback uses source time; headless validation runs as fast as possible.
-            if not args.headless:
+            # Real MIDI uses source time even headless; device-free validation stays fast.
+            if not args.headless or midi is not None:
                 delay = elapsed - (time.perf_counter() - wall_start)
                 if delay > 0:
                     time.sleep(delay)
             before = time.perf_counter()
             final = controller.update(frame)
             core_times.append((time.perf_counter() - before) * 1000)
+            if midi is not None:
+                before = time.perf_counter()
+                midi.update(final)
+                midi_times.append((time.perf_counter() - before) * 1000)
             before = time.perf_counter()
-            rendered = renderer.draw(image, frame, final, inference_ms + core_times[-1])
+            rendered = renderer.draw(
+                image,
+                frame,
+                final,
+                inference_ms + core_times[-1],
+                midi_status=midi.status if midi is not None else None,
+            )
             render_times.append((time.perf_counter() - before) * 1000)
             inference_times.append(inference_ms)
             if playback:
@@ -234,6 +273,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     renderer.style = "light" if renderer.style == "fire" else "fire"
                 elif key in (ord("t"), ord("T")):
                     controller.toggle_root_mode()
+                elif key in (ord("p"), ord("P")) and midi is not None:
+                    midi.set_paused(not midi.paused)
                 if cv2.getWindowProperty(WINDOW_TITLE, cv2.WND_PROP_VISIBLE) < 1:
                     break
         if final is None:
@@ -254,6 +295,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "source_size_px": [image.shape[1], image.shape[0]],
         "preview_size_px": [rendered.shape[1], rendered.shape[0]],
     }
+    if midi is not None:
+        metrics["midi"] = {
+            "port": midi.port.name,
+            "channel": midi.channel,
+            "velocity": midi.velocity,
+            "mode": "held_root",
+            "messages": midi.messages,
+            "update_p95_ms": float(np.percentile(midi_times, 95)),
+        }
     if args.output:
         (args.output / "summary.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     return metrics
@@ -269,6 +319,20 @@ def main() -> int:
     sources.add_argument("--video", type=Path, help="track a local video instead of camera")
     sources.add_argument(
         "--model-smoke", action="store_true", help="load models and infer two blank frames"
+    )
+    sources.add_argument(
+        "--list-midi-ports", action="store_true", help="list existing MIDI output destinations"
+    )
+    parser.add_argument(
+        "--midi", action="store_true", help="send one held root to dance2music - Notes to Ableton"
+    )
+    parser.add_argument(
+        "--midi-port",
+        help="enable MIDI to an existing destination (exact name or unique substring)",
+    )
+    parser.add_argument("--midi-channel", type=int, default=1, help="MIDI channel 1-16 (default 1)")
+    parser.add_argument(
+        "--midi-velocity", type=int, default=96, help="note velocity 1-127 (default 96)"
     )
     parser.add_argument("--camera", type=int, default=0)
     parser.add_argument("--camera-width", type=int, default=1280, help="requested capture width")

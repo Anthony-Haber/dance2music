@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/decisions.md": {
-    "mtime": 1791818618.9993062,
-    "ast_hash": "5b8ad3d0079e7c0d510eca811b390f56",
+    "mtime": 1791819065.5658865,
+    "ast_hash": "0825b738886b0b2cd0ce2f0842df2ec9",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/plan.md": {
@@ -430,23 +430,23 @@
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/quickstart.md": {
-    "mtime": 1791818681.6847184,
-    "ast_hash": "589efd7e19d5d2ce28f9ac876d69972b",
+    "mtime": 1791819065.6031249,
+    "ast_hash": "bf41d02c9530915d1c0e74ad7dfc1d01",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/spec.md": {
-    "mtime": 1791818619.0187702,
-    "ast_hash": "87e2b82098ae68bbf19c7220e84d6568",
+    "mtime": 1791819065.585418,
+    "ast_hash": "01558618a16a3daa87cc6cad2fab82ee",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/tasks.md": {
-    "mtime": 1791817819.9477673,
-    "ast_hash": "6c6a86b5e684c6cb65acd06fb8dd3e6e",
+    "mtime": 1791819142.5796533,
+    "ast_hash": "d16e60ac6742b253938b027930ee5750",
     "semantic_hash": ""
   },
   "status.md": {
-    "mtime": 1791818918.3309426,
-    "ast_hash": "1dc57e339a33d6dec6967633c353e516",
+    "mtime": 1791819142.5587842,
+    "ast_hash": "2d7efc40ec0040fbf124851abece3f22",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20261005_044808_continue_working_where_you_last_stopped_yesterday.md": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/evidence.md": {
-    "mtime": 1791818753.9892073,
-    "ast_hash": "0c35e3bd4f13326b7437f7b617e94ab6",
+    "mtime": 1791819142.5335264,
+    "ast_hash": "f321551c2887484eeee1a82ee04d1957",
     "semantic_hash": ""
   },
   ".specify/scripts/bash/check-prerequisites.sh": {
@@ -505,8 +505,8 @@
     "semantic_hash": ""
   },
   "docs/FEATURE_TUTORIALS.md": {
-    "mtime": 1791818918.3076463,
-    "ast_hash": "78e0bbc20e897000e4661d2af56d4f63",
+    "mtime": 1791819065.5452175,
+    "ast_hash": "53963164d813136ceff4728ab6392334",
     "semantic_hash": ""
   },
   "docs/explanation.md": {
@@ -580,8 +580,8 @@
     "semantic_hash": ""
   },
   "tests/test_instrument_transfer.py": {
-    "mtime": 1791818848.9125328,
-    "ast_hash": "be5eefc04fa4f7d084eaafd55714f7ce",
+    "mtime": 1791819097.269928,
+    "ast_hash": "722e38d7beed1b587f4c003110f72061",
     "semantic_hash": ""
   }
 }

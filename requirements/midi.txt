@@ -1,0 +1,2 @@
+# Optional native MIDI output, tested on macOS arm64 / Python 3.11.
+python-rtmidi==1.5.8

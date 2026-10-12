@@ -158,3 +158,21 @@ Engineering completion is separate from performer acceptance.
 - [X] T050 Confirm approved area-conserving split-energy collection in both
   directions at four sizes; verify one-time growth, donor removal and common merge,
   update energy-transfer tutorial and evidence, and run final validation.
+
+## First single-note Ableton output: 2026-10-12
+
+- [X] T051 Record Anthony's current-root/held-note decisions, clear cable names,
+  first-stage boundaries and verification plan in midi-output.md.
+- [X] T052 Add lazy optional RtMidi boundary and pinned dependency; support automatic
+  named source, listed/exact/unique existing destinations and reliable endpoint deletion.
+- [X] T053 Implement one held root, replacement Off/On ordering, ball/gain gating,
+  persistent pause/resume and best-effort exit/failure Note Off + All Notes Off.
+- [X] T054 Integrate CLI channel/velocity/MIDI opt-in, P key, status row, paced
+  headless MIDI, exact-byte exports and summary metrics.
+- [X] T055 Run device-free contracts/full suite, lint/format/types; verify real
+  CoreMIDI bytes/cleanup, paced demo, latency and HUD; add usage/tutorial/evidence/status.
+- [X] T056 Refresh local AST graph once after this new MIDI capability.
+- [ ] T057 Performer/Ableton trial: choose the Notes input, enable Track, monitor
+  an instrument, verify held roots/octaves/pause/recovery/quit by listening.
+
+Chord MIDI and Expressive Chords trigger mapping are intentionally later work.

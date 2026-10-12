@@ -6,7 +6,9 @@ Date: 2026-10-04. Branch: `anthony-explorations`.
 
 Implement a native Python instrument, not a server for the existing website.
 Anthony confirmed a temporary Joseph-inspired 2D glow instead of initial 3D;
-true depth, animator assets, spells, games and Ableton MIDI remain separate work.
+true depth, animator assets, spells, games and chord MIDI remain separate work.
+Anthony's approved 2026-10-12 addition sends one held root note to Ableton;
+its bounded first-stage contract is [midi-output.md](midi-output.md).
 The minimum split interaction is included because idea 1 and lock arbitration
 depend on it; additional finger-pattern ball modes remain undefined.
 

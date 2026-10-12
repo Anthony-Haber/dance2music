@@ -98,6 +98,8 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   The receiver is now the fist; recordings made with the earlier palm receiver
   likewise replay with the corrected ownership direction.
 - T switches root mode; R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
+- With MIDI enabled, P pauses/resumes MIDI and its extra 44px HUD row shows the
+  named cable, channel and active note. Pausing releases the note immediately.
 - Body/wrist loss silences sound with a short fade and hides unavailable visuals.
   Hand-detail loss retains the last detection for up to 0.4 seconds, as in web/main,
   then cancels pending gesture actions while body wrists can keep the ball/sound active.
@@ -120,6 +122,27 @@ gaps above 0.20 seconds reset controller gesture candidates, so slow inference m
 tuning `max_gap_s` and the dwell values together after a real performer trial.
 The visible central dead-zone guide uses the same configured threshold as root selection.
 
+## Single-note Ableton output (macOS)
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi --mute
+# No camera/models needed for this connection test:
+.venv/bin/python -m instrument --demo --midi --mute
+```
+
+The active source is **dance2music - Notes to Ableton**, channel 1, velocity 96.
+It is created automatically and removed at exit. Select that input in Ableton,
+enable Track and monitor/arm a MIDI track with an instrument. One root note holds
+while the ball has positive gain; root/octave changes replace it, loss releases
+it, recovery resumes it, and quality changes leave it held. Chord output and plugin
+trigger mappings are deferred. See [setup and troubleshooting](../../docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
+and the [contract](midi-output.md). `--midi-channel` / `--midi-velocity` override defaults.
+`--list-midi-ports` lists existing destinations; `--midi-port "exact name"` enables
+that route instead of the automatic source. Windows needs a named loopMIDI cable.
+`--mute` and `--volume` affect local audio only. Tested MIDI dependency: RtMidi 1.5.8
+on macOS arm64/Python 3.11.17; other platforms require validation.
+
 ## Headless validation and local exports
 
 ```powershell
@@ -129,8 +152,12 @@ The visible central dead-zone guide uses the same configured threshold as root s
 .venv/Scripts/python.exe -m instrument --model-smoke
 ```
 
-Headless mode never opens a display or audio device. Exports include frames.jsonl,
+Headless mode never opens a display or audio device. Explicit --midi still opens
+a MIDI port and follows source timing; device-free headless runs remain fast.
+Exports include frames.jsonl,
 states.jsonl, preview.avi, chords.wav, representative PNGs and summary.json.
+MIDI-enabled exports also include midi.jsonl with exact bytes and source timestamps,
+including cleanup. Summary reports MIDI port/channel/velocity/count/update p95.
 Only processed observations are replayed, not camera images. Optional pose_landmarks
 contains 33 pixel points, with null for unavailable joints; older replays without
 that field remain valid. Camera hands store confirmed gesture/confidence plus

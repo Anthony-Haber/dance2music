@@ -51,7 +51,7 @@ for relocated dependency files and the model setup command.
 | `web/methods.html`, `web/about.html` | the math of everything, as a drawer and as a standalone page |
 | `web/live/` | the live tool: camera picker, causal features, pose chords, Web Audio synth, mixer |
 | `live.py` | serves `web/` on localhost (the camera needs localhost or https) |
-| `instrument/` | Anthony's native Python prototype: root lock, glowing/split/one-hand ball, 12 roots and 25 chord qualities |
+| `instrument/` | Native Python: root lock, split/one-hand ball, 12 roots, 25 qualities and optional single-root MIDI |
 | `IDEAS.md` | ideas not built yet |
 | `docs/ANTHONY_IDEAS.md` | Anthony's project vision, priorities, design decisions, and possible design flaws |
 | `docs/explanation.md` | what the code does, what MediaPipe supplies, and what the project implements |
@@ -82,6 +82,18 @@ records provisional choices for Anthony's review. True 3D and JavaScript transla
 The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
 model/device checks, measured latency and the remaining performer/listening review.
 For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).
+
+For one held root note in Ableton on macOS:
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi --mute
+```
+
+Select **dance2music - Notes to Ableton** as Ableton's MIDI input, channel 1.
+P pauses/resumes MIDI; exit releases the note. Chord MIDI comes later.
+See the [Ableton setup tutorial](docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
+for monitoring, the camera-free demo and existing IAC/loopMIDI cables.
 
 ---
 

@@ -1,5 +1,18 @@
 # Decisions made during ideas 0–2 implementation
 
+## First Ableton MIDI stage, 2026-10-12
+
+Anthony requested clear virtual cable names and one note before later chord work.
+He chose the **current root note** over a fixed test note, and **hold while active**
+over pulses. This makes interval/octave gestures directly playable on an Ableton
+instrument and defers the Expressive Chords mapping until the chord stage.
+Active source: `dance2music - Notes to Ableton`; reserve
+`dance2music - Chords to Ableton` for later without opening it now.
+The [MIDI contract](midi-output.md) defines channel/velocity defaults, active-ball
+gating, replacement/release, P pause/resume, opt-in ports and cleanup. Optional
+python-rtmidi is isolated at the device boundary. No full chords, plugin preset
+assumptions, continuous CC volume, website translation or external publication.
+
 ## Persistent one-hand transfer, 2026-10-12
 
 Anthony accepted persistent ownership and captured size/gain after requesting

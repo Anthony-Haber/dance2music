@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1791817660.399778,
-    "ast_hash": "f8aa45e98524582c83a0fa1ee4ee342f",
+    "mtime": 1791824407.6465285,
+    "ast_hash": "a62de60ced007052de24bc95cb6aa874",
     "semantic_hash": ""
   },
   "requirements.txt": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "instrument/__main__.py": {
-    "mtime": 1791817541.3615506,
-    "ast_hash": "35a892ffb7d3217bf78538d0f7414884",
+    "mtime": 1791824205.5747957,
+    "ast_hash": "f7d082f290d089fcdfd55d5331c57978",
     "semantic_hash": ""
   },
   "instrument/audio.py": {
@@ -380,8 +380,8 @@
     "semantic_hash": ""
   },
   "instrument/visuals.py": {
-    "mtime": 1791817541.3440382,
-    "ast_hash": "1f27b9e3c1029e82b97fb91fc09534c8",
+    "mtime": 1791824407.7250152,
+    "ast_hash": "e1b051804dbf82e2899a858af89894f7",
     "semantic_hash": ""
   },
   "pyproject.toml": {
@@ -420,33 +420,33 @@
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/decisions.md": {
-    "mtime": 1791819065.5658865,
-    "ast_hash": "0825b738886b0b2cd0ce2f0842df2ec9",
+    "mtime": 1791824407.6790605,
+    "ast_hash": "34d57b93e5ba985f8e3068736b66bd8f",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/plan.md": {
-    "mtime": 1791818681.7042782,
-    "ast_hash": "d159025b8a51fd34874e2148a2ff4377",
+    "mtime": 1791824571.3046212,
+    "ast_hash": "a990f5cdb836afba4ce4aa302f52a2de",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/quickstart.md": {
-    "mtime": 1791819065.6031249,
-    "ast_hash": "bf41d02c9530915d1c0e74ad7dfc1d01",
+    "mtime": 1791824407.663227,
+    "ast_hash": "0f0a826d17fdac480d9166352e491c91",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/spec.md": {
-    "mtime": 1791819065.585418,
-    "ast_hash": "01558618a16a3daa87cc6cad2fab82ee",
+    "mtime": 1791824571.2686367,
+    "ast_hash": "952c9f76592fd2c5aba760b243266f34",
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/tasks.md": {
-    "mtime": 1791819142.5796533,
-    "ast_hash": "d16e60ac6742b253938b027930ee5750",
+    "mtime": 1791824571.3212152,
+    "ast_hash": "6f1b0cd6486493a93c577ba9a311a320",
     "semantic_hash": ""
   },
   "status.md": {
-    "mtime": 1791819142.5587842,
-    "ast_hash": "2d7efc40ec0040fbf124851abece3f22",
+    "mtime": 1791824571.3527546,
+    "ast_hash": "595706475e53a30aa4bbb8ce07dfabc8",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20261005_044808_continue_working_where_you_last_stopped_yesterday.md": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "specs/001-anthony-instrument/evidence.md": {
-    "mtime": 1791819142.5335264,
-    "ast_hash": "f321551c2887484eeee1a82ee04d1957",
+    "mtime": 1791824571.3372133,
+    "ast_hash": "d6ec2069fcdcfb33039f62744ceeb661",
     "semantic_hash": ""
   },
   ".specify/scripts/bash/check-prerequisites.sh": {
@@ -500,18 +500,18 @@
     "semantic_hash": ""
   },
   "docs/ANTHONY_IDEAS.md": {
-    "mtime": 1791818460.3739839,
-    "ast_hash": "7087bc5a9a7f8c4764d42b55422b9e18",
+    "mtime": 1791824407.6945515,
+    "ast_hash": "0a2765eda18b393cfbf256ca1c4d4545",
     "semantic_hash": ""
   },
   "docs/FEATURE_TUTORIALS.md": {
-    "mtime": 1791819065.5452175,
-    "ast_hash": "53963164d813136ceff4728ab6392334",
+    "mtime": 1791824407.6105466,
+    "ast_hash": "18ac0e2693a9eb20f902cf1bfe20111a",
     "semantic_hash": ""
   },
   "docs/explanation.md": {
-    "mtime": 1791818460.3738062,
-    "ast_hash": "5527a07a2e1000ff1d0b1be4df464daf",
+    "mtime": 1791824407.7097287,
+    "ast_hash": "4659fac4e9cc503b4dfd786f2acd9393",
     "semantic_hash": ""
   },
   "requirements/dev.txt": {
@@ -582,6 +582,26 @@
   "tests/test_instrument_transfer.py": {
     "mtime": 1791819097.269928,
     "ast_hash": "722e38d7beed1b587f4c003110f72061",
+    "semantic_hash": ""
+  },
+  "instrument/midi.py": {
+    "mtime": 1791824205.574577,
+    "ast_hash": "c24df5b3a08147b172a400043c618391",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_midi.py": {
+    "mtime": 1791824205.574873,
+    "ast_hash": "9ddaddf0460de03b48e99c6576ebfb35",
+    "semantic_hash": ""
+  },
+  "requirements/midi.txt": {
+    "mtime": 1791823670.1481843,
+    "ast_hash": "78eec6afb5e9a47725d67bbf71292eaf",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/midi-output.md": {
+    "mtime": 1791823970.3047457,
+    "ast_hash": "4508f5c1f9eb060ff51a7a684acfec69",
     "semantic_hash": ""
   }
 }

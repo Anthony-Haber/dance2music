@@ -7,6 +7,7 @@ Start here for the current native Python instrument:
 - [Split and merge the ball](#1--control-and-split-the-ball)
 - [Lock a root](#0--lock-a-chord-root)
 - [Choose chord qualities](#2--choose-roots-and-chord-qualities)
+- [Play one note in Ableton](#play-one-root-note-in-ableton)
 - [Run on macOS](#native-instrument-on-macos)
 
 ## Repository layout and moved commands
@@ -53,6 +54,90 @@ it can differ while recognition waits for a stable gesture. **UNKNOWN** means no
 gesture is confirmed, **Wrist only; no gesture** means body tracking has no hand
 details, and **NOT SEEN** means that hand is absent. Readouts follow corrected hand
 identities even when the hands cross.
+
+## Play one root note in Ableton
+
+The native Python instrument now sends **one held root note**. Interval and octave
+gestures change its pitch. Chord-quality gestures still affect the local synth;
+the MIDI output stays on the root. Full chord output and Expressive Chords mappings
+are the next stage.
+
+The cable names are:
+
+| Cable | Purpose |
+| --- | --- |
+| **dance2music - Notes to Ableton** | Active virtual MIDI source for this version |
+| **dance2music - Chords to Ableton** | Reserved name for later; not created yet |
+
+On this Mac, install the optional MIDI dependency once, then start the instrument:
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi --mute
+```
+
+`--mute` turns off the local synth so you hear Ableton. The process creates the
+**Notes to Ableton** source automatically; you do not need to create an IAC bus.
+The cable appears while the instrument is running and disappears when it exits.
+For a camera-free connection test, run:
+
+```bash
+.venv/bin/python -m instrument --demo --midi --mute
+```
+
+1. Keep the instrument running. In Ableton **Settings → Link, Tempo & MIDI**, find
+   input **dance2music - Notes to Ableton** and turn **Track** on. Sync and Remote
+   are not needed for this note input.
+2. Create a MIDI track and load a synth/instrument. Set **MIDI From** to that exact
+   source and its channel to **1**. Set **Monitor** to **In**, or use **Auto** and
+   arm the track. Start with a regular instrument for this single-note stage.
+3. In camera mode, show shoulders/hips and the required wrist(s). A ball with
+   positive gain starts root note **48** initially. Center both hands, then use
+   the [root controls](#relative-roots-and-switching-modes). Left hand left + right
+   hand up changes 48 → 55; both hands up changes the current root by +12.
+   Different applications name octaves differently; MIDI numbers are authoritative.
+4. The MIDI row shows the cable, channel and **NOTE**, **WAITING** or **PAUSED**.
+   Press **P** to pause/resume MIDI. Pausing releases the note immediately; it stays
+   paused through later frames. Local synthesis continues if you omitted `--mute`.
+5. The note holds through quality, split and transfer changes when the root stays
+   the same. Body/required-wrist loss or zero gain releases it. Recovery starts the
+   current root again. Root changes release the old pitch before starting the new
+   one. Q, Escape, closing the window and Ctrl-C release it and close the cable.
+
+Channel defaults to 1 and velocity to 96. Override with `--midi-channel 2` or
+`--midi-velocity 80`. Velocity stays constant; ball size and `--volume` do not send
+MIDI volume automation in this stage. An owned ball needs its owner and torso;
+the other wrist may leave view without releasing the note.
+
+If you prefer an existing IAC cable, create/rename its bus to
+**dance2music - Notes to Ableton**, enable the IAC driver in Audio MIDI Setup,
+then inspect and select its full destination name:
+
+```bash
+.venv/bin/python -m instrument --list-midi-ports
+.venv/bin/python -m instrument --camera 0 --mute --midi-port "IAC Driver dance2music - Notes to Ableton"
+```
+
+Copy the actual listed name if it differs. `--midi-port` enables MIDI by itself;
+an ambiguous or missing name fails with available destinations. Windows requires
+an existing loopMIDI cable with this name and `.venv/Scripts/python.exe`; the default
+process-owned virtual source is supported on macOS/Linux. Existing ARIA_IN/ARIA_OUT
+ports are independent; there is no need to rename them for the default route.
+
+If Ableton is silent, first run the demo and check its MIDI input indicator,
+the exact source/channel, Track switch, monitoring/arm and loaded instrument.
+**WAITING** in camera mode means the controller has no active ball/gain. **PAUSED**
+means press P to resume. Restart the Python process after code updates. macOS
+CoreMIDI checks passed from the normal desktop environment; the restricted agent
+sandbox could not create a CoreMIDI client, so use your usual Terminal.
+
+`--output output/anthony-instrument/ableton-test` also saves `midi.jsonl` with exact
+sent bytes and cleanup. Headless MIDI runs follow source timing. Automated tests
+and real macOS loopback verify delivery/lifecycle; audible Ableton acceptance is
+still pending. See the [MIDI contract](../specs/001-anthony-instrument/midi-output.md)
+and [validation evidence](../specs/001-anthony-instrument/evidence.md).
+Routing references: [Ableton routing and monitoring](https://www.ableton.com/en/manual/routing-and-i-o/)
+and [Ableton virtual MIDI buses](https://help.ableton.com/hc/en-us/articles/209774225-Setting-up-a-virtual-MIDI-bus).
 
 ## Relative roots and switching modes
 

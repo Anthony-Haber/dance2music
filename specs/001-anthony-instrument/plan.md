@@ -4,6 +4,11 @@ Branch: `anthony-explorations` | 2026-10-04 | [spec](spec.md)
 
 ## Technical context
 
+Current MIDI addition: macOS arm64 / Python 3.11.17, optional python-rtmidi 1.5.8.
+The approved [single-root MIDI plan and contract](midi-output.md) extends this
+instrument without changing root selection or local chord synthesis. Earlier
+scope exclusions below refer to their original increments. Chord MIDI remains deferred.
+
 Python 3.14 on this Windows workstation, isolated `.venv`. Native OpenCV window;
 MediaPipe Tasks GestureRecognizer and PoseLandmarker using explicit local `.task`
 files; NumPy rendering/synthesis; sounddevice optional playback. Pure state logic
@@ -22,6 +27,7 @@ An explicit setup helper downloads public model artifacts only when invoked.
 - `instrument/controller.py`: causal dwell, closure/rearm and split arbitration.
 - `instrument/visuals.py`: Joseph-style glow, particles and interaction overlay.
 - `instrument/audio.py`: deterministic synth plus optional playback boundary.
+- `instrument/midi.py`: optional named-port output and one held root-note lifecycle.
 - `instrument/tracking.py`: local MediaPipe model/camera observation adaptation.
 - `instrument/replay.py`: repeatable scripted interaction without devices.
 - `instrument/__main__.py`: camera/video/demo/replay/headless CLI and cleanup.
@@ -42,6 +48,18 @@ review and AST update; status.md handoff. Decisions prompted and answered above.
 Only Stage 1 Python is authorized. Stage 2 JavaScript remains deferred.
 
 ## Implementation strategy
+
+### Single-root Ableton MIDI, 2026-10-12
+
+Follow [midi-output.md](midi-output.md): a lazy optional port boundary, a typed
+monophonic adapter observing controller output, explicit CLI opt-in and named
+source/destination selection, persistent P pause, visible status and cleanup/logs.
+Validate without hardware, then check exact bytes through a dedicated CoreMIDI
+loopback. Keep optional dependency in requirements/ and tests in the existing tests/
+directory. Measure the controller-plus-adapter p95 against 5ms and inspect the HUD.
+User selected the current root, held while active; full chords/plugin maps are deferred.
+Document routing/listening as pending until verified in Ableton, update status and
+refresh the AST graph once. Local Python only; no push or browser translation.
 
 ### One-hand transfer, 2026-10-12
 

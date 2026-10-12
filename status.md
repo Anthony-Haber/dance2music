@@ -1,5 +1,40 @@
 # Project Status
 
+## 2026-10-12 - Save Ableton changes on a separate branch
+
+- Task: Create the local ableton branch, commit the MIDI implementation and its
+  tests, documentation and graph refresh, then return to anthony-explorations.
+- Scope: Keep the Ableton work on ableton; anthony-explorations stays at its
+  previous commit. No push requested. Implementation verification is recorded below.
+
+## 2026-10-12 - Single held root note to Ableton
+
+- State: Implemented and verified locally; Ableton routing/listening trial pending.
+- Task: Add clearly named virtual MIDI cables and send one note before chord work.
+- Decisions: Anthony selected the current root, held while the ball is active.
+  Active cable: dance2music - Notes to Ableton. Reserved for later, not created:
+  dance2music - Chords to Ableton. Channel 1, velocity 96; both configurable.
+- Changes: Lazy optional RtMidi port/monophonic adapter, explicit MIDI CLI flags,
+  exact/unique existing destinations, port listing, P pause/resume, visible status,
+  paced headless output and MIDI byte logs. Root/octave changes release then replace;
+  loss/pause/exit release. Quality/ball-mode changes preserve the held root.
+  Best-effort Note Off/All Notes Off and endpoint deletion run on exit/failure.
+- Verification: Full suite 161 passed, 2 optional skips, 242 subtests passed;
+  Ruff lint/format, mypy and whitespace checks pass. Native macOS CoreMIDI loopback
+  received all seven expected note/release/panic messages and confirmed source
+  deletion. Full 450-frame MIDI demo ran in 14.997s, roots 48 → 55 → 57, MIDI p95
+  0.00221ms. Controller+adapter p95 0.00734ms (<5ms) over 13,500 synthetic frames.
+  Inspected the HUD preview; tutorials and reproducible evidence are recorded.
+- Outstanding: Connect an Ableton MIDI instrument and listen through root/octave,
+  pause/loss/recovery and exit. Windows/Linux integration and end-to-end latency
+  remain unverified. Restricted sandbox cannot create CoreMIDI; desktop check passes.
+  Chord MIDI/Expressive Chords mapping remains the later stage. Local Python only;
+  dependency installed in .venv; saved on local branch ableton. No push or website
+  translation.
+- Graph refresh: Local AST update completed once; 1,522 nodes, 2,699 edges,
+  155 communities, no API cost. No supported /compact invocation in this session;
+  user must run it before starting the next feature under constitution XI.
+
 ## 2026-10-12 - Split-ball energy transfer verification
 
 - State: Complete locally with the approved area rule; performer trial pending.

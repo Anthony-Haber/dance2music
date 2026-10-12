@@ -32,8 +32,10 @@ See [quickstart](../specs/001-anthony-instrument/quickstart.md),
 [decisions for review](../specs/001-anthony-instrument/decisions.md), and
 [validation evidence](../specs/001-anthony-instrument/evidence.md).
 The original vision and design risks below remain relevant. Human gesture/listening
-acceptance is still pending; 3D, extra finger-pattern modes, spells, game and MIDI
-remain future work. The website has not been translated or changed by this feature.
+acceptance is still pending; 3D, extra finger-pattern modes, spells, game and chord
+MIDI remain future work. The first single-root MIDI stage is now implemented;
+see [Ableton setup](FEATURE_TUTORIALS.md#play-one-root-note-in-ableton).
+The website has not been translated or changed by this feature.
 
 ## Completion checklist: ideas 0–2
 
@@ -72,7 +74,8 @@ The following concrete limitations and acceptance work remain:
 **Deferred additions, rather than fixes to implemented scope:** true 3D/depth,
 animator assets, rotation/hold-time effects, extra finger-pattern modes,
 broader chord vocabulary, and separate musical roles for the two balls.
-Ableton MIDI, spells and the game remain ideas 6, 3 and 4. JavaScript translation
+The first Ableton single-note stage is implemented; chord MIDI, spells and the game
+remain ideas 6, 3 and 4. JavaScript translation
 still requires an explicit request.
 
 ### Fixes already completed during validation
@@ -393,7 +396,15 @@ the merge gesture is confirmed above.
 virtual MIDI cable. Anthony already knows how to connect the cable; the work is the instrument's
 output and its mapping to the existing plugin setup.
 
-**Required output model.** Each configured chord is triggered by one MIDI note in Expressive Chords,
+**First stage, approved 2026-10-12.** Send the current root note and hold it while
+the ball is active. Anthony selected this instead of a fixed test note or pulses.
+`dance2music - Notes to Ableton` is the active process-owned cable; the name
+`dance2music - Chords to Ableton` is reserved for later. Roots/octaves replace the
+held pitch, body/required-wrist loss releases it, and P pauses/resumes MIDI.
+Quality changes stay local for now. Implementation and lifecycle are recorded in
+the [MIDI contract](../specs/001-anthony-instrument/midi-output.md).
+
+**Later chord output model.** Each configured chord is triggered by one MIDI note in Expressive Chords,
 as Anthony described. Send that chord's configured trigger note; do not send all the constituent
 notes of a voiced chord. Trigger-note pitch identifies a plugin mapping and must not be assumed
 to be the harmonic root. Local synthesis can still use a full voicing independently.
@@ -415,8 +426,8 @@ to be the harmonic root. Local synthesis can still use a full voicing independen
 - Output latency and jitter affect playability. Measure gesture recognition through chord decision
   to MIDI emission, then evaluate the audible result in Ableton separately.
 
-**Questions for design.** What is Anthony's configured chord-to-trigger-note table? Which port and
-channel should be used? Does the plugin expect a held note or a pulse? How should a repeated same
+**Questions for the later chord stage.** What is Anthony's configured chord-to-trigger-note table?
+Which channel should be used? Does the plugin expect a held note or a pulse? How should a repeated same
 chord and an unmapped chord behave? These details need confirmation, not a guessed plugin preset.
 
 ## Implementation boundaries and next review
@@ -435,7 +446,8 @@ and subjective listening still need Anthony's review. The thresholds and choices
 decisions.md remain provisional. The original questions above describe risks and future
 choices; the current feature's confirmed answers are recorded in its spec and decisions.
 
-Ableton MIDI remains a high-priority next feature, after agreeing on the chord trigger
-table, port/channel and note lifecycle. Spells, the game, extra finger-pattern modes
+The Ableton single-root transport is implemented and locally verified. Its routing
+and listening acceptance remains pending. Chord output will require agreement on
+the trigger table and plugin lifecycle. Spells, the game, extra finger-pattern modes
 and 3D need their own specifications and decisions. Website translation requires
 Anthony's explicit instruction; no browser feature code changed in this implementation.

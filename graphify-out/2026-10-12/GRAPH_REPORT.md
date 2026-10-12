@@ -1,11 +1,11 @@
 # Graph Report - dance2music  (2026-10-12)
 
 ## Corpus Check
-- 107 files · ~144,714 words
+- 107 files · ~145,142 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1435 nodes · 2454 edges · 156 communities (79 shown, 77 thin omitted)
+- 1436 nodes · 2455 edges · 152 communities (78 shown, 74 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 124 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
@@ -135,7 +135,6 @@
 - [[_COMMUNITY_SWAM MIDI Quartet|SWAM MIDI Quartet]]
 - [[_COMMUNITY_Vocabulary Sonification|Vocabulary Sonification]]
 - [[_COMMUNITY_Implementation Plan Anthony's local Python instrument|Implementation Plan: Anthony's local Python instrument]]
-- [[_COMMUNITY_handler|handler]]
 - [[_COMMUNITY_ControllerTests|ControllerTests]]
 - [[_COMMUNITY_Anthony's Vision for dance2music|Anthony's Vision for dance2music]]
 - [[_COMMUNITY_Tasks Anthony's local Python instrument|Tasks: Anthony's local Python instrument]]
@@ -157,12 +156,9 @@
 - [[_COMMUNITY_W|W]]
 - [[_COMMUNITY_Nr|Nr]]
 - [[_COMMUNITY_valid_point|valid_point]]
-- [[_COMMUNITY_K|K]]
-- [[_COMMUNITY_K|K]]
 - [[_COMMUNITY_Cr|Cr]]
 - [[_COMMUNITY_Nr|Nr]]
 - [[_COMMUNITY_Ideas|Ideas]]
-- [[_COMMUNITY_Q|Q]]
 - [[_COMMUNITY_Decisions made during ideas 0–2 implementation|Decisions made during ideas 0–2 implementation]]
 - [[_COMMUNITY_Hands|Hands]]
 
@@ -197,7 +193,7 @@
 - **Shared mathematical explanations** — web_about_standalone_methods, web_index_comparison_page, web_live_index_live_instrument, web_methods_methods [INFERRED 0.95]
 - **Movement to sound contracts** — readme_mediapipe_pose, web_methods_motion_cleaning, web_methods_savitzky_golay_derivatives, web_methods_laban_efforts, web_methods_synthesis_primitives [EXTRACTED 1.00]
 
-## Communities (156 total, 77 thin omitted)
+## Communities (152 total, 74 thin omitted)
 
 ### Community 0 - "Dance Music Methods"
 Cohesion: 0.09
@@ -212,16 +208,16 @@ Cohesion: 0.12
 Nodes (31): DanceContext, _fill_gaps(), limbs_music(), main(), music(), out_dir(), overlay(), Linear interpolation across frames the tracker missed. (+23 more)
 
 ### Community 3 - "KaTeX Formula Parsing"
-Cohesion: 0.09
-Nodes (9): c(), handler(), Hn, Hr(), m, Mn, qr(), Vn (+1 more)
+Cohesion: 0.08
+Nodes (12): c(), handler(), Hn, Hr(), m, Mn, Or(), qr() (+4 more)
 
 ### Community 4 - "Live Audio Harmony"
-Cohesion: 0.16
-Nodes (4): cents(), Engine, gauss(), silentWav()
+Cohesion: 0.15
+Nodes (5): cents(), Engine, gauss(), silentWav(), CHORDS
 
 ### Community 5 - "KaTeX Rendering Styles"
-Cohesion: 0.18
-Nodes (4): P, H, mathmlBuilder(), O
+Cohesion: 0.07
+Nodes (15): P, BY_COUNT, ChordFollower, H, readFingers(), readPose(), readRegions(), SIX (+7 more)
 
 ### Community 6 - "Live Instrument Controls"
 Cohesion: 0.06
@@ -240,8 +236,8 @@ Cohesion: 0.15
 Nodes (25): $(), applyMix(), applySens(), draw(), drawRegions(), drawSphere(), exists(), handReadout() (+17 more)
 
 ### Community 10 - "KaTeX Rendering Core"
-Cohesion: 0.13
-Nodes (10): $e(), It(), je(), N(), Or(), qt(), Rr(), Rt() (+2 more)
+Cohesion: 0.16
+Nodes (7): $e(), It(), je(), N(), Rt(), S(), vr()
 
 ### Community 12 - "Offline Motion Processing"
 Cohesion: 0.11
@@ -264,8 +260,8 @@ Cohesion: 0.11
 Nodes (19): 1. The three existing ways to run the project, 2. What the computer-vision models provide, 3. What the project adds after computer vision, 4. Are we training our own AI?, 5. How much comes from the model, and how much are we doing?, 6. What our next work actually is, 7. Where to look for detail, Body pose (+11 more)
 
 ### Community 18 - "KaTeX DOM Construction"
-Cohesion: 0.12
-Nodes (4): A, dt, toText(), ut
+Cohesion: 0.10
+Nodes (5): A, dt, K, toText(), ut
 
 ### Community 19 - "Motion Sound Mapping"
 Cohesion: 0.22
@@ -276,8 +272,8 @@ Cohesion: 0.13
 Nodes (15): 0. First task: persistent fist root lock, 1. A 3D ball between the hands, with two-ball modes, 2. Musician-oriented harmony: roots and qualities, 3. Chords as three-move magic spells, 4. A beginner game that teaches the magic chords, 5. Nearby closed fists split the central ball, 6. Ableton / Expressive Chords through a virtual MIDI cable, Anthony's Vision for dance2music (+7 more)
 
 ### Community 23 - "Hand Gesture Features"
-Cohesion: 0.10
-Nodes (24): ExitStack, camera_frames(), Exports, main(), Any, NDArray, Path, uint8 (+16 more)
+Cohesion: 0.13
+Nodes (20): ExitStack, camera_frames(), Exports, main(), Any, NDArray, Path, uint8 (+12 more)
 
 ### Community 24 - "KaTeX Node Rendering"
 Cohesion: 0.12
@@ -296,12 +292,12 @@ Cohesion: 0.18
 Nodes (5): CompletedProcess, Exercise the official native-shell helpers against disposable project fixtures., Validate the same file and JSON contracts on macOS and Windows., Run a bundled helper without touching the working project's feature state., SpecKitScriptTests
 
 ### Community 29 - "KaTeX Markup Elements"
-Cohesion: 0.26
-Nodes (6): GestureState, Port of web/live/hands.js Hand.update: canned labels, never joint guesses., FistTests, Hand, Website canned-gesture parity and regression coverage for flickering fists., raw_hand()
+Cohesion: 0.14
+Nodes (9): Dwell, FistGate, Capture combined ball area and loudness, independent of the other wrist., Return to initial chord/unlocked/merged; both hands must reopen to arm., Switch root input without changing the current chord, register or lock., Ball, Config, IntervalSelector (+1 more)
 
 ### Community 32 - "KaTeX Range Utility"
-Cohesion: 0.17
-Nodes (22): Controller, Keyboard merge control, independent of chord and lock., Capture combined ball area and loudness, independent of the other wrist., Persistent musical state driven by strictly increasing elapsed timestamps., MonkeyPatch, hold(), observation(), Any (+14 more)
+Cohesion: 0.20
+Nodes (22): Controller, Keyboard merge control, independent of chord and lock., Persistent musical state driven by strictly increasing elapsed timestamps., Particle, MonkeyPatch, hold(), observation(), Any (+14 more)
 
 ### Community 33 - "KaTeX Range Construction"
 Cohesion: 0.25
@@ -312,12 +308,12 @@ Cohesion: 0.39
 Nodes (4): ConvertTo-AsciiLower(), ConvertTo-CleanBranchName(), ConvertTo-UnicodeWords(), Get-BranchName()
 
 ### Community 37 - "Specification Template Resolution"
-Cohesion: 0.19
-Nodes (8): BY_COUNT, ChordFollower, CHORDS, readFingers(), readPose(), readRegions(), SIX, voiceLead()
+Cohesion: 0.21
+Nodes (14): hand_origins(), interval_name(), Point, Body-relative interval selection, independent of devices and chord voicing., Chest-height origins below each shoulder in the corrected mirrored view.      Re, _label(), pixel(), NDArray (+6 more)
 
 ### Community 38 - "Implementation Plan Setup"
-Cohesion: 0.25
-Nodes (7): Frame, Hand, Fresh elapsed-time observation; body points are 33 image pixels / missing None., Renderer, sample(), Ball geometry, deterministic drawing, and loss behavior., VisualTests
+Cohesion: 0.30
+Nodes (5): Frame, Fresh elapsed-time observation; body points are 33 image pixels / missing None., Renderer, Ball geometry, deterministic drawing, and loss behavior., VisualTests
 
 ### Community 39 - "Implementation Task Setup"
 Cohesion: 0.26
@@ -384,8 +380,8 @@ Cohesion: 0.12
 Nodes (17): 0 — Lock a chord root, 1 — Control and split the ball, 2 — Choose roots and chord qualities, Collect energy from split balls, Complete relative root map, Feature Tutorials, First try: C → G → D, Native instrument on macOS (+9 more)
 
 ### Community 55 - "draw"
-Cohesion: 0.18
-Nodes (4): htmlBuilder(), p, r, sn()
+Cohesion: 0.21
+Nodes (4): hand_directions(), Directions relative to chest origins, not the other hand or image edges.      Ne, position_frame(), RootControlTests
 
 ### Community 56 - "SKILL.md"
 Cohesion: 0.29
@@ -416,12 +412,12 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 65 - "gestureActions"
-Cohesion: 0.11
-Nodes (23): body_hands(), hand_crop(), observations(), pose_observations(), Any, Hand, NDArray, Point (+15 more)
+Cohesion: 0.06
+Nodes (42): Hand, Point, True when both pixel coordinates are finite., valid_point(), Path, JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy., read_replay(), body_hands() (+34 more)
 
 ### Community 66 - "AGENTS.md"
-Cohesion: 0.05
-Nodes (44): Dwell, FistGate, Causal instrument state; no camera, drawing, sound or file effects., Return to initial chord/unlocked/merged; both hands must reopen to arm., Switch root input without changing the current chord, register or lock., _assignment_costs(), Chord, gesture_quality() (+36 more)
+Cohesion: 0.13
+Nodes (16): Causal instrument state; no camera, drawing, sound or file effects., _assignment_costs(), Chord, gesture_quality(), Explicit musical vocabulary and absolute, path-independent selections., 12 chromatic sectors clockwise from screen right; centered hands hold root., Minimum remaining total movement for each assigned-pitch bit mask.      A mask's, Distinct chord pitches in shifted MIDI [48,83], clipped to MIDI [0,127].      A (+8 more)
 
 ### Community 67 - "CLAUDE.md"
 Cohesion: 0.40
@@ -434,10 +430,6 @@ Nodes (6): Approved map, Position, timing and recovery, Register and replay, Rel
 ### Community 120 - "Implementation Plan: Anthony's local Python instrument"
 Cohesion: 0.33
 Nodes (6): Feature: Anthony's local Python instrument, ideas 0–2, Required validation, Scope and decisions, US1 — Persistent root lock (P1, idea 0), US2 — Joseph's temporary ball and persistent split (P2, idea 1), US3 — Reachable roots and musical qualities (P3, idea 2)
-
-### Community 121 - "handler"
-Cohesion: 0.31
-Nodes (4): Path, JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy., read_replay(), CliTests
 
 ### Community 122 - "ControllerTests"
 Cohesion: 0.50
@@ -461,11 +453,15 @@ Nodes (4): Answer, Outcome, Q: what other hand symbols can we do, can i do diffe
 
 ### Community 129 - "Mn"
 Cohesion: 0.11
-Nodes (18): 2026-10-11 performer corrections, Automated checks, Automated contracts, Complete 25-pair jazz catalogue, 2026-10-11, Device and rendered evidence, Models, native window, camera/video and playback, Ordered hand chord mappings, 2026-10-11, Persistent hand transfer and shared merge, 2026-10-12 (+10 more)
+Nodes (19): 2026-10-11 performer corrections, Automated checks, Automated contracts, Complete 25-pair jazz catalogue, 2026-10-11, Device and rendered evidence, Models, native window, camera/video and playback, Ordered hand chord mappings, 2026-10-11, Persistent hand transfer and shared merge, 2026-10-12 (+11 more)
 
 ### Community 135 - "Q: continue working where you last stopped yesterday"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: continue working where you last stopped yesterday, Source Nodes
+
+### Community 136 - ".setAttribute"
+Cohesion: 0.18
+Nodes (3): _, kt(), Q
 
 ### Community 139 - "read_replay"
 Cohesion: 0.40
@@ -474,10 +470,6 @@ Nodes (4): Answer, Outcome, Q: what is left on the todo that we did not do yet, 
 ### Community 140 - "Z"
 Cohesion: 0.29
 Nodes (3): ct(), mt(), Z
-
-### Community 144 - "K"
-Cohesion: 0.40
-Nodes (3): Point, True when both pixel coordinates are finite., valid_point()
 
 ### Community 148 - "Ideas"
 Cohesion: 0.33
@@ -492,18 +484,18 @@ Cohesion: 0.13
 Nodes (8): J, d2(), fingerState(), GESTURES, Hand, HAND_EDGES, Hands, HS
 
 ## Knowledge Gaps
-- **465 isolated node(s):** `check-prerequisites.sh script`, `common.sh script`, `resolve-template.sh script`, `setup-plan.sh script`, `setup-tasks.sh script` (+460 more)
+- **466 isolated node(s):** `check-prerequisites.sh script`, `common.sh script`, `resolve-template.sh script`, `setup-plan.sh script`, `setup-tasks.sh script` (+461 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **77 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **74 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_twofive()` connect `Offline Audio Synthesis` to `KaTeX Rendering Core`, `Offline Motion Processing`, `W`, `draw`?**
+- **Why does `_twofive()` connect `Offline Audio Synthesis` to `KaTeX Rendering Core`, `Offline Motion Processing`, `KaTeX Rendering Styles`, `W`?**
   _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `p` connect `draw` to `Offline Audio Synthesis`, `KaTeX Formula Parsing`, `Specification Template Resolution`, `Camera Display Controls`, `KaTeX Rendering Core`?**
+- **Why does `p` connect `KaTeX Rendering Styles` to `Offline Audio Synthesis`, `KaTeX Rendering Core`, `KaTeX Formula Parsing`, `Camera Display Controls`?**
   _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `Frame` connect `Implementation Plan Setup` to `KaTeX Range Utility`, `gestureActions`, `AGENTS.md`, `Specification Script Utilities`, `K`, `Hand Gesture Features`, `handler`, `Feature Branch Creation`, `KaTeX Markup Elements`?**
+- **Why does `Frame` connect `Implementation Plan Setup` to `KaTeX Range Utility`, `gestureActions`, `AGENTS.md`, `Specification Template Resolution`, `Specification Script Utilities`, `draw`, `Hand Gesture Features`, `Feature Branch Creation`, `KaTeX Markup Elements`?**
   _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **Are the 18 inferred relationships involving `Frame` (e.g. with `AudioTests` and `Controller`) actually correct?**
   _`Frame` has 18 INFERRED edges - model-reasoned connections that need verification._
