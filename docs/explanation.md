@@ -297,7 +297,7 @@ The following separates implemented Python behavior from future directions recor
 | One-hand transfer | Implemented: fist + palm transfers to the fist, preserving size/gain/lock; nearby fists or M return to midpoint |
 | Three-move spells | Ordered-sequence recognition, progress, timing, cancellation, and musical actions |
 | Beginner game | Challenges, interaction rules, fair feedback, and lessons tied to the instrument's vocabulary |
-| Ableton MIDI output | Implemented first stage: one held current root on a named virtual source, with replacement, loss/pause/exit release; later chord triggers require a plugin mapping |
+| Ableton MIDI output | Optional held root or full voiced chord on separate named sources, with replacement and loss/pause/exit release; direct input to an ordinary synth |
 | Temporary ball visual | Implemented: Python fire/light glow and bounded sparks using Joseph's 2D wrist geometry |
 | Later 3D/animated asset | Renderer/asset integration and depth/rotation/hold-time behavior, deferred until that work is requested |
 

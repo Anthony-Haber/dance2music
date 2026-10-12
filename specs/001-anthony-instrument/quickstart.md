@@ -99,7 +99,7 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   likewise replay with the corrected ownership direction.
 - T switches root mode; R resets; S switches fire/light; Q or Escape quits. Closing the window quits too.
 - With MIDI enabled, P pauses/resumes MIDI and its extra 44px HUD row shows the
-  named cable, channel and active note. Pausing releases the note immediately.
+  named cable, channel and active note/chord pitches. Pausing releases every note.
 - Body/wrist loss silences sound with a short fade and hides unavailable visuals.
   Hand-detail loss retains the last detection for up to 0.4 seconds, as in web/main,
   then cancels pending gesture actions while body wrists can keep the ball/sound active.
@@ -122,6 +122,23 @@ gaps above 0.20 seconds reset controller gesture candidates, so slow inference m
 tuning `max_gap_s` and the dwell values together after a real performer trial.
 The visible central dead-zone guide uses the same configured threshold as root selection.
 
+## Direct chord Ableton output (macOS)
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi-chords --mute
+.venv/bin/python -m instrument --demo --midi-chords --mute
+```
+
+Use **dance2music - Chords to Ableton**, channel 1, Track enabled and a monitored
+polyphonic synth. All current chord tones hold while the ball has positive gain;
+quality/root/register changes replace the entire voicing. P pauses/resumes;
+tracking loss and exit release all notes. Resume uses the latest active chord.
+This is direct synth input; no Expressive Chords mapping is involved. The cable
+exists only while running. Use `--midi-chords --midi-port "exact name"` for an
+existing IAC/loopMIDI destination. Full
+[tutorial](../../docs/FEATURE_TUTORIALS.md#play-sustained-chords-in-ableton).
+
 ## Single-note Ableton output (macOS)
 
 ```bash
@@ -135,8 +152,8 @@ The active source is **dance2music - Notes to Ableton**, channel 1, velocity 96.
 It is created automatically and removed at exit. Select that input in Ableton,
 enable Track and monitor/arm a MIDI track with an instrument. One root note holds
 while the ball has positive gain; root/octave changes replace it, loss releases
-it, recovery resumes it, and quality changes leave it held. Chord output and plugin
-trigger mappings are deferred. See [setup and troubleshooting](../../docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
+it, recovery resumes it, and quality changes leave it held. Use `--midi-chords`
+instead for full voicings. See [setup and troubleshooting](../../docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
 and the [contract](midi-output.md). `--midi-channel` / `--midi-velocity` override defaults.
 `--list-midi-ports` lists existing destinations; `--midi-port "exact name"` enables
 that route instead of the automatic source. Windows needs a named loopMIDI cable.
@@ -152,7 +169,7 @@ on macOS arm64/Python 3.11.17; other platforms require validation.
 .venv/Scripts/python.exe -m instrument --model-smoke
 ```
 
-Headless mode never opens a display or audio device. Explicit --midi still opens
+Headless mode never opens a display or audio device. Explicit --midi/--midi-chords opens
 a MIDI port and follows source timing; device-free headless runs remain fast.
 Exports include frames.jsonl,
 states.jsonl, preview.avi, chords.wav, representative PNGs and summary.json.
@@ -200,4 +217,5 @@ existing models with `--models PATH`. Subsequent runs work offline.
 
 See [decisions.md](decisions.md) for provisional choices and [evidence.md](evidence.md)
 for measured results and remaining human acceptance checks. This is Stage 1 only;
-no browser port, true 3D, three-move spells, game or Ableton output is implemented.
+no browser port, true 3D, three-move spells or game is implemented. Root and direct
+chord MIDI are implemented; performer/Ableton listening acceptance remains pending.

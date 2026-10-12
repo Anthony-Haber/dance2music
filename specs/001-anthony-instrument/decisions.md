@@ -1,5 +1,17 @@
 # Decisions made during ideas 0–2 implementation
 
+## Direct chord MIDI, 2026-10-12
+
+Anthony requested chord work on ableton, then explicitly said to forget
+Expressive Chords and use direct synth input. This supersedes the proposed
+chord-to-trigger table and its unmapped-chord policy: send every existing voiced
+note, not one plugin selector. He confirmed **hold while the ball is active;
+P pauses/resumes**, rather than a latched chord that survives tracking loss.
+Use `--midi-chords` and `dance2music - Chords to Ableton`; retain the earlier
+single-root command/cable. Notes use the controller's current voicing and register;
+the existing replacement contract releases the previous voicing before starting
+the changed one. No continuous MIDI volume or plugin configuration is included.
+
 ## First Ableton MIDI stage, 2026-10-12
 
 Anthony requested clear virtual cable names and one note before later chord work.

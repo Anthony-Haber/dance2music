@@ -1,5 +1,45 @@
 # Validation evidence: local Python instrument
 
+## Direct held-chord Ableton synth input, 2026-10-12
+
+- Anthony explicitly dropped Expressive Chords and selected direct synth input,
+  **hold while ball is active; P pauses/resumes**. `--midi-chords` sends every
+  existing voiced pitch on `dance2music - Chords to Ableton`. Single-root mode
+  and its Notes cable remain available through `--midi`.
+- Full suite: **184 passed, 2 optional skips, 242 subtests passed in 10.00s**
+  (`.venv/bin/python -m pytest -q`). Twenty-three new cases cover all **300 chords
+  at three registers** (900 voicings), locked quality changes, three/six-note
+  transitions, identical reordered pitches, loss/recovery, persistent P, pitch and
+  voice-count boundaries, partial Note On failure, failed Note Off recovery,
+  named source/destination/channel selection, mode exclusion, exact exports,
+  keyboard controls and Ctrl-C/loop/exit release. Existing root tests still pass.
+  Ruff check/format (24 files) and mypy (12 sources) pass.
+- macOS arm64 / Python **3.11.17** / python-rtmidi **1.5.8**; no dependency change.
+  Real dedicated CoreMIDI source/receiver received exactly **38 messages** for
+  C major → locked C minor → octave C minor → pause → latest G → loss → six-note
+  Cmaj13 recovery → exit. Repeated frames/paused frames sent no duplicate notes.
+  Source disappearance was confirmed after cleanup; existing IAC/hardware outputs
+  were not selected. Script/result: `output/anthony-instrument/midi-chords/verify.py`
+  and `coremidi.json`. Run from the normal desktop environment with
+  `PYTHONPATH=. .venv/bin/python output/anthony-instrument/midi-chords/verify.py`.
+- Thirty deterministic device-free demo repetitions (**13,500 frames**) measured
+  controller-plus-chord-adapter p95 **0.00792ms**, below the **5ms** budget.
+  `latency.json` records demonstration(30) and the transport boundary; preview seed is 0.
+  This does not measure camera-to-Ableton audio latency.
+- Real CLI: `.venv/bin/python -m instrument --demo --headless --midi-chords
+  --seconds 15 --output output/anthony-instrument/midi-chords/demo` processed
+  **450 frames in 14.993s**, with **31 messages** including three final Note Offs
+  and All Notes Off. Log voicings: C (48,52,55) → G (55,59,62) → Gm (55,58,62)
+  → Am (57,60,64) → A (57,61,64). Every old note releases before the replacement.
+  MIDI update p95 **0.00621ms**, controller **0.0691ms**, renderer **3.9443ms**.
+  Inspected the 960x1214 HUD with chord/name/full pitch list and P control, retaining
+  the full 960x720 source below 450px HUD plus 44px MIDI row.
+- Updated user tutorial, quickstart, vision, spec/plan/decisions/tasks and status.
+  Work is on ableton; Anthony authorized commit/push on 2026-10-12. No website changes. Real
+  performer/Ableton routing/listening, Windows/Linux MIDI and end-to-end audio
+  latency remain unverified. Local AST refresh completed once: **1,550 nodes,
+  2,799 edges, 154 communities**, no API cost.
+
 ## First held-root Ableton MIDI output, 2026-10-12
 
 - Anthony chose the current root and hold-while-active behavior. Implemented the

@@ -1,5 +1,31 @@
 # Project Status
 
+## 2026-10-12 - Direct sustained chords to Ableton
+
+- State: Implemented and verified locally on ableton; performer/Ableton listening pending.
+- Task: Add chord output after the single-root stage. Anthony dropped Expressive
+  Chords and requested direct synth input, confirming hold while ball is active
+  with P as persistent pause/resume rather than a latched chord after tracking loss.
+- Changes: --midi-chords opens dance2music - Chords to Ableton and sends the full
+  current three-to-six-note voicing. Identical pitch sets hold without retriggering;
+  changed voicings release all old notes before new notes. Quality changes still
+  work with root locked. Pause/loss/exit releases every held or attempted pitch;
+  partial send/release failures attempt all cleanup before deleting the endpoint.
+  Single-root --midi remains available; only the selected mode creates a cable.
+- Verification: Full suite 184 passed, 2 optional skips, 242 subtests passed;
+  Ruff lint/format and mypy pass. All 300 chords tested at three registers.
+  Dedicated CoreMIDI loopback received 38 exact messages and verified source removal.
+  Full paced demo: 450 frames in 14.993s, 31 messages including exit cleanup.
+  MIDI update p95 0.00621ms; controller+adapter p95 0.00792ms over 13,500 synthetic
+  frames, below 5ms. Inspected full six-note MIDI HUD; tutorials/evidence updated.
+- Local scope: Branch ableton; Anthony authorized commit and push on 2026-10-12.
+  No website translation; dependency unchanged. Local AST refresh: 1,550 nodes, 2,799 edges,
+  154 communities, no API cost. Whitespace check passes.
+- Outstanding: Connect a polyphonic Ableton synth and listen to held chords,
+  quality/root/octave changes, P/loss/recovery and exit. Windows/Linux integration
+  and end-to-end audio latency remain unverified. Session cannot invoke /compact;
+  user must run it before the next feature under constitution XI.
+
 ## 2026-10-12 - Save Ableton changes on a separate branch
 
 - Task: Create the local ableton branch, commit the MIDI implementation and its

@@ -6,9 +6,11 @@ Date: 2026-10-04. Branch: `anthony-explorations`.
 
 Implement a native Python instrument, not a server for the existing website.
 Anthony confirmed a temporary Joseph-inspired 2D glow instead of initial 3D;
-true depth, animator assets, spells, games and chord MIDI remain separate work.
-Anthony's approved 2026-10-12 addition sends one held root note to Ableton;
-its bounded first-stage contract is [midi-output.md](midi-output.md).
+true depth, animator assets, spells and games remain separate work.
+Anthony's approved 2026-10-12 MIDI additions send one held root or the full chord
+voicing directly to an Ableton synth. Chords hold while the ball is active;
+P pauses/resumes. Expressive Chords trigger mapping was explicitly dropped.
+The output contract is [midi-output.md](midi-output.md).
 The minimum split interaction is included because idea 1 and lock arbitration
 depend on it; additional finger-pattern ball modes remain undefined.
 
@@ -101,8 +103,9 @@ Acceptance: symbols and tone sets match the complete map in chord-map.md, includ
 6, 6/9, 9, 11, 13, suspended, augmented and altered qualities. Every tone in the
 chosen three-to-six-note voicing sounds; 13ths include 9 and 13 and omit natural 11.
 Quality choices never move a locked root; ordered hand pairs replace conflict priority.
-The prototype sounds chords locally and exposes
-the selected chord clearly. It does not send full chords to Expressive Chords.
+The prototype sounds chords locally and exposes the selected chord clearly.
+Optional `--midi-chords` sends that full voicing directly to a polyphonic Ableton
+synth, using the active-ball/P/exit contract in midi-output.md.
 An open palm is an explicit member of the ordered pair, so left and right shortcuts
 can differ. A non-palm pair must stay unchanged for quality dwell to select it.
 Brief reopening, neutral/unknown hands and tracking loss preserve quality. Returning

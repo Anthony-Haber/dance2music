@@ -13,7 +13,8 @@ import pytest
 
 from instrument.__main__ import main
 from instrument.controller import Controller
-from instrument.midi import NOTES_PORT, MidiNotes, MidiPort, output_ports
+from instrument.harmony import INTERVALS, Chord, voice_lead
+from instrument.midi import CHORDS_PORT, NOTES_PORT, MidiChords, MidiNotes, MidiPort, output_ports
 from instrument.models import Ball, Frame, Hand, Output
 from instrument.replay import demonstration
 from instrument.visuals import HUD_HEIGHT, MIDI_STATUS_HEIGHT, Renderer
@@ -469,3 +470,294 @@ def test_midi_status_row_preserves_camera_image_and_existing_hud() -> None:
     assert output.shape == (480 + HUD_HEIGHT + MIDI_STATUS_HEIGHT, 640, 3)
     assert np.any(output[HUD_HEIGHT : HUD_HEIGHT + MIDI_STATUS_HEIGHT])
     assert not np.any(image)
+
+
+def test_direct_chords_hold_and_replace_all_notes_on_locked_quality_changes() -> None:
+    port = FakePort()
+    midi = MidiChords(port)
+    major = sounding(notes=(48, 52, 55), locked=True)
+    midi.update(major)
+    for state in (
+        major,
+        replace(major, notes=(55, 48, 52)),
+        replace(major, split=True),
+        replace(major, ball_owner="R"),
+        replace(major, gain=0.01),
+    ):
+        midi.update(state)
+    assert port.messages == [[0x90, note, 96] for note in (48, 52, 55)]
+    midi.update(replace(major, quality="minor", symbol="Cm", notes=(48, 51, 55)))
+    assert port.messages[3:] == [
+        *([0x80, note, 0] for note in (48, 52, 55)),
+        *([0x90, note, 96] for note in (48, 51, 55)),
+    ]
+    assert "CHORD Cm" in midi.status and "NOTES 48,51,55" in midi.status
+    midi.close()
+    assert port.messages[-4:] == [
+        *([0x80, note, 0] for note in (48, 51, 55)),
+        [0xB0, 123, 0],
+    ]
+    assert port.closed
+
+
+def test_direct_chords_cover_all_300_catalogue_voicings_and_real_octaves() -> None:
+    port = FakePort()
+    midi = MidiChords(port, channel=16, velocity=127)
+    held: set[int] = set()
+    previous: tuple[int, ...] = ()
+    for shift in (-48, 0, 36):
+        for root in range(12):
+            for quality in INTERVALS:
+                chord = Chord(root, quality)
+                notes = voice_lead(previous, chord, shift)
+                first = len(port.messages)
+                midi.update(sounding(root + 48 + shift, notes=notes, symbol=chord.symbol))
+                for status, note, _ in port.messages[first:]:
+                    if status == 0x8F:
+                        assert note in held
+                        held.remove(note)
+                    else:
+                        assert status == 0x9F and not held.intersection({note})
+                        held.add(note)
+                assert held == set(notes), (chord, shift)
+                assert len(held) == len(INTERVALS[quality])
+                assert midi.notes == tuple(sorted(notes))
+                first = len(port.messages)
+                midi.update(sounding(root + 48 + shift, notes=notes, symbol=chord.symbol))
+                assert len(port.messages) == first
+                previous = notes
+    midi.close()
+    assert all(message[0] in (0x8F, 0x9F, 0xBF) for message in port.messages)
+
+
+def test_controller_demo_sends_full_quality_changes_in_chord_mode() -> None:
+    controller, port = Controller(), FakePort()
+    midi = MidiChords(port)
+    sounding_sets = []
+    for frame in demonstration(30):
+        state = controller.update(frame)
+        first = len(port.messages)
+        midi.update(state)
+        expected = tuple(sorted(state.notes)) if state.balls and state.gain > 0 else ()
+        assert midi.notes == expected
+        on = [message[1] for message in port.messages[first:] if message[0] == 0x90]
+        if on:
+            sounding_sets.append((state.symbol, tuple(on)))
+    assert any(symbol == "Gm" for symbol, _ in sounding_sets)
+    assert len(sounding_sets) > 3  # Quality changes add events beyond the three root changes.
+    assert all(len(notes) >= 3 for _, notes in sounding_sets)
+    midi.close()
+
+
+@pytest.mark.parametrize("missing", ["ball", "gain", "nan"])
+def test_chord_loss_releases_every_note_and_recovery_starts_current_chord(missing: str) -> None:
+    port = FakePort()
+    midi = MidiChords(port)
+    state = sounding(notes=(48, 52, 55))
+    midi.update(state)
+    lost = (
+        replace(state, balls=())
+        if missing == "ball"
+        else replace(state, gain=0 if missing == "gain" else float("nan"))
+    )
+    midi.update(lost)
+    midi.update(lost)
+    assert port.messages[3:] == [[0x80, note, 0] for note in (48, 52, 55)]
+    midi.update(replace(state, notes=(60, 63, 67), symbol="Cm"))
+    assert port.messages[-3:] == [[0x90, note, 96] for note in (60, 63, 67)]
+
+
+def test_chord_pause_persists_and_resumes_latest_voicing() -> None:
+    port = FakePort()
+    midi = MidiChords(port)
+    midi.update(sounding(notes=(48, 52, 55)))
+    midi.set_paused(True)
+    latest = sounding(notes=(60, 64, 67, 71, 74, 81), symbol="Cmaj13")
+    for _ in range(5):
+        midi.update(latest)
+    assert len(port.messages) == 7 and "PAUSED" in midi.status
+    assert port.messages[-4:] == [*([0x80, note, 0] for note in (48, 52, 55)), [0xB0, 123, 0]]
+    midi.set_paused(False)
+    midi.update(latest)
+    assert port.messages[-6:] == [[0x90, note, 96] for note in latest.notes]
+    midi.close()
+
+
+@pytest.mark.parametrize(
+    "notes",
+    [(), (48, 48), (-1, 52, 55), (48, 52, 128), (48.5, 52, 55), (True, 52, 55), tuple(range(7))],
+)
+def test_invalid_chord_sends_nothing_and_preserves_previous_notes(notes: tuple[int, ...]) -> None:
+    port = FakePort()
+    midi = MidiChords(port)
+    midi.update(sounding(notes=(0, 64, 127)))
+    with pytest.raises(ValueError, match="distinct integer notes"):
+        midi.update(sounding(notes=notes))
+    assert midi.notes == (0, 64, 127) and len(port.messages) == 3
+    midi.close()
+
+
+def test_partial_chord_send_and_failed_release_attempt_every_note_then_panic() -> None:
+    port = FakePort(fail_at={2, 3})
+    midi = MidiChords(port)
+    with pytest.raises(RuntimeError, match="disconnected"):
+        midi.update(sounding(notes=(48, 52, 55)))
+    with pytest.raises(RuntimeError, match="disconnected"):
+        midi.close()
+    assert port.attempts == [
+        [0x90, 48, 96],
+        [0x90, 52, 96],
+        [0x80, 48, 0],
+        [0x80, 52, 0],
+        [0xB0, 123, 0],
+    ]
+    assert port.closed and midi.notes == ()
+    count = len(port.attempts)
+    midi.close()
+    assert len(port.attempts) == count
+
+
+def test_chord_replacement_failure_releases_remaining_notes_and_does_not_start_new_chord() -> None:
+    port = FakePort(fail_at={4})
+    midi = MidiChords(port)
+    midi.update(sounding(notes=(48, 52, 55)))
+    with pytest.raises(RuntimeError, match="disconnected"):
+        midi.update(sounding(notes=(60, 64, 67)))
+    assert port.attempts[3:] == [[0x80, note, 0] for note in (48, 52, 55)]
+    assert midi.notes == (48,)
+    midi.close()
+    assert port.attempts[-2:] == [[0x80, 48, 0], [0xB0, 123, 0]] and port.closed
+
+
+def test_chord_source_uses_separate_clear_name() -> None:
+    native = FakeNative()
+    with patch(
+        "instrument.midi._backend", return_value=SimpleNamespace(MidiOut=lambda name: native)
+    ):
+        port = MidiPort(virtual_name=CHORDS_PORT)
+    assert native.opened == (None, CHORDS_PORT) and port.name == CHORDS_PORT
+    port.close()
+    assert native.deleted
+
+
+def test_cli_chords_opt_in_exports_every_note_and_cleanup(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    port, names = FakePort(), []
+
+    def make_port(destination: str | None, *, virtual_name: str) -> FakePort:
+        names.append((destination, virtual_name))
+        port.name = virtual_name
+        return port
+
+    monkeypatch.setattr("instrument.__main__.MidiPort", make_port)
+    monkeypatch.setattr("instrument.__main__.time.sleep", lambda delay: None)
+    assert (
+        call_cli(
+            monkeypatch,
+            "--demo",
+            "--headless",
+            "--midi-chords",
+            "--seconds",
+            "0.05",
+            "--output",
+            str(tmp_path),
+        )
+        == 0
+    )
+    assert names == [(None, CHORDS_PORT)]
+    summary = json.loads(capsys.readouterr().out)
+    assert summary["midi"]["mode"] == "held_chord" and summary["midi"]["port"] == CHORDS_PORT
+    recorded = [
+        json.loads(line)["bytes"] for line in (tmp_path / "midi.jsonl").read_text().splitlines()
+    ]
+    assert recorded == [
+        *([0x90, note, 96] for note in (48, 52, 55)),
+        *([0x80, note, 0] for note in (48, 52, 55)),
+        [0xB0, 123, 0],
+    ]
+    assert port.closed and summary["midi"]["messages"] == 7
+
+
+@pytest.mark.parametrize(
+    "failure,code", [(RuntimeError("bad frame"), 1), (KeyboardInterrupt(), 130)]
+)
+def test_cli_chord_loop_failure_releases_entire_chord(
+    monkeypatch: pytest.MonkeyPatch, failure: BaseException, code: int
+) -> None:
+    port = FakePort()
+    monkeypatch.setattr("instrument.__main__.MidiPort", lambda *a, **k: port)
+    monkeypatch.setattr(
+        "instrument.__main__.Renderer.draw", lambda *a, **k: (_ for _ in ()).throw(failure)
+    )
+    assert call_cli(monkeypatch, "--demo", "--headless", "--midi-chords") == code
+    assert port.messages == [
+        *([0x90, note, 96] for note in (48, 52, 55)),
+        *([0x80, note, 0] for note in (48, 52, 55)),
+        [0xB0, 123, 0],
+    ]
+    assert port.closed
+
+
+def test_cli_rejects_simultaneous_root_and_chord_modes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "instrument.__main__.MidiPort", lambda *a, **k: pytest.fail("device opened")
+    )
+    with pytest.raises(SystemExit) as error:
+        call_cli(monkeypatch, "--demo", "--headless", "--midi", "--midi-chords")
+    assert error.value.code == 2
+
+
+def test_cli_chord_destination_uses_selected_cable_and_channel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    port, names = FakePort(), []
+
+    def make_port(destination: str | None, *, virtual_name: str) -> FakePort:
+        names.append((destination, virtual_name))
+        return port
+
+    monkeypatch.setattr("instrument.__main__.MidiPort", make_port)
+    assert (
+        call_cli(
+            monkeypatch,
+            "--demo",
+            "--headless",
+            "--midi-chords",
+            "--midi-port",
+            "IAC Chords",
+            "--midi-channel",
+            "2",
+            "--seconds",
+            "0.01",
+        )
+        == 0
+    )
+    assert names == [("IAC Chords", CHORDS_PORT)]
+    assert port.messages == [
+        *([0x91, note, 96] for note in (48, 52, 55)),
+        *([0x81, note, 0] for note in (48, 52, 55)),
+        [0xB1, 123, 0],
+    ]
+
+
+def test_cli_chord_p_key_pauses_resumes_and_q_releases(monkeypatch: pytest.MonkeyPatch) -> None:
+    port = FakePort()
+    monkeypatch.setattr("instrument.__main__.MidiPort", lambda *a, **k: port)
+    with patch("instrument.__main__.time.sleep"):
+        with patch("instrument.__main__.cv2.waitKey", side_effect=[ord("P"), ord("p"), ord("q")]):
+            with patch("instrument.__main__.cv2.getWindowProperty", return_value=1):
+                with patch.multiple(
+                    "instrument.__main__.cv2",
+                    namedWindow=lambda *a: None,
+                    resizeWindow=lambda *a: None,
+                    imshow=lambda *a: None,
+                    destroyAllWindows=lambda: None,
+                ):
+                    assert call_cli(monkeypatch, "--demo", "--mute", "--midi-chords") == 0
+    cycle = [
+        *([0x90, note, 96] for note in (48, 52, 55)),
+        *([0x80, note, 0] for note in (48, 52, 55)),
+        [0xB0, 123, 0],
+    ]
+    assert port.messages == cycle + cycle and port.closed

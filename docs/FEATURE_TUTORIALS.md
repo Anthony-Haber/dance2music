@@ -7,6 +7,7 @@ Start here for the current native Python instrument:
 - [Split and merge the ball](#1--control-and-split-the-ball)
 - [Lock a root](#0--lock-a-chord-root)
 - [Choose chord qualities](#2--choose-roots-and-chord-qualities)
+- [Play sustained chords in Ableton](#play-sustained-chords-in-ableton)
 - [Play one note in Ableton](#play-one-root-note-in-ableton)
 - [Run on macOS](#native-instrument-on-macos)
 
@@ -55,19 +56,69 @@ gesture is confirmed, **Wrist only; no gesture** means body tracking has no hand
 details, and **NOT SEEN** means that hand is absent. Readouts follow corrected hand
 identities even when the hands cross.
 
+## Play sustained chords in Ableton
+
+Send the selected chord's actual notes directly to a regular Ableton synth:
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi-chords --mute
+```
+
+1. Keep the instrument running. In Ableton **Settings → Link, Tempo & MIDI**,
+   enable **Track** for **dance2music - Chords to Ableton**.
+2. Load a **polyphonic synth** on a MIDI track. Set **MIDI From** to that cable,
+   channel **1**, and **Monitor → In** (or Auto with the track armed). Use a pad
+   or a patch with a sustaining envelope to hear a continuous held chord.
+3. Show your torso and required wrist(s) so the ball becomes active. The initial
+   C major chord sends MIDI notes **48, 52, 55** together. Use the existing
+   [quality gestures](#2--choose-roots-and-chord-qualities) and
+   [root/interval/octave controls](#relative-roots-and-switching-modes).
+   For example, changing C major to C minor sends **48, 51, 55**.
+4. The MIDI row shows **CHORD**, its name and the actual **NOTES**. Notes hold
+   while the ball is active. A changed voicing releases every previous note
+   before starting the new chord; unchanged frames do not retrigger it.
+5. **P** toggles persistent MIDI pause/resume. Pause releases the whole chord;
+   resume starts the latest chord on the next active frame. Tracking loss or
+   zero gain releases it; recovery starts the current chord. It does not latch
+   a chord after your hands disappear. **Q**, Escape, window close and Ctrl-C
+   release all held notes and remove the process-owned cable.
+
+All **25 qualities × 12 roots = 300 chords** use the same three-to-six-note
+voicings as local synthesis, including voice leading and octave shifts. Root lock
+still permits quality changes. Split/merge/transfer preserves the MIDI chord when
+its voicing is unchanged; an owned ball needs its owner and torso only.
+`--mute` stops the local synth so you hear Ableton. MIDI velocity remains constant,
+default **96**; `--volume` and ball size do not automate the Ableton synth's volume.
+
+For a camera-free test, run
+`.venv/bin/python -m instrument --demo --midi-chords --mute`.
+To use an existing cable, add `--midi-port "exact listed destination"` alongside
+`--midi-chords`; use `--list-midi-ports` to inspect names. Windows requires an
+existing loopMIDI cable. Channel and velocity overrides work in both MIDI modes.
+`--output output/anthony-instrument/ableton-chords` records every Note On/Off byte.
+Use a normal polyphonic instrument with this output; an Expressive Chords device
+would interpret each constituent pitch as another chord trigger.
+
+The [routing and troubleshooting steps below](#play-one-root-note-in-ableton)
+also apply, selecting **Chords to Ableton** instead of **Notes to Ableton**.
+See the [MIDI contract](../specs/001-anthony-instrument/midi-output.md).
+
 ## Play one root note in Ableton
 
 The native Python instrument now sends **one held root note**. Interval and octave
 gestures change its pitch. Chord-quality gestures still affect the local synth;
-the MIDI output stays on the root. Full chord output and Expressive Chords mappings
-are the next stage.
+the MIDI output stays on the root. Use
+[sustained chord mode](#play-sustained-chords-in-ableton) to send the full voicing.
 
 The cable names are:
 
 | Cable | Purpose |
 | --- | --- |
-| **dance2music - Notes to Ableton** | Active virtual MIDI source for this version |
-| **dance2music - Chords to Ableton** | Reserved name for later; not created yet |
+| **dance2music - Notes to Ableton** | Single-root source with `--midi` |
+| **dance2music - Chords to Ableton** | Full-chord source with `--midi-chords` |
+
+Only the selected mode creates its cable. Choose one mode per process.
 
 On this Mac, install the optional MIDI dependency once, then start the instrument:
 

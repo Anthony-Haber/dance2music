@@ -18,7 +18,7 @@ from numpy.typing import NDArray
 
 from instrument.audio import Playback, Synth
 from instrument.controller import Controller
-from instrument.midi import MidiNotes, MidiPort, output_ports
+from instrument.midi import CHORDS_PORT, MidiChords, MidiNotes, MidiPort, output_ports
 from instrument.models import Config, Frame, Output
 from instrument.replay import demonstration, read_replay
 from instrument.tracking import Tracker
@@ -140,7 +140,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         return {"midi_destinations": output_ports()}
     if not 1 <= args.midi_channel <= 16 or not 1 <= args.midi_velocity <= 127:
         raise ValueError("MIDI channel must be in [1,16] and velocity in [1,127]")
-    midi_enabled = args.midi or args.midi_port is not None
+    midi_enabled = args.midi or args.midi_chords or args.midi_port is not None
     if args.model_smoke and midi_enabled:
         raise ValueError("Use --demo --midi to test MIDI; --model-smoke only tests CV models")
     if not math.isfinite(args.seconds) or args.seconds < 0 or not 1 <= args.fps <= 120:
@@ -158,7 +158,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     core_times, render_times, inference_times, midi_times = [], [], [], []
     final: Output | None = None
     with ExitStack() as stack:
-        midi = None
+        midi: MidiNotes | None = None
         if midi_enabled:
             midi_log = None
             if args.output:
@@ -171,12 +171,20 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 if midi_log is not None:
                     midi_log.write(json.dumps({"time_s": timestamp, "bytes": message}) + "\n")
 
-            midi = MidiNotes(
-                MidiPort(args.midi_port), args.midi_channel, args.midi_velocity, record_midi
-            )
+            if args.midi_chords:
+                midi = MidiChords(
+                    MidiPort(args.midi_port, virtual_name=CHORDS_PORT),
+                    args.midi_channel,
+                    args.midi_velocity,
+                    record_midi,
+                )
+            else:
+                midi = MidiNotes(
+                    MidiPort(args.midi_port), args.midi_channel, args.midi_velocity, record_midi
+                )
             stack.callback(midi.close)
             print(
-                f"MIDI ready: {midi.port.name} | channel {midi.channel} | held root note",
+                f"MIDI ready: {midi.port.name} | channel {midi.channel} | {midi.mode}",
                 file=sys.stderr,
             )
         playback = None
@@ -300,7 +308,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "port": midi.port.name,
             "channel": midi.channel,
             "velocity": midi.velocity,
-            "mode": "held_root",
+            "mode": midi.mode,
             "messages": midi.messages,
             "update_p95_ms": float(np.percentile(midi_times, 95)),
         }
@@ -323,8 +331,14 @@ def main() -> int:
     sources.add_argument(
         "--list-midi-ports", action="store_true", help="list existing MIDI output destinations"
     )
-    parser.add_argument(
+    midi_modes = parser.add_mutually_exclusive_group()
+    midi_modes.add_argument(
         "--midi", action="store_true", help="send one held root to dance2music - Notes to Ableton"
+    )
+    midi_modes.add_argument(
+        "--midi-chords",
+        action="store_true",
+        help="send held chord notes to dance2music - Chords to Ableton (ordinary synth input)",
     )
     parser.add_argument(
         "--midi-port",

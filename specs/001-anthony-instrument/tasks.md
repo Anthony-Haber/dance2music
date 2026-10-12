@@ -175,4 +175,21 @@ Engineering completion is separate from performer acceptance.
 - [ ] T057 Performer/Ableton trial: choose the Notes input, enable Track, monitor
   an instrument, verify held roots/octaves/pause/recovery/quit by listening.
 
-Chord MIDI and Expressive Chords trigger mapping are intentionally later work.
+## Direct sustained chord MIDI: 2026-10-12
+
+Anthony explicitly dropped Expressive Chords trigger mapping and selected direct
+synth input, held while the ball is active; P pauses/resumes.
+
+- [X] T058 Record direct voiced-note output and active-ball/P behavior, superseding
+  the proposed plugin selector map and unmapped policy in midi-output.md/decisions.md.
+- [X] T059 Extend the MIDI lifecycle to full voicings, set-based hold/replacement
+  and all-note cleanup after partial sends/releases, preserving single-root behavior.
+- [X] T060 Add --midi-chords, separate Chords source, mutually exclusive root/chord
+  modes, existing-destination support, chord/pitch HUD and summary mode.
+- [X] T061 Validate all 300 chords at three registers, quality/root/octave changes,
+  loss/recovery/P, boundaries, failure cleanup and CLI; run full suite/lint/format/types.
+- [X] T062 Verify dedicated CoreMIDI chord bytes/endpoint removal, paced CLI demo,
+  latency and HUD; update tutorials, design/spec, evidence and status.
+- [X] T063 Refresh local AST graph once after this full-chord capability.
+- [ ] T064 Performer/Ableton listening trial: polyphonic synth on Chords input,
+  held triads/six-note chords, locked quality changes, octaves, P/loss/recovery/quit.

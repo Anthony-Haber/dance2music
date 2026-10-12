@@ -4,10 +4,11 @@ import math
 from collections.abc import Callable
 from typing import Any, Protocol
 
+from instrument.harmony import MAX_VOICES
 from instrument.models import Output
 
 NOTES_PORT = "dance2music - Notes to Ableton"
-CHORDS_PORT = "dance2music - Chords to Ableton"  # Reserved; not opened by this version.
+CHORDS_PORT = "dance2music - Chords to Ableton"
 CLIENT_NAME = "dance2music Instrument"
 
 
@@ -38,14 +39,16 @@ class MidiPort:
     is required to remove virtual endpoints; close_port alone leaves them alive.
     """
 
-    def __init__(self, destination: str | None = None) -> None:
+    def __init__(self, destination: str | None = None, *, virtual_name: str = NOTES_PORT) -> None:
         if destination is not None and not destination.strip():
             raise ValueError("MIDI destination name must not be empty")
-        self.name = NOTES_PORT
+        if not virtual_name.strip():
+            raise ValueError("MIDI virtual source name must not be empty")
+        self.name = virtual_name
         self.native: Any = _backend().MidiOut(name=CLIENT_NAME)
         try:
             if destination is None:
-                self.native.open_virtual_port(NOTES_PORT)
+                self.native.open_virtual_port(virtual_name)
             else:
                 ports = list(self.native.get_ports())
                 matches = [i for i, name in enumerate(ports) if name == destination]
@@ -62,7 +65,7 @@ class MidiPort:
                         f"Use --list-midi-ports and select an exact name. Available: {ports}"
                     )
                 self.name = ports[matches[0]]
-                self.native.open_port(matches[0], NOTES_PORT)
+                self.native.open_port(matches[0], virtual_name)
         except Exception as error:
             self.native.delete()
             self.native = None
@@ -98,6 +101,8 @@ class Sender(Protocol):
 class MidiNotes:
     """One held controller root; no chord tones, volume CCs or frame retriggering."""
 
+    mode = "held_root"
+
     def __init__(
         self,
         port: Sender,
@@ -114,7 +119,7 @@ class MidiNotes:
             raise ValueError("MIDI channel must be in [1,16] and velocity in [1,127]")
         self.port, self.channel, self.velocity = port, channel, velocity
         self.record = record
-        self.note: int | None = None
+        self.notes: tuple[int, ...] = ()
         self.paused = False
         self.closed = False
         self.time_s = 0.0
@@ -127,25 +132,38 @@ class MidiNotes:
             self.record(self.time_s, message)
 
     def _release(self) -> None:
-        if self.note is not None:
-            self._send([0x80 | (self.channel - 1), self.note, 0])
-            self.note = None
+        """Attempt every held/partially sent note even if an earlier release fails."""
+        error: Exception | None = None
+        for note in self.notes:
+            try:
+                self._send([0x80 | (self.channel - 1), note, 0])
+                self.notes = tuple(held for held in self.notes if held != note)
+            except Exception as release_error:
+                if error is None:
+                    error = release_error
+        if error is not None:
+            raise error
+
+    def _target(self, state: Output) -> tuple[int, ...]:
+        active = bool(state.balls) and math.isfinite(state.gain) and state.gain > 0
+        if not active or self.paused:
+            return ()
+        if not isinstance(state.root_midi, int) or not 0 <= state.root_midi <= 127:
+            raise ValueError("MIDI root note must be an integer in [0,127]")
+        return (state.root_midi,)
 
     def update(self, state: Output) -> None:
         """Apply an observation immediately; no new note without valid audible geometry."""
         if self.closed:
             raise RuntimeError("MIDI notes are closed")
         self.time_s = state.time_s
-        active = bool(state.balls) and math.isfinite(state.gain) and state.gain > 0
-        target = state.root_midi if active and not self.paused else None
-        if target is not None and (not isinstance(target, int) or not 0 <= target <= 127):
-            raise ValueError("MIDI root note must be an integer in [0,127]")
-        if target != self.note:
+        target = self._target(state)
+        if target != self.notes:
             self._release()
-            if target is not None:
+            for note in target:
                 # Track the attempted note before sending, so failure cleanup can release it.
-                self.note = target
-                self._send([0x90 | (self.channel - 1), target, self.velocity])
+                self.notes += (note,)
+                self._send([0x90 | (self.channel - 1), note, self.velocity])
 
     def set_paused(self, paused: bool) -> None:
         """P pause is persistent; resuming starts the next valid observation."""
@@ -158,7 +176,9 @@ class MidiNotes:
 
     @property
     def status(self) -> str:
-        state = "PAUSED" if self.paused else "WAITING" if self.note is None else f"NOTE {self.note}"
+        state = (
+            "PAUSED" if self.paused else "WAITING" if not self.notes else f"NOTE {self.notes[0]}"
+        )
         return f"MIDI: {self.port.name} | CH {self.channel} | {state} | P: pause/resume"
 
     def close(self) -> None:
@@ -178,7 +198,46 @@ class MidiNotes:
                     error = panic_error
         finally:
             self.closed = True
-            self.note = None
+            self.notes = ()
             self.port.close()
         if error is not None:
             raise error
+
+
+class MidiChords(MidiNotes):
+    """Hold the controller's full voicing for an ordinary polyphonic MIDI synth.
+
+    Changed pitch sets release the entire previous chord before starting the new
+    chord, extending the root adapter's replacement contract. Identical sets hold
+    without retriggering, including harmless oscillator-order changes.
+    """
+
+    mode = "held_chord"
+    symbol = ""
+
+    def _target(self, state: Output) -> tuple[int, ...]:
+        self.symbol = state.symbol
+        active = bool(state.balls) and math.isfinite(state.gain) and state.gain > 0
+        if not active or self.paused:
+            return ()
+        notes = state.notes
+        if (
+            not 1 <= len(notes) <= MAX_VOICES
+            or any(type(note) is not int or not 0 <= note <= 127 for note in notes)
+            or len(set(notes)) != len(notes)
+        ):
+            raise ValueError(
+                f"MIDI chord must contain 1-{MAX_VOICES} distinct integer notes in [0,127]"
+            )
+        return tuple(sorted(notes))
+
+    @property
+    def status(self) -> str:
+        state = (
+            "PAUSED"
+            if self.paused
+            else "WAITING"
+            if not self.notes
+            else f"CHORD {self.symbol} | NOTES {','.join(str(note) for note in self.notes)}"
+        )
+        return f"MIDI: {self.port.name} | CH {self.channel} | {state} | P: pause/resume"

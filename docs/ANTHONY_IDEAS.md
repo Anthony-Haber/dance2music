@@ -32,9 +32,9 @@ See [quickstart](../specs/001-anthony-instrument/quickstart.md),
 [decisions for review](../specs/001-anthony-instrument/decisions.md), and
 [validation evidence](../specs/001-anthony-instrument/evidence.md).
 The original vision and design risks below remain relevant. Human gesture/listening
-acceptance is still pending; 3D, extra finger-pattern modes, spells, game and chord
-MIDI remain future work. The first single-root MIDI stage is now implemented;
-see [Ableton setup](FEATURE_TUTORIALS.md#play-one-root-note-in-ableton).
+acceptance is still pending; 3D, extra finger-pattern modes, spells and game
+remain future work. Root and full-chord MIDI are implemented for a normal synth;
+see [Ableton setup](FEATURE_TUTORIALS.md#play-sustained-chords-in-ableton).
 The website has not been translated or changed by this feature.
 
 ## Completion checklist: ideas 0–2
@@ -74,8 +74,8 @@ The following concrete limitations and acceptance work remain:
 **Deferred additions, rather than fixes to implemented scope:** true 3D/depth,
 animator assets, rotation/hold-time effects, extra finger-pattern modes,
 broader chord vocabulary, and separate musical roles for the two balls.
-The first Ableton single-note stage is implemented; chord MIDI, spells and the game
-remain ideas 6, 3 and 4. JavaScript translation
+Ableton root/full-chord MIDI is implemented; spells and the game
+remain ideas 3 and 4. JavaScript translation
 still requires an explicit request.
 
 ### Fixes already completed during validation
@@ -112,7 +112,7 @@ Implementation commit: `6acfa55` (local).
 | Ball | One visual ball from the 2D wrist midpoint and spacing; sphere-size sound mappings | Reuse Joseph's visual design in Python first; two-ball interactions and later 3D |
 | Harmony | A predefined harmonic palette, dwell filtering, and voice leading | Independent root selection and gesture-driven chord-quality changes |
 | Fist | Default chord hold while the fist is recognized | Persistent root-lock toggle, with quality gestures still active |
-| Ableton | Existing offline MIDI described for the SWAM/rope workflow | A live single-note trigger per selected chord for Expressive Chords |
+| Ableton | Existing offline MIDI described for the SWAM/rope workflow | Held root or full chord notes sent directly to a synth |
 
 Source context: [README.md](../README.md), [IDEAS.md](../IDEAS.md), [live.py](../live.py),
 [web/live/live.js](../web/live/live.js), [web/live/hands.js](../web/live/hands.js),
@@ -135,7 +135,7 @@ deployment, or upload. Existing web behavior is useful reference material while 
 | Item | Direction |
 | --- | --- |
 | First implementation priority | Persistent fist root-lock toggle |
-| High-priority integration | Ableton / Expressive Chords using one MIDI trigger note per chord |
+| High-priority integration | Ableton synth input with held root/full-chord MIDI; Expressive Chords dropped on 2026-10-12 |
 | Remaining ideas | Preserve all ideas below; their relative implementation order is not yet agreed |
 | Lock lifecycle | A fist closure locks; a later fist closure unlocks. Reopening alone does not unlock. |
 | Locked harmony | Root selection stays fixed; chord-quality gestures remain active. |
@@ -271,7 +271,8 @@ and which renderer/asset format supports those controls when the 3D stage is req
 **Status: DONE for the approved 300-chord Python catalogue.** Implemented in
 [harmony.py](../instrument/harmony.py) and [audio.py](../instrument/audio.py). Automated
 tests cover all 90,000 starting-to-target chord combinations. Live gesture and
-subjective listening review remain; broader vocabulary and Ableton output are deferred.
+subjective listening review remain; broader vocabulary is deferred. Direct Ableton
+root/full-chord MIDI is implemented as described in idea 6.
 
 **Vision.** Make harmonic actions musically understandable and avoid being trapped in the current
 fixed palette. From whichever chord is active, the performer should have a path to every chord
@@ -309,8 +310,8 @@ Right Victory + left palm selects dim7; left Victory + right palm selects m7b5.
 Point means index up with other fingers curled and thumb tucked. The approved map
 changes left-hand shortcuts with right palm to m6, 6 and 6/9, and both V signs to aug.
 Extensions sound in fuller five/six-note voicings, with both ninth and thirteenth in
-13th chords. Root lock remains independent of quality. Wider catalogues, alternative
-root navigation and Expressive Chords mapping behavior need later design decisions.
+13th chords. Root lock remains independent of quality. Relative interval root
+navigation and direct chord MIDI are implemented; broader catalogues need later decisions.
 
 ## 3. Chords as three-move magic spells
 
@@ -390,45 +391,45 @@ have distinct musical roles? What happens if one
 hand leaves the frame? Distance and dwell remain provisional for performer review;
 the merge gesture is confirmed above.
 
-## 6. Ableton / Expressive Chords through a virtual MIDI cable
+## 6. Ableton synth input through a virtual MIDI cable
 
 **Vision.** Send musical decisions from the local Python prototype to Ableton through Anthony's
 virtual MIDI cable. Anthony already knows how to connect the cable; the work is the instrument's
-output and its mapping to the existing plugin setup.
+output and direct control of an ordinary polyphonic synth.
 
 **First stage, approved 2026-10-12.** Send the current root note and hold it while
 the ball is active. Anthony selected this instead of a fixed test note or pulses.
-`dance2music - Notes to Ableton` is the active process-owned cable; the name
-`dance2music - Chords to Ableton` is reserved for later. Roots/octaves replace the
+`dance2music - Notes to Ableton` is the single-root process-owned cable. Roots/octaves replace the
 held pitch, body/required-wrist loss releases it, and P pauses/resumes MIDI.
-Quality changes stay local for now. Implementation and lifecycle are recorded in
+Quality changes stay local in this root-only mode. Implementation and lifecycle are recorded in
 the [MIDI contract](../specs/001-anthony-instrument/midi-output.md).
 
-**Later chord output model.** Each configured chord is triggered by one MIDI note in Expressive Chords,
-as Anthony described. Send that chord's configured trigger note; do not send all the constituent
-notes of a voiced chord. Trigger-note pitch identifies a plugin mapping and must not be assumed
-to be the harmonic root. Local synthesis can still use a full voicing independently.
+**Direct chord stage, approved 2026-10-12.** Anthony explicitly dropped Expressive
+Chords and requested synth input. `--midi-chords` opens
+`dance2music - Chords to Ableton` and sends every note in the current local voicing.
+He confirmed holding while the ball is active with P as pause/resume, instead of
+latching a chord after tracking loss. All 300 catalogue chords use the existing
+three-to-six-note voicings and real octave shifts; no trigger table is needed.
+Changed voicings release all old notes before starting the new chord; identical
+pitch sets hold without retriggering. Loss, pause and exit release every note.
+This supersedes the earlier single-note-per-chord Expressive Chords proposal.
 
 **Possible design flaws.**
 
-- The Python chord catalogue and the plugin's configured trigger map can drift apart. Each
-  chord identifier needs a matching, inspectable mapping to a port, channel, and note number.
-- Sending a note on every camera frame retriggers a chord repeatedly. Musical state changes and
-  deliberate retriggers need an explicit event model.
-- Note-off behavior depends on how the plugin is configured. Short triggers, held notes, latch
-  behavior, and changing chords must be tested with Anthony's actual setup before choosing a policy.
+- Sending a note on every camera frame retriggers a chord repeatedly. The adapter
+  holds identical pitch sets and replaces only changed voicings.
+- The synth needs enough polyphony and an appropriate sustain envelope. A held
+  MIDI note does not prevent a percussive patch's amplitude envelope from decaying.
 - A stuck note or an interrupted MIDI connection can leave unwanted sound. Stop, error recovery,
   and a manual panic/reset need a defined cleanup contract.
-- Root-lock quality changes still represent different chords and may need different trigger notes.
-  The lock must not accidentally suppress those musical changes.
-- A broad root/quality catalogue can exceed the available configured trigger mappings. Catalogue
-  size and any bank/channel scheme need agreement; unlimited chord access cannot be assumed.
+- Root-lock quality changes still represent different chords; the MIDI adapter
+  follows the controller's actual pitches rather than treating root lock as chord lock.
 - Output latency and jitter affect playability. Measure gesture recognition through chord decision
   to MIDI emission, then evaluate the audible result in Ableton separately.
 
-**Questions for the later chord stage.** What is Anthony's configured chord-to-trigger-note table?
-Which channel should be used? Does the plugin expect a held note or a pulse? How should a repeated same
-chord and an unmapped chord behave? These details need confirmation, not a guessed plugin preset.
+**Remaining acceptance.** Route the Chords input into a polyphonic synth and listen
+to quality/root/octave changes, pause/recovery and exit. Channel 1 and velocity 96
+are configurable. Continuous volume CCs and new performance gestures are later work.
 
 ## Implementation boundaries and next review
 
@@ -446,8 +447,8 @@ and subjective listening still need Anthony's review. The thresholds and choices
 decisions.md remain provisional. The original questions above describe risks and future
 choices; the current feature's confirmed answers are recorded in its spec and decisions.
 
-The Ableton single-root transport is implemented and locally verified. Its routing
-and listening acceptance remains pending. Chord output will require agreement on
-the trigger table and plugin lifecycle. Spells, the game, extra finger-pattern modes
+Ableton root and direct full-chord transports are implemented. Routing and listening
+acceptance remains pending. Expressive Chords trigger mapping was dropped.
+Spells, the game, extra finger-pattern modes
 and 3D need their own specifications and decisions. Website translation requires
 Anthony's explicit instruction; no browser feature code changed in this implementation.

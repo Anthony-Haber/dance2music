@@ -10,8 +10,9 @@ Read `specs/001-anthony-instrument/quickstart.md` for commands and controls, and
 `specs/001-anthony-instrument/decisions.md` for confirmed versus provisional decisions.
 
 Anthony's vision is an expressive musical instrument with a future 3D ball, gesture-controlled chord
-roots and qualities, three-move chord spells, beginner learning games, and single-note MIDI chord
-triggers sent to Ableton's Expressive Chords through a virtual MIDI cable.
+roots and qualities, three-move chord spells, beginner learning games, and MIDI sent directly
+to an Ableton synth through a virtual cable. Anthony dropped Expressive Chords on 2026-10-12;
+use optional held-root or full-voicing output, active-ball gating and P pause/resume.
 The initial Python prototype will reuse Joseph's glowing 2D ball design; depth/3D work is deferred.
 
 - Read `README.md` for the existing pipeline and commands.

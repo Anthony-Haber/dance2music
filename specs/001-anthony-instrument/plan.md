@@ -5,9 +5,10 @@ Branch: `anthony-explorations` | 2026-10-04 | [spec](spec.md)
 ## Technical context
 
 Current MIDI addition: macOS arm64 / Python 3.11.17, optional python-rtmidi 1.5.8.
-The approved [single-root MIDI plan and contract](midi-output.md) extends this
+The approved [root/full-chord MIDI plan and contract](midi-output.md) extends this
 instrument without changing root selection or local chord synthesis. Earlier
-scope exclusions below refer to their original increments. Chord MIDI remains deferred.
+scope exclusions below refer to their original increments. Direct chord MIDI is
+now approved; Expressive Chords trigger mapping was dropped by Anthony.
 
 Python 3.14 on this Windows workstation, isolated `.venv`. Native OpenCV window;
 MediaPipe Tasks GestureRecognizer and PoseLandmarker using explicit local `.task`
@@ -48,6 +49,19 @@ review and AST update; status.md handoff. Decisions prompted and answered above.
 Only Stage 1 Python is authorized. Stage 2 JavaScript remains deferred.
 
 ## Implementation strategy
+
+### Direct sustained chord MIDI, 2026-10-12
+
+Observe the controller's existing voiced notes through a polyphonic extension of
+the MIDI adapter. Reuse active-ball gating, persistent P pause, channel/velocity,
+ordered release/replacement, logging and endpoint cleanup. Track every attempted
+Note On so partial send failures release all potentially sounding notes; attempt
+every Note Off before reporting a release failure. `--midi-chords` selects the
+Chords cable; `--midi` preserves single-root behavior, with mutually exclusive
+flags. Identical pitch sets hold without frame/oscillator-order retriggers.
+Validate all 300 chords at multiple registers, loss/recovery, locked quality
+changes, partial failures and CLI/cleanup; verify real CoreMIDI delivery and
+inspect the HUD. No new dependency, directory, trigger map or website work.
 
 ### Single-root Ableton MIDI, 2026-10-12
 
