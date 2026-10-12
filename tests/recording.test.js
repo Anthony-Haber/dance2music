@@ -2,6 +2,7 @@ import { Observations, snapshotPose, snapshotHandInference, handDisplayState } f
 import { Hands } from '../web/live/hands.js';
 import { Recorder, packageRecording } from '../web/live/recorder.js';
 import { modelAsset } from '../web/live/model-assets.js';
+import { Engine } from '../web/live/audio.js';
 
 function assert(ok, message) { if (!ok) throw new Error(message); }
 function equal(actual, expected, message) { assert(JSON.stringify(actual) === JSON.stringify(expected), message); }
@@ -18,6 +19,213 @@ const configuration = mode => ({ source: { id: 'fixture', type: 'camera', width:
     runtime: { version: 'fixture' }, delegate: 'cpu', running_mode: 'video', num_poses: 1,
     detection_threshold: 0.5, presence_threshold: 0.5, tracking_threshold: 0.5, segmentation_masks: false },
   hands: { mode }, preview_mirrored: false, video_mirrored: false });
+
+async function unpack(saved) {
+  const files = window.fflate.unzipSync(new Uint8Array(await (await fetch(saved.url)).arrayBuffer()));
+  const manifest = JSON.parse(new TextDecoder().decode(files['manifest.json']));
+  for (const artifact of Object.values(manifest.artifacts)) {
+    const bytes = files[artifact.path];
+    assert(bytes.length === artifact.size_bytes, 'artifact size');
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+      b => b.toString(16).padStart(2, '0')).join('');
+    equal(digest, artifact.sha256, 'artifact SHA-256');
+  }
+  return { files, manifest };
+}
+
+async function microphoneTests(options, ctx, passed) {
+  const originalAccess = navigator.mediaDevices.getUserMedia;
+  const audioSessionDescriptor = Object.getOwnPropertyDescriptor(navigator, 'audioSession');
+  Object.defineProperty(navigator, 'audioSession', { configurable: true, value: { type: 'playback' } });
+  const unlockEngine = new Engine(); unlockEngine.ctx = ctx;
+  unlockEngine.keepAlive = { play: () => Promise.resolve() };
+  const OriginalRecorder = window.MediaRecorder;
+  const OriginalWorker = window.Worker;
+  const micDest = ctx.createMediaStreamDestination(), micOsc = ctx.createOscillator();
+  micOsc.frequency.value = 880; micOsc.connect(micDest); micOsc.start();
+  const recorder = new Recorder();
+  let requests = 0, micStream;
+  const acquire = async constraints => {
+    equal(constraints, { audio: true, video: false }, 'default microphone and processing constraints');
+    // Reproduce Safari's exact failure if playback mode was not changed before access.
+    if (!['auto', 'play-and-record'].includes(navigator.audioSession.type))
+      throw new DOMException('AudioSession category is not compatible with audio capture.', 'InvalidStateError');
+    requests++; micStream = new MediaStream(micDest.stream.getAudioTracks().map(track => track.clone()));
+    return micStream;
+  };
+  const released = stream => {
+    assert(stream.getTracks().every(t => t.readyState === 'ended'), 'microphone tracks released');
+    equal(navigator.audioSession.type, 'playback', 'playback mode restored after microphone cleanup');
+  };
+  try {
+    navigator.mediaDevices.getUserMedia = acquire;
+    await recorder.start(options); await wait(120);
+    const off = await unpack(await recorder.stop());
+    assert(requests === 0 && off.manifest.microphone.outcome === 'disabled', 'default off never requests microphone');
+    assert(!off.manifest.artifacts.microphone && Object.keys(off.files).length === 3, 'default bundle files unchanged');
+    for (const audioOnly of [false, true]) {
+      await recorder.start({ ...options, audioOnly, recordMicrophone: true });
+      assert(recorder.microphone.outcome === 'recording', 'microphone active');
+      unlockEngine.unlock();
+      equal(navigator.audioSession.type, 'play-and-record', 'sound unlock keeps microphone-compatible audio session');
+      recorder.observe({ nowMs: performance.now(), mediaTime: 0, configuration: configuration('off'), pose: snapshotPose({}) });
+      await wait(450);
+      const { files, manifest } = await unpack(await recorder.stop()); released(micStream);
+      const mic = manifest.microphone, artifact = manifest.artifacts.microphone;
+      assert(mic.selected && mic.outcome === 'complete' && !mic.error, 'microphone finalized');
+      assert(mic.start_offset_s >= 0 && mic.end_offset_s > mic.start_offset_s && mic.end_offset_s <= manifest.duration_s + 0.1,
+        'recording-relative microphone offsets');
+      assert(mic.mime_type.startsWith('audio/') && mic.settings !== null, 'actual microphone MIME/settings');
+      assert(/^microphone\.(m4a|webm)$/.test(artifact.path) && artifact.size_bytes > 0, 'separate microphone artifact');
+      const player = document.createElement('audio');
+      const url = URL.createObjectURL(new Blob([files[artifact.path]], { type: mic.mime_type }));
+      player.src = url; await player.play(); player.pause(); URL.revokeObjectURL(url);
+      if (audioOnly) {
+        const frequency = async bytes => {
+          const buffer = await ctx.decodeAudioData(bytes.slice().buffer), samples = buffer.getChannelData(0);
+          const start = Math.floor(samples.length / 3), end = Math.floor(samples.length * 2 / 3);
+          let crossings = 0;
+          for (let i = start + 1; i < end; i++) if (samples[i - 1] < 0 && samples[i] >= 0) crossings++;
+          return crossings * buffer.sampleRate / (end - start);
+        };
+        assert(Math.abs(await frequency(files[artifact.path]) - 880) < 30, 'microphone contains its own audio');
+        assert(Math.abs(await frequency(files[manifest.artifacts.media.path]) - 440) < 30, 'instrument audio remains separate');
+      }
+    }
+    passed.push('default-off permission guard, separate playable microphone in both modes, checksums, settings, offsets and unmixed audio');
+
+    for (const name of ['NotAllowedError', 'NotFoundError']) {
+      navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('injected acquisition failure', name); };
+      await recorder.start({ ...options, recordMicrophone: true }); await wait(120);
+      equal(navigator.audioSession.type, 'playback', 'denied/missing microphone restores playback');
+      const { manifest, files } = await unpack(await recorder.stop());
+      assert(manifest.microphone.outcome === 'unavailable' && manifest.microphone.error.includes(name), 'acquisition reason recorded');
+      assert(!manifest.artifacts.microphone && files[manifest.artifacts.media.path].length, 'main recording survives microphone acquisition failure');
+    }
+    navigator.mediaDevices.getUserMedia = acquire;
+    for (const failure of ['constructor', 'start', 'format']) {
+      window.MediaRecorder = class extends OriginalRecorder {
+        static isTypeSupported(type) { return failure === 'format' && type.startsWith('audio/') ? false : OriginalRecorder.isTypeSupported(type); }
+        constructor(stream, config) {
+          if (stream === micStream && failure === 'constructor') throw new Error('injected microphone initialization failure');
+          super(stream, config); this.isMic = stream === micStream;
+        }
+        start(...args) { if (this.isMic && failure === 'start') throw new Error('injected microphone start failure'); super.start(...args); }
+      };
+      await recorder.start({ ...options, recordMicrophone: true }); released(micStream); await wait(120);
+      const { manifest } = await unpack(await recorder.stop());
+      assert(manifest.microphone.outcome === 'unavailable' && manifest.microphone.error, 'microphone initialization failure recorded');
+      assert(!manifest.artifacts.microphone && manifest.artifacts.media.size_bytes, 'main recording survives initialization failure');
+    }
+    window.MediaRecorder = OriginalRecorder;
+    await recorder.start({ ...options, recordMicrophone: true });
+    recorder.microphoneRec.ondataavailable = () => {}; await wait(120);
+    const empty = await unpack(await recorder.stop()); released(micStream);
+    assert(empty.manifest.microphone.outcome === 'no_audio' && !empty.manifest.artifacts.microphone, 'empty microphone capture omits artifact');
+    // Failure of main startup must also release an already acquired microphone.
+    let paints = 0;
+    for (const failureOptions of [
+      { engine: { recordStream: () => { throw new Error('main startup failed'); } } },
+      { mirror: () => { if (++paints === 2) throw new Error('main painting failed after both recorders started'); return false; } },
+    ]) {
+      let rejected = false;
+      try { await recorder.start({ ...options, recordMicrophone: true, ...failureOptions }); }
+      catch { rejected = true; }
+      assert(rejected && !recorder.starting && !recorder.recording, 'main startup failure clears startup'); released(micStream);
+      assert(recorder.ownedTracks.length === 0, 'failed main startup releases owned tracks');
+    }
+    passed.push('denied/missing microphone, unsupported format, constructor/start failures and main startup cleanup');
+
+    for (const interruption of ['disconnect', 'error', 'stop']) {
+      const statuses = [];
+      await recorder.start({ ...options, recordMicrophone: true, onMicrophoneStatus: value => statuses.push(value.outcome) });
+      const capturedStream = micStream; await wait(250);
+      if (interruption === 'disconnect') capturedStream.getAudioTracks()[0].dispatchEvent(new Event('ended'));
+      else if (interruption === 'error') recorder.microphoneRec.onerror({ error: new Error('injected microphone error') });
+      else recorder.microphoneRec.stop();
+      await wait(50); released(capturedStream);
+      assert(recorder.active && statuses.includes('interrupted'), 'main capture continues and microphone status updates');
+      recorder.observe({ nowMs: performance.now(), configuration: configuration('off'), pose: snapshotPose({}) });
+      const { manifest } = await unpack(await recorder.stop());
+      assert(manifest.microphone.outcome === 'interrupted' && manifest.microphone.error && manifest.artifacts.microphone.size_bytes,
+        'interrupted microphone audio preserved');
+      assert(manifest.observation_count === 1 && manifest.media.complete, 'observations/main media continue');
+    }
+    passed.push('microphone disconnect/error/unexpected stop preserves available audio and continues main capture');
+
+    let resolveAccess;
+    navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { resolveAccess = resolve; });
+    const starting = recorder.start({ ...options, recordMicrophone: true });
+    assert(recorder.starting, 'permission pending');
+    unlockEngine.unlock();
+    equal(navigator.audioSession.type, 'play-and-record', 'pending permission keeps capture-compatible mode through sound unlock');
+    let overlapRejected = false;
+    try { await recorder.start(options); } catch { overlapRejected = true; }
+    assert(overlapRejected, 'overlap blocked while requesting permission');
+    recorder.cancelStart(); assert(await starting === null && !recorder.starting, 'pending permission cancelled immediately');
+    await recorder.start(options); // A superseding recording must survive the old permission response.
+    const late = new MediaStream(micDest.stream.getAudioTracks().map(track => track.clone()));
+    resolveAccess(late); await wait(0); released(late);
+    assert(recorder.active && recorder.microphone.outcome === 'disabled', 'late permission cannot change newer recording');
+    await wait(120); await recorder.stop();
+    let rejectAccess;
+    navigator.mediaDevices.getUserMedia = () => new Promise((_, reject) => { rejectAccess = reject; });
+    const denying = recorder.start({ ...options, recordMicrophone: true }); recorder.cancelStart(); await denying;
+    rejectAccess(new DOMException('late denial', 'NotAllowedError')); await wait(0);
+    assert(!recorder.recording && !recorder.starting, 'late denial after cancellation ignored');
+    navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { resolveAccess = resolve; });
+    const racing = recorder.start({ ...options, recordMicrophone: true });
+    const arriving = await acquire({ audio: true, video: false });
+    resolveAccess(arriving); queueMicrotask(() => recorder.cancelStart());
+    assert(await racing === null, 'cancellation during stream handoff'); released(arriving);
+    // A cancelled request's eventual stream must not reset a newer capture's mode.
+    const oldStart = recorder.start({ ...options, recordMicrophone: true });
+    const resolveOld = resolveAccess;
+    recorder.cancelStart(); await oldStart;
+    navigator.mediaDevices.getUserMedia = acquire;
+    await recorder.start({ ...options, recordMicrophone: true });
+    const staleStream = new MediaStream(micDest.stream.getAudioTracks().map(track => track.clone()));
+    resolveOld(staleStream); await wait(0);
+    assert(staleStream.getTracks().every(track => track.readyState === 'ended'), 'stale capture released');
+    equal(navigator.audioSession.type, 'play-and-record', 'stale permission does not reset newer capture audio session');
+    await wait(120); await recorder.stop(); released(micStream);
+    passed.push('permission pending overlap guard, cancellation, late stream cleanup, superseded session and late denial');
+    passed.push('Safari audio-session rejection regression, sound unlock during capture/permission, playback restoration and stale-request isolation');
+
+    navigator.mediaDevices.getUserMedia = acquire;
+    await recorder.start({ ...options, audioOnly: true, recordMicrophone: true }); await wait(250);
+    window.Worker = class { constructor() { throw new Error('injected microphone packaging failure'); } };
+    let failed = false;
+    try { await recorder.stop(); } catch { failed = true; }
+    finally { window.Worker = OriginalWorker; }
+    released(micStream);
+    assert(failed && recorder.pending.microphone.size, 'microphone retained for retry');
+    const recovery = recorder.recoveryFiles();
+    assert(recovery.length === 4 && recovery.some(f => f.name.startsWith('microphone.')), 'microphone recovery download');
+    const microphoneRecovery = await (await fetch(recovery.find(f => f.name.startsWith('microphone.')).url)).arrayBuffer();
+    const { manifest, files } = await unpack(await recorder.retry());
+    equal(Array.from(new Uint8Array(microphoneRecovery)), Array.from(files[manifest.artifacts.microphone.path]), 'retry retains identical microphone bytes');
+    let sizeRejected = false;
+    try { await packageRecording({ media: new Blob(['main']), mediaName: 'recording.webm', observations: new Blob(),
+      microphone: { size: 0xffffffff }, manifest: {} }); } catch (error) { sizeRejected = error.message.includes('4 GB'); }
+    assert(sizeRejected, 'microphone included in ZIP size limit');
+    const progress = [];
+    const progressZip = await packageRecording({ media: new Blob(['main']), mediaName: 'recording.webm',
+      observations: new Blob(), microphone: new Blob([new Uint8Array(700 * 1024)]), microphoneName: 'microphone.webm', manifest: {} },
+    value => progress.push(value));
+    assert(progress[0] === 0 && progress.some(value => value > 0 && value < 99) && progress.at(-1) === 99,
+      'ZIP progress counts microphone bytes');
+    const progressFiles = window.fflate.unzipSync(new Uint8Array(await progressZip.arrayBuffer()));
+    assert(progressFiles['microphone.webm'].length === 700 * 1024, 'microphone packaged without truncation');
+    passed.push('microphone ZIP recovery/retry and ZIP32 size bound');
+  } finally {
+    navigator.mediaDevices.getUserMedia = originalAccess; window.MediaRecorder = OriginalRecorder; window.Worker = OriginalWorker;
+    recorder.cancelStart(); if (recorder.recording) await recorder.stop();
+    recorder.releaseMicrophone(); recorder.releaseDownloads(); micOsc.stop(); micDest.stream.getTracks().forEach(track => track.stop());
+    if (audioSessionDescriptor) Object.defineProperty(navigator, 'audioSession', audioSessionDescriptor);
+    else delete navigator.audioSession;
+  }
+}
 
 export async function runTests() {
   const passed = [];
@@ -108,9 +316,9 @@ export async function runTests() {
   const recorder = new Recorder();
   const options = { engine, video, overlay: canvas, mirror: () => true, label: () => ['C', 'I', 'white'],
     audioOnly: false, configuration: configuration('off') };
-  recorder.start(options);
+  await recorder.start(options);
   let overlapRejected = false;
-  try { recorder.start(options); } catch { overlapRejected = true; }
+  try { await recorder.start(options); } catch { overlapRejected = true; }
   assert(overlapRejected, 'overlapping start rejected');
   const recordPose = () => recorder.observe({ nowMs: performance.now(), mediaTime: video.currentTime,
     configuration: configuration('off'), pose: snapshotPose(poseResult()), hands: { status: 'disabled', inferences: [] } });
@@ -128,7 +336,7 @@ export async function runTests() {
   playback.pause(); URL.revokeObjectURL(playbackUrl);
   passed.push('native video/audio recording, decoded playback, track ownership and overlap guard');
 
-  recorder.start({ ...options, audioOnly: true }); recordPose(); await wait(150);
+  await recorder.start({ ...options, audioOnly: true }); recordPose(); await wait(150);
   const OriginalWorker = window.Worker;
   window.Worker = class { constructor() { throw new Error('injected worker failure'); } };
   let failed = false;
@@ -143,6 +351,7 @@ export async function runTests() {
   assert(!recorder.pending, 'retry releases retained bundle input');
   recorder.releaseDownloads();
   passed.push('audio-only, repeat session reset, worker failure, recovery and retry');
+  await microphoneTests(options, ctx, passed);
   clearInterval(painter); source.getTracks().forEach(t => t.stop()); video.pause(); await ctx.close();
   return { passed, fixtureSize: fixtureZip.size };
 }

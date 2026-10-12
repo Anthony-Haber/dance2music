@@ -128,6 +128,7 @@ async function start() {
 }
 
 async function stop() {
+  if (recorder.starting) cancelRecordingStart();
   if (recorder.recording) await finishRecording();
   $('rec').disabled = true;
   running = false;
@@ -644,6 +645,39 @@ function downloadLink({ name, url }) {
   const a = document.createElement('a'); a.href = url; a.download = name; a.textContent = name; return a;
 }
 function packagingProgress(progress) { $('recMsg').textContent = `Preparing recording bundle… ${progress ?? 0}%`; }
+// A fresh page always starts with microphone capture off, including form restoration.
+$('recMic').checked = false;
+window.addEventListener('pageshow', () => { if (!recorder.starting && !recorder.recording) $('recMic').checked = false; });
+let recordingStartGeneration = 0;
+function lockRecordingOptions(locked) { $('recMic').disabled = locked; $('recWhat').disabled = locked; }
+function cancelRecordingStart() {
+  ++recordingStartGeneration; recorder.cancelStart(); lockRecordingOptions(false);
+  $('micMsg').hidden = true;
+  $('rec').textContent = '● Record'; $('recMsg').textContent = 'Recording cancelled.';
+}
+function microphoneStatus(mic = recorder.microphone) {
+  const message = $('micMsg');
+  message.hidden = !mic?.selected;
+  if (!mic?.selected) return;
+  message.classList.toggle('warning', ['unavailable', 'interrupted', 'no_audio'].includes(mic.outcome));
+  const descriptions = {
+    pending: 'Microphone: waiting for permission…',
+    recording: 'Microphone capture active — saved as a separate audio file.',
+    complete: 'Microphone audio captured as a separate file.',
+    unavailable: 'Microphone unavailable. No microphone file will be included.',
+    interrupted: 'Microphone capture was interrupted. Any captured audio is kept in the ZIP.',
+    no_audio: 'No microphone audio was captured. The ZIP has no microphone file.',
+  };
+  message.textContent = descriptions[mic.outcome] + (mic.error ? ' ' + mic.error : '');
+}
+function recordingStatus() {
+  let message = 'Recording movement data and ' + ($('recWhat').value === 'audio' ? 'sound' : 'video + sound');
+  const mic = recorder.microphone;
+  if (mic?.selected) message += mic.outcome === 'recording' ? '. Microphone capture active (separate file).'
+    : `. Microphone ${mic.outcome === 'interrupted' ? 'interrupted' : 'unavailable'}: ${mic.error}`;
+  $('recMsg').textContent = message;
+  microphoneStatus();
+}
 let finishingRecording = null;
 function finishRecording(retry = false) {
   if (finishingRecording) return finishingRecording;
@@ -654,21 +688,29 @@ function finishRecording(retry = false) {
     try {
       const r = await (retry ? recorder.retry(packagingProgress) : recorder.stop(packagingProgress));
       if (r) {
+        microphoneStatus(r.microphone);
         const a = downloadLink(r);
         $('recMsg').replaceChildren(document.createTextNode(`Bundle ready (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s, ${r.observations} observations). Download again: `), a);
         a.click();
         if (r.mediaError) $('recMsg').append(document.createTextNode(' Media was interrupted: ' + r.mediaError));
+        if (r.microphone?.selected) $('recMsg').append(document.createTextNode(
+          r.microphone.outcome === 'complete' ? ' Separate microphone audio included.'
+            : r.microphone.outcome === 'no_audio' ? ' No microphone audio was captured.'
+              : ` Microphone ${r.microphone.outcome}: ${r.microphone.error}`));
       }
     } catch (error) {
+      microphoneStatus();
       $('recMsg').textContent = 'Could not package recording: ' + error.message + '. ';
       const retryButton = document.createElement('button'); retryButton.textContent = 'Retry ZIP';
       retryButton.onclick = () => finishRecording(true); $('recMsg').append(retryButton);
       for (const file of recorder.recoveryFiles()) $('recMsg').append(' ', downloadLink(file));
       const discard = document.createElement('button'); discard.textContent = 'Clear recording';
       discard.onclick = () => { recorder.pending = null; recorder.releaseDownloads();
+        $('micMsg').hidden = true;
         $('recMsg').textContent = ''; $('rec').disabled = !running; };
       $('recMsg').append(' ', discard);
     } finally {
+      lockRecordingOptions(false);
       $('rec').textContent = '● Record'; $('rec').disabled = !running || !!recorder.pending;
       finishingRecording = null;
     }
@@ -677,17 +719,33 @@ function finishRecording(retry = false) {
 }
 async function toggleRecord() {
   if (finishingRecording || recorder.busy || recorder.pending) return;
+  if (recorder.starting) { cancelRecordingStart(); return; }
   if (!recorder.recording) {
+    const generation = ++recordingStartGeneration;
+    lockRecordingOptions(true);
+    microphoneStatus({ selected: $('recMic').checked, outcome: 'pending' });
     try {
-      const type = recorder.start({ engine, video: v, overlay: cv, mirror,
+      const starting = recorder.start({ engine, video: v, overlay: cv, mirror,
         audioOnly: $('recWhat').value === 'audio',
-        configuration: recordingConfiguration(), onUnexpectedStop: () => finishRecording(),
+        recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
+        configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
         label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
+      if (recorder.starting) {
+        $('rec').textContent = 'Cancel recording';
+        $('recMsg').textContent = 'Waiting for microphone permission… Press Cancel recording to cancel.';
+      }
+      const type = await starting;
+      if (generation !== recordingStartGeneration || !type) return;
       $('rec').classList.add('on'); $('rec').textContent = '■ Stop recording'; $('recDot').hidden = false;
       status('recording ' + type.split(';')[0]);
-      $('recMsg').textContent = 'Recording movement data and ' + ($('recWhat').value === 'audio' ? 'sound' : 'video + sound');
+      recordingStatus();
       recTick();
-    } catch (e) { status('could not record: ' + e.message); }
+    } catch (e) {
+      if (generation !== recordingStartGeneration) return;
+      lockRecordingOptions(false); $('rec').textContent = '● Record';
+      $('micMsg').hidden = true;
+      $('recMsg').textContent = 'Could not record: ' + e.message; status('could not record: ' + e.message);
+    }
   } else {
     await finishRecording();
   }

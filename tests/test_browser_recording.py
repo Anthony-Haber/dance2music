@@ -64,9 +64,13 @@ def check_live_controls(page, origin):
                                            headers={'Access-Control-Allow-Origin': '*'}))
     page.goto(origin + '/web/live/')
     assert page.locator('#rec').is_disabled()
+    assert not page.locator('#recMic').is_checked()
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent === 'Stop'")
     page.locator('#rec').click()
+    page.wait_for_function("document.querySelector('#rec').textContent === '■ Stop recording'")
+    assert page.locator('#recMic').is_disabled()
+    assert page.locator('#recWhat').is_disabled()
     page.wait_for_timeout(400)
     page.evaluate("""async () => {
         const { Engine } = await import('/web/live/audio.js');
@@ -89,6 +93,9 @@ def check_live_controls(page, origin):
     with zipfile.ZipFile(io.BytesIO(bundle)) as archive:
         manifest = json.loads(archive.read('manifest.json'))
         rows = [json.loads(line) for line in archive.read('observations.jsonl').splitlines()]
+        assert manifest['microphone']['outcome'] == 'disabled'
+        assert 'microphone' not in manifest['artifacts']
+        assert len(archive.namelist()) == 3
         for artifact in manifest['artifacts'].values():
             assert hashlib.sha256(archive.read(artifact['path'])).hexdigest() == artifact['sha256']
     assert rows and manifest['observation_count'] == len(rows)
@@ -105,7 +112,108 @@ def check_live_controls(page, origin):
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent === 'Start'")
     assert page.locator('#recMsg a[download]').count() == 1
+    assert not page.locator('#recMic').is_disabled()
     print('PASS live controls: record, hand/mirror changes, stop during model load, ZIP download')
+
+
+def check_microphone_controls(page, origin):
+    # Chrome does not expose AudioSession; enforce Safari's category restriction
+    # while keeping native browser microphone/MediaRecorder/ZIP behavior.
+    page.add_init_script("""{
+        const session = { type: 'auto' };
+        Object.defineProperty(navigator, 'audioSession', { configurable: true, value: session });
+        const access = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+        navigator.mediaDevices.getUserMedia = constraints => {
+            if (constraints.audio && !['auto', 'play-and-record'].includes(session.type))
+                return Promise.reject(new DOMException('AudioSession category is not compatible with audio capture.', 'InvalidStateError'));
+            return access(constraints);
+        };
+    }""")
+    page.goto(origin + '/web/live/')
+    page.locator('#go').click()
+    page.wait_for_function("document.querySelector('#go').textContent === 'Stop'")
+    assert page.evaluate('navigator.audioSession.type') == 'playback'
+    page.evaluate("""async () => {
+        const { Recorder } = await import('/web/live/recorder.js');
+        const start = Recorder.prototype.start;
+        Recorder.prototype.start = function (...args) { window.liveRecorder = this; return start.apply(this, args); };
+        window.originalMicrophoneAccess = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    }""")
+    page.locator('#recMic').check()
+    page.locator('#rec').click()
+    page.wait_for_function("document.querySelector('#recMsg').textContent.includes('Microphone capture active')")
+    assert page.locator('#micMsg').is_visible()
+    assert 'Microphone capture active' in page.locator('#micMsg').inner_text()
+    assert page.evaluate('navigator.audioSession.type') == 'play-and-record'
+    assert page.locator('#recMic').is_disabled()
+    page.wait_for_timeout(400)
+    with page.expect_download() as download:
+        page.locator('#rec').click()
+    with zipfile.ZipFile(download.value.path()) as archive:
+        manifest = json.loads(archive.read('manifest.json'))
+        assert manifest['microphone']['outcome'] == 'complete'
+        artifact = manifest['artifacts']['microphone']
+        assert hashlib.sha256(archive.read(artifact['path'])).hexdigest() == artifact['sha256']
+    assert 'Separate microphone audio included' in page.locator('#recMsg').inner_text()
+    assert page.evaluate('navigator.audioSession.type') == 'playback'
+    assert page.locator('#recMic').is_checked() and not page.locator('#recMic').is_disabled()
+
+    page.locator('#recWhat').select_option('audio')
+    page.locator('#rec').click()
+    page.wait_for_function("document.querySelector('#recMsg').textContent.includes('Microphone capture active')")
+    page.wait_for_timeout(300)
+    page.evaluate("window.liveRecorder.microphoneStream.getAudioTracks()[0].dispatchEvent(new Event('ended'))")
+    page.wait_for_function("document.querySelector('#recMsg').textContent.includes('Microphone interrupted')")
+    assert page.locator('#rec').inner_text() == '■ Stop recording'
+    with page.expect_download() as download:
+        page.locator('#rec').click()
+    with zipfile.ZipFile(download.value.path()) as archive:
+        manifest = json.loads(archive.read('manifest.json'))
+        assert manifest['media']['audio_only'] and manifest['media']['complete']
+        assert manifest['microphone']['outcome'] == 'interrupted'
+        assert manifest['artifacts']['microphone']['size_bytes'] > 0
+    assert 'Microphone interrupted: Microphone disconnected' in page.locator('#recMsg').inner_text()
+
+    page.evaluate("""() => {
+        navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Permission denied', 'NotAllowedError'); };
+    }""")
+    page.locator('#rec').click()
+    page.wait_for_function("document.querySelector('#recMsg').textContent.includes('Microphone unavailable: NotAllowedError')")
+    assert page.locator('#micMsg.warning').is_visible()
+    assert 'No microphone file will be included' in page.locator('#micMsg').inner_text()
+    page.wait_for_timeout(150)
+    with page.expect_download():
+        page.locator('#rec').click()
+    assert 'Microphone unavailable: NotAllowedError' in page.locator('#recMsg').inner_text()
+    assert page.locator('#micMsg.warning').is_visible()
+
+    for cancel_app in [False, True]:
+        page.evaluate("""() => {
+            navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { window.resolveMicrophone = resolve; });
+        }""")
+        page.locator('#rec').click()
+        page.wait_for_function("document.querySelector('#rec').textContent === 'Cancel recording'")
+        assert 'Waiting for microphone permission' in page.locator('#recMsg').inner_text()
+        assert page.locator('#recMic').is_disabled()
+        page.locator('#go' if cancel_app else '#rec').click()
+        if cancel_app:
+            page.wait_for_function("document.querySelector('#go').textContent === 'Start'")
+        assert not page.locator('#recMic').is_disabled()
+        assert 'Recording cancelled' in page.locator('#recMsg').inner_text()
+        assert page.evaluate('navigator.audioSession.type') == 'playback'
+        page.evaluate("""async () => {
+            // A stream arriving after cancellation represents a permission request
+            // accepted while the previous capture-compatible category was still set.
+            navigator.audioSession.type = 'play-and-record';
+            window.lateMicrophoneStream = await window.originalMicrophoneAccess({ audio: true, video: false });
+            navigator.audioSession.type = 'playback';
+            window.resolveMicrophone(window.lateMicrophoneStream);
+        }""")
+        page.wait_for_function("window.lateMicrophoneStream.getTracks().every(t => t.readyState === 'ended')")
+        assert page.locator('#rec').inner_text() == '● Record'
+    page.reload()
+    assert not page.locator('#recMic').is_checked()
+    print('PASS microphone controls: default-off reload, native microphone capture, locked selection, repeated sound-only take, interruption/denial notices and pending cancellation')
 
 
 def main():
@@ -145,6 +253,7 @@ def main():
             })""")
             check_zip(base64.b64decode(data), args.zones_root)
             check_live_controls(page, origin)
+            check_microphone_controls(page, origin)
             assert not errors, errors
             print('PASS no browser module/runtime errors')
             browser.close()

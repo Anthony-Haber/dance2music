@@ -5,6 +5,7 @@ is one `dance2music-<UTC-time>-<session-id>.zip` containing:
 
 - `recording.mp4`, `recording.webm`, or `recording.m4a`: the existing composited
   video and instrument output, or sound only.
+- Optional `microphone.m4a` or `microphone.webm`: a separate microphone track.
 - `manifest.json`: session identity, timing, effective configuration history,
   model provenance, artifact sizes, and SHA-256 checksums.
 - `observations.jsonl`: one JSON object per processed video frame.
@@ -14,24 +15,52 @@ enabled; off/near/far changes are preserved within the recording. Sound-only
 recordings also include movement observations. All packaging stays in the
 browser. Keep the tab open until the bundle is ready. The download link remains
 available until another recording starts. If packaging fails, retry the ZIP or
-download the three recovery files before clearing the recording. Recovery
+download the recovery files before clearing the recording (including the
+microphone file when captured). Recovery
 manifests have `packaging_incomplete: true` and lack artifact checksums.
 
 This format preserves evidence for a future Zones importer. **It is not yet
 directly loadable in `soniqflow-m5stack-python`'s `scripts/zones_app.py`.** This
 change adds no importer and modifies no Zones source files.
 
+Check **Record microphone separately** before pressing **Record** to include
+microphone audio in either video or sound-only mode. The checkbox starts off on
+every page load and is locked for the entire recording. The app requests the
+system default microphone only when recording starts, using the browser's
+default audio processing. There is no monitoring, device picker, or mixing with
+the instrument output. While permission is pending, **Cancel recording** cancels
+startup; any microphone stream that arrives later is released. Stopping the live
+app also cancels pending startup.
+
+If access or initialization fails, the main recording continues and the recording
+status shows the reason. If the microphone disconnects or fails during capture,
+the main recording and movement observations continue; available microphone
+audio is saved and the download status reports the interruption. Microphone
+tracks are released when capture ends. No microphone file is included when no
+audio bytes were captured.
+
+On Safari, the app switches the Audio Session to `play-and-record` before asking
+for the microphone, and restores `playback` after capture ends, fails, or is
+cancelled. Sound-unlock taps preserve this capture mode. A dedicated microphone
+status beside the recording controls stays visible through packaging and the
+completed download, including a warning when no microphone file is available.
+
 ## Version 1 contract
 
 The manifest has `schema: "dance2music.recording"`, `schema_version: 1`, a UUID
 `session_id`, UTC `created_at`, `duration_s`, `observation_count`, `timing`,
 `coordinates`, `landmark_layouts`, `media`, `configurations`, and `artifacts`.
+New recordings also include the additive `microphone` field described below;
+older version-1 bundles may omit it.
 An importer must dispatch on the schema and version, rather than file extension.
 All JSON is UTF-8 and uses `null` for unavailable or nonfinite numbers. Numeric
 zero is an observation, not a missing-value marker.
 
 `artifacts.media` and `artifacts.observations` each declare `path`, `size_bytes`,
 and lowercase hexadecimal `sha256` of the uncompressed file bytes. The manifest
+also includes `artifacts.microphone` with the same fields when microphone audio
+is available. Microphone bytes count toward the ZIP size bound and packaging
+progress, and are retained for ZIP retries and recovery downloads. The manifest
 does not checksum itself. Media is stored without additional compression;
 JSON files are deflated. ZIP32 bundles exceeding the supported 4 GB size bound
 fail with recovery downloads instead of producing an invalid archive. Recording
@@ -44,6 +73,18 @@ overlays, instrument audio source, and any MediaRecorder error. `complete: false
 marks interrupted media; it does not turn previous valid observations into
 missing values. An empty or very short take is allowed and does not imply
 enough data for an embedding.
+
+`microphone` contains `selected`, `outcome` (`disabled`, `unavailable`,
+`complete`, `interrupted`, or `no_audio`), `error`, the actual `mime_type`, and
+available audio track `settings` (`sampleRate`, `sampleSize`, `channelCount`,
+`echoCancellation`, `noiseSuppression`, `autoGainControl`, `latency`). Unavailable
+metadata is null; unavailable individual settings are omitted. Device identifiers
+are not stored. `start_offset_s` and `end_offset_s` record capture start/stop
+relative to `timing.performance_origin_ms`, using the same monotonic clock as
+the main recording. They are null if microphone capture never started.
+Offsets support later alignment, but independent browser recorders do not
+guarantee sample-accurate synchronization. An interrupted file can contain less
+audio than its timing interval if the browser dropped data at failure.
 
 ### Timing and configurations
 
@@ -200,3 +241,9 @@ They cover missing values, raw hand freshness, async mode loading, crop/depth
 transforms, configuration changes, timing/loops, audio-only capture, retry, and
 Python ZIP/checksum/array validation. Real camera/model inference and Safari/
 Firefox still require platform smoke checks.
+Microphone tests also cover default-off permission behavior, separate playable
+audio in both modes, denied/missing devices, initialization failures,
+disconnects/errors, pending permission cancellation and late-stream cleanup,
+track ownership, locked controls, and microphone ZIP retries/recovery.
+The Chrome suite also simulates Safari's Audio Session restriction, including
+sound-unlock taps and restoring playback after cancellation and failures.

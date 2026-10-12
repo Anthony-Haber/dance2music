@@ -53,6 +53,9 @@
   .bar i { display: block; height: 100%; width: 0; border-radius: 4px; }
   .status { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 8px; }
   .note { color: var(--dim); font-size: 12.5px; }
+  .mic-option { display: flex; gap: 6px; margin-top: 8px; }
+  .mic-status { padding: 8px; border: 1px solid var(--accent); border-radius: 6px; color: var(--ink); }
+  .mic-status.warning { border-color: #e99b69; color: #ffc89f; }
   .rules { font-size: 12.5px; line-height: 1.6; }
   .rules b { display: inline-block; width: 30px; }
   .rules .now { background: #2c2a27; border-radius: 4px; }
@@ -107,6 +110,8 @@
   <button class="go" id="go">Start</button>
   <div class="recrow"><button id="rec" disabled>● Record</button>
     <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>
+  <label class="mic-option"><input id="recMic" type="checkbox" autocomplete="off">Record microphone separately</label>
+  <div class="status mic-status" id="micMsg" role="status" aria-live="polite" hidden></div>
   <div class="status" id="recMsg"></div>
   <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
     Keep this tab open until the download is ready.</p>
