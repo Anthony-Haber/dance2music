@@ -19,6 +19,18 @@ download the recovery files before clearing the recording (including the
 microphone file when captured). Recovery
 manifests have `packaging_incomplete: true` and lack artifact checksums.
 
+When **3D objects** is enabled for a live camera, its freshly rendered scene
+layer is composited between camera video and existing overlays. Video includes
+the same estimated depth occlusion, mirroring, and **Show surfaces** display as
+the preview. Configuration history adds a `scene` field with selected/effective
+state, exact model/runtime provenance, processing transforms, approximate camera
+projection, accepted surfaces, and object transforms for each scan. It does not
+store per-frame depth maps or masks, and does not change schema version 1.
+When **Touch effects** is enabled, the video also includes the same glow,
+particles, and ripples as the preview, and its audio includes chord-based contact
+notes. `scene.touch` records interaction settings; Mix has an objects fader.
+See [3D objects](3d-objects.md) for assumptions and scene validation.
+
 This format preserves evidence for a future Zones importer. **It is not yet
 directly loadable in `soniqflow-m5stack-python`'s `scripts/zones_app.py`.** This
 change adds no importer and modifies no Zones source files.
@@ -192,6 +204,18 @@ performance clock; subtract `timing.performance_origin_ms / 1000`. These are
 optional analysis aids, not a promise of exact audio synthesis replay.
 An `analysis_error` records downstream failures separately, preserving any raw
 detector evidence already captured for that frame.
+
+`analysis.scene_touch_events` contains newly detected approximate 3D contacts,
+when any occur: `object_id`, `part` (hand or foot), `position` in arbitrary scene
+coordinates, `generation` of the scan, and `approximate: true`. `timestamp_s`
+uses the recording clock and identifies the contact pose; `timestamp_ms`,
+`depth_timestamp_ms`, and `effect_timestamp_ms` use the performance clock for
+the pose, supporting depth input, and effect onset. `sound` records the played
+chord, MIDI note, frequency, timbre, stereo pan, and AudioContext time (or null
+when audio is unavailable). An input captured just before recording begins can have a negative relative
+timestamp when its effect starts during recording. Contacts are application
+estimates rather than measured physical collisions. Held contact does not emit
+repeated events. Depth maps and masks remain excluded.
 
 ## Mapping to Zones v0.2
 

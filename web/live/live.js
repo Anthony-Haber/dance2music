@@ -6,6 +6,7 @@ import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapp
 import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
+import { SceneController } from './scene/controller.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
 
@@ -22,19 +23,39 @@ const store = {
 
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 let poseModel = null, modelGeneration = 0, currentSource = null;
+let starting = false, stopping = false, sessionGeneration = 0, sourceGeneration = 0, sourceURL = null;
+const sceneWanted = () => $('sceneObjects').checked && $('source').value === 'camera';
+const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => recordConfiguration(),
+  onStatus: ({state, message}) => {
+    $('sceneStatus').textContent = message;
+    $('sceneStatus').hidden = state === 'off';
+    $('sceneRescan').disabled = !['active', 'empty'].includes(state);
+    if (state === 'failed') disableSceneMask();
+  }});
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
+async function disableSceneMask() {
+  const target = landmarker;
+  if (!poseModel?.segmentation_masks || !target?.setOptions) return;
+  try {
+    await target.setOptions({outputSegmentationMasks: false});
+    if (landmarker !== target) return;
+    poseModel = {...poseModel, segmentation_masks: false};
+    landmarkerKey = poseModel.quality + ':false'; recordConfiguration();
+  } catch {}
+}
+
 // ── setup ───────────────────────────────────────────────────────────
 const exists = async url => { try { return (await fetch(url, { method: 'HEAD' })).ok; } catch (e) { return false; } };
 
 async function loadLandmarker() {
   const model = $('model').value;
-  const generation = ++modelGeneration;
-  if (landmarker && landmarkerKey === model) return landmarker;
+  const generation = ++modelGeneration, masks = sceneWanted(), key = model + ':' + masks;
+  if (landmarker && landmarkerKey === key) return landmarker;
   status('loading pose model…');
   if (!vision) {
     const local = await exists(LOCAL + 'vision_bundle.mjs');
@@ -46,7 +67,7 @@ async function loadLandmarker() {
   const path = (await exists(localModel)) ? localModel : MODEL(model);
   const asset = await modelAsset(path);
   const opts = delegate => ({ baseOptions: { modelAssetBuffer: asset.bytes, delegate }, runningMode: 'VIDEO',
-                              numPoses: 1, minPoseDetectionConfidence: 0.5,
+                              numPoses: 1, outputSegmentationMasks: masks, minPoseDetectionConfidence: 0.5,
                               minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
   let delegate = 'GPU', loaded;
   try { loaded = await vision.mod.PoseLandmarker.createFromOptions(vision.fileset, opts(delegate)); }
@@ -54,10 +75,10 @@ async function loadLandmarker() {
   if (generation !== modelGeneration) { loaded.close(); return landmarker; }
   if (landmarker) landmarker.close();
   landmarker = loaded;
-  landmarkerKey = model;
+  landmarkerKey = key;
   poseModel = { family: 'PoseLandmarker', quality: model, asset: path, asset_sha256: asset.sha256,
     runtime: runtimeIdentity(vision), delegate: delegate.toLowerCase(), running_mode: 'video', num_poses: 1,
-    detection_threshold: 0.5, presence_threshold: 0.5, tracking_threshold: 0.5, segmentation_masks: false };
+    detection_threshold: 0.5, presence_threshold: 0.5, tracking_threshold: 0.5, segmentation_masks: masks };
   recordConfiguration();
   return landmarker;
 }
@@ -80,62 +101,90 @@ async function listDevices() {
 }
 
 async function openCamera() {
+  const generation = ++sourceGeneration, session = sessionGeneration;
   const [w, h] = $('res').value.split('x').map(Number);
   const id = $('cam').value;
   if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
+  const opened = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
     deviceId: id ? { exact: id } : undefined, width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: 60 } } });
+  if (generation !== sourceGeneration || session !== sessionGeneration) { opened.getTracks().forEach(t => t.stop()); return; }
+  stream = opened;
+  if (sourceURL) { URL.revokeObjectURL(sourceURL); sourceURL = null; }
   v.srcObject = stream; v.src = '';
   await v.play();
+  if (generation !== sourceGeneration || session !== sessionGeneration) return;
   currentSource = { id: crypto.randomUUID(), type: 'camera', width: v.videoWidth, height: v.videoHeight };
   recordConfiguration();
   await listDevices();               // labels appear only after permission
 }
 
 async function openFile() {
+  const generation = ++sourceGeneration, session = sessionGeneration;
   const f = $('file').files[0];
   if (!f) throw new Error('choose a video file first');
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  v.srcObject = null; v.src = URL.createObjectURL(f); v.loop = true; v.muted = true;
+  if (sourceURL) URL.revokeObjectURL(sourceURL);
+  v.srcObject = null; v.src = sourceURL = URL.createObjectURL(f); v.loop = true; v.muted = true;
   await v.play();
+  if (generation !== sourceGeneration || session !== sessionGeneration) return;
   currentSource = { id: crypto.randomUUID(), type: 'file', file_name: f.name, size_bytes: f.size,
     last_modified_ms: f.lastModified, width: v.videoWidth, height: v.videoHeight };
   recordConfiguration();
 }
 
+function lockSessionOptions() {
+  $('sceneObjects').disabled = running || starting || stopping || $('source').value !== 'camera';
+  for (const id of ['source', 'cam', 'res', 'model', 'file']) $(id).disabled = starting || stopping;
+  $('sceneControls').hidden = !sceneWanted();
+  $('sceneNote').textContent = $('source').value === 'camera'
+    ? 'Live camera · stop to change · Chrome on Apple Silicon' : '3D objects are unavailable for video files.';
+}
 async function start() {
-  engine.unlock();                     // first, while we are still inside the tap (iOS)
+  if (starting || running || stopping) return;
+  const generation = ++sessionGeneration;
+  lastF = null;
+  starting = true; $('go').textContent = 'Cancel'; lockSessionOptions();
+  engine.unlock();
   try {
-    $('go').disabled = true;
-    await loadLandmarker();
     status('opening source…');
     if ($('source').value === 'camera') await openCamera(); else await openFile();
+    if (generation !== sessionGeneration) return;
+    $('hint').hidden = true;
+    draw();
+    await loadLandmarker();
+    if (generation !== sessionGeneration) return;
     feats.reset(); follower.reset(); bounce.reset(); bounceOn = false;
     if ($('handMode').value !== 'off') status('loading hand model…');
-    const th = performance.now();
     await hands.load(vision, $('handMode').value);
-
+    if (generation !== sessionGeneration) return;
+    if (sceneWanted()) await scene.start(v, currentSource.id);
+    if (generation !== sessionGeneration) return;
     await engine.start($('out').value || undefined);
-    applyMix(); applySens();
-    watchAudio();
-    running = true; $('hint').hidden = true; $('badge').hidden = false;
-    $('go').textContent = 'Stop'; $('go').disabled = false;
+    if (generation !== sessionGeneration) { await engine.stop(); return; }
+    applyMix(); applySens(); watchAudio();
+    running = true; starting = false; $('badge').hidden = false;
+    $('go').textContent = 'Stop'; $('go').disabled = false; lockSessionOptions();
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
+    status('camera running — waiting for movement');
     loop();
   } catch (e) {
-    status('could not start: ' + e.message); $('go').disabled = false;
+    if (generation !== sessionGeneration) return;
+    await stop(); status('could not start: ' + e.message);
   }
 }
 
 async function stop() {
+  if (stopping) return;
+  stopping = true; starting = false; ++sessionGeneration; ++sourceGeneration; ++modelGeneration;
+  running = false; scene.stop(); $('go').disabled = true; lockSessionOptions();
   if (recorder.starting) cancelRecordingStart();
   if (recorder.recording) await finishRecording();
   $('rec').disabled = true;
-  running = false;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
   await engine.stop();
-  $('go').textContent = 'Start'; $('hint').hidden = false; $('tap').hidden = true; status('stopped');
+  stopping = false; $('go').textContent = 'Start'; $('go').disabled = false;
+  $('hint').hidden = false; $('tap').hidden = true; lockSessionOptions(); status('stopped');
 }
 
 // iOS can leave the context suspended, or interrupt it when the camera
@@ -151,11 +200,12 @@ document.addEventListener('visibilitychange', () => {
 
 // ── the loop: one pose per new video frame ────────────────────────────
 function loop() {
+  const generation = sessionGeneration;
   if (!running) return;
   let lastVideoTime = null;
   const next = () => (v.requestVideoFrameCallback ? v.requestVideoFrameCallback(frame) : requestAnimationFrame(frame));
   function frame(nowCb, meta) {
-    if (!running) return;
+    if (!running || generation !== sessionGeneration) return;
     if (v.readyState >= 2 && landmarker) {
       if (!meta && v.currentTime === lastVideoTime) { next(); return; }
       lastVideoTime = v.currentTime;
@@ -169,8 +219,11 @@ function loop() {
       let rawPose = null, rawHands = { mode: hands.mode, status: 'skipped', reason: 'pose_error', inferences: [] };
       try { landmarker.detectForVideo(v, now, res => {
         inferMs = performance.now() - now;
+        scene.copyPerson(res.segmentationMasks?.[0], now);
         rawPose = recorder.active ? snapshotPose(res) : null;
         const lms = res.landmarks && res.landmarks[0];
+        scene.observePose(lms,now);
+        const touchEvents=scene.takeTouchEvents();
         const t = (now - t0) / 1000;
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
         try { rawHands = hands.detect(v, f, now, recorder.active); }
@@ -196,6 +249,7 @@ function loop() {
           engine.update(f, lastVals, DESTS, mirror(), drums);
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
         } else engine.idle();
+        for(const event of touchEvents)event.sound=engine.touchObject(event,mirror());
         lastF = f;
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose, hands: rawHands,
@@ -203,12 +257,14 @@ function loop() {
             bounce: lastBounce, chord: follower.chord(), mapped_controls: f ? lastVals : null,
             drums_enabled: drumsEnabled, bounce_gate: bounceOn, chord_held: frozen,
             feature_clock_offset_s: (t0 - recorder.t0) / 1000,
-            gesture_transitions: f ? frameGestureEvents : [] } });
+            gesture_transitions: f ? frameGestureEvents : [],
+            scene_touch_events: touchEvents.filter(event=>event.effect_timestamp_ms>=recorder.t0).map(event=>({...event,timestamp_s:(event.timestamp_ms-recorder.t0)/1000})) } });
       }); } catch (error) {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose || snapshotPose(null, error.message), hands: rawHands, analysis: null, analysis_error: error.message });
         status('frame analysis failed: ' + error.message);
       }
+      scene.pose(now);
       fpsT.push(now); while (fpsT.length && fpsT[0] < now - 1000) fpsT.shift();
       draw();
     }
@@ -269,12 +325,14 @@ function draw() {
   const box = $('stage').getBoundingClientRect();
   const s = Math.min(box.width / W, box.height / H);
   const dw = Math.round(W * s), dh = Math.round(H * s);
-  if (cv.width !== dw * devicePixelRatio) {
+  if (cv.width !== Math.round(dw * devicePixelRatio) || cv.height !== Math.round(dh * devicePixelRatio)) {
     cv.width = dw * devicePixelRatio; cv.height = dh * devicePixelRatio;
     cv.style.width = dw + 'px'; cv.style.height = dh + 'px';
   }
   v.style.width = dw + 'px'; v.style.height = dh + 'px';
   v.classList.toggle('mirror', mirror());
+  $('sceneLayer').style.width = dw + 'px'; $('sceneLayer').style.height = dh + 'px';
+  $('sceneLayer').classList.toggle('mirror', mirror());
   const k = s * devicePixelRatio;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, cv.width, cv.height);
@@ -439,18 +497,18 @@ function meters(f) {
 function status(s) { $('status').textContent = s; }
 
 // ── mixer and sensitivity ───────────────────────────────────────────
-const LAYERS = [['pad', 1], ['bass', 1], ['plucks', 1], ['wind', 1], ['wind tuned', 0.6], ['drums', 0.8]];
+const LAYERS = [['pad', 1], ['bass', 1], ['plucks', 1], ['wind', 1], ['wind tuned', 0.6], ['drums', 0.8], ['objects', 0.8]];
 const mix = store.get('mix', Object.fromEntries(LAYERS.map(([k, d]) => [k, { vol: d, mute: false }]).concat([['master', { vol: 1 }]])));
 const slider = (key, val, min, max, step, cls = '') =>
   `<input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-k="${key}" class="${cls}">`;
-$('mix').innerHTML = LAYERS.map(([k]) => `<span>${k}</span>
+$('mix').innerHTML = LAYERS.map(([k,defaultVolume]) => `<span>${k}</span>
   <button data-k="${k}" class="${mix[k]?.mute ? '' : 'on'}">${mix[k]?.mute ? 'off' : 'on'}</button>
-  ${slider(k, mix[k]?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-${k.replace(' ', '_')}"></span>`).join('') +
+  ${slider(k, mix[k]?.vol ?? defaultVolume, 0, 1.5, 0.01)}<span class="val" id="mv-${k.replace(' ', '_')}"></span>`).join('') +
   `<span>master</span><span></span>${slider('master', mix.master?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-master"></span>` +
   `<span>pad floor</span><button id="floorBtn">off</button>${slider('__floor', 0, 0, 0.5, 0.01)}<span class="val" id="mv-floor"></span>`;
 function applyMix() {
-  for (const [k] of LAYERS) {
-    const m = mix[k] || (mix[k] = { vol: 1, mute: false });
+  for (const [k,defaultVolume] of LAYERS) {
+    const m = mix[k] || (mix[k] = { vol: defaultVolume, mute: false });
     engine.level(k, m.mute ? 0 : m.vol);
     $('mv-' + k.replace(' ', '_')).textContent = Math.round(m.vol * 100) + '%';
   }
@@ -571,7 +629,15 @@ for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
   const saved = store.get(id, null); if (saved !== null) $(id).value = saved;
 }
 $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
-$('go').onclick = () => (running ? stop() : start());
+$('sceneObjects').checked = store.get('sceneObjects', false);
+$('sceneObjects').onchange = () => { store.set('sceneObjects', $('sceneObjects').checked); lockSessionOptions(); };
+$('sceneDebug').onchange = () => { scene.debug = $('sceneDebug').checked; $('sceneTouchHelp').hidden=!scene.debug;recordConfiguration(); };
+$('sceneTouch').checked = store.get('sceneTouch',true); scene.setTouchEnabled($('sceneTouch').checked);
+$('sceneTouch').onchange = () => { store.set('sceneTouch',$('sceneTouch').checked);scene.setTouchEnabled($('sceneTouch').checked);recordConfiguration(); };
+$('sceneRescan').onclick = () => scene.rescan();
+setInterval(() => { if (sceneWanted()) $('sceneMetrics').textContent = scene.metrics(); }, 500);
+lockSessionOptions();
+$('go').onclick = () => (running || starting ? stop() : start());
 const RULES = {
   six: [['I', 'hands centred, at rest (arms hanging counts)'], ['IV', 'hands centred and raised, or spread wide'],
         ['vi', 'hands to your left, up'], ['ii', 'hands to your left, down'],
@@ -591,20 +657,32 @@ function showRules() {
 $('mode').onchange = () => { store.set('mode', $('mode').value); follower = new ChordFollower($('mode').value);
                               showRules(); if (engine.ctx) engine.setChord(follower.chord(), true); };
 showRules();
+async function changeSource() {
+  if (!running) return;
+  const session = sessionGeneration, change = sourceGeneration + 1;
+  scene.stop();
+  try {
+    if ($('source').value === 'camera') await openCamera(); else await openFile();
+    if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
+    await loadLandmarker();
+    if (sceneWanted() && running && session === sessionGeneration && change === sourceGeneration) await scene.start(v, currentSource.id);
+  } catch (error) { status('could not change source: ' + error.message); }
+}
 $('source').onchange = () => { store.set('source', $('source').value);
-  $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file'; };
-$('cam').onchange = async () => { store.set('cam', $('cam').value); if (running && stream) await openCamera(); };
-$('res').onchange = async () => { store.set('res', $('res').value); if (running && stream) await openCamera(); };
+  $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
+  lockSessionOptions(); changeSource(); };
+$('cam').onchange = () => { store.set('cam', $('cam').value); changeSource(); };
+$('res').onchange = () => { store.set('res', $('res').value); changeSource(); };
 $('mirror').onchange = () => { store.set('mirror', $('mirror').value); recordConfiguration(); };
 $('model').onchange = async () => { store.set('model', $('model').value);
   if (running) try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); } };
 $('out').onchange = async () => { store.set('out', $('out').value);
   if (engine.ctx && engine.ctx.setSinkId) await engine.ctx.setSinkId($('out').value || ''); };
-$('file').onchange = () => { if (running) openFile(); };
+$('file').onchange = () => changeSource();
 
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
-  if (e.key === ' ') { e.preventDefault(); running ? stop() : start(); }
+  if (e.key === ' ') { e.preventDefault(); running || starting ? stop() : start(); }
   else if (e.key === 'r') { if (running) toggleRecord(); }
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
@@ -631,6 +709,7 @@ function handReadout() {
 function recordingConfiguration() {
   return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
     pose_model: poseModel, hands: hands.configuration(),
+    scene: { ...scene.configuration(), selected: $('sceneObjects').checked },
     preview_mirrored: mirror(), video_mirrored: mirror(),
     harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
     drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
@@ -725,7 +804,7 @@ async function toggleRecord() {
     lockRecordingOptions(true);
     microphoneStatus({ selected: $('recMic').checked, outcome: 'pending' });
     try {
-      const starting = recorder.start({ engine, video: v, overlay: cv, mirror,
+      const starting = recorder.start({ engine, video: v, overlay: cv, mirror, sceneLayer: now => scene.render(now),
         audioOnly: $('recWhat').value === 'audio',
         recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
         configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),

@@ -57,6 +57,11 @@ export class Engine {
     const layer = name => { const g = ctx.createGain(); g.connect(this.bus);
                             this.layers[name] = g; return g; };
     for (const k of ['pad', 'bass', 'plucks', 'wind', 'wind tuned']) layer(k);
+    // Contact notes have their own fader and share the master/reverb/recorder.
+    // They stay audible even when movement maps the other instruments to zero.
+    this.layers.objects=ctx.createGain();this.layers.objects.gain.value=.8;
+    this.layers.objects.connect(dry);this.layers.objects.connect(verb);
+    this.objectVoices=new Set();this.objectNotes=new Map();
     // drums: hits → dlevel (the mapping) → the drums fader
     this.layers['drums'] = ctx.createGain(); this.dlevel = ctx.createGain(); this.dlevel.gain.value = 0;
     this.drumFader = ctx.createGain();
@@ -341,6 +346,32 @@ export class Engine {
     s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
   }
 
+  // A bright chord accent, independent of the movement-driven instrument gate.
+  touchObject(event, mirror=false) {
+    const ctx=this.ctx,c=this.chord;
+    if(!ctx||ctx.state!=='running'||!c||!this.layers.objects||performance.now()-event.effect_timestamp_ms>200)return null;
+    const key=`${event.generation}:${event.object_id}:${event.timestamp_ms}`;
+    if(this.objectNotes.get(event.object_id)===key)return null;
+    this.objectNotes.set(event.object_id,key);
+    if(this.objectVoices.size>=6)this.objectVoices.values().next().value();
+    const shape=event.shape||['cube','sphere','cylinder'][event.object_id%3];
+    const midi=shape==='cube'?c.bass+36:shape==='sphere'?c.voices[1]+12:c.voices[2]+12;
+    const hz=440*2**((midi-69)/12),duration=shape==='sphere'?1.1:shape==='cube'?.85:.65,t=ctx.currentTime+.005;
+    const pan=Math.max(-1,Math.min(1,((mirror?1-(event.x??.5):(event.x??.5))*2-1)));
+    const out=ctx.createStereoPanner();out.pan.value=pan;out.connect(this.layers.objects);
+    const env=ctx.createGain();env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(.3,t+.006);
+    env.gain.exponentialRampToValueAtTime(.0001,t+duration);env.connect(out);
+    const nodes=[out,env],oscillators=[];
+    const finish=()=>{for(const o of oscillators){o.onended=null;try{o.stop();}catch{}}for(const n of nodes)n.disconnect();this.objectVoices.delete(finish);};
+    this.objectVoices.add(finish);
+    for(const [ratio,gain] of [[1,1],[shape==='sphere'?3:2,.35]]) {
+      const o=ctx.createOscillator(),g=ctx.createGain();o.type=shape==='cylinder'?'triangle':'sine';o.frequency.value=hz*ratio;g.gain.value=gain;
+      o.connect(g).connect(env);nodes.push(o,g);oscillators.push(o);o.start(t);o.stop(t+duration+.02);
+    }
+    oscillators[0].onended=finish;
+    return {chord:c.key,midi,frequency_hz:hz,timbre:shape==='sphere'?'bell':shape==='cube'?'mallet':'wood',pan,audio_time_s:t};
+  }
+
   // a MediaStream of exactly what goes to the speakers, for the recorder
   recordStream() {
     if (!this.recDest) { this.recDest = this.ctx.createMediaStreamDestination(); this.limiter.connect(this.recDest); }
@@ -358,6 +389,8 @@ export class Engine {
     let m = 0; for (const x of a) m = Math.max(m, Math.abs(x)); return m;
   }
   async stop() {
+    for(const finish of this.objectVoices||[])finish();
+    this.objectNotes?.clear();
     if (this.ctx) await this.ctx.close();
     this.ctx = null; this.chordKey = null; this.layers = {}; this.recDest = null;
     if (this.keepAlive) this.keepAlive.pause();

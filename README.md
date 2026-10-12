@@ -15,7 +15,7 @@ Code only in git: clips go in `videos/`, everything generated lands in
     python synths.py                                 # render every demo for every clip
     python synths.py --serve                         # the page, http://127.0.0.1:5091/
     python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
-    python live.py --offline                         # same, with MediaPipe downloaded for a venue without internet
+    python live.py --offline                         # download pose, hand, and 3D assets for a venue without internet
 
 | file | what |
 |---|---|
@@ -37,6 +37,19 @@ Browser **Record** now downloads one ZIP with the video (or sound only), raw
 metadata. It preserves data for later embedding and other offline analysis.
 The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
 describe the files and tests. Direct import into Zones requires a future importer.
+
+Enable **3D objects** before Start to scan visible floor and tabletop regions and
+place up to three shapes. This optional feature targets Chrome on Apple Silicon
+and live cameras. It uses local WebGPU depth and segmentation models; no inference
+server, camera movement, or calibration is needed. Music starts after the scan.
+**Show surfaces** and **Rescan** help inspect placement. Stop to change the option.
+Objects use estimated depth occlusion. Stale depth hides objects; motion suppresses
+uncertain pixels. Placement and room scale are approximate.
+With **Touch effects** on, reach toward a shape with a hand or foot to make it
+glow, emit sparks and a ripple, and play a note from the current chord. Adjust
+the **objects** fader in Mix. Contact is estimated from pose and scene depth;
+visuals and sounds are included in recordings.
+See [3D objects, offline setup, and validation](docs/3d-objects.md).
 
 ---
 

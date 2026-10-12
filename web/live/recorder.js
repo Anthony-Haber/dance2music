@@ -61,7 +61,7 @@ export class Recorder {
 
   // engine: for its audio tap; video, overlay: the elements to composite;
   // label(): text to burn in (the chord); mirror(): whether to flip the video
-  async start({ engine, video, overlay, label, mirror, audioOnly, configuration, onUnexpectedStop,
+  async start({ engine, video, overlay, label, mirror, audioOnly, configuration, onUnexpectedStop, sceneLayer,
     recordMicrophone = false, onMicrophoneStatus }) {
     if (this.starting || this.recording || this.busy || this.pending) throw new Error('Finish or recover the previous recording first');
     let cancel;
@@ -101,7 +101,10 @@ export class Recorder {
         this.paint = () => {
           const g = this.cg, w = this.comp.width, h = this.comp.height;
           g.save(); if (mirror()) { g.translate(w, 0); g.scale(-1, 1); }
-          g.drawImage(video, 0, 0, w, h); g.restore();
+          g.drawImage(video, 0, 0, w, h);
+          const scene = sceneLayer?.(performance.now());
+          if (scene?.width) g.drawImage(scene, 0, 0, w, h);
+          g.restore();
           if (overlay.width) g.drawImage(overlay, 0, 0, w, h);
           const [sym, deg, col] = label();
           g.font = `600 ${Math.round(h / 16)}px -apple-system, sans-serif`; g.textAlign = 'right'; g.fillStyle = col;

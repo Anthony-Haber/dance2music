@@ -58,7 +58,7 @@ def check_zip(blob, zones_root):
 
 
 def check_live_controls(page, origin):
-    page.route('https://cdn.jsdelivr.net/npm/@mediapipe/**/vision_bundle.mjs',
+    page.route('**/vision_bundle.mjs',
                lambda route: route.fulfill(body=(ROOT / 'tests/vision-fixture.js').read_text(),
                                            content_type='text/javascript',
                                            headers={'Access-Control-Allow-Origin': '*'}))
@@ -230,6 +230,7 @@ def main():
             page = browser.new_page(permissions=['camera'])
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
+            page.route('**/vendor/mediapipe/*.task', lambda route: route.fulfill(body='fixture-model'))
             page.route('**/fixture.task', lambda route: route.fulfill(body='fixture-model'))
             page.route('https://storage.googleapis.com/**', lambda route: route.fulfill(body='fixture-model'))
             origin = f'http://127.0.0.1:{server.server_port}'

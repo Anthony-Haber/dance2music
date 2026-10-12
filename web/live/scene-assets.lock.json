@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "runtime": {
+    "transformers": "3.8.1",
+    "onnxruntime": "1.22.0-dev.20250409-89f8206ba4",
+    "three": "0.160.1"
+  },
+  "models": {
+    "depth": {
+      "id": "onnx-community/depth-anything-v2-small",
+      "revision": "4472b7362082ad9968fee890ca0f1e5aca36b93d",
+      "dtype": "fp32"
+    },
+    "segmentation": {
+      "id": "Xenova/segformer-b0-finetuned-ade-512-512",
+      "revision": "d3e5499fa8701ff0453ca940a8dfeae39b2f1504",
+      "dtype": "fp32"
+    }
+  },
+  "processing": {
+    "depth_size": {
+      "width": 518,
+      "height": 518
+    },
+    "segmentation_size": {
+      "width": 512,
+      "height": 512
+    },
+    "resize": "stretch",
+    "padding": 0,
+    "grid_width": 160,
+    "vertical_fov_degrees": 60
+  },
+  "files": [
+    {
+      "path": "models/onnx-community/depth-anything-v2-small/config.json",
+      "url": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/config.json",
+      "sha256": "3aee5b9bc4f711ee885c2526d871f0c8c6c8c4b26b8e04253d0167f6a83264f5",
+      "size": 38
+    },
+    {
+      "path": "models/onnx-community/depth-anything-v2-small/preprocessor_config.json",
+      "url": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/preprocessor_config.json",
+      "sha256": "03576db3c13dd0471fdf5f5e1428befcb95de063fe699879150b293dc9e0a2c6",
+      "size": 461
+    },
+    {
+      "path": "models/onnx-community/depth-anything-v2-small/onnx/model.onnx",
+      "url": "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/4472b7362082ad9968fee890ca0f1e5aca36b93d/onnx/model.onnx",
+      "sha256": "afb6a5c28f3b6bf1618c6e43f02073ef9dfdc70e937502d51603e57b0a1df10c",
+      "size": 99060839
+    },
+    {
+      "path": "models/Xenova/segformer-b0-finetuned-ade-512-512/config.json",
+      "url": "https://huggingface.co/Xenova/segformer-b0-finetuned-ade-512-512/resolve/d3e5499fa8701ff0453ca940a8dfeae39b2f1504/config.json",
+      "sha256": "435799652b2b64c3e422dea20fed4c59651dae9f0e291fd885e9e067fee0ce2a",
+      "size": 6957
+    },
+    {
+      "path": "models/Xenova/segformer-b0-finetuned-ade-512-512/preprocessor_config.json",
+      "url": "https://huggingface.co/Xenova/segformer-b0-finetuned-ade-512-512/resolve/d3e5499fa8701ff0453ca940a8dfeae39b2f1504/preprocessor_config.json",
+      "sha256": "dbabd93c735c8a5c39ef207c6c4459bf2d261a5dcc55e1ba1c1b982e5947f518",
+      "size": 373
+    },
+    {
+      "path": "models/Xenova/segformer-b0-finetuned-ade-512-512/onnx/model.onnx",
+      "url": "https://huggingface.co/Xenova/segformer-b0-finetuned-ade-512-512/resolve/d3e5499fa8701ff0453ca940a8dfeae39b2f1504/onnx/model.onnx",
+      "sha256": "3e5c18a4be395f16646438d54c42377ddc202edfa33d5eced0c9506de75c44c2",
+      "size": 15335446
+    },
+    {
+      "path": "runtime/transformers.min.js",
+      "url": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js",
+      "sha256": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
+      "size": 888173
+    },
+    {
+      "path": "runtime/ort-wasm-simd-threaded.jsep.mjs",
+      "url": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.mjs",
+      "sha256": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+      "size": 44484
+    },
+    {
+      "path": "runtime/ort-wasm-simd-threaded.jsep.wasm",
+      "url": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/ort-wasm-simd-threaded.jsep.wasm",
+      "sha256": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
+      "size": 21596019
+    },
+    {
+      "path": "runtime/LICENSE.transformers",
+      "url": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    {
+      "path": "three/three.module.js",
+      "url": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+      "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495",
+      "size": 1272972
+    },
+    {
+      "path": "three/LICENSE",
+      "url": "https://cdn.jsdelivr.net/npm/three@0.160.1/LICENSE",
+      "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d",
+      "size": 1081
+    }
+  ]
+}

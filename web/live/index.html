@@ -17,7 +17,7 @@
   #stage { position: relative; background: #000; display: flex; align-items: center;
            justify-content: center; overflow: hidden; min-height: 60vh; }
   #stage video, #stage canvas { position: absolute; max-width: 100%; max-height: 100%; }
-  #stage video.mirror { transform: scaleX(-1); }
+  #stage .mirror { transform: scaleX(-1); }
   #badge { position: absolute; top: 18px; right: 22px; text-align: right; pointer-events: none; }
   #badge b { display: block; font-size: 44px; font-weight: 600; line-height: 1; }
   #badge span { color: var(--dim); font-size: 18px; }
@@ -83,6 +83,7 @@
 <body>
 <div id="stage">
   <video id="v" playsinline muted></video>
+  <canvas id="sceneLayer" aria-hidden="true"></canvas>
   <canvas id="c"></canvas>
   <button id="tap" hidden>Tap for sound</button>
   <div id="recDot" hidden>● REC 0:00</div>
@@ -107,6 +108,17 @@
   <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
     <option value="0">as the camera sees</option></select></label>
   <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
+  <label class="mic-option"><input type="checkbox" id="sceneObjects">3D objects</label>
+  <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
+  <div id="sceneControls" hidden>
+    <label class="mic-option"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
+    <div class="note">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
+    <label class="mic-option"><input type="checkbox" id="sceneDebug">Show surfaces</label>
+    <div class="note" id="sceneTouchHelp" hidden>Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.</div>
+    <button id="sceneRescan" disabled>Rescan</button>
+    <details><summary>3D diagnostics</summary><div class="status" id="sceneMetrics"></div></details>
+  </div>
+  <div class="status" id="sceneStatus" role="status" aria-live="polite" hidden></div>
   <button class="go" id="go">Start</button>
   <div class="recrow"><button id="rec" disabled>● Record</button>
     <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>

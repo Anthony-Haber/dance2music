@@ -2,8 +2,8 @@
 """Serve the live tool (web/) on localhost, where browsers allow the camera.
 
     python live.py              # http://127.0.0.1:5092/live/
-    python live.py --offline    # first download MediaPipe (wasm + models) into
-                                # web/live/vendor/mediapipe so a venue needs no internet
+    python live.py --offline    # first download pose, hand, and 3D assets into
+                                # web/live/vendor so a venue needs no internet
 
 The page prefers the local copy when it exists and falls back to the CDN.
 """
@@ -13,6 +13,7 @@ import http.server
 import os
 import urllib.request
 import webbrowser
+from scene_assets import prepare as prepare_scene_assets
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 WEB = os.path.join(ROOT, 'web')
@@ -29,11 +30,15 @@ def offline():
     jobs = [(MP + f, os.path.join(VENDOR, f)) for f in FILES]
     jobs += [(MODEL.format(m=m), os.path.join(VENDOR, f'pose_landmarker_{m}.task'))
              for m in ('lite', 'full', 'heavy')]
+    jobs += [('https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
+              'gesture_recognizer/float16/1/gesture_recognizer.task',
+              os.path.join(VENDOR, 'gesture_recognizer.task'))]
     for url, dst in jobs:
         if not os.path.exists(dst):
             print('get', os.path.relpath(dst, ROOT))
             urllib.request.urlretrieve(url, dst)
     print('offline copy ready:', os.path.relpath(VENDOR, ROOT))
+    prepare_scene_assets()
 
 
 def main():
