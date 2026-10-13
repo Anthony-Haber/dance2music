@@ -83,6 +83,12 @@ The [validation record](specs/001-anthony-instrument/evidence.md) includes repla
 model/device checks, measured latency and the remaining performer/listening review.
 For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).
 
+Browser **Record** now downloads one ZIP with the video (or sound only), raw
+33-point body pose, detailed hands when enabled, timestamps, and model/session
+metadata. It preserves data for later embedding and other offline analysis.
+The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
+describe the files and tests. Direct import into Zones requires a future importer.
+
 ---
 
 # Dance → the rope's music engine
