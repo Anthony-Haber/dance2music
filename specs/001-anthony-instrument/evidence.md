@@ -570,3 +570,67 @@ raw classifier flip. A fist alternating continuously from its first appearance
 can still remain unconfirmed, as on the website. Restart and perform a deliberate
 open-to-fist trial to assess recognition on Anthony's actual movement. No push or
 website feature changes were made.
+## Authorized browser translation and iPhone server, 2026-10-13
+
+Scope and decisions: [web-port.md](web-port.md). All work is local on
+`anthony-explorations`; main recording/iOS fixes were merged at `83433fc` with
+the current constitution/helpers preserved. No MIDI/Ableton, spells, game or
+true 3D behavior was added. The user selected tracking and sound on the iPhone.
+
+Validation used Python 3.14, Node 24.11.1, OpenSSL 3.4.0, Playwright 1.62.1 and
+Chromium 151.0.7922.34. Native reference fixtures use seed 20261013 and include
+4,020 frame observations across 48 scenarios. Every musical output/event, ball
+geometry and gain matches Python within 1e-7 floating tolerance. Integer pitches
+and events match exactly; displayed HOLD progress allows one percentage point
+for Python/JS rounding. All 300 catalogue chords and all 90,000 root-position
+start/target voice-leading outputs match the native SHA-256 digest.
+
+- 56 Node tests pass, covering replay, tracking loss, joint identity/crossing,
+  phone capture constraints, all timbres' six tones, unused-slot/resonator release
+  and bass-register updates. Synthetic desktop controller p95 0.006ms and
+  voice-leading p95 0.006ms are below the 5ms core budget. These exclude camera,
+  model inference, rendering and physical audio output.
+- Affected pytest suite: 123 passed, 240 subtests passed. This includes 10 phone
+  certificate/TLS/CLI cases. Explicit Ruff lint/format and mypy checks pass for
+  changed Python and fixture generation; configured instrument mypy also passes.
+- Broader pytest run: 129 passed, 2 failed, 2 skipped, 242 subtests passed. The
+  two failures are the already-documented Windows Spec Kit LF/CRLF fixture
+  failures; `.specify/` helpers were not changed. The manual upstream
+  `test_browser_recording.py` runner requires Python Playwright absent here, so
+  it was excluded from pytest collection and its browser JS recording tests
+  were run with the existing Node Playwright runtime instead. Repository-wide
+  Ruff also reports 27 baseline issues in untouched upstream browser/zone test
+  scripts; changed-source checks pass.
+- Headless browser smoke passes with a synthetic camera/MediaPipe model: mobile
+  defaults, Start/audio, neutral arming, transfer, common merge, split, augmented
+  quality, root-mode switching, loss/recovery, recording ZIP, Stop, legacy modes,
+  mobile overflow and desktop controls. The 13 existing recording test groups
+  pass, including near/far/off freshness, model provenance, ZIP/checksums,
+  real browser recording/playback, microphone refusal/disconnect/cancellation,
+  Safari audio-session rejection regression and packaging recovery.
+- Inspected phone ownership/split and desktop control screenshots. The phone
+  previews retain the complete source frame and show distinct attached/split
+  balls with readable status. Fixed stale canvas/badge after Stop found during
+  that inspection. Browser OfflineAudioContext rendered native C13, all six
+  pitches [48,52,55,58,62,69], at 48kHz: peak 0.27312, RMS 0.08752, all finite,
+  unclipped. Subjective listening acceptance remains pending.
+
+Artifacts are under ignored `output/web-port/`: browser-results.json,
+recording-tests.json, audio-results.json, phone-owned-ball.png, phone-split.png,
+phone-midpoint.png, desktop-controls.png and browser-native-C13.wav. Compressed
+native fixtures and the generator live in `tests/web/`.
+
+Outstanding: install/trust the local certificate on Anthony's iPhone, try the
+camera in Safari and evaluate detection/FPS, thermal behavior, output volume,
+listening and actual movement-to-sound latency. Browser latency estimates and
+synthetic desktop timings do not establish any of those. No physical iPhone
+or performer trial was claimed. The CLI does not modify system trust stores.
+
+Graphify code refresh completed once, locally with AST extraction and zero API
+cost: 1,675 nodes, 3,006 edges, 164 communities. Module CLI invocation used the
+installed interpreter because the launcher trampoline failed. Final particle
+cleanup on tracking loss/topology changes is a minor drawing fix with unchanged
+module relationships; it does not warrant another graph refresh under VIII.
+Instrument near-mode association also now requires one distinct detection per
+hand, preventing a single detected sign from manufacturing a two-hand quality
+pair. This is a tested correction within the existing tracker boundary.

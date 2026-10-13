@@ -316,3 +316,27 @@ work while allowing the gesture, harmony, and MIDI behavior to be developed.
 - [ANTHONY_IDEAS.md](ANTHONY_IDEAS.md): vision, accepted decisions, priorities, and design flaws.
 - [.specify/memory/constitution.md](../.specify/memory/constitution.md): development rules.
 - [status.md](../status.md): task outcomes and remaining work.
+# Browser instrument translation, 2026-10-13
+
+Anthony explicitly authorized translating the implemented Python instrument into
+JavaScript, excluding MIDI/Ableton. `web/live/instrument-controller.js`,
+`instrument-root.js` and `instrument-harmony.js` preserve the native decision
+rules; `instrument-frame.js` supplies raw-confidence-gated, causally smoothed,
+mirrored body geometry. These rules are project behavior, not learned model
+outputs. MediaPipe still provides only pose/hand observations and canned signs.
+
+The browser's instrument mode uses persistent root-only lock, all 25 ordered hand
+pairs, interval/midpoint roots, nearby split/merge and one-hand ownership. Six
+Web Audio slots preserve all chord tones. Native and browser controller behavior
+is checked with native-generated fixtures and every catalogue transition. Web
+Audio pitch glides use cents with a 60ms time constant; Python smooths frequency
+in Hz. Rendering, timbre, reverb and platform audio scheduling are browser
+adaptations, not sample-identical synthesis.
+
+`live.py --phone` serves HTTPS and a separate local certificate setup page.
+Tracking, musical decisions and synthesis run inside Safari on the iPhone. The
+laptop serves code/model assets; it does not receive camera frames or generate
+the phone's sound. Browser FPS/inference times and audio latency estimates are
+diagnostics; a real-device trial is needed to establish movement-to-sound latency
+and gesture usability. See the [port contract](../specs/001-anthony-instrument/web-port.md)
+and [iPhone usage](FEATURE_TUTORIALS.md#iphone-camera-and-sound).

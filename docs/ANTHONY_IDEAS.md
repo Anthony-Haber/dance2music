@@ -1,10 +1,20 @@
 # Anthony's Vision for dance2music
 
-Last updated: 2026-10-12. This is a living vision and planning document for Anthony to revise.
+Last updated: 2026-10-13. This is a living vision and planning document for Anthony to revise.
 It records desired behavior, existing capabilities, accepted decisions, and possible design flaws.
 Suggestions and open questions are not approved implementation choices.
 
 ## Project purpose and starting point
+
+**Authorized web translation, 2026-10-13:** Anthony requested the implemented
+native instrument in JavaScript, excluding Ableton/MIDI. The scope covers ideas
+0–2, split/merge, one-hand transfers and relative interval roots, preserving the
+approved gesture maps. He selected tracking and sound on the iPhone, served by
+the laptop with `live.py --phone`. Work remains local on `anthony-explorations`;
+upstream main's recording/iOS updates were merged first. See the
+[port contract](../specs/001-anthony-instrument/web-port.md) and
+[browser/iPhone tutorials](FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
+Earlier entries describing JavaScript as deferred record the Stage 1 history.
 
 dance2music turns movement into music: pose tracking and cleaned motion provide meaningful control
 over harmony, sound, and musical expression. The original work explores dance videos through

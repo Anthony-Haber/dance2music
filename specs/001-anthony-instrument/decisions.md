@@ -236,3 +236,12 @@ are shown separately in bold black. Fresh body wrists remain necessary for ball
 geometry, even with cached hand details. New replay metadata preserves these
 labels and candidate time; legacy geometry flags are ignored. Performer acceptance
 is pending.
+# Authorized web translation, 2026-10-13
+
+Anthony explicitly requested all implemented native instrument behavior in the
+JavaScript web app, excluding Ableton/MIDI, with work remaining local on
+`anthony-explorations`. Relevant main updates may be merged into this branch.
+He selected tracking and sound on the iPhone; the laptop serves the website.
+The [web-port contract](web-port.md) records preserved Python behavior and
+browser adaptations. Future spells, games and 3D were not included as implemented
+features. Existing thresholds/maps remain authoritative and unchanged.

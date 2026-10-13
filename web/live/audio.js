@@ -4,6 +4,7 @@
 // (time constant τ). Pitches glide in cents via `detune` on a 440 Hz base,
 // so, as offline, every semitone step sounds equal.
 import { CHORDS } from './harmony.js';
+import { prepareAudioPlayback } from './audio-session.js';
 const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out slowly
 
 const cents = m => 100 * (m - 69);
@@ -16,7 +17,7 @@ export class Engine {
   // and mutes Web Audio with the ring/silent switch unless the page says it
   // is playing media.
   unlock() {
-    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    prepareAudioPlayback();
     if (!this.keepAlive) {              // older iOS: a playing <audio> element does the same
       const el = this.keepAlive = document.createElement('audio');
       el.src = URL.createObjectURL(silentWav()); el.loop = true;
@@ -84,13 +85,14 @@ export class Engine {
     this.tpan = ctx.createStereoPanner();
     const makeup = ctx.createGain(); makeup.gain.value = 4;
     this.res = [];
-    for (let v = 0; v < 4; v++) for (const o of [12, 24]) {
+    for (let v = 0; v < 6; v++) for (const o of [12, 24]) {
       const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 60; f.frequency.value = 440;
-      noise.connect(f).connect(makeup); this.res.push({ f, v, o });
+      const level = ctx.createGain(); level.gain.value = 0;
+      noise.connect(f).connect(level).connect(makeup); this.res.push({ f, level, v, o });
     }
     makeup.connect(this.tamp).connect(this.tpan).connect(this.layers['wind tuned']);
 
-    // pad: four voices, detuned by slow LFOs when paths wander. The voices'
+    // pad: six persistent slots; unused catalogue tones release independently.
     // sound (the timbre) is swappable; they all feed padBus → timbre post-chain
     // → level → brightness low-pass → the pad fader.
     this.pamp = ctx.createGain(); this.pamp.gain.value = 0;
@@ -135,16 +137,21 @@ export class Engine {
     const organ = ctx.createPeriodicWave(new Float32Array([0, 1, 0.8, 0.5, 0.6, 0, 0.35, 0, 0.3]), new Float32Array(9));
     const osc = (type, base = 440) => { const o = ctx.createOscillator(); if (type === 'organ') o.setPeriodicWave(organ); else o.type = type;
                                           o.frequency.value = base; o.start(now); return o; };
-    this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2]].map(([r, sign, pan], i) => {
+    this.voices = [[0.31, 1, -0.5], [0.47, -1, 0.5], [0.71, 1, -0.2], [0.23, -1, 0.2],
+      [0.37, 1, -0.35], [0.59, -1, 0.35]].map(([r, sign, pan], i) => {
       const lfo = ctx.createOscillator(); lfo.frequency.value = r; lfo.start(now);
       const depth = ctx.createGain(); depth.gain.value = 0; lfo.connect(depth);
-      const out = ctx.createGain(), pn = ctx.createStereoPanner(); pn.pan.value = pan; out.connect(pn).connect(this.padBus);
+      const out = ctx.createGain(), pn = ctx.createStereoPanner(); out.gain.value = 0;
+      pn.pan.value = name === 'native' ? 0 : pan; out.connect(pn).connect(this.padBus);
       const nodes = [lfo, depth, out, pn], pitch = [];
       const vib = (hz, cents) => { const l = ctx.createOscillator(), g = ctx.createGain(); l.frequency.value = hz * (1 + 0.07 * i);
                                    g.gain.value = cents; l.connect(g); l.start(now); nodes.push(l, g); return g; };
       const add = (o, off, gain, vibrato) => { const g = ctx.createGain(); g.gain.value = gain; o.connect(g).connect(out);
         depth.connect(o.detune); if (vibrato) vibrato.connect(o.detune); pitch.push([o.detune, off]); nodes.push(o, g); return o; };
-      if (name === 'strings') {       // two saws ±8 cents, 5.3 Hz vibrato
+      if (name === 'native') {
+        add(osc('sine'), 0, 0.7 / 1.2);
+        add(osc('sine', 880), 0, 0.7 * 0.2 / 1.2);
+      } else if (name === 'strings') {       // two saws ±8 cents, 5.3 Hz vibrato
         const vb = vib(5.3, 12); add(osc('sawtooth'), -8, 0.13, vb); add(osc('sawtooth'), 8, 0.13, vb);
       } else if (name === 'glass') {  // FM bell: modulator at 3.5 × the carrier, index 1.2
         const c = add(osc('sine'), 0, 0.22), m = osc('sine', 440 * 3.5), dev = ctx.createGain();
@@ -157,7 +164,7 @@ export class Engine {
       } else {
         add(osc('sawtooth'), 0, 0.2);
       }
-      return { depth, sign, pitch, nodes };
+      return { depth, sign, pitch, nodes, out };
     });
     if (!building && this.chord) { const c = this.chord; this.chordKey = null; this.setChord(c, true); }
   }
@@ -188,13 +195,20 @@ export class Engine {
   // chord: {key, bass, voices} (voices may be voice-led, not fixed)
   setChord(chord, instant = false) {
     if (typeof chord === 'string') chord = { key: chord, ...CHORDS[chord] };
-    const sig = chord.key + chord.voices.join();
+    const sig = `${chord.key}:${chord.bass}:${chord.voices.join()}:${!!chord.instrument}`;
     if (!this.ctx || !this.voices || sig === this.chordKey) return;
     this.chordKey = sig; this.chord = chord;
     const t = this.ctx.currentTime, set = (param, v, tau) =>
       instant ? param.setValueAtTime(v, t) : param.setTargetAtTime(v, t, tau);
-    this.voices.forEach((v, i) => v.pitch.forEach(([param, off]) => set(param, cents(this.chord.voices[i]) + off, 0.25)));
-    this.res.forEach(r => set(r.f.detune, cents(this.chord.voices[r.v] + r.o), 0.25));
+    const tau = chord.instrument ? 0.060 : 0.25, count = chord.voices.length;
+    this.voices.forEach((v, i) => {
+      set(v.out.gain, i < count ? (this.timbre === 'native' ? 1 / count : Math.min(1, 4 / count)) : 0, 0.030);
+      if (i < count) v.pitch.forEach(([param, off]) => set(param, cents(chord.voices[i]) + off, tau));
+    });
+    this.res.forEach(r => {
+      set(r.level.gain, r.v < count ? Math.min(1, 4 / count) : 0, 0.030);
+      if (r.v < count) set(r.f.detune, cents(chord.voices[r.v] + r.o), tau);
+    });
     set(this.bc.detune, cents(this.chord.bass), 0.12);
     set(this.bm.detune, cents(this.chord.bass), 0.12);
   }
@@ -208,6 +222,7 @@ export class Engine {
     const set = (param, k, scale = 1) => this.ar(param, scale * v[k], t, dest[k].att, dest[k].rel);
     set(this.pamp.gain, 'pad.level');
     set(this.inst.gain, 'inst.level');
+    if (this.chord?.instrument) this.inst.gain.setTargetAtTime(f.instrumentGain ?? 0, t, 0.030);
     if (this.formants) this.setVowel(v['pad.vowel'], t);
     set(this.plp.frequency, 'pad.bright');
     this.voices.forEach(o => this.ar(o.depth.gain, o.sign * v['pad.detune'], t, dest['pad.detune'].att, dest['pad.detune'].rel));
@@ -317,13 +332,15 @@ export class Engine {
   idle() {   // nobody in frame: everything that follows movement falls silent
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
+    if (this.chord?.instrument) this.inst.gain.setTargetAtTime(0, t, 0.030);
     for (const g of [this.wamp, this.tamp]) g.gain.setTargetAtTime(0, t, 0.3);
     for (const g of [this.pamp, this.bamp]) { g.gain.setTargetAtTime(0, t, 0.6); g.gain._target = 0; }
   }
 
   pluck(ev, pan) {
     const c = this.chord, midi = { lfoot: c.bass + 12, rfoot: c.voices[1],
-                                   lhand: c.voices[2] + 12, rhand: c.voices[3] + 12 }[ev.part];
+                                     lhand: c.voices[2 % c.voices.length] + 12,
+                                     rhand: c.voices[3 % c.voices.length] + 12 }[ev.part];
     const ctx = this.ctx, sr = ctx.sampleRate, n = Math.floor(2.5 * sr);
     const buf = ctx.createBuffer(1, n, sr), y = buf.getChannelData(0);
     const hz = 440 * 2 ** ((midi - 69) / 12), N = Math.max(2, Math.floor(sr / hz));

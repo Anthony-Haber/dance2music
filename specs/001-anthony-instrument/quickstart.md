@@ -217,5 +217,13 @@ existing models with `--models PATH`. Subsequent runs work offline.
 
 See [decisions.md](decisions.md) for provisional choices and [evidence.md](evidence.md)
 for measured results and remaining human acceptance checks. This is Stage 1 only;
-no browser port, true 3D, three-move spells or game is implemented. Root and direct
-chord MIDI are implemented; performer/Ableton listening acceptance remains pending.
+true 3D, three-move spells and games remain deferred. Native root/chord MIDI
+and the browser translation are implemented; live acceptance remains pending.
+# Browser translation
+
+The implemented native controls are also available in the JavaScript app by
+Anthony's explicit 2026-10-13 request. Run `python live.py`, select **Anthony
+instrument**, and Start. For iPhone tracking and sound, use `python live.py --phone`
+and follow its local certificate setup URL. See the
+[browser/iPhone tutorial](../../docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser)
+and [port contract](web-port.md). The native commands below remain supported.

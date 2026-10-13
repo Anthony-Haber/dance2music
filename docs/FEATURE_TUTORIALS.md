@@ -1,5 +1,10 @@
 # Feature Tutorials
 
+The browser translation is now available locally:
+
+- [Play the instrument in JavaScript](#play-anthonys-instrument-in-the-browser)
+- [Use the iPhone camera and sound with --phone](#iphone-camera-and-sound)
+
 Start here for the current native Python instrument:
 
 - [Change roots: interval map, octaves and T mode switch](#relative-roots-and-switching-modes)
@@ -453,3 +458,129 @@ See the [approved map and tone sets](../specs/001-anthony-instrument/chord-map.m
 **R:** reset to C major, unlocked, one ball. **Q / Escape:** quit.
 Body/wrist loss mutes sound; hand-detail loss preserves the body-driven ball and
 audio. Reopen your hands after gesture tracking returns before another fist toggle.
+
+## Play Anthony's instrument in the browser
+
+```powershell
+.venv/Scripts/python.exe live.py
+```
+
+Choose **Anthony instrument · 300 chords** in Harmony, then Start. New browser
+sessions default to it; an existing saved harmony mode is preserved. Hand tracking
+defaults to **far**, cropping each body wrist in alternating frames. For an
+instrument close to the camera, **near** is also available. Both detailed signs
+must be reliable to choose a chord quality; **None**, missing signs, fists and
+heart signs hold the current quality. Both palms held for 1.5 seconds return to
+major. Use the on-page chord chart or the [approved map](../specs/001-anthony-instrument/chord-map.md).
+
+The browser preserves the native controls:
+
+- **Fist + palm:** transfer the ball to the fist, retaining its size and loudness.
+  The owning body wrist can continue controlling it when the other wrist disappears.
+- **Fist + another sign, or two distant fists:** toggle root-only lock; chord
+  quality remains editable. Held fists act once; reopen before repeating.
+- **Two nearby fists:** toggle split/merge, or return an owned ball to midpoint.
+  This takes priority over root lock. Proximity is 1.0 torso length.
+- **Relative intervals:** center both wrists in the marked chest circles for
+  0.2 seconds, then hold a cardinal direction pair for 0.35 seconds. Each step
+  applies once; return to center before another. Both up/down moves a real octave.
+  Consult the [interval map](../specs/001-anthony-instrument/relative-root.md).
+- **Root control selector / T:** switch to the 12-sector midpoint ring or back
+  without changing the current chord, register, ball ownership or lock.
+- **Merge ball / M:** return to midpoint. **Reset / R:** C major, unlocked, merged.
+  These buttons work on touch screens. Space starts/stops on a keyboard.
+
+The ball uses body wrists, so finger-detail loss alone does not stop it. Missing
+required body/wrist tracking silences sound; persistent chord/lock/ownership
+survives recovery. Instrument L/R uses the same corrected joint identities as
+Python, including crossed hands, independent of whether the preview is mirrored.
+
+Choose **native instrument** for the sine-plus-harmonic tone. All existing web
+timbres now support three through six chord notes. Instrument loudness follows
+the ball's size or captured transfer gain. The Mix pad/master faders still apply;
+instrument mode keeps the pad sounding while a ball is active. Legacy harmony,
+mapping, drum and gesture-action modes remain available in the Harmony selector.
+In instrument mode, signs control chords/balls rather than legacy drum/preset actions.
+
+Record still exports a ZIP containing video/sound, pose/hand observations and
+configuration history, now including instrument state. Microphone recording
+remains an explicit separate option. Use the Record button in instrument mode
+because R is its reset shortcut. Existing microphone/bundle behavior comes from main.
+
+## iPhone camera and sound
+
+```powershell
+.venv/Scripts/python.exe live.py --phone
+```
+
+Use **Safari**, with the iPhone and laptop on the same Wi-Fi. The command prints
+an HTTP setup URL (default port 5093) and an HTTPS instrument URL (port 5092).
+Open the **setup URL on the iPhone** first. Follow its one-time steps:
+
+1. Download the local certificate profile.
+2. In Settings → General → VPN & Device Management, install
+   **dance2music local phone camera**.
+3. In Settings → General → About → Certificate Trust Settings, enable full trust
+   for **dance2music local phone CA**.
+4. Return to Safari and open the HTTPS instrument link. Tap Start and allow the
+   camera. If needed, tap **Tap for sound**.
+
+This trust step is required for Safari camera access; bypassing a certificate
+warning is not a substitute. See [Apple's certificate trust instructions](https://support.apple.com/en-us/102390)
+and [browser camera security requirements](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia).
+No system trust stores are changed by the CLI. Remove the profile from the
+iPhone when it is no longer needed. Certificates/keys stay under ignored
+`output/phone/`; the setup server only exposes the public certificate profile.
+
+OpenSSL 3.x must be on the laptop's PATH (**3.4.0 tested on this Windows machine**).
+Ordinary localhost mode needs no OpenSSL. On this machine it is already available
+through MSYS2; on another machine use its package manager, e.g. `brew install
+openssl@3` on macOS or `sudo apt install openssl` on Debian/Ubuntu. The command
+reports an actionable error if OpenSSL or a listener is unavailable.
+
+Phone mode prefers the **rear camera**, **lite** pose model and **640×480 at a
+requested 30 fps**. Front/rear switching is in Camera. Tracking and synthesis run
+on the iPhone; the laptop only serves files. There is no video stream back to the
+laptop, MIDI or Ableton integration in this port. Use the phone speaker or wired
+audio for latency testing. Keep Safari visible; backgrounding releases sound,
+and returning may require another sound tap. iPhone inference and audible latency
+still require a real-device trial. The displayed audio latency is a browser
+estimate, not measured movement-to-sound latency. Gesture confirmation/dwell
+times deliberately match the native instrument.
+
+If the auto-detected address uses a VPN/other adapter, specify the laptop's Wi-Fi IP:
+
+```powershell
+.venv/Scripts/python.exe live.py --phone --phone-host 192.168.1.50
+# Custom listener ports:
+.venv/Scripts/python.exe live.py --phone --port 5100 --setup-port 5101
+```
+
+Allow those local TCP ports through the laptop firewall if prompted. Restart
+after a Wi-Fi IP change; the server reissues its leaf certificate under the same
+local CA, so the iPhone trust step need not repeat. Ctrl+C closes both servers.
+For a venue without internet, run `live.py --offline` beforehand; it now downloads
+the hand model as well as pose/WASM assets. The ordinary camera command stays local
+to `127.0.0.1` unless `--phone` is supplied.
+
+### Web-port validation commands
+
+```powershell
+# Device-free native -> JavaScript fixtures, then JS parity/audio checks (Node 24 tested):
+.venv/Scripts/python.exe tests/web/generate_reference.py
+node --test tests/web/instrument.test.mjs tests/web/audio.test.mjs
+# Python HTTPS/CLI tests:
+.venv/Scripts/python.exe -m pytest tests/test_phone_server.py -q
+.venv/Scripts/python.exe -m ruff check live.py web/phone_server.py tests/test_phone_server.py tests/web/generate_reference.py
+.venv/Scripts/python.exe -m ruff format --check live.py web/phone_server.py tests/test_phone_server.py tests/web/generate_reference.py
+.venv/Scripts/python.exe -m mypy --explicit-package-bases live.py web/phone_server.py tests/web/generate_reference.py
+```
+
+`tests/web/browser-smoke.cjs` uses Playwright **1.62.1** and Chromium, a synthetic
+camera/model and real browser media APIs. Set `NODE_PATH` to an existing Playwright
+installation, or install it under ignored `output/web-port/browser-tools` with
+`npm install --prefix output/web-port/browser-tools playwright@1.62.1`, then set
+`NODE_PATH` to that folder's `node_modules`. Install Chromium with Playwright's
+CLI, and run `node tests/web/browser-smoke.cjs`. Set `PLAYWRIGHT_BROWSERS_PATH` if
+using a custom browser cache. It saves screenshots/results under `output/web-port/`.
+These checks do not establish real iPhone camera recognition or performance.

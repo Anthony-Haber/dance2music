@@ -193,3 +193,19 @@ synth input, held while the ball is active; P pauses/resumes.
 - [X] T063 Refresh local AST graph once after this full-chord capability.
 - [ ] T064 Performer/Ableton listening trial: polyphonic synth on Chords input,
   held triads/six-note chords, locked quality changes, octaves, P/loss/recovery/quit.
+
+## Browser translation: 2026-10-13
+
+- [X] T051 Record explicit JavaScript port authorization, preserved Python contracts,
+  browser adaptations and the selected iPhone tracking/audio arrangement in web-port.md.
+- [X] T052 Merge relevant main recording/iOS updates into anthony-explorations locally,
+  preserving the approved constitution and native-shell helpers.
+- [X] T053 Translate catalogue/voice leading, interval roots and controller state;
+  connect body-wrist geometry, hand confirmation, six-voice audio, visuals and controls.
+- [X] T054 Implement and validate the Python HTTPS/certificate boundary, then connect
+  --phone to iPhone Safari with local tracking/audio, rear-camera defaults and trust instructions.
+- [X] T055 Verify native replay/90,000 transition parity, Node audio/adapter checks,
+  Python HTTPS/CLI checks and browser/recording integration; inspect previews and render sound.
+- [ ] T056 On the actual iPhone, install/trust the local CA and review gestures,
+  audible sound, heat/FPS and movement-to-sound latency. Automated desktop results
+  do not establish device/performer acceptance.
