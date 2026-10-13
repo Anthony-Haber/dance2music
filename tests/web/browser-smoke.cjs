@@ -83,7 +83,7 @@ async function main() {
     await page.waitForFunction(() => document.querySelector('#rec').textContent.includes('Stop recording'));
     await page.waitForTimeout(500);
     await page.locator('#rec').click();
-    await page.waitForFunction(() => document.querySelector('#recMsg').textContent.includes('.zip'), null, { timeout: 20000 });
+    await page.waitForFunction(() => /saved .*\.(webm|mp4|m4a)/.test(document.querySelector('#recMsg').textContent), null, { timeout: 20000 });
     await page.locator('#go').click();
     await page.waitForFunction(() => document.querySelector('#go').textContent === 'Start');
     assert.equal(await page.locator('#badge').isVisible(), false);
@@ -115,19 +115,18 @@ async function main() {
     samples.forEach((sample, i) => wav.writeInt16LE(Math.round(Math.max(-1, Math.min(1, sample)) * 32767), 44 + i * 2));
     fs.writeFileSync(path.join(output, 'browser-native-C13.wav'), wav);
     fs.writeFileSync(path.join(output, 'audio-results.json'), JSON.stringify({ peak, rms, sampleRate: 48000, notes: [48, 52, 55, 58, 62, 69] }, null, 2));
-    // Existing upstream recording tests exercise ZIP/microphone lifecycle using
-    // real browser media APIs, with no physical microphone/camera or downloads.
-    await page.goto('http://127.0.0.1:5098/tests/browser.html');
-    const recording = await page.evaluate(async () => {
-      const tests = await import('/tests/recording.test.js'); return tests.runTests();
-    });
-    fs.writeFileSync(path.join(output, 'recording-tests.json'), JSON.stringify(recording, null, 2));
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(output, 'browser-results.json'), JSON.stringify({ passed: true, errors,
       browser: await browser.version(), synthetic: true,
       checks: ['phone defaults','start/audio','neutral','transfer','merge','split','quality','root mode','near hand uniqueness','loss',
-        'recording ZIP','stop','legacy mode','mobile layout','desktop controls'] }, null, 2));
-    console.log('Browser smoke passed: phone/desktop controls, gestures, tracking loss, recording ZIP, legacy modes.');
+        'media recording (no ZIP/microphone/pose export)','stop','legacy mode','mobile layout','desktop controls'] }, null, 2));
+    console.log('Browser smoke passed: phone/desktop controls, gestures, tracking loss, media recording, legacy modes.');
+  } catch (error) {
+    for (const page of browser.contexts().flatMap(context => context.pages())) {
+      console.error(await page.locator('#status').textContent().catch(() => ''),
+        await page.locator('#handTxt').textContent().catch(() => ''), errors);
+    }
+    throw error;
   } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => server.kill());

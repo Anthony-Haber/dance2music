@@ -701,3 +701,20 @@
 - Outstanding: Actual iPhone CA setup, Safari camera/gesture trials, listening,
   heat/FPS and movement-to-sound latency. Browser estimates are not measured
   end-to-end latency. Spells, games and true 3D remain future scope.
+
+## 2026-10-13 - Remove separate upstream recording work
+
+- State: Cleanup validated locally; branch isolation requested for all three Anthony branches.
+- Changes: Selectively undo Samir recording/pose ZIP/microphone additions and their
+  assets/metadata/audio-session helpers. Restore ordinary media recording, retaining
+  Anthony instrument, ball/hand controls, phone server and MIDI on existing branches.
+- Governance: .specify and .agents match pre-merge 1ee972f; no Samir Spec Kit
+  changes survived. Preserve our installation and all prior commits. AGENTS.md now
+  requires explicit authorization for specific upstream imports.
+- Verification: 68 Node tests and real-browser smoke pass on ableton, including
+  gestures/MIDI and restored video/audio recording. Core modules/phone/native MIDI
+  are unchanged. Scope/audit is in upstream-isolation.md.
+- Publication: Local cleanup commits only; no upstream or remote-history rewrite.
+- Web implementation branch: 56 Node tests and browser/media-recording smoke
+  pass. Core instrument and phone files are identical to 58e504b. Local AST
+  graph refreshed: 1,577 nodes, 2,759 edges, 154 communities, no API cost.

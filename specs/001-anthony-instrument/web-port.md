@@ -23,7 +23,9 @@ the approved constitution and Spec Kit helpers were retained.
 
 MIDI/Ableton is excluded by request. Unbuilt spells, games, true 3D and additional
 finger modes remain deferred. Existing web harmony, mixer, mapping, drums,
-recording and microphone exports remain available alongside the new mode.
+ordinary video/audio recording remain available alongside the new mode.
+Samir's raw-observation ZIP and separate microphone work was subsequently removed
+at Anthony's request; it remains isolated on its upstream branch.
 
 ## Browser adaptation
 
