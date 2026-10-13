@@ -8,8 +8,6 @@
 // and the canned gesture, each debounced so a flicker does not act.
 
 import { J } from './features.js';
-import { modelAsset, runtimeIdentity } from './model-assets.js';
-import { snapshotHandInference } from './observations.js';
 
 const MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/latest/gesture_recognizer.task';
 export const GESTURES = ['Closed_Fist', 'Open_Palm', 'Pointing_Up', 'Thumb_Up', 'Thumb_Down', 'Victory', 'ILoveYou'];
@@ -57,78 +55,38 @@ class Hand {             // debounced state of one hand
 export class Hands {
   constructor() { this.mode = 'off'; this.rec = {}; this.L = new Hand(); this.R = new Hand(); this.n = 0;
                   this.canvas = document.createElement('canvas'); this.canvas.width = this.canvas.height = HS.crop;
-                  this.cx = this.canvas.getContext('2d', { willReadFrequently: false }); this.tLast = {}; this.ms = 0;
-                  this.models = {}; this.pending = {}; this.loadGeneration = 0; this.loading = false; this.requestedMode = 'off'; }
+                  this.cx = this.canvas.getContext('2d', { willReadFrequently: false }); this.tLast = {}; this.ms = 0; }
 
   async load(vision, mode) {
-    const generation = ++this.loadGeneration;
-    this.requestedMode = mode; this.loading = mode !== 'off'; this.loadError = null;
-    if (mode === 'off') { this.mode = mode; this.L.reset(); this.R.reset(); return; }
-    try {
-      const asset = await modelAsset(MODEL);
-      const opts = (numHands, delegate) => ({ baseOptions: { modelAssetBuffer: asset.bytes, delegate }, runningMode: 'VIDEO',
-        numHands, minHandDetectionConfidence: 0.3, minHandPresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
-      const make = async (key, n) => {
-        if (this.rec[key]) return;
-        if (!this.pending[key]) this.pending[key] = (async () => {
-          let delegate = 'GPU', recognizer;
-          try { recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
-          catch (e) { delegate = 'CPU'; recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
-          this.rec[key] = recognizer;
-          this.models[key] = { family: 'GestureRecognizer', asset: MODEL, asset_sha256: asset.sha256,
-            runtime: runtimeIdentity(vision), delegate: delegate.toLowerCase(), running_mode: 'video',
-            num_hands: n, detection_threshold: 0.3, presence_threshold: 0.3, tracking_threshold: 0.3 };
-        })().finally(() => { delete this.pending[key]; });
-        await this.pending[key];
-      };
-      // VIDEO mode needs rising timestamps per recogniser: one per crop, or one for the frame
-      if (mode === 'far') { await make('L', 1); await make('R', 1); }
-      if (mode === 'near') await make('F', 2);
-      if (generation === this.loadGeneration) { this.mode = mode; this.L.reset(); this.R.reset(); }
-    } catch (error) {
-      if (generation === this.loadGeneration) this.loadError = error.message;
-      throw error;
-    } finally { if (generation === this.loadGeneration) this.loading = false; }
-  }
-
-  configuration() {
-    const keys = this.mode === 'far' ? ['L', 'R'] : this.mode === 'near' ? ['F'] : [];
-    return { mode: this.mode, requested_mode: this.requestedMode, loading: this.loading,
-      load_error: this.loadError || null, models: Object.fromEntries(keys.map(k => [k, this.models[k]])),
-      crop_policy: this.mode === 'far' ? HS : null, association_policy: 'browser-pose-wrist-v1' };
+    this.mode = mode; this.L.reset(); this.R.reset();
+    if (mode === 'off') return;
+    const opts = (numHands, delegate) => ({ baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: 'VIDEO',
+      numHands, minHandDetectionConfidence: 0.3, minHandPresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
+    const make = async n => { try { return await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, 'GPU')); }
+                              catch (e) { return vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, 'CPU')); } };
+    // VIDEO mode needs rising timestamps per recogniser: one per crop, or one for the frame
+    if (mode === 'far' && !this.rec.L) { this.rec.L = await make(1); this.rec.R = await make(1); }
+    if (mode === 'near' && !this.rec.F) this.rec.F = await make(2);
   }
 
   // f: live features (pose, in video pixels), tMs: a rising timestamp
-  detect(video, f, tMs, capture = false) {
-    const observation = { mode: this.mode, status: 'skipped', reason: null, inferences: [] };
-    if (this.loading || this.mode === 'off' || !f) {
-      observation.status = this.loading ? 'skipped' : this.mode === 'off' ? 'disabled' : 'skipped';
-      observation.reason = this.loading ? 'model_loading' : this.mode === 'off' ? 'tracking_off' : 'pose_unavailable';
-      return observation;
-    }
+  detect(video, f, tMs) {
+    if (this.mode === 'off' || !f) return;
     const t = tMs / 1000, t0 = performance.now(), W = video.videoWidth, H = video.videoHeight;
     if (this.mode === 'far') {
       // alternate hands frame by frame: each hand at half the frame rate
       const side = this.n++ % 2 ? 'R' : 'L', wj = side === 'L' ? J.L_WR : J.R_WR, ej = side === 'L' ? J.L_EL : J.R_EL;
       const w = f.pos(wj), e = f.pos(ej), hand = this[side];
-      if (!w || f.conf(wj) < 0.3) { hand.update(null, t);
-        observation.reason = 'wrist_unavailable'; observation.attempted_side = side; return observation; }
+      if (!w || f.conf(wj) < 0.3) { hand.update(null, t); return; }
       const c = e ? [w[0] + HS.reach * (w[0] - e[0]), w[1] + HS.reach * (w[1] - e[1])] : w;
       const sz = Math.max(HS.cropMinPx, HS.cropTorso * f.L), box = [c[0] - sz / 2, c[1] - sz / 2, sz, sz];
       this.drawCrop(video, box, W, H);
       const ts = Math.max(tMs, (this.tLast[side] ?? 0) + 1); this.tLast[side] = ts;
       const r = this.rec[side].recognizeForVideo(this.canvas, ts);
-      if (capture) {
-        const raw = snapshotHandInference(r, box, W, H, ts, side, [this.canvas.width, this.canvas.height]);
-        raw.associations[side] = r.landmarks?.length ? 0 : null;
-        observation.inferences.push(raw);
-      }
       hand.update(this.pick(r, 0, box, W, H), t);
     } else {
       const ts = Math.max(tMs, (this.tLast.F ?? 0) + 1); this.tLast.F = ts;
       const r = this.rec.F.recognizeForVideo(video, ts);
-      const raw = capture ? snapshotHandInference(r, [0, 0, W, H], W, H, ts) : null;
-      if (raw) observation.inferences.push(raw);
       // assign detected hands to her wrists by distance (handedness labels assume a mirrored selfie)
       const found = (r.landmarks || []).map((lm, i) => this.pick(r, i, [0, 0, W, H], W, H));
       for (const side of ['L', 'R']) {
@@ -137,13 +95,10 @@ export class Hands {
         for (const h of found) { const dx = h.lm[0].px - (w ? w[0] : 1e9), dy = h.lm[0].py - (w ? w[1] : 1e9), dd = dx * dx + dy * dy;
           if (dd < bd) { bd = dd; best = h; } }
         if (best && found.length > 1) found.splice(found.indexOf(best), 1);
-        if (raw) raw.associations[side] = best?.candidateIndex ?? null;
         this[side].update(best, t);
       }
     }
     this.ms = performance.now() - t0;
-    observation.status = 'completed';
-    return observation;
   }
 
   drawCrop(video, [x, y, w, h], W, H) {       // clamp the source rect; pad the rest black
@@ -158,7 +113,7 @@ export class Hands {
     if (!r || !r.landmarks || !r.landmarks[i]) return null;
     const lm = r.landmarks[i].map(p => ({ x: p.x, y: p.y, px: x + p.x * w, py: y + p.y * h }));
     const g = r.gestures && r.gestures[i] && r.gestures[i][0];
-    return { lm, candidateIndex: i, gesture: g ? g.categoryName : 'None', score: g ? g.score : 0, box: [x, y, w, h] };
+    return { lm, gesture: g ? g.categoryName : 'None', score: g ? g.score : 0, box: [x, y, w, h] };
   }
 
   // sources for the mapping matrix, and the total finger count

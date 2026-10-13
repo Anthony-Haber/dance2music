@@ -4,7 +4,6 @@
 // (time constant τ). Pitches glide in cents via `detune` on a 440 Hz base,
 // so, as offline, every semitone step sounds equal.
 import { CHORDS } from './harmony.js';
-import { prepareAudioPlayback } from './audio-session.js';
 const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out slowly
 
 const cents = m => 100 * (m - 69);
@@ -17,7 +16,7 @@ export class Engine {
   // and mutes Web Audio with the ring/silent switch unless the page says it
   // is playing media.
   unlock() {
-    prepareAudioPlayback();
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     if (!this.keepAlive) {              // older iOS: a playing <audio> element does the same
       const el = this.keepAlive = document.createElement('audio');
       el.src = URL.createObjectURL(silentWav()); el.loop = true;

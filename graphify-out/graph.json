@@ -837,8 +837,8 @@
       "source_file": ".specify/scripts/powershell/resolve-template.ps1",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specify_scripts_powershell_resolve_template_ps1",
-      "community": 151,
+      "id": "specify_scripts_powershell_resolve_template",
+      "community": 144,
       "norm_label": "resolve-template.ps1"
     },
     {
@@ -847,8 +847,8 @@
       "source_file": ".specify/scripts/powershell/setup-plan.ps1",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specify_scripts_powershell_setup_plan_ps1",
-      "community": 152,
+      "id": "specify_scripts_powershell_setup_plan",
+      "community": 145,
       "norm_label": "setup-plan.ps1"
     },
     {
@@ -1062,14 +1062,14 @@
       "norm_label": "linear interpolation across frames the tracker missed."
     },
     {
-      "label": "landmarks \u2192 when (accents), what (labels), how much (energy).      Pose semantic",
+      "label": "landmarks \u2192 when (accents), what (labels), how much (energy).      Pose semant",
       "file_type": "rationale",
       "source_file": "dance_pose.py",
       "source_location": "L136",
       "_origin": "ast",
       "id": "dance_pose_rationale_136",
       "community": 2,
-      "norm_label": "landmarks \u2192 when (accents), what (labels), how much (energy).      pose semantic"
+      "norm_label": "landmarks \u2192 when (accents), what (labels), how much (energy).      pose semant"
     },
     {
       "label": "What perform_render.simulate needs, from a dance instead of a rope.",
@@ -1082,14 +1082,14 @@
       "norm_label": "what perform_render.simulate needs, from a dance instead of a rope."
     },
     {
-      "label": "A second sonification: four limbs, four voices, no chords at all.      The chord",
+      "label": "A second sonification: four limbs, four voices, no chords at all.      The cho",
       "file_type": "rationale",
       "source_file": "dance_pose.py",
       "source_location": "L269",
       "_origin": "ast",
       "id": "dance_pose_rationale_269",
       "community": 2,
-      "norm_label": "a second sonification: four limbs, four voices, no chords at all.      the chord"
+      "norm_label": "a second sonification: four limbs, four voices, no chords at all.      the cho"
     },
     {
       "label": "The dance with its skeleton, its label, and the music it made.",
@@ -1222,14 +1222,14 @@
       "norm_label": "per frame: which rule the pose satisfies ('ii', 'v', 'i' or '')."
     },
     {
-      "label": "Held chord per frame after the dwell, starting on I.      `alt_weight`: if given",
+      "label": "Held chord per frame after the dwell, starting on I.      `alt_weight`: if giv",
       "file_type": "rationale",
       "source_file": "harmony.py",
       "source_location": "L175",
       "_origin": "ast",
       "id": "harmony_rationale_175",
       "community": 12,
-      "norm_label": "held chord per frame after the dwell, starting on i.      `alt_weight`: if given"
+      "norm_label": "held chord per frame after the dwell, starting on i.      `alt_weight`: if giv"
     },
     {
       "label": "__init__.py",
@@ -1237,8 +1237,8 @@
       "source_file": "instrument/__init__.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_init_py",
-      "community": 130,
+      "id": "instrument_init",
+      "community": 137,
       "norm_label": "__init__.py"
     },
     {
@@ -1247,8 +1247,8 @@
       "source_file": "instrument/__init__.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_init_rationale_1",
-      "community": 130,
+      "id": "instrument_init_rationale_1",
+      "community": 137,
       "norm_label": "native python movement instrument; imports perform no i/o."
     },
     {
@@ -1457,8 +1457,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_py",
-      "community": 13,
+      "id": "instrument_audio",
+      "community": 55,
       "norm_label": "audio.py"
     },
     {
@@ -1467,8 +1467,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_synth",
-      "community": 13,
+      "id": "instrument_audio_synth",
+      "community": 55,
       "norm_label": "synth"
     },
     {
@@ -1477,8 +1477,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_synth_init",
-      "community": 13,
+      "id": "instrument_audio_synth_init",
+      "community": 55,
       "norm_label": ".__init__()"
     },
     {
@@ -1487,8 +1487,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L27",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_synth_render",
-      "community": 13,
+      "id": "instrument_audio_synth_render",
+      "community": 55,
       "norm_label": ".render()"
     },
     {
@@ -1497,8 +1497,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_py_ndarray",
-      "community": 143,
+      "id": "instrument_audio_py_ndarray",
+      "community": 55,
       "norm_label": "ndarray"
     },
     {
@@ -1508,7 +1508,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "float32",
-      "community": 13,
+      "community": 55,
       "norm_label": "float32"
     },
     {
@@ -1517,8 +1517,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L64",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_playback",
-      "community": 13,
+      "id": "instrument_audio_playback",
+      "community": 55,
       "norm_label": "playback"
     },
     {
@@ -1527,8 +1527,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L67",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_playback_init",
-      "community": 13,
+      "id": "instrument_audio_playback_init",
+      "community": 55,
       "norm_label": ".__init__()"
     },
     {
@@ -1537,8 +1537,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L87",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_playback_callback",
-      "community": 13,
+      "id": "instrument_audio_playback_callback",
+      "community": 55,
       "norm_label": "._callback()"
     },
     {
@@ -1547,8 +1547,8 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_py_any",
-      "community": 137,
+      "id": "instrument_audio_py_any",
+      "community": 55,
       "norm_label": "any"
     },
     {
@@ -1557,8 +1557,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_playback_update",
-      "community": 13,
+      "id": "instrument_audio_playback_update",
+      "community": 55,
       "norm_label": ".update()"
     },
     {
@@ -1567,8 +1567,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L99",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_playback_close",
-      "community": 13,
+      "id": "instrument_audio_playback_close",
+      "community": 55,
       "norm_label": ".close()"
     },
     {
@@ -1577,8 +1577,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_rationale_1",
-      "community": 13,
+      "id": "instrument_audio_rationale_1",
+      "community": 55,
       "norm_label": "simple local chord synth; optional hardware playback is an explicit boundary."
     },
     {
@@ -1587,8 +1587,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_rationale_14",
-      "community": 13,
+      "id": "instrument_audio_rationale_14",
+      "community": 55,
       "norm_label": "catalogue-sized persistent slots, 60ms pitch and 30ms gain smoothing."
     },
     {
@@ -1597,8 +1597,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L28",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_rationale_28",
-      "community": 13,
+      "id": "instrument_audio_rationale_28",
+      "community": 55,
       "norm_label": "return mono float32 samples in [-0.7,0.7]; no device needed.          missing tr"
     },
     {
@@ -1607,8 +1607,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_instrument_audio_rationale_65",
-      "community": 13,
+      "id": "instrument_audio_rationale_65",
+      "community": 55,
       "norm_label": "optional sounddevice stream. call close in finally; failures are surfaced."
     },
     {
@@ -1618,7 +1618,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_controller",
-      "community": 66,
+      "community": 29,
       "norm_label": "controller.py"
     },
     {
@@ -1688,7 +1688,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "instrument_controller_controller_init",
-      "community": 29,
+      "community": 32,
       "norm_label": ".__init__()"
     },
     {
@@ -1698,7 +1698,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "instrument_controller_controller_reset",
-      "community": 29,
+      "community": 32,
       "norm_label": ".reset()"
     },
     {
@@ -1728,7 +1728,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "instrument_controller_controller_toggle_root_mode",
-      "community": 29,
+      "community": 32,
       "norm_label": ".toggle_root_mode()"
     },
     {
@@ -1778,7 +1778,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_controller_rationale_1",
-      "community": 66,
+      "community": 29,
       "norm_label": "causal instrument state; no camera, drawing, sound or file effects."
     },
     {
@@ -1798,7 +1798,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "instrument_controller_rationale_70",
-      "community": 29,
+      "community": 32,
       "norm_label": "return to initial chord/unlocked/merged; both hands must reopen to arm."
     },
     {
@@ -1838,7 +1838,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_harmony",
-      "community": 66,
+      "community": 29,
       "norm_label": "harmony.py"
     },
     {
@@ -1848,7 +1848,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "instrument_harmony_gesture_quality",
-      "community": 66,
+      "community": 29,
       "norm_label": "gesture_quality()"
     },
     {
@@ -1858,7 +1858,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "instrument_harmony_chord",
-      "community": 66,
+      "community": 55,
       "norm_label": "chord"
     },
     {
@@ -1868,7 +1868,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "instrument_harmony_chord_post_init",
-      "community": 66,
+      "community": 55,
       "norm_label": ".__post_init__()"
     },
     {
@@ -1878,7 +1878,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "instrument_harmony_chord_symbol",
-      "community": 66,
+      "community": 55,
       "norm_label": ".symbol()"
     },
     {
@@ -1888,7 +1888,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "instrument_harmony_chord_pitch_classes",
-      "community": 66,
+      "community": 55,
       "norm_label": ".pitch_classes()"
     },
     {
@@ -1898,7 +1898,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "instrument_harmony_root_region",
-      "community": 66,
+      "community": 29,
       "norm_label": "root_region()"
     },
     {
@@ -1908,7 +1908,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "instrument_harmony_assignment_costs",
-      "community": 66,
+      "community": 55,
       "norm_label": "_assignment_costs()"
     },
     {
@@ -1918,7 +1918,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "instrument_harmony_voice_lead",
-      "community": 66,
+      "community": 55,
       "norm_label": "voice_lead()"
     },
     {
@@ -1928,7 +1928,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_harmony_rationale_1",
-      "community": 66,
+      "community": 29,
       "norm_label": "explicit musical vocabulary and absolute, path-independent selections."
     },
     {
@@ -1938,7 +1938,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "instrument_harmony_rationale_82",
-      "community": 66,
+      "community": 29,
       "norm_label": "only complete ordered pairs select a quality; uncertain/fist signs hold it."
     },
     {
@@ -1948,28 +1948,28 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "instrument_harmony_rationale_107",
-      "community": 66,
+      "community": 29,
       "norm_label": "12 chromatic sectors clockwise from screen right; centered hands hold root."
     },
     {
-      "label": "Minimum remaining total movement for each assigned-pitch bit mask.      A mask's",
+      "label": "Minimum remaining total movement for each assigned-pitch bit mask.      A mask",
       "file_type": "rationale",
       "source_file": "instrument/harmony.py",
       "source_location": "L119",
       "_origin": "ast",
       "id": "instrument_harmony_rationale_119",
-      "community": 66,
-      "norm_label": "minimum remaining total movement for each assigned-pitch bit mask.      a mask's"
+      "community": 55,
+      "norm_label": "minimum remaining total movement for each assigned-pitch bit mask.      a mask"
     },
     {
-      "label": "Distinct chord pitches in shifted MIDI [48,83], clipped to MIDI [0,127].      A",
+      "label": "Distinct chord pitches in shifted MIDI [48,83], clipped to MIDI [0,127].",
       "file_type": "rationale",
       "source_file": "instrument/harmony.py",
       "source_location": "L142",
       "_origin": "ast",
       "id": "instrument_harmony_rationale_142",
-      "community": 66,
-      "norm_label": "distinct chord pitches in shifted midi [48,83], clipped to midi [0,127].      a"
+      "community": 55,
+      "norm_label": "distinct chord pitches in shifted midi [48,83], clipped to midi [0,127]."
     },
     {
       "label": "models.py",
@@ -1978,7 +1978,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_models",
-      "community": 66,
+      "community": 29,
       "norm_label": "models.py"
     },
     {
@@ -2078,7 +2078,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "instrument_models_output",
-      "community": 23,
+      "community": 37,
       "norm_label": "output"
     },
     {
@@ -2088,7 +2088,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_models_rationale_1",
-      "community": 66,
+      "community": 29,
       "norm_label": "device-independent contracts. positions/radii use camera pixels, excluding hud r"
     },
     {
@@ -2138,7 +2138,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "instrument_replay_read_replay",
-      "community": 65,
+      "community": 23,
       "norm_label": "read_replay()"
     },
     {
@@ -2148,7 +2148,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "instrument_replay_py_path",
-      "community": 65,
+      "community": 23,
       "norm_label": "path"
     },
     {
@@ -2162,14 +2162,14 @@
       "norm_label": "repeatable scripted frames and jsonl replay, independent of camera/models."
     },
     {
-      "label": "15-second sequence: root, lock, locked minor, unlock, near split, reopen.      C",
+      "label": "15-second sequence: root, lock, locked minor, unlock, near split, reopen.",
       "file_type": "rationale",
       "source_file": "instrument/replay.py",
       "source_location": "L12",
       "_origin": "ast",
       "id": "instrument_replay_rationale_12",
       "community": 23,
-      "norm_label": "15-second sequence: root, lock, locked minor, unlock, near split, reopen.      c"
+      "norm_label": "15-second sequence: root, lock, locked minor, unlock, near split, reopen."
     },
     {
       "label": "JSONL: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy.",
@@ -2178,7 +2178,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "instrument_replay_rationale_55",
-      "community": 65,
+      "community": 23,
       "norm_label": "jsonl: time_s, hands[{side,wrist,gesture,confidence}], torso_center/px, energy."
     },
     {
@@ -2188,7 +2188,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_root_control",
-      "community": 37,
+      "community": 29,
       "norm_label": "root_control.py"
     },
     {
@@ -2228,7 +2228,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "instrument_root_control_hand_directions",
-      "community": 55,
+      "community": 29,
       "norm_label": "hand_directions()"
     },
     {
@@ -2268,28 +2268,28 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_root_control_rationale_1",
-      "community": 37,
+      "community": 29,
       "norm_label": "body-relative interval selection, independent of devices and chord voicing."
     },
     {
-      "label": "Chest-height origins below each shoulder in the corrected mirrored view.      Re",
+      "label": "Chest-height origins below each shoulder in the corrected mirrored view.",
       "file_type": "rationale",
       "source_file": "instrument/root_control.py",
       "source_location": "L36",
       "_origin": "ast",
       "id": "instrument_root_control_rationale_36",
       "community": 37,
-      "norm_label": "chest-height origins below each shoulder in the corrected mirrored view.      re"
+      "norm_label": "chest-height origins below each shoulder in the corrected mirrored view."
     },
     {
-      "label": "Directions relative to chest origins, not the other hand or image edges.      Ne",
+      "label": "Directions relative to chest origins, not the other hand or image edges.",
       "file_type": "rationale",
       "source_file": "instrument/root_control.py",
       "source_location": "L57",
       "_origin": "ast",
       "id": "instrument_root_control_rationale_57",
-      "community": 55,
-      "norm_label": "directions relative to chest origins, not the other hand or image edges.      ne"
+      "community": 29,
+      "norm_label": "directions relative to chest origins, not the other hand or image edges."
     },
     {
       "label": "One step per neutral -> stable pair -> neutral cycle; no held repeats.",
@@ -2348,7 +2348,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "instrument_tracking_gesturestate",
-      "community": 65,
+      "community": 13,
       "norm_label": "gesturestate"
     },
     {
@@ -2358,7 +2358,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "instrument_tracking_gesturestate_init",
-      "community": 65,
+      "community": 13,
       "norm_label": ".__init__()"
     },
     {
@@ -2478,7 +2478,7 @@
       "source_location": "L206",
       "_origin": "ast",
       "id": "instrument_tracking_tracker",
-      "community": 65,
+      "community": 23,
       "norm_label": "tracker"
     },
     {
@@ -2488,7 +2488,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "instrument_tracking_tracker_init",
-      "community": 65,
+      "community": 13,
       "norm_label": ".__init__()"
     },
     {
@@ -2498,7 +2498,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "instrument_tracking_py_path",
-      "community": 65,
+      "community": 13,
       "norm_label": "path"
     },
     {
@@ -2528,7 +2528,7 @@
       "source_location": "L332",
       "_origin": "ast",
       "id": "instrument_tracking_tracker_close",
-      "community": 65,
+      "community": 13,
       "norm_label": ".close()"
     },
     {
@@ -2548,7 +2548,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "instrument_tracking_rationale_33",
-      "community": 65,
+      "community": 13,
       "norm_label": "port of web/live/hands.js hand.update: canned labels, never joint guesses."
     },
     {
@@ -2608,7 +2608,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "instrument_tracking_rationale_207",
-      "community": 65,
+      "community": 23,
       "norm_label": "synchronous video-mode tasks with strict monotonic timestamps and cleanup."
     },
     {
@@ -2638,7 +2638,7 @@
       "source_location": "L333",
       "_origin": "ast",
       "id": "instrument_tracking_rationale_333",
-      "community": 65,
+      "community": 13,
       "norm_label": "release every model even if another model's close raises an error."
     },
     {
@@ -2718,7 +2718,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "instrument_visuals_particle",
-      "community": 32,
+      "community": 37,
       "norm_label": "particle"
     },
     {
@@ -2738,7 +2738,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "instrument_visuals_renderer_init",
-      "community": 29,
+      "community": 38,
       "norm_label": ".__init__()"
     },
     {
@@ -2782,14 +2782,14 @@
       "norm_label": "._hud()"
     },
     {
-      "label": "Native adaptation of Joseph Bakarji's wrist-based glow and sparks.  Geometry is",
+      "label": "Native adaptation of Joseph Bakarji's wrist-based glow and sparks.  Geometry i",
       "file_type": "rationale",
       "source_file": "instrument/visuals.py",
       "source_location": "L1",
       "_origin": "ast",
       "id": "instrument_visuals_rationale_1",
       "community": 37,
-      "norm_label": "native adaptation of joseph bakarji's wrist-based glow and sparks.  geometry is"
+      "norm_label": "native adaptation of joseph bakarji's wrist-based glow and sparks.  geometry i"
     },
     {
       "label": "Bold text with a dark shadow and outline for contrast against camera/glow.",
@@ -3507,8 +3507,8 @@
       "source_file": "tests/__init__.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_init_py",
-      "community": 131,
+      "id": "tests_init",
+      "community": 143,
       "norm_label": "__init__.py"
     },
     {
@@ -3517,8 +3517,8 @@
       "source_file": "tests/__init__.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_init_rationale_1",
-      "community": 131,
+      "id": "tests_init_rationale_1",
+      "community": 143,
       "norm_label": "synthetic device-free tests for the python instrument."
     },
     {
@@ -3527,8 +3527,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_py",
-      "community": 13,
+      "id": "tests_test_instrument_audio",
+      "community": 55,
       "norm_label": "test_instrument_audio.py"
     },
     {
@@ -3537,8 +3537,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests",
+      "community": 55,
       "norm_label": "audiotests"
     },
     {
@@ -3547,8 +3547,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
+      "community": 55,
       "norm_label": ".test_silence_and_finite_bounded_chord()"
     },
     {
@@ -3557,8 +3557,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
+      "community": 55,
       "norm_label": ".test_chunk_continuity_and_note_transition()"
     },
     {
@@ -3567,8 +3567,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L32",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "community": 55,
       "norm_label": ".test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output()"
     },
     {
@@ -3577,8 +3577,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L50",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
+      "community": 55,
       "norm_label": ".test_invalid_inputs_fail()"
     },
     {
@@ -3587,8 +3587,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
-      "community": 13,
+      "id": "tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
+      "community": 55,
       "norm_label": ".test_full_catalogue_audio_and_six_to_three_voice_release()"
     },
     {
@@ -3597,8 +3597,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_tests_test_instrument_audio_rationale_1",
-      "community": 13,
+      "id": "tests_test_instrument_audio_rationale_1",
+      "community": 55,
       "norm_label": "synthesis without an audio device or sounddevice import."
     },
     {
@@ -3618,7 +3618,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests",
-      "community": 65,
+      "community": 23,
       "norm_label": "clitests"
     },
     {
@@ -3628,7 +3628,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests_test_t_key_switches_root_modes_and_exports_replayable_mode_changes",
-      "community": 65,
+      "community": 23,
       "norm_label": ".test_t_key_switches_root_modes_and_exports_replayable_mode_changes()"
     },
     {
@@ -3648,7 +3648,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests_test_malformed_replay_has_line_context",
-      "community": 65,
+      "community": 23,
       "norm_label": ".test_malformed_replay_has_line_context()"
     },
     {
@@ -3668,7 +3668,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests_test_headless_demo_writes_events_audio_and_frames_without_models",
-      "community": 65,
+      "community": 23,
       "norm_label": ".test_headless_demo_writes_events_audio_and_frames_without_models()"
     },
     {
@@ -3678,7 +3678,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests_test_replay_bad_line_and_missing_model_fail_cleanly",
-      "community": 65,
+      "community": 23,
       "norm_label": ".test_replay_bad_line_and_missing_model_fail_cleanly()"
     },
     {
@@ -3698,7 +3698,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "tests_test_instrument_cli_clitests_test_model_setup_rejects_corrupt_existing_file_without_network",
-      "community": 65,
+      "community": 23,
       "norm_label": ".test_model_setup_rejects_corrupt_existing_file_without_network()"
     },
     {
@@ -3718,7 +3718,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_controller",
-      "community": 66,
+      "community": 38,
       "norm_label": "test_instrument_controller.py"
     },
     {
@@ -3728,7 +3728,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_test_instrument_controller_sample",
-      "community": 26,
+      "community": 38,
       "norm_label": "sample()"
     },
     {
@@ -3748,7 +3748,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_test_instrument_controller_controllertests_test_wider_nearby_fists_split_and_merge_once_without_locking",
-      "community": 26,
+      "community": 32,
       "norm_label": ".test_wider_nearby_fists_split_and_merge_once_without_locking()"
     },
     {
@@ -3758,7 +3758,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "tests_test_instrument_controller_controllertests_setup",
-      "community": 26,
+      "community": 32,
       "norm_label": ".setup()"
     },
     {
@@ -3938,7 +3938,7 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "tests_test_instrument_controller_controllertests_test_low_score_gap_reset_and_invalid_timing",
-      "community": 26,
+      "community": 38,
       "norm_label": ".test_low_score_gap_reset_and_invalid_timing()"
     },
     {
@@ -4018,7 +4018,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_controller_rationale_1",
-      "community": 66,
+      "community": 38,
       "norm_label": "observable event contracts, runnable by pytest without devices."
     },
     {
@@ -4038,7 +4038,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_raw_hand",
-      "community": 65,
+      "community": 13,
       "norm_label": "raw_hand()"
     },
     {
@@ -4048,7 +4048,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_py_hand",
-      "community": 65,
+      "community": 13,
       "norm_label": "hand"
     },
     {
@@ -4058,7 +4058,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests",
-      "community": 65,
+      "community": 13,
       "norm_label": "fisttests"
     },
     {
@@ -4068,7 +4068,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_complete_chord_map_with_alternating_confirmation_flicker_and_replay",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_complete_chord_map_with_alternating_confirmation_flicker_and_replay()"
     },
     {
@@ -4078,7 +4078,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_joint_shape_does_not_override_canned_none",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_joint_shape_does_not_override_canned_none()"
     },
     {
@@ -4088,7 +4088,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_alternating_raw_labels_keep_confirmed_fist",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_alternating_raw_labels_keep_confirmed_fist()"
     },
     {
@@ -4098,7 +4098,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_low_confidence_fists_never_confirm",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_low_confidence_fists_never_confirm()"
     },
     {
@@ -4108,7 +4108,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_short_dropout_keeps_hand_then_expires",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_short_dropout_keeps_hand_then_expires()"
     },
     {
@@ -4118,7 +4118,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_confirmed_fist_locks_once_despite_raw_flicker_and_replays",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_confirmed_fist_locks_once_despite_raw_flicker_and_replays()"
     },
     {
@@ -4128,7 +4128,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_nearby_confirmed_fists_split_and_separated_fists_lock",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_nearby_confirmed_fists_split_and_separated_fists_lock()"
     },
     {
@@ -4138,7 +4138,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_reopening_and_a_second_confirmed_closure_unlocks",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_reopening_and_a_second_confirmed_closure_unlocks()"
     },
     {
@@ -4148,7 +4148,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_alternating_confirmed_fists_split_after_approaching",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_alternating_confirmed_fists_split_after_approaching()"
     },
     {
@@ -4158,7 +4158,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_confirmed_pair_toggles_split_merge_despite_flicker_and_replays",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_confirmed_pair_toggles_split_merge_despite_flicker_and_replays()"
     },
     {
@@ -4168,7 +4168,7 @@
       "source_location": "L219",
       "_origin": "ast",
       "id": "tests_test_instrument_fists_fisttests_test_filter_matches_actual_website_hand_update",
-      "community": 65,
+      "community": 13,
       "norm_label": ".test_filter_matches_actual_website_hand_update()"
     },
     {
@@ -4188,7 +4188,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony",
-      "community": 66,
+      "community": 29,
       "norm_label": "test_instrument_harmony.py"
     },
     {
@@ -4198,7 +4198,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests",
-      "community": 66,
+      "community": 55,
       "norm_label": "harmonytests"
     },
     {
@@ -4208,7 +4208,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_catalogue_intervals_and_symbols",
-      "community": 66,
+      "community": 55,
       "norm_label": ".test_catalogue_intervals_and_symbols()"
     },
     {
@@ -4218,7 +4218,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_complete_ordered_map_matches_approved_table",
-      "community": 66,
+      "community": 55,
       "norm_label": ".test_complete_ordered_map_matches_approved_table()"
     },
     {
@@ -4228,7 +4228,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_root_regions_and_dead_zone",
-      "community": 66,
+      "community": 65,
       "norm_label": ".test_root_regions_and_dead_zone()"
     },
     {
@@ -4238,7 +4238,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_any_chord_can_reach_every_chord",
-      "community": 66,
+      "community": 32,
       "norm_label": ".test_any_chord_can_reach_every_chord()"
     },
     {
@@ -4248,7 +4248,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_optimized_voice_leading_matches_exhaustive_musical_cost",
-      "community": 66,
+      "community": 55,
       "norm_label": ".test_optimized_voice_leading_matches_exhaustive_musical_cost()"
     },
     {
@@ -4258,7 +4258,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_harmonytests_test_voice_leading_preserves_notes_across_voice_count_changes",
-      "community": 66,
+      "community": 55,
       "norm_label": ".test_voice_leading_preserves_notes_across_voice_count_changes()"
     },
     {
@@ -4268,7 +4268,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_harmony_rationale_1",
-      "community": 66,
+      "community": 29,
       "norm_label": "musical intervals, root ring and complete catalogue reachability."
     },
     {
@@ -4278,7 +4278,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_root_control",
-      "community": 66,
+      "community": 29,
       "norm_label": "test_instrument_root_control.py"
     },
     {
@@ -4448,7 +4448,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_root_control_rationale_1",
-      "community": 66,
+      "community": 29,
       "norm_label": "relative intervals, register, mode changes and body-relative position contracts."
     },
     {
@@ -4458,7 +4458,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking",
-      "community": 65,
+      "community": 33,
       "norm_label": "test_instrument_tracking.py"
     },
     {
@@ -4468,7 +4468,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_body_result",
-      "community": 65,
+      "community": 33,
       "norm_label": "body_result()"
     },
     {
@@ -4478,7 +4478,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "simplenamespace",
-      "community": 65,
+      "community": 33,
       "norm_label": "simplenamespace"
     },
     {
@@ -4488,7 +4488,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_empty_hands",
-      "community": 65,
+      "community": 33,
       "norm_label": "empty_hands()"
     },
     {
@@ -4498,7 +4498,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_fake_tracker",
-      "community": 65,
+      "community": 33,
       "norm_label": "fake_tracker()"
     },
     {
@@ -4508,7 +4508,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests",
-      "community": 65,
+      "community": 33,
       "norm_label": "trackingtests"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_mirrored_body_sides_select_ordered_chords_even_when_hands_cross",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_mirrored_body_sides_select_ordered_chords_even_when_hands_cross()"
     },
     {
@@ -4528,7 +4528,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_model_cleanup_releases_all_tasks_when_one_close_fails",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_model_cleanup_releases_all_tasks_when_one_close_fails()"
     },
     {
@@ -4538,7 +4538,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_whole_body_drives_ball_when_hand_models_detect_nothing",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_whole_body_drives_ball_when_hand_models_detect_nothing()"
     },
     {
@@ -4548,7 +4548,7 @@
       "source_location": "L134",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_missing_wrist_has_no_stale_ball_and_lost_body_is_silent",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_missing_wrist_has_no_stale_ball_and_lost_body_is_silent()"
     },
     {
@@ -4568,7 +4568,7 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_crop_canned_fist_is_confirmed_before_reaching_controller",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_crop_canned_fist_is_confirmed_before_reaching_controller()"
     },
     {
@@ -4578,7 +4578,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_position_filter_is_causal_and_clears_missing_joints_and_long_gaps",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_position_filter_is_causal_and_clears_missing_joints_and_long_gaps()"
     },
     {
@@ -4598,7 +4598,7 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_trackingtests_test_pose_confidence_validation_and_replay_round_trip",
-      "community": 65,
+      "community": 33,
       "norm_label": ".test_pose_confidence_validation_and_replay_round_trip()"
     },
     {
@@ -4608,7 +4608,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_instrument_tracking_rationale_1",
-      "community": 65,
+      "community": 33,
       "norm_label": "body-driven tracking and wrist crops without models, cameras or downloads."
     },
     {
@@ -6167,7 +6167,7 @@
       "source_file": "web/live/live.js",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "id": "c_code_github_serious_dance2music_web_live_live",
       "community": 9,
       "norm_label": "$()"
     },
@@ -7447,7 +7447,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "id": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "community": 136,
       "norm_label": "_"
     },
@@ -7608,7 +7608,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k",
-      "community": 18,
+      "community": 130,
       "norm_label": "k"
     },
     {
@@ -7618,7 +7618,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_constructor",
-      "community": 18,
+      "community": 130,
       "norm_label": ".constructor()"
     },
     {
@@ -7628,7 +7628,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_tonode",
-      "community": 18,
+      "community": 130,
       "norm_label": ".tonode()"
     },
     {
@@ -7638,7 +7638,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_k_tomarkup",
-      "community": 18,
+      "community": 130,
       "norm_label": ".tomarkup()"
     },
     {
@@ -7648,7 +7648,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q",
-      "community": 136,
+      "community": 131,
       "norm_label": "q"
     },
     {
@@ -7658,7 +7658,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_constructor",
-      "community": 136,
+      "community": 131,
       "norm_label": ".constructor()"
     },
     {
@@ -7668,7 +7668,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_tonode",
-      "community": 136,
+      "community": 131,
       "norm_label": ".tonode()"
     },
     {
@@ -7678,7 +7678,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_q_tomarkup",
-      "community": 136,
+      "community": 131,
       "norm_label": ".tomarkup()"
     },
     {
@@ -7898,7 +7898,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_qt",
-      "community": 3,
+      "community": 10,
       "norm_label": "qt()"
     },
     {
@@ -8088,7 +8088,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_rr",
-      "community": 3,
+      "community": 10,
       "norm_label": "rr()"
     },
     {
@@ -8108,7 +8108,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_or",
-      "community": 3,
+      "community": 10,
       "norm_label": "or()"
     },
     {
@@ -8218,7 +8218,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_vendor_katex_katex_min_zn_endgroups",
-      "community": 3,
+      "community": 21,
       "norm_label": ".endgroups()"
     },
     {
@@ -11425,7 +11425,7 @@
       "label": "Spec Kit platforms",
       "file_type": "document",
       "source_file": "AGENTS.md",
-      "source_location": "L26",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "agents_spec_kit_platforms",
       "community": 16,
@@ -11435,7 +11435,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "AGENTS.md",
-      "source_location": "L35",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "agents_graphify",
       "community": 16,
@@ -12002,6 +12002,16 @@
       "norm_label": "reset or quit"
     },
     {
+      "label": "Separate upstream work",
+      "file_type": "document",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L321",
+      "_origin": "ast",
+      "id": "docs_feature_tutorials_separate_upstream_work",
+      "community": 54,
+      "norm_label": "separate upstream work"
+    },
+    {
       "label": "explanation.md",
       "file_type": "document",
       "source_file": "docs/explanation.md",
@@ -12407,8 +12417,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_md",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map",
+      "community": 125,
       "norm_label": "chord-map.md"
     },
     {
@@ -12417,8 +12427,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "community": 66,
       "norm_label": "approved complete hand-pair chord catalogue"
     },
     {
@@ -12427,8 +12437,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_ordered_gesture_map",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_ordered_gesture_map",
+      "community": 66,
       "norm_label": "ordered gesture map"
     },
     {
@@ -12437,8 +12447,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L40",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_musical_vocabulary",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_musical_vocabulary",
+      "community": 66,
       "norm_label": "musical vocabulary"
     },
     {
@@ -12447,8 +12457,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L52",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_sound_design",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_approved_sound_design",
+      "community": 66,
       "norm_label": "approved sound design"
     },
     {
@@ -12457,8 +12467,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L66",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_tone_sets_for_the_new_qualities",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_tone_sets_for_the_new_qualities",
+      "community": 66,
       "norm_label": "tone sets for the new qualities"
     },
     {
@@ -12467,8 +12477,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L96",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_implementation_and_verification",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_implementation_and_verification",
+      "community": 66,
       "norm_label": "implementation and verification"
     },
     {
@@ -12477,8 +12487,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_reference_material",
-      "community": 33,
+      "id": "specs_001_anthony_instrument_chord_map_reference_material",
+      "community": 66,
       "norm_label": "reference material"
     },
     {
@@ -13272,13 +13282,53 @@
       "norm_label": "persistent hand transfer: 2026-10-12"
     },
     {
+      "label": "upstream-isolation.md",
+      "file_type": "document",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "specs_001_anthony_instrument_upstream_isolation",
+      "community": 121,
+      "norm_label": "upstream-isolation.md"
+    },
+    {
+      "label": "Keep Anthony's branches separate \u00e2\u20ac\u201d 2026-10-13",
+      "file_type": "document",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "specs_001_anthony_instrument_upstream_isolation_keep_anthony_s_branches_separate_\u00e2_2026_10_13",
+      "community": 121,
+      "norm_label": "keep anthony's branches separate a\u20ac\u201d 2026-10-13"
+    },
+    {
+      "label": "Audit",
+      "file_type": "document",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "specs_001_anthony_instrument_upstream_isolation_audit",
+      "community": 121,
+      "norm_label": "audit"
+    },
+    {
+      "label": "Cleanup contract",
+      "file_type": "document",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "specs_001_anthony_instrument_upstream_isolation_cleanup_contract",
+      "community": 121,
+      "norm_label": "cleanup contract"
+    },
+    {
       "label": "status.md",
       "file_type": "document",
       "source_file": "status.md",
       "source_location": "L1",
       "_origin": "ast",
       "id": "status",
-      "community": 126,
+      "community": 125,
       "norm_label": "status.md"
     },
     {
@@ -13622,6 +13672,16 @@
       "norm_label": "2026-10-11 - complete 25-pair jazz chord catalogue"
     },
     {
+      "label": "2026-10-13 - Isolate Anthony exploration from upstream work",
+      "file_type": "document",
+      "source_file": "status.md",
+      "source_location": "L669",
+      "_origin": "ast",
+      "id": "status_2026_10_13_isolate_anthony_exploration_from_upstream_work",
+      "community": 126,
+      "norm_label": "2026-10-13 - isolate anthony exploration from upstream work"
+    },
+    {
       "label": "speckit-analyze",
       "file_type": "document",
       "source_file": ".agents/skills/speckit-analyze/SKILL.md",
@@ -13783,7 +13843,7 @@
       "community": 107,
       "community_name": "Graphify Extraction Tools",
       "norm_label": "claude graphify integration",
-      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_integration"
+      "id": "claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_claude_graphify_integration"
     },
     {
       "label": "graphify knowledge graph pipeline",
@@ -16641,8 +16701,19 @@
       "source_file": "instrument/__init__.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_init_rationale_1",
-      "target": "c_code_github_serious_dance2music_instrument_init_py",
+      "source": "instrument_init_rationale_1",
+      "target": "instrument_init",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/__main__.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "instrument_main",
+      "target": "instrument_audio",
       "confidence_score": 1.0
     },
     {
@@ -16653,7 +16724,7 @@
       "source_location": "L19",
       "weight": 1.0,
       "source": "instrument_main",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback",
+      "target": "instrument_audio_playback",
       "confidence_score": 1.0
     },
     {
@@ -16664,7 +16735,7 @@
       "source_location": "L19",
       "weight": 1.0,
       "source": "instrument_main",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -16888,7 +16959,7 @@
       "source_location": "L19",
       "weight": 0.8,
       "source": "instrument_main_exports",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback",
+      "target": "instrument_audio_playback",
       "confidence_score": 0.5
     },
     {
@@ -16898,7 +16969,7 @@
       "source_location": "L19",
       "weight": 0.8,
       "source": "instrument_main_exports",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "target": "instrument_audio_synth",
       "confidence_score": 0.5
     },
     {
@@ -17055,17 +17126,6 @@
       "target": "instrument_main_exports"
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "instrument/__main__.py",
-      "source_location": "L42",
-      "weight": 1.0,
-      "source": "instrument_main_exports_init",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
-    },
-    {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
@@ -17075,6 +17135,17 @@
       "source": "instrument_main_exports_init",
       "target": "exitstack",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "instrument/__main__.py",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "instrument_main_exports_init",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "references",
@@ -17401,7 +17472,7 @@
       "source_location": "L156",
       "weight": 1.0,
       "source": "instrument_main_run",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback",
+      "target": "instrument_audio_playback",
       "confidence_score": 1.0
     },
     {
@@ -17509,8 +17580,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L64",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_py",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback",
+      "source": "instrument_audio",
+      "target": "instrument_audio_playback",
       "confidence_score": 1.0
     },
     {
@@ -17519,8 +17590,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_py",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "source": "instrument_audio",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -17530,7 +17601,7 @@
       "source_file": "instrument/audio.py",
       "source_location": "L10",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_py",
+      "source": "instrument_audio",
       "target": "instrument_harmony",
       "confidence_score": 1.0
     },
@@ -17540,8 +17611,30 @@
       "source_file": "instrument/audio.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_rationale_1",
-      "target": "c_code_github_serious_dance2music_instrument_audio_py",
+      "source": "instrument_audio_rationale_1",
+      "target": "instrument_audio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_audio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_root_control.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "tests_test_instrument_root_control",
+      "target": "instrument_audio",
       "confidence_score": 1.0
     },
     {
@@ -17551,8 +17644,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L70",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback_init",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "source": "instrument_audio_playback_init",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -17561,8 +17654,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_rationale_14",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "source": "instrument_audio_rationale_14",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -17571,8 +17664,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L16",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_synth",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth_init",
+      "source": "instrument_audio_synth",
+      "target": "instrument_audio_synth_init",
       "confidence_score": 1.0
     },
     {
@@ -17581,8 +17674,19 @@
       "source_file": "instrument/audio.py",
       "source_location": "L27",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_synth",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth_render",
+      "source": "instrument_audio_synth",
+      "target": "instrument_audio_synth_render",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -17591,8 +17695,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L7",
       "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "instrument_audio_synth",
       "confidence_score": 0.5
     },
     {
@@ -17600,55 +17704,55 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
+      "source_file": "tests/test_instrument_audio.py",
       "source_location": "L25",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "source": "tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
+      "source_file": "tests/test_instrument_audio.py",
       "source_location": "L66",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "source": "tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
+      "source_file": "tests/test_instrument_audio.py",
       "source_location": "L53",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "source": "tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
+      "source_file": "tests/test_instrument_audio.py",
       "source_location": "L38",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "source": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
+      "source_file": "tests/test_instrument_audio.py",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "source": "tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "imports",
@@ -17658,7 +17762,7 @@
       "source_location": "L11",
       "weight": 1.0,
       "source": "tests_test_instrument_root_control",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "target": "instrument_audio_synth",
       "confidence_score": 1.0
     },
     {
@@ -17668,7 +17772,7 @@
       "source_location": "L11",
       "weight": 0.8,
       "source": "tests_test_instrument_root_control_rootcontroltests",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth",
+      "target": "instrument_audio_synth",
       "confidence_score": 0.5
     },
     {
@@ -17680,7 +17784,7 @@
       "source_location": "L175",
       "weight": 1.0,
       "source": "tests_test_instrument_root_control_rootcontroltests_test_octaves_change_audio_frequency_and_round_trip_exactly",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth"
+      "target": "instrument_audio_synth"
     },
     {
       "relation": "calls",
@@ -17689,8 +17793,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L92",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback_callback",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth_render",
+      "source": "instrument_audio_playback_callback",
+      "target": "instrument_audio_synth_render",
       "confidence_score": 1.0
     },
     {
@@ -17699,8 +17803,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L28",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_rationale_28",
-      "target": "c_code_github_serious_dance2music_instrument_audio_synth_render",
+      "source": "instrument_audio_rationale_28",
+      "target": "instrument_audio_synth_render",
       "confidence_score": 1.0
     },
     {
@@ -17710,8 +17814,19 @@
       "source_file": "instrument/audio.py",
       "source_location": "L27",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_synth_render",
+      "source": "instrument_audio_synth_render",
       "target": "float32",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/audio.py",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "instrument_audio_synth_render",
+      "target": "instrument_audio_py_ndarray",
       "confidence_score": 1.0
     },
     {
@@ -17720,8 +17835,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L87",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback_callback",
+      "source": "instrument_audio_playback",
+      "target": "instrument_audio_playback_callback",
       "confidence_score": 1.0
     },
     {
@@ -17730,8 +17845,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L99",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback_close",
+      "source": "instrument_audio_playback",
+      "target": "instrument_audio_playback_close",
       "confidence_score": 1.0
     },
     {
@@ -17740,8 +17855,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L67",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback_init",
+      "source": "instrument_audio_playback",
+      "target": "instrument_audio_playback_init",
       "confidence_score": 1.0
     },
     {
@@ -17750,8 +17865,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L94",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback_update",
+      "source": "instrument_audio_playback",
+      "target": "instrument_audio_playback_update",
       "confidence_score": 1.0
     },
     {
@@ -17760,8 +17875,8 @@
       "source_file": "instrument/audio.py",
       "source_location": "L65",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_rationale_65",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback",
+      "source": "instrument_audio_rationale_65",
+      "target": "instrument_audio_playback",
       "confidence_score": 1.0
     },
     {
@@ -17771,8 +17886,19 @@
       "source_file": "instrument/audio.py",
       "source_location": "L84",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_instrument_audio_playback_init",
-      "target": "c_code_github_serious_dance2music_instrument_audio_playback_close",
+      "source": "instrument_audio_playback_init",
+      "target": "instrument_audio_playback_close",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "instrument/audio.py",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "instrument_audio_playback_callback",
+      "target": "instrument_audio_py_any",
       "confidence_score": 1.0
     },
     {
@@ -18252,27 +18378,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_audio.py",
-      "source_location": "L33",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "instrument_controller_controller",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
-      "source_location": "L37",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
-      "target": "instrument_controller_controller"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "instrument/controller.py",
@@ -18431,6 +18536,38 @@
       "source": "instrument_controller_rationale_62",
       "target": "instrument_controller_controller",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_controller_controller",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L33",
+      "weight": 0.8,
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "instrument_controller_controller",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "target": "instrument_controller_controller"
     },
     {
       "relation": "imports",
@@ -19324,17 +19461,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_instrument_audio.py",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_py",
-      "target": "instrument_harmony",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "instrument/harmony.py",
@@ -19431,6 +19557,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_harmony",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "tests/test_instrument_controller.py",
       "source_location": "L8",
       "weight": 1.0,
@@ -19504,27 +19641,6 @@
       "target": "instrument_harmony_gesture_quality"
     },
     {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_audio.py",
-      "source_location": "L8",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "instrument_harmony_chord",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
-      "source_location": "L70",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
-      "target": "instrument_harmony_chord"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "instrument/harmony.py",
@@ -19574,6 +19690,38 @@
       "source": "instrument_harmony_voice_lead",
       "target": "instrument_harmony_chord",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_harmony_chord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L8",
+      "weight": 0.8,
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "instrument_harmony_chord",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
+      "target": "instrument_harmony_chord"
     },
     {
       "relation": "imports",
@@ -19867,17 +20015,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
-      "source_location": "L70",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
-      "target": "instrument_harmony_voice_lead"
-    },
-    {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "instrument/harmony.py",
@@ -19886,6 +20023,28 @@
       "source": "instrument_harmony_rationale_142",
       "target": "instrument_harmony_voice_lead",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_harmony_voice_lead",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
+      "target": "instrument_harmony_voice_lead"
     },
     {
       "relation": "imports",
@@ -20199,27 +20358,6 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_audio.py",
-      "source_location": "L34",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "instrument_models_hand",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
-      "target": "instrument_models_hand"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "instrument/models.py",
@@ -20314,6 +20452,38 @@
       "source": "instrument_tracking_tracker",
       "target": "instrument_models_hand",
       "confidence_score": 0.5
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_models_hand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L34",
+      "weight": 0.8,
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "instrument_models_hand",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "target": "instrument_models_hand"
     },
     {
       "relation": "imports",
@@ -20596,27 +20766,6 @@
       "target": "instrument_models_hand"
     },
     {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_instrument_audio.py",
-      "source_location": "L34",
-      "weight": 0.8,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "instrument_models_frame",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "C:/Code/Github Serious/dance2music/tests/test_instrument_audio.py",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
-      "target": "instrument_models_frame"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "instrument/models.py",
@@ -20828,6 +20977,38 @@
       "source": "instrument_visuals_renderer_hud",
       "target": "instrument_models_frame",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio",
+      "target": "instrument_models_frame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L34",
+      "weight": 0.8,
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "instrument_models_frame",
+      "confidence_score": 0.5
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/test_instrument_audio.py",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "target": "instrument_models_frame"
     },
     {
       "relation": "imports",
@@ -25270,8 +25451,8 @@
       "source_file": "tests/__init__.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_init_rationale_1",
-      "target": "c_code_github_serious_dance2music_tests_init_py",
+      "source": "tests_init_rationale_1",
+      "target": "tests_init",
       "confidence_score": 1.0
     },
     {
@@ -25280,8 +25461,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L11",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_py",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
+      "source": "tests_test_instrument_audio",
+      "target": "tests_test_instrument_audio_audiotests",
       "confidence_score": 1.0
     },
     {
@@ -25290,8 +25471,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_rationale_1",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_py",
+      "source": "tests_test_instrument_audio_rationale_1",
+      "target": "tests_test_instrument_audio",
       "confidence_score": 1.0
     },
     {
@@ -25300,8 +25481,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L24",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "tests_test_instrument_audio_audiotests_test_chunk_continuity_and_note_transition",
       "confidence_score": 1.0
     },
     {
@@ -25310,8 +25491,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L65",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "tests_test_instrument_audio_audiotests_test_full_catalogue_audio_and_six_to_three_voice_release",
       "confidence_score": 1.0
     },
     {
@@ -25320,8 +25501,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L50",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "tests_test_instrument_audio_audiotests_test_invalid_inputs_fail",
       "confidence_score": 1.0
     },
     {
@@ -25330,8 +25511,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L32",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "tests_test_instrument_audio_audiotests_test_ordinary_hand_spacing_is_audible_and_master_volume_scales_output",
       "confidence_score": 1.0
     },
     {
@@ -25340,8 +25521,8 @@
       "source_file": "tests/test_instrument_audio.py",
       "source_location": "L12",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests",
-      "target": "c_code_github_serious_dance2music_tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
+      "source": "tests_test_instrument_audio_audiotests",
+      "target": "tests_test_instrument_audio_audiotests_test_silence_and_finite_bounded_chord",
       "confidence_score": 1.0
     },
     {
@@ -29969,7 +30150,7 @@
       "source_location": "L14",
       "weight": 1.0,
       "source": "web_live_live",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30660,7 +30841,7 @@
       "source_location": "L413",
       "weight": 1.0,
       "source": "web_live_live_applymix",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30671,7 +30852,7 @@
       "source_location": "L435",
       "weight": 1.0,
       "source": "web_live_live_applysens",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30682,7 +30863,7 @@
       "source_location": "L227",
       "weight": 1.0,
       "source": "web_live_live_draw",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30693,7 +30874,7 @@
       "source_location": "L338",
       "weight": 1.0,
       "source": "web_live_live_drawsphere",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30704,7 +30885,7 @@
       "source_location": "L212",
       "weight": 1.0,
       "source": "web_live_live_gestureactions",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30715,7 +30896,7 @@
       "source_location": "L576",
       "weight": 1.0,
       "source": "web_live_live_handreadout",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30726,7 +30907,7 @@
       "source_location": "L57",
       "weight": 1.0,
       "source": "web_live_live_listdevices",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30737,7 +30918,7 @@
       "source_location": "L32",
       "weight": 1.0,
       "source": "web_live_live_loadlandmarker",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30748,7 +30929,7 @@
       "source_location": "L375",
       "weight": 1.0,
       "source": "web_live_live_meters",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30759,7 +30940,7 @@
       "source_location": "L219",
       "weight": 1.0,
       "source": "web_live_live_mirror",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30770,7 +30951,7 @@
       "source_location": "L71",
       "weight": 1.0,
       "source": "web_live_live_opencamera",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30781,7 +30962,7 @@
       "source_location": "L82",
       "weight": 1.0,
       "source": "web_live_live_openfile",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30792,7 +30973,7 @@
       "source_location": "L454",
       "weight": 1.0,
       "source": "web_live_live_presetlist",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30803,7 +30984,7 @@
       "source_location": "L603",
       "weight": 1.0,
       "source": "web_live_live_rectick",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30814,7 +30995,7 @@
       "source_location": "L460",
       "weight": 1.0,
       "source": "web_live_live_rendermapping",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30825,7 +31006,7 @@
       "source_location": "L540",
       "weight": 1.0,
       "source": "web_live_live_showrules",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30836,7 +31017,7 @@
       "source_location": "L92",
       "weight": 1.0,
       "source": "web_live_live_start",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30847,7 +31028,7 @@
       "source_location": "L397",
       "weight": 1.0,
       "source": "web_live_live_status",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30858,7 +31039,7 @@
       "source_location": "L114",
       "weight": 1.0,
       "source": "web_live_live_stop",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -30869,7 +31050,7 @@
       "source_location": "L588",
       "weight": 1.0,
       "source": "web_live_live_togglerecord",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_live_live",
+      "target": "c_code_github_serious_dance2music_web_live_live",
       "confidence_score": 1.0
     },
     {
@@ -31444,7 +31625,7 @@
       "source_location": "L1",
       "weight": 1.0,
       "source": "web_vendor_katex_katex_min",
-      "target": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "target": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "confidence_score": 1.0
     },
     {
@@ -32792,7 +32973,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "source": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "target": "web_vendor_katex_katex_min_constructor",
       "confidence_score": 1.0
     },
@@ -32802,7 +32983,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "source": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "target": "web_vendor_katex_katex_min_hasclass",
       "confidence_score": 1.0
     },
@@ -32812,7 +32993,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "source": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "target": "web_vendor_katex_katex_min_setattribute",
       "confidence_score": 1.0
     },
@@ -32822,7 +33003,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "source": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "target": "web_vendor_katex_katex_min_tomarkup",
       "confidence_score": 1.0
     },
@@ -32832,7 +33013,7 @@
       "source_file": "web/vendor/katex/katex.min.js",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "users_anthonyhaber_documents_code_dance2music_web_vendor_katex_katex_min",
+      "source": "c_code_github_serious_dance2music_web_vendor_katex_katex_min",
       "target": "web_vendor_katex_katex_min_tonode",
       "confidence_score": 1.0
     },
@@ -37757,7 +37938,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
-      "source_location": "L35",
+      "source_location": "L37",
       "weight": 1.0,
       "source": "agents_project_context",
       "target": "agents_graphify",
@@ -37767,7 +37948,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
-      "source_location": "L26",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "agents_project_context",
       "target": "agents_spec_kit_platforms",
@@ -38077,6 +38258,16 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/ANTHONY_IDEAS.md",
+      "source_location": "L280",
+      "weight": 1.0,
+      "source": "docs_anthony_ideas",
+      "target": "specs_001_anthony_instrument_chord_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/ANTHONY_IDEAS.md",
       "source_location": "L32",
       "weight": 1.0,
       "source": "docs_anthony_ideas",
@@ -38287,6 +38478,16 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L302",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials",
+      "target": "specs_001_anthony_instrument_chord_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
       "source_location": "L194",
       "weight": 1.0,
       "source": "docs_feature_tutorials",
@@ -38301,6 +38502,16 @@
       "weight": 1.0,
       "source": "docs_feature_tutorials",
       "target": "specs_001_anthony_instrument_relative_root",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L325",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials",
+      "target": "specs_001_anthony_instrument_upstream_isolation",
       "confidence_score": 1.0
     },
     {
@@ -38391,6 +38602,16 @@
       "weight": 1.0,
       "source": "docs_feature_tutorials_feature_tutorials",
       "target": "docs_feature_tutorials_save_replay_or_use_video",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/FEATURE_TUTORIALS.md",
+      "source_location": "L321",
+      "weight": 1.0,
+      "source": "docs_feature_tutorials_feature_tutorials",
+      "target": "docs_feature_tutorials_separate_upstream_work",
       "confidence_score": 1.0
     },
     {
@@ -38869,8 +39090,48 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_md",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "source": "specs_001_anthony_instrument_chord_map",
+      "target": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/chord-map.md",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_chord_map",
+      "target": "specs_001_anthony_instrument_evidence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/decisions.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_decisions",
+      "target": "specs_001_anthony_instrument_chord_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/plan.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_plan",
+      "target": "specs_001_anthony_instrument_chord_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/quickstart.md",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_quickstart",
+      "target": "specs_001_anthony_instrument_chord_map",
       "confidence_score": 1.0
     },
     {
@@ -38879,8 +39140,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L52",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_sound_design",
+      "source": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "target": "specs_001_anthony_instrument_chord_map_approved_sound_design",
       "confidence_score": 1.0
     },
     {
@@ -38889,8 +39150,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L96",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_implementation_and_verification",
+      "source": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "target": "specs_001_anthony_instrument_chord_map_implementation_and_verification",
       "confidence_score": 1.0
     },
     {
@@ -38899,8 +39160,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L40",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_musical_vocabulary",
+      "source": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "target": "specs_001_anthony_instrument_chord_map_musical_vocabulary",
       "confidence_score": 1.0
     },
     {
@@ -38909,8 +39170,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L7",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_ordered_gesture_map",
+      "source": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "target": "specs_001_anthony_instrument_chord_map_ordered_gesture_map",
       "confidence_score": 1.0
     },
     {
@@ -38919,8 +39180,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L122",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_reference_material",
+      "source": "specs_001_anthony_instrument_chord_map_approved_complete_hand_pair_chord_catalogue",
+      "target": "specs_001_anthony_instrument_chord_map_reference_material",
       "confidence_score": 1.0
     },
     {
@@ -38929,8 +39190,8 @@
       "source_file": "specs/001-anthony-instrument/chord-map.md",
       "source_location": "L66",
       "weight": 1.0,
-      "source": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_approved_sound_design",
-      "target": "c_code_github_serious_dance2music_specs_001_anthony_instrument_chord_map_tone_sets_for_the_new_qualities",
+      "source": "specs_001_anthony_instrument_chord_map_approved_sound_design",
+      "target": "specs_001_anthony_instrument_chord_map_tone_sets_for_the_new_qualities",
       "confidence_score": 1.0
     },
     {
@@ -39736,6 +39997,36 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_upstream_isolation",
+      "target": "specs_001_anthony_instrument_upstream_isolation_keep_anthony_s_branches_separate_\u00e2_2026_10_13",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_upstream_isolation_keep_anthony_s_branches_separate_\u00e2_2026_10_13",
+      "target": "specs_001_anthony_instrument_upstream_isolation_audit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "specs/001-anthony-instrument/upstream-isolation.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "specs_001_anthony_instrument_upstream_isolation_keep_anthony_s_branches_separate_\u00e2_2026_10_13",
+      "target": "specs_001_anthony_instrument_upstream_isolation_cleanup_contract",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "status.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -40071,6 +40362,16 @@
       "weight": 1.0,
       "source": "status_project_status",
       "target": "status_2026_10_12_split_ball_energy_transfer_verification",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "status.md",
+      "source_location": "L669",
+      "weight": 1.0,
+      "source": "status_project_status",
+      "target": "status_2026_10_13_isolate_anthony_exploration_from_upstream_work",
       "confidence_score": 1.0
     },
     {
@@ -40615,5 +40916,5 @@
       "source_file": "web/methods.html"
     }
   ],
-  "built_at_commit": "2a5dcb18d37a8f19795b0f714d076e126b399275"
+  "built_at_commit": "83433fc1a68b6e5101d925489d05b0fd36893857"
 }

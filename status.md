@@ -665,3 +665,19 @@
 - Outstanding: Restart Python and retest both-hand combinations on camera; listen
   to the fuller extensions. Automated results do not establish model accuracy or
   performer acceptance. Additional jazz alterations, MIDI and spells remain future work.
+
+## 2026-10-13 - Isolate Anthony exploration from upstream work
+
+- State: Imported main content undone locally at user request, preserving all
+  existing Anthony commits. Tracked executable files now match 1ee972f exactly.
+- Governance: .specify/.agents match the pre-merge versions; our constitution and
+  Spec Kit installation were never replaced. AGENTS.md requires explicit
+  authorization for specific future upstream imports.
+- Changes: Remove Samir pose/observation ZIP and separate microphone exports;
+  retain the earlier web recorder and the native Python instrument. Other two
+  branches retain their independent web/MIDI features after targeted cleanup.
+- Verification: Native files/entry points byte-identical to 1ee972f; audit recorded
+  in upstream-isolation.md. No remote history rewrite or cleanup push.
+- Native regression suite: 59 passed + 32 subtests; Windows sandbox blocked
+  temporary export fixtures, then the approved retry passed. Local AST refresh:
+  1,442 nodes, 2,478 edges, 153 communities, no API cost.

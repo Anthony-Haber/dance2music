@@ -317,3 +317,9 @@ See the [approved map and tone sets](../specs/001-anthony-instrument/chord-map.m
 **R:** reset to C major, unlocked, one ball. **Q / Escape:** quit.
 Body/wrist loss mutes sound; hand-detail loss preserves the body-driven ball and
 audio. Reopen your hands after gesture tracking returns before another fist toggle.
+
+## Separate upstream work
+
+Anthony exploration retains the earlier video/audio recorder. Samir's separate
+pose/observation ZIP and microphone work is excluded. See the
+[branch isolation audit](../specs/001-anthony-instrument/upstream-isolation.md).

@@ -6,8 +6,6 @@ import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapp
 import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
-import { modelAsset, runtimeIdentity } from './model-assets.js';
-import { snapshotPose, handDisplayState } from './observations.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -21,7 +19,6 @@ const store = {
 };
 
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
-let poseModel = null, modelGeneration = 0, currentSource = null;
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
@@ -33,32 +30,23 @@ const exists = async url => { try { return (await fetch(url, { method: 'HEAD' })
 
 async function loadLandmarker() {
   const model = $('model').value;
-  const generation = ++modelGeneration;
   if (landmarker && landmarkerKey === model) return landmarker;
   status('loading pose model…');
   if (!vision) {
     const local = await exists(LOCAL + 'vision_bundle.mjs');
     const base = local ? new URL(LOCAL, location.href).href : MP;
     const mod = await import(base + 'vision_bundle.mjs');
-    vision = { mod, fileset: await mod.FilesetResolver.forVisionTasks(base + 'wasm'), local, base };
+    vision = { mod, fileset: await mod.FilesetResolver.forVisionTasks(base + 'wasm'), local };
   }
   const localModel = LOCAL + `pose_landmarker_${model}.task`;
   const path = (await exists(localModel)) ? localModel : MODEL(model);
-  const asset = await modelAsset(path);
-  const opts = delegate => ({ baseOptions: { modelAssetBuffer: asset.bytes, delegate }, runningMode: 'VIDEO',
+  if (landmarker) landmarker.close();
+  const opts = delegate => ({ baseOptions: { modelAssetPath: path, delegate }, runningMode: 'VIDEO',
                               numPoses: 1, minPoseDetectionConfidence: 0.5,
                               minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
-  let delegate = 'GPU', loaded;
-  try { loaded = await vision.mod.PoseLandmarker.createFromOptions(vision.fileset, opts(delegate)); }
-  catch (e) { delegate = 'CPU'; loaded = await vision.mod.PoseLandmarker.createFromOptions(vision.fileset, opts(delegate)); }
-  if (generation !== modelGeneration) { loaded.close(); return landmarker; }
-  if (landmarker) landmarker.close();
-  landmarker = loaded;
+  try { landmarker = await vision.mod.PoseLandmarker.createFromOptions(vision.fileset, opts('GPU')); }
+  catch (e) { landmarker = await vision.mod.PoseLandmarker.createFromOptions(vision.fileset, opts('CPU')); }
   landmarkerKey = model;
-  poseModel = { family: 'PoseLandmarker', quality: model, asset: path, asset_sha256: asset.sha256,
-    runtime: runtimeIdentity(vision), delegate: delegate.toLowerCase(), running_mode: 'video', num_poses: 1,
-    detection_threshold: 0.5, presence_threshold: 0.5, tracking_threshold: 0.5, segmentation_masks: false };
-  recordConfiguration();
   return landmarker;
 }
 
@@ -87,8 +75,6 @@ async function openCamera() {
     deviceId: id ? { exact: id } : undefined, width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: 60 } } });
   v.srcObject = stream; v.src = '';
   await v.play();
-  currentSource = { id: crypto.randomUUID(), type: 'camera', width: v.videoWidth, height: v.videoHeight };
-  recordConfiguration();
   await listDevices();               // labels appear only after permission
 }
 
@@ -98,9 +84,6 @@ async function openFile() {
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
   v.srcObject = null; v.src = URL.createObjectURL(f); v.loop = true; v.muted = true;
   await v.play();
-  currentSource = { id: crypto.randomUUID(), type: 'file', file_name: f.name, size_bytes: f.size,
-    last_modified_ms: f.lastModified, width: v.videoWidth, height: v.videoHeight };
-  recordConfiguration();
 }
 
 async function start() {
@@ -119,8 +102,7 @@ async function start() {
     applyMix(); applySens();
     watchAudio();
     running = true; $('hint').hidden = true; $('badge').hidden = false;
-    $('go').textContent = 'Stop'; $('go').disabled = false;
-    $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
+    $('go').textContent = 'Stop'; $('go').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
   } catch (e) {
     status('could not start: ' + e.message); $('go').disabled = false;
@@ -128,8 +110,7 @@ async function start() {
 }
 
 async function stop() {
-  if (recorder.starting) cancelRecordingStart();
-  if (recorder.recording) await finishRecording();
+  if (recorder.active) await toggleRecord();
   $('rec').disabled = true;
   running = false;
   if (stream) stream.getTracks().forEach(t => t.stop());
@@ -152,35 +133,26 @@ document.addEventListener('visibilitychange', () => {
 // ── the loop: one pose per new video frame ────────────────────────────
 function loop() {
   if (!running) return;
-  let lastVideoTime = null;
   const next = () => (v.requestVideoFrameCallback ? v.requestVideoFrameCallback(frame) : requestAnimationFrame(frame));
   function frame(nowCb, meta) {
     if (!running) return;
     if (v.readyState >= 2 && landmarker) {
-      if (!meta && v.currentTime === lastVideoTime) { next(); return; }
-      lastVideoTime = v.currentTime;
       const now = performance.now(), W = v.videoWidth, H = v.videoHeight;
       // when the camera took this frame (same clock as performance.now); the
       // bounce tracker and the groove use it so the beat lands on the real body
       const capMs = (meta && (meta.captureTime || meta.expectedDisplayTime)) || now;
-      const timing = { nowMs: now, mediaTime: meta?.mediaTime ?? v.currentTime,
-        captureTime: meta?.captureTime, expectedDisplayTime: meta?.expectedDisplayTime,
-        presentedFrames: meta?.presentedFrames };
-      let rawPose = null, rawHands = { mode: hands.mode, status: 'skipped', reason: 'pose_error', inferences: [] };
-      try { landmarker.detectForVideo(v, now, res => {
+      landmarker.detectForVideo(v, now, res => {
         inferMs = performance.now() - now;
-        rawPose = recorder.active ? snapshotPose(res) : null;
         const lms = res.landmarks && res.landmarks[0];
         const t = (now - t0) / 1000;
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
-        try { rawHands = hands.detect(v, f, now, recorder.active); }
-        catch (error) { rawHands = { mode: hands.mode, status: 'error', error: error.message, inferences: [] }; }
         if (f) {
           // hips: raw landmark heights (no smoothing: the filter is the smoothing)
           const lh = lms[23], rh = lms[24];
           if (lh && rh && (lh.visibility ?? 1) > 0.5 && (rh.visibility ?? 1) > 0.5)
             lastBounce = bounce.update(-((lh.y + rh.y) / 2) * H / f.L, capMs / 1000);
           lastCapMs = capMs;
+          hands.detect(v, f, now);
           const bo = lastBounce;
           Object.assign(f, hands.sources(), { bounce: bo ? bo.prob : 0,
                                               bounceTempoN: bo ? Math.min(1, Math.max(0, (bo.tempo - 50) / 130)) : 0 });
@@ -197,18 +169,7 @@ function loop() {
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
         } else engine.idle();
         lastF = f;
-        if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
-          pose: rawPose, hands: rawHands,
-          analysis: { features: f, hand_display_state: handDisplayState(hands, recorder.t0),
-            bounce: lastBounce, chord: follower.chord(), mapped_controls: f ? lastVals : null,
-            drums_enabled: drumsEnabled, bounce_gate: bounceOn, chord_held: frozen,
-            feature_clock_offset_s: (t0 - recorder.t0) / 1000,
-            gesture_transitions: f ? frameGestureEvents : [] } });
-      }); } catch (error) {
-        if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
-          pose: rawPose || snapshotPose(null, error.message), hands: rawHands, analysis: null, analysis_error: error.message });
-        status('frame analysis failed: ' + error.message);
-      }
+      });
       fpsT.push(now); while (fpsT.length && fpsT[0] < now - 1000) fpsT.shift();
       draw();
     }
@@ -234,16 +195,13 @@ const DEFAULT_ACTIONS = { Closed_Fist: 'hold', Open_Palm: 'none', Pointing_Up: '
                           Thumb_Down: 'drumsOff', Victory: 'nextPreset', ILoveYou: 'mute' };
 let actions = { ...DEFAULT_ACTIONS, ...store.get('actions', {}) };
 let frozen = false, drumsEnabled = true, lastG = { L: 'None', R: 'None' }, gestureLog = '';
-let frameGestureEvents = [];
 function gestureActions(t) {
-  frameGestureEvents = [];
   frozen = false;
   for (const side of ['L', 'R']) {
     const h = hands[side], g = h.seen ? h.gesture : 'None';
     if (actions[g] === 'hold') frozen = true;
     if (g === lastG[side]) continue;
     lastG[side] = g;
-    frameGestureEvents.push({ side, gesture: g, action: actions[g] || 'none' });
     const a = actions[g]; if (!a || a === 'none' || a === 'hold') continue;
     if (a === 'drumsOn') drumsEnabled = true;
     else if (a === 'drumsOff') drumsEnabled = false;
@@ -550,11 +508,7 @@ $('syncOff').oninput = () => { store.set('syncOff', +$('syncOff').value); $('syn
 $('accent').value = store.get('accent', 'down'); $('accent').onchange = () => store.set('accent', $('accent').value);
 $('handMode').value = store.get('handMode', 'off');
 $('handMode').onchange = async () => { store.set('handMode', $('handMode').value);
-  if (running && vision) { status('loading hand model…');
-    const loading = hands.load(vision, $('handMode').value); recordConfiguration();
-    try { await loading; status('hands: ' + hands.mode); }
-    catch (error) { status('could not load hands: ' + error.message); }
-    finally { recordConfiguration(); } } };
+  if (running && vision) { status('loading hand model…'); await hands.load(vision, $('handMode').value); status('hands: ' + $('handMode').value); } };
 $('gestures').innerHTML = GESTURES.map(gname => `<span>${gname.replace('_', ' ')}</span><select data-g="${gname}">` +
   ACTIONS.map(([k, n]) => `<option value="${k}" ${actions[gname] === k ? 'selected' : ''}>${n}</option>`).join('') + '</select>').join('');
 $('gestures').onchange = e => { const gname = e.target.dataset.g; if (!gname) return;
@@ -595,9 +549,8 @@ $('source').onchange = () => { store.set('source', $('source').value);
   $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file'; };
 $('cam').onchange = async () => { store.set('cam', $('cam').value); if (running && stream) await openCamera(); };
 $('res').onchange = async () => { store.set('res', $('res').value); if (running && stream) await openCamera(); };
-$('mirror').onchange = () => { store.set('mirror', $('mirror').value); recordConfiguration(); };
-$('model').onchange = async () => { store.set('model', $('model').value);
-  if (running) try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); } };
+$('mirror').onchange = () => store.set('mirror', $('mirror').value);
+$('model').onchange = async () => { store.set('model', $('model').value); if (running) await loadLandmarker(); };
 $('out').onchange = async () => { store.set('out', $('out').value);
   if (engine.ctx && engine.ctx.setSinkId) await engine.ctx.setSinkId($('out').value || ''); };
 $('file').onchange = () => { if (running) openFile(); };
@@ -628,126 +581,20 @@ function handReadout() {
 }
 
 // ── recording ───────────────────────────────────────────────────────
-function recordingConfiguration() {
-  return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
-    pose_model: poseModel, hands: hands.configuration(),
-    preview_mirrored: mirror(), video_mirrored: mirror(),
-    harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
-    drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
-}
-function recordConfiguration() {
-  if (recorder.active) recorder.configuration(recordingConfiguration());
-}
-// Also capture control changes between inference frames (e.g. while hidden).
-document.querySelector('aside').addEventListener('change', recordConfiguration);
-
-function downloadLink({ name, url }) {
-  const a = document.createElement('a'); a.href = url; a.download = name; a.textContent = name; return a;
-}
-function packagingProgress(progress) { $('recMsg').textContent = `Preparing recording bundle… ${progress ?? 0}%`; }
-// A fresh page always starts with microphone capture off, including form restoration.
-$('recMic').checked = false;
-window.addEventListener('pageshow', () => { if (!recorder.starting && !recorder.recording) $('recMic').checked = false; });
-let recordingStartGeneration = 0;
-function lockRecordingOptions(locked) { $('recMic').disabled = locked; $('recWhat').disabled = locked; }
-function cancelRecordingStart() {
-  ++recordingStartGeneration; recorder.cancelStart(); lockRecordingOptions(false);
-  $('micMsg').hidden = true;
-  $('rec').textContent = '● Record'; $('recMsg').textContent = 'Recording cancelled.';
-}
-function microphoneStatus(mic = recorder.microphone) {
-  const message = $('micMsg');
-  message.hidden = !mic?.selected;
-  if (!mic?.selected) return;
-  message.classList.toggle('warning', ['unavailable', 'interrupted', 'no_audio'].includes(mic.outcome));
-  const descriptions = {
-    pending: 'Microphone: waiting for permission…',
-    recording: 'Microphone capture active — saved as a separate audio file.',
-    complete: 'Microphone audio captured as a separate file.',
-    unavailable: 'Microphone unavailable. No microphone file will be included.',
-    interrupted: 'Microphone capture was interrupted. Any captured audio is kept in the ZIP.',
-    no_audio: 'No microphone audio was captured. The ZIP has no microphone file.',
-  };
-  message.textContent = descriptions[mic.outcome] + (mic.error ? ' ' + mic.error : '');
-}
-function recordingStatus() {
-  let message = 'Recording movement data and ' + ($('recWhat').value === 'audio' ? 'sound' : 'video + sound');
-  const mic = recorder.microphone;
-  if (mic?.selected) message += mic.outcome === 'recording' ? '. Microphone capture active (separate file).'
-    : `. Microphone ${mic.outcome === 'interrupted' ? 'interrupted' : 'unavailable'}: ${mic.error}`;
-  $('recMsg').textContent = message;
-  microphoneStatus();
-}
-let finishingRecording = null;
-function finishRecording(retry = false) {
-  if (finishingRecording) return finishingRecording;
-  finishingRecording = (async () => {
-    $('rec').disabled = true; $('recDot').hidden = true;
-    $('rec').classList.remove('on'); $('rec').textContent = 'Preparing…';
-    packagingProgress(0);
-    try {
-      const r = await (retry ? recorder.retry(packagingProgress) : recorder.stop(packagingProgress));
-      if (r) {
-        microphoneStatus(r.microphone);
-        const a = downloadLink(r);
-        $('recMsg').replaceChildren(document.createTextNode(`Bundle ready (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s, ${r.observations} observations). Download again: `), a);
-        a.click();
-        if (r.mediaError) $('recMsg').append(document.createTextNode(' Media was interrupted: ' + r.mediaError));
-        if (r.microphone?.selected) $('recMsg').append(document.createTextNode(
-          r.microphone.outcome === 'complete' ? ' Separate microphone audio included.'
-            : r.microphone.outcome === 'no_audio' ? ' No microphone audio was captured.'
-              : ` Microphone ${r.microphone.outcome}: ${r.microphone.error}`));
-      }
-    } catch (error) {
-      microphoneStatus();
-      $('recMsg').textContent = 'Could not package recording: ' + error.message + '. ';
-      const retryButton = document.createElement('button'); retryButton.textContent = 'Retry ZIP';
-      retryButton.onclick = () => finishRecording(true); $('recMsg').append(retryButton);
-      for (const file of recorder.recoveryFiles()) $('recMsg').append(' ', downloadLink(file));
-      const discard = document.createElement('button'); discard.textContent = 'Clear recording';
-      discard.onclick = () => { recorder.pending = null; recorder.releaseDownloads();
-        $('micMsg').hidden = true;
-        $('recMsg').textContent = ''; $('rec').disabled = !running; };
-      $('recMsg').append(' ', discard);
-    } finally {
-      lockRecordingOptions(false);
-      $('rec').textContent = '● Record'; $('rec').disabled = !running || !!recorder.pending;
-      finishingRecording = null;
-    }
-  })();
-  return finishingRecording;
-}
 async function toggleRecord() {
-  if (finishingRecording || recorder.busy || recorder.pending) return;
-  if (recorder.starting) { cancelRecordingStart(); return; }
-  if (!recorder.recording) {
-    const generation = ++recordingStartGeneration;
-    lockRecordingOptions(true);
-    microphoneStatus({ selected: $('recMic').checked, outcome: 'pending' });
+  if (!recorder.active) {
     try {
-      const starting = recorder.start({ engine, video: v, overlay: cv, mirror,
+      const type = recorder.start({ engine, video: v, overlay: cv, mirror,
         audioOnly: $('recWhat').value === 'audio',
-        recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
-        configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
         label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
-      if (recorder.starting) {
-        $('rec').textContent = 'Cancel recording';
-        $('recMsg').textContent = 'Waiting for microphone permission… Press Cancel recording to cancel.';
-      }
-      const type = await starting;
-      if (generation !== recordingStartGeneration || !type) return;
       $('rec').classList.add('on'); $('rec').textContent = '■ Stop recording'; $('recDot').hidden = false;
       status('recording ' + type.split(';')[0]);
-      recordingStatus();
       recTick();
-    } catch (e) {
-      if (generation !== recordingStartGeneration) return;
-      lockRecordingOptions(false); $('rec').textContent = '● Record';
-      $('micMsg').hidden = true;
-      $('recMsg').textContent = 'Could not record: ' + e.message; status('could not record: ' + e.message);
-    }
+    } catch (e) { status('could not record: ' + e.message); }
   } else {
-    await finishRecording();
+    const r = await recorder.stop();
+    $('rec').classList.remove('on'); $('rec').textContent = '● Record'; $('recDot').hidden = true;
+    if (r) $('recMsg').textContent = `saved ${r.name} (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s) to your downloads`;
   }
 }
 function recTick() {
