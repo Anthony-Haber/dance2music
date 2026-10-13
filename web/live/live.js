@@ -12,6 +12,7 @@ import { InstrumentController } from './instrument-controller.js';
 import { InstrumentFrames, instrumentChord, cameraConstraints } from './instrument-frame.js';
 import { ROOT_NAMES, QUALITY_ROWS, SUFFIXES, symbol, rootColor } from './instrument-harmony.js';
 import { DIRECTIONS, STEP_ROWS, handOrigins } from './instrument-root.js';
+import { MidiOutput } from './midi.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -27,6 +28,7 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 let poseModel = null, modelGeneration = 0, currentSource = null;
 const feats = new Features(), engine = new Engine();
+const midi = new MidiOutput({ notify: midiStatus });
 const phone = new URLSearchParams(location.search).has('phone');
 const initialMode = store.get('mode', 'instrument');
 let follower = new ChordFollower(initialMode === 'instrument' ? 'six' : initialMode);
@@ -144,6 +146,7 @@ async function start() {
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
     loop();
   } catch (e) {
+    midi.silence(true);
     if (stream) stream.getTracks().forEach(track => track.stop());
     stream = null; v.pause(); await engine.stop();
     status('could not start: ' + e.message); $('go').disabled = false;
@@ -151,10 +154,11 @@ async function start() {
 }
 
 async function stop() {
+  running = false;
+  midi.silence(true);
   if (recorder.starting) cancelRecordingStart();
   if (recorder.recording) await finishRecording();
   $('rec').disabled = true;
-  running = false;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
   await engine.stop();
@@ -172,6 +176,7 @@ function watchAudio() {
 }
 $('tap').onclick = () => { engine.unlock(); setTimeout(() => { if (engine.ctx) $('tap').hidden = engine.ctx.state === 'running'; }, 300); };
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) midi.silence(true);
   if (document.hidden && running) engine.idle();
   if (!document.hidden && running && engine.ctx && engine.ctx.state !== 'running') $('tap').hidden = false; });
 
@@ -208,6 +213,7 @@ function loop() {
             sparks = []; sparkGroups = {};
           }
           controllerMs = performance.now() - started; instrumentReadout();
+          if (!document.hidden) midi.update({ ...lastInstrument, gain: midiGain(lastInstrument.gain) });
         }
         if (f) {
           // hips: raw landmark heights (no smoothing: the filter is the smoothing)
@@ -230,7 +236,7 @@ function loop() {
                           offsetMs: +$('syncOff').value, accent: $('accent').value };
           engine.update(f, lastVals, DESTS, mirror(), drums);
           for (const ev of f.events) flashes.push({ ...ev, t0: now });
-        } else engine.idle();
+        } else { engine.idle(); midi.silence(); }
         lastF = f;
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose, hands: rawHands,
@@ -244,7 +250,7 @@ function loop() {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose || snapshotPose(null, error.message), hands: rawHands, analysis: null, analysis_error: error.message });
         status('frame analysis failed: ' + error.message);
-        engine.idle(); lastF = null;
+        engine.idle(); midi.silence(); lastF = null;
         if (isInstrument() && now / 1000 > (instrument.last_time ?? -1)) {
           lastInstrument = instrument.update(instrumentFrames.read(null, hands, now / 1000, W, H));
           instrumentReadout();
@@ -533,7 +539,7 @@ function applyMix() {
     engine.level(k, m.mute ? 0 : m.vol);
     $('mv-' + k.replace(' ', '_')).textContent = Math.round(m.vol * 100) + '%';
   }
-  engine.masterLevel(mix.master.vol); $('mv-master').textContent = Math.round(mix.master.vol * 100) + '%';
+  engine.masterLevel(isInstrument() && $('soundRoute').value === 'midi' ? 0 : mix.master.vol); $('mv-master').textContent = Math.round(mix.master.vol * 100) + '%';
   store.set('mix', mix);
 }
 $('mix').addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return;
@@ -676,12 +682,13 @@ function showRules() {
     (m === 'six' ? '<div class="note">“hands” = their midpoint, relative to your torso; left/right as you face the camera</div>' : '');
 }
 $('mode').onchange = () => {
+  midi.silence(true);
   store.set('mode', $('mode').value);
   follower = new ChordFollower(isInstrument() ? 'six' : $('mode').value);
   instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
   hands.instrument = isInstrument(); hands.L.reset(); hands.R.reset();
   if (isInstrument() && $('handMode').value === 'off') { $('handMode').value = 'far'; $('handMode').onchange(); }
-  showRules(); instrumentReadout(); if (engine.ctx) engine.setChord(currentChord(), true);
+  showRules(); instrumentReadout(); configureMidi(); if (engine.ctx) { applyMix(); engine.setChord(currentChord(), true); }
 };
 hands.instrument = isInstrument();
 if (isInstrument() && $('handMode').value === 'off') $('handMode').value = 'far';
@@ -689,6 +696,7 @@ $('rootMode').value = instrument.root_mode;
 $('rootMode').onchange = () => { instrument.setRootMode($('rootMode').value); store.set('rootMode', instrument.root_mode); instrumentReadout(); };
 $('mergeBall').onclick = () => { instrument.merge(); sparks = []; sparkGroups = {}; };
 $('resetInstrument').onclick = () => {
+  midi.silence(true);
   instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {}; instrumentReadout();
   if (engine.ctx) { engine.idle(); engine.setChord(currentChord(), true); }
 };
@@ -763,7 +771,9 @@ function recordingConfiguration() {
     preview_mirrored: mirror(), video_mirrored: mirror(),
     harmony_mode: $('mode').value, instrument: isInstrument() ? { ...instrument.config, root_mode: instrument.root_mode } : null,
     mapping, sensitivity: P, gesture_actions: isInstrument() ? {} : actions,
-    drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
+    drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value,
+    midi: { route: $('soundRoute').value, channel: +$('midiChannel').value,
+      kind: $('midiKind').value, output_name: midi.port?.name || null } };
 }
 function recordConfiguration() {
   if (recorder.active) recorder.configuration(recordingConfiguration());
@@ -887,3 +897,39 @@ function recTick() {
   setTimeout(recTick, 250);
 }
 $('rec').onclick = () => toggleRecord();
+
+// MIDI is optional and enabled only by explicit desktop interaction. Do not
+// restore a port/route from storage: opening the page must never start MIDI.
+function midiStatus(message) {
+  $('midiStatus').textContent = message;
+  const select = $('midiPort');
+  select.replaceChildren(new Option('Select a MIDI port', ''));
+  for (const port of midi.ports()) select.add(new Option(port.name || port.id, port.id));
+  select.value = midi.port?.id || '';
+}
+function configureMidi() {
+  midi.configure({ enabled: isInstrument() && $('soundRoute').value !== 'browser',
+    channel: +$('midiChannel').value, kind: $('midiKind').value });
+}
+function midiGain(gain) {
+  return Math.min(1, Math.max(0, gain * mix.master.vol * (mix.pad.mute ? 0 : mix.pad.vol)));
+}
+for (let channel = 1; channel <= 16; channel++) $('midiChannel').add(new Option(String(channel), String(channel)));
+$('midiConnect').onclick = async () => {
+  $('midiConnect').disabled = true;
+  try { await midi.connect(); } finally { $('midiConnect').disabled = false; }
+};
+$('midiPort').onchange = () => midi.select($('midiPort').value);
+for (const id of ['midiChannel', 'midiKind', 'soundRoute']) $(id).onchange = () => {
+  configureMidi(); if (engine.ctx) applyMix();
+  $('midiStatus').textContent = !isInstrument() ? 'Choose Anthony instrument mode for MIDI.' :
+    $('soundRoute').value === 'browser' ? 'MIDI off. Browser sound only.' :
+    midi.port ? 'MIDI ready. ' + ($('midiKind').value === 'root' ? 'One root note; quality gestures do not change the MIDI note yet.' : 'All chord notes.') : 'Select a MIDI output port.';
+};
+$('midiPanic').onclick = () => {
+  midi.silence(true); $('soundRoute').value = 'browser'; $('soundRoute').onchange();
+};
+window.addEventListener('pagehide', () => midi.silence(true));
+window.addEventListener('beforeunload', () => midi.silence(true));
+setInterval(() => midi.watchdog(), 100);
+configureMidi();

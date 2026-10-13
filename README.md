@@ -84,6 +84,9 @@ now been translated into JavaScript on explicit request; true 3D remains deferre
 Choose **Anthony instrument · 300 chords** in the browser. For iPhone camera and
 sound, run `python live.py --phone` and follow the printed certificate setup URL.
 See [browser and iPhone instructions](docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
+Desktop Chrome/Edge/Firefox can also send all chord notes or one root note to
+Ableton through the **Ableton / MIDI** section and a local virtual MIDI port.
+See the [desktop MIDI setup](docs/FEATURE_TUTORIALS.md#desktop-browser-midi-to-ableton).
 The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
 model/device checks, measured latency and the remaining performer/listening review.
 For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).

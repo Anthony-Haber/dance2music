@@ -40,8 +40,20 @@ async function main() {
   try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      window.midiMessages = [];
+      const port = { id: 'test-port', name: 'dance2music test virtual port', state: 'connected',
+        async open() {}, async close() {}, send(message) { window.midiMessages.push([...message]); } };
+      window.testMidiAccess = { outputs: new Map([[port.id, port]]) };
+      Object.defineProperty(navigator, 'requestMIDIAccess', { value: async () => window.testMidiAccess });
+    });
     await page.route('**/vision_bundle.mjs', route => route.fulfill({ body: model, contentType: 'text/javascript' }));
     await page.route('**/*.task', route => route.fulfill({ body: 'fixture-model', contentType: 'application/octet-stream' }));
+    await page.route('**/audio.js', route => {
+      const source = fs.readFileSync(path.join(root, 'web/live/audio.js'), 'utf8').replace('export class Engine', 'class BrowserEngine');
+      return route.fulfill({ contentType: 'text/javascript', body: source +
+        '\nexport class Engine extends BrowserEngine { constructor() { super(); globalThis.testEngine = this; } }' });
+    });
     await page.goto('http://127.0.0.1:5098/web/live/?phone=1');
     assert.equal(await page.locator('#mode').inputValue(), 'instrument');
     assert.equal(await page.locator('#model').inputValue(), 'lite');
@@ -94,6 +106,47 @@ async function main() {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.locator('#mode').selectOption('instrument');
     await page.screenshot({ path: path.join(output, 'desktop-controls.png') });
+    // Desktop MIDI controls exercise the actual app and a synthetic MIDI port.
+    await page.locator('#midiConnect').click();
+    await page.locator('#midiPort').selectOption('test-port');
+    await page.waitForFunction(() => document.querySelector('#midiStatus').textContent.includes('MIDI connected'));
+    await page.locator('#soundRoute').selectOption('midi');
+    await page.locator('#go').click();
+    await page.waitForFunction(() => window.midiMessages.some(m => m[0] === 144));
+    assert.equal(await page.locator('#soundRoute').inputValue(), 'midi');
+    await page.waitForFunction(() => window.testEngine.master.gain.value < 0.001);
+    await page.locator('#midiKind').selectOption('root');
+    await page.waitForTimeout(150);
+    await page.evaluate(() => { window.midiMessages = []; });
+    await page.waitForTimeout(350);
+    assert.equal(await page.evaluate(() => window.midiMessages.filter(m => m[0] === 144).length), 0, 'held root retriggered');
+    await page.evaluate(() => { window.testLoss = true; });
+    await page.waitForFunction(() => window.midiMessages.some(m => m[0] === 128));
+    await page.evaluate(() => { window.testLoss = false; });
+    await page.waitForFunction(() => window.midiMessages.some(m => m[0] === 144));
+    await page.evaluate(() => {
+      window.midiMessages = [];
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => window.midiMessages.filter(m => m[0] === 128).length), 1);
+    assert.equal(await page.evaluate(() => window.midiMessages.filter(m => m[0] === 144).length), 0);
+    await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
+    await page.waitForFunction(() => window.midiMessages.some(m => m[0] === 144));
+    await page.locator('#midiPanic').click();
+    assert.equal(await page.locator('#soundRoute').inputValue(), 'browser');
+    await page.waitForFunction(() => window.testEngine.master.gain.value > 0.5);
+    await page.locator('#soundRoute').selectOption('both');
+    await page.waitForTimeout(200);
+    await page.evaluate(() => { window.midiMessages = []; });
+    await page.locator('#go').click();
+    await page.waitForFunction(() => document.querySelector('#go').textContent === 'Start');
+    assert.equal(await page.evaluate(() => window.midiMessages.filter(m => m[0] === 128).length), 1);
+    await page.locator('#midiKind').selectOption('chord');
+    await page.locator('#soundRoute').selectOption('midi');
+    await page.locator('#midiConnect').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(output, 'desktop-midi.png') });
     const samples = await page.evaluate(async () => {
       const { Engine } = await import('/web/live/audio.js');
       const synth = new Engine(); synth.ctx = new OfflineAudioContext(1, 48000, 48000); synth.timbre = 'native';
@@ -126,7 +179,8 @@ async function main() {
     fs.writeFileSync(path.join(output, 'browser-results.json'), JSON.stringify({ passed: true, errors,
       browser: await browser.version(), synthetic: true,
       checks: ['phone defaults','start/audio','neutral','transfer','merge','split','quality','root mode','near hand uniqueness','loss',
-        'recording ZIP','stop','legacy mode','mobile layout','desktop controls'] }, null, 2));
+        'recording ZIP','stop','legacy mode','mobile layout','desktop controls',
+        'MIDI selection','MIDI root hold','MIDI tracking loss','MIDI hidden release','MIDI panic','MIDI stop'] }, null, 2));
     console.log('Browser smoke passed: phone/desktop controls, gestures, tracking loss, recording ZIP, legacy modes.');
   } finally { await browser.close(); }
 }

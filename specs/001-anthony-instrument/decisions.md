@@ -245,3 +245,14 @@ He selected tracking and sound on the iPhone; the laptop serves the website.
 The [web-port contract](web-port.md) records preserved Python behavior and
 browser adaptations. Future spells, games and 3D were not included as implemented
 features. Existing thresholds/maps remain authoritative and unchanged.
+
+## Desktop MIDI authorization, 2026-10-13
+
+Anthony now requested desktop Chrome/Edge/Firefox routing and chose both
+**All chord notes** and **One root note** under an Ableton section. This supersedes
+the preceding exclusion for desktop MIDI only; phone MIDI is deferred. The
+[desktop MIDI contract](desktop-midi.md) records Python-first validation,
+browser adaptation, explicit permission/port selection and note release behavior.
+Root-only currently ignores quality changes in MIDI; Anthony explicitly requested
+T075 to define their future musical effect. All-note mode preserves native voiced
+pitches, but uses discrete MIDI pitch changes rather than Web Audio glides.

@@ -227,3 +227,8 @@ instrument**, and Start. For iPhone tracking and sound, use `python live.py --ph
 and follow its local certificate setup URL. See the
 [browser/iPhone tutorial](../../docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser)
 and [port contract](web-port.md). The native commands below remain supported.
+
+For desktop Ableton output, use the browser's **Ableton / MIDI** section, connect
+your virtual MIDI port, choose all chord notes or one root note, and select MIDI
+only or Browser + MIDI. See the
+[desktop MIDI tutorial](../../docs/FEATURE_TUTORIALS.md#desktop-browser-midi-to-ableton).

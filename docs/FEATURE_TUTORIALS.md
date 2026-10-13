@@ -525,6 +525,64 @@ Open the **setup URL on the iPhone** first. Follow its one-time steps:
 4. Return to Safari and open the HTTPS instrument link. Tap Start and allow the
    camera. If needed, tap **Tap for sound**.
 
+## Desktop browser MIDI to Ableton
+
+Run `.venv/Scripts/python.exe live.py` and open the printed localhost URL in
+desktop Chrome, Edge or Firefox. Select **Anthony instrument**. A public hosted
+version can use the same MIDI feature over HTTPS: it connects to each visitor's
+own computer, without a MIDI server. Deployment is separate from this local work.
+
+1. Create a virtual MIDI port on your computer. On Windows, use loopMIDI and
+   create a port such as **dance2music**; keep loopMIDI running. On macOS, enable
+   an IAC Driver bus in Audio MIDI Setup. See
+   [Ableton's virtual MIDI bus guide](https://help.ableton.com/hc/en-us/articles/209774225-Setting-up-a-virtual-MIDI-bus).
+2. In Ableton's MIDI settings, enable **Track** for that port's input. Create a
+   MIDI track, choose that port and the matching channel under **MIDI From**, set
+   **Monitor: In** (or arm the track with Auto), and load an instrument.
+   Use a dedicated channel/port for this website. Do not route Ableton's output
+   back into the same bus. See [Ableton routing](https://www.ableton.com/en/manual/routing-and-i-o/).
+3. Under the website's **Ableton / MIDI** section, click **Connect / refresh MIDI**
+   and approve MIDI access. Select your output port and channel (default 1).
+   Firefox may request a site permission add-on; follow its permission prompt.
+   Safari is not supported for this direct route. No SysEx access is requested.
+4. Choose **All chord notes** to send the voiced three-to-six-note chord into
+   an ordinary Ableton instrument. Choose **One root note** for a chord device
+   such as Expressive Chords: load/configure the chord device before the instrument
+   in Ableton. The root/register determines the trigger; changing hand quality
+   currently changes the visual/browser chord but does not change that MIDI note.
+   A future task will define the gestures' Ableton effect in this mode.
+5. Choose **MIDI only** to hear Ableton, or **Browser + MIDI** to hear both, then
+   click **Start** and allow the camera. **Browser only** is the default on every
+   new page load; the site never automatically selects a port or starts MIDI.
+
+Notes sustain while the ball has positive gain. Shared chord tones stay held;
+removed tones release before added tones sound. MIDI notes change discretely,
+unlike the browser synth's pitch smoothing. Ball loudness, pad level/mute and
+master level produce expression **CC11** (0–127), with note-on velocity 100.
+If the Ableton instrument doesn't respond to CC11, enable **Remote** for the
+port input and MIDI-map CC11 to a volume/Utility gain control with a suitable
+range. Until it is mapped, continuous ball loudness may not affect Ableton sound;
+zero gain still releases notes. No percussion or other mixer layers are exported.
+
+Stop, tracking loss, reset, hidden tab, route/channel/port changes and page exit
+release notes. A camera stall releases them after 500ms, checked every 100ms.
+**Panic / release MIDI notes** also clears sustain/all-notes on the selected
+channel and changes the route to Browser only, so notes stay off until you
+enable MIDI again. On disconnect, reselect the port after reconnection; the app
+does not resume it automatically. A broken physical connection or browser crash
+can prevent note-offs reaching Ableton; use Ableton's stop/panic if needed.
+
+Browser recordings capture browser audio, **not Ableton audio**. Record MIDI and
+Ableton sound in Ableton when using MIDI only. Lower Ableton's audio buffer to
+reduce audible latency; browser routing adds no network or scheduling buffer.
+Actual camera-to-sound latency remains dependent on inference and audio setup.
+
+If no ports appear, start your virtual MIDI driver and click refresh. If access
+fails, check browser site permissions and use localhost or trusted HTTPS.
+Hosted pages must allow the `midi` Permissions Policy; embedded pages also need
+permission delegated by the embedding site.
+[Web MIDI requirements](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/requestMIDIAccess).
+
 This trust step is required for Safari camera access; bypassing a certificate
 warning is not a substitute. See [Apple's certificate trust instructions](https://support.apple.com/en-us/102390)
 and [browser camera security requirements](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia).

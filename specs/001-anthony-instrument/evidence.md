@@ -634,3 +634,62 @@ module relationships; it does not warrant another graph refresh under VIII.
 Instrument near-mode association also now requires one distinct detection per
 hand, preventing a single detected sign from manufacturing a two-hand quality
 pair. This is a tested correction within the existing tracker boundary.
+# Desktop MIDI routing — 2026-10-13
+
+Stage 1 preceded JavaScript: `instrument/midi_lifecycle.py` was validated locally with
+16 pytest cases before translating it to `web/live/midi.js`. Generated
+`tests/web/midi-reference.json` from that Python sender; Node compares exact
+message bytes/order. No hardware driver or native MIDI dependency is needed
+for these tests; importing either computational module starts no devices.
+
+Commands (existing Windows Python 3.14 venv and Node runtime):
+
+```powershell
+.venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/test_browser_midi.py tests/test_instrument_controller.py tests/test_instrument_harmony.py
+node --test tests/web/instrument.test.mjs tests/web/audio.test.mjs tests/web/midi.test.mjs
+.venv/Scripts/ruff.exe check instrument/midi_lifecycle.py tests/test_browser_midi.py
+.venv/Scripts/ruff.exe format --check instrument/midi_lifecycle.py tests/test_browser_midi.py
+.venv/Scripts/mypy.exe
+# Existing Playwright 1.62.1 + Chromium 151, configured as in the web-port evidence:
+node tests/web/browser-smoke.cjs
+```
+
+Results: 47 Python tests + 32 subtests; 68 Node tests (12 new MIDI cases);
+changed Python lint/format and configured mypy (12 source files) pass.
+Routing p95 ~0.0022ms over 4,000 alternating six-note updates against a 1ms
+budget; native controller/voice-leading checks and all 90,000 transitions pass.
+Browser smoke uses synthetic camera/MediaPipe and MIDI ports with real browser
+audio/recording APIs. It covers explicit port selection, both sending modes,
+root sustain, MIDI-only audio fade/browser restore, tracking loss, background
+release, panic, stop, existing instrument controls and 13 recording groups.
+`output/web-port/browser-results.json`, `recording-tests.json` and
+`desktop-midi.png` preserve local results/preview. Inspected the desktop controls.
+
+The first Python invocation used an unused tmp_path fixture that hit Windows
+sandbox temp permissions; removed the unnecessary fixture. Browser localhost
+network access was blocked in the sandbox, then passed using approved escalation.
+An initial silence assertion used exact zero while the existing 30ms master
+fade was still running; the corrected integration assertion waits for amplitude
+below 0.001 and confirms the browser output is restored afterward.
+
+Real loopMIDI/IAC output, Chrome/Edge/Firefox permission prompts, Ableton
+instruments/CC11 mapping, listening and movement-to-sound latency are not tested
+by these mocks; T074 retains that acceptance work. No phone transport, hosting,
+new device driver installation or publication was performed. MIDI-only browser
+recordings cannot capture the external Ableton audio. A failed physical link or
+browser crash can prevent note-offs reaching the receiver despite cleanup attempts.
+
+## Integration into ableton before commit/push
+
+Anthony explicitly requested moving this work to `ableton` and pushing it to his
+fork. Merged the web prerequisite at `5db8ff8`, retained the existing native
+`instrument/midi.py` and `tests/test_instrument_midi.py` unchanged, and named
+the independent browser-reference files `instrument/midi_lifecycle.py` and
+`tests/test_browser_midi.py`. Documentation conflicts retain both native and
+browser instructions. Browser tasks use T065–T076 after native T051–T064.
+
+Revalidated the combined branch: 118 pytest cases + 38 subtests, 68 Node tests,
+browser/recording smoke, Ruff check/format and mypy (13 modules) pass. Pytest's
+initial failures were Windows sandbox temporary-file permissions; an approved
+unsandboxed retry passed. No MIDI hardware was used. Refreshed the AST graph
+for the integrated native/browser module relationships before committing.

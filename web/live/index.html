@@ -144,6 +144,19 @@
       T switches root control. Left/right labels follow your body, including crossed hands.</p>
   </div>
 
+  <h2>Ableton / MIDI</h2>
+  <button id="midiConnect">Connect / refresh MIDI</button>
+  <label style="margin-top:8px">Output port <select id="midiPort"><option value="">Select a MIDI port</option></select></label>
+  <label>Channel <select id="midiChannel"></select></label>
+  <label>Send <select id="midiKind"><option value="chord">All chord notes</option><option value="root">One root note</option></select></label>
+  <label>Sound route <select id="soundRoute"><option value="browser">Browser only</option><option value="midi">MIDI only</option><option value="both">Browser + MIDI</option></select></label>
+  <button id="midiPanic">Panic / release MIDI notes</button>
+  <div id="midiStatus" class="status" role="status">MIDI off. Connect and choose an output port.</div>
+  <p class="note">Use Anthony instrument mode. Route a virtual MIDI port into an Ableton MIDI track.
+    One root note uses Ableton's chord mapping; hand quality gestures currently affect browser chords only.
+    Ball gain sends expression CC11 (map it in Ableton if needed).
+    Browser recording does not capture Ableton audio.</p>
+
   <h2>Sound</h2>
   <label>Pad timbre <select id="timbre"><option value="native">native instrument (sine + harmonic)</option>
     <option value="saw">saw (warm, plain)</option>

@@ -762,3 +762,33 @@
 - Outstanding: Actual iPhone CA setup, Safari camera/gesture trials, listening,
   heat/FPS and movement-to-sound latency. Browser estimates are not measured
   end-to-end latency. Spells, games and true 3D remain future scope.
+
+## 2026-10-13 - Desktop Web MIDI routing to Ableton
+
+- State: Implemented on codex/anthony-web-implementation, then integrated into
+  ableton at Anthony's explicit commit/push request; live
+  driver/Ableton and individual desktop-browser acceptance remain pending.
+- Authorization: Anthony requested desktop Chrome/Edge/Firefox routing,
+  chose both full chord/root-only modes, and deferred phone MIDI. Work uses
+  the constitution's Python-first then explicitly requested JS workflow.
+- Changes: Ableton section with Connect/refresh, explicit port/channel,
+  all voiced notes or one root note, browser/MIDI/both sound routes, CC11
+  expression and panic. Sustained/common notes avoid frame retriggers.
+  Releases on loss/stop/background/reset/configuration/port changes/errors;
+  500ms stale-frame watchdog. No backend required for hosted desktop MIDI.
+  Recording metadata includes MIDI settings; browser audio exports exclude Ableton.
+- Verification: 47 affected Python tests + 32 subtests, 68 Node tests,
+  changed lint/format and configured mypy pass. Browser/recording smoke passes
+  with synthetic MIDI/camera/model, including actual browser audio routing.
+  Routing p95 ~0.0022ms (<1ms budget), not end-to-end audio latency.
+- Documentation: Desktop contract, tutorial/setup links, decisions, quickstart,
+  evidence and tasks updated. No new root files or runtime dependencies.
+- Outstanding: T074 real virtual-port/Ableton/Firefox permission/listening/latency
+  trial; T075 define quality hand gestures' effect in root-only MIDI mode;
+  T076 later phone bridge. Local AST graph refresh completed: 1,730 nodes,
+  3,094 edges, 162 communities, AST-only with no API cost. Integration refresh
+  on ableton: 1,845 nodes, 3,438 edges and 164 communities, also AST-only.
+  Integrated branch checks: 118 Python tests + 38 subtests, 68 Node tests,
+  browser/recording smoke, lint/format/mypy pass. Native MIDI files remain intact;
+  web Python reference/test files are renamed
+  to avoid collisions. User authorized commit and push to fork/ableton; no deployment.

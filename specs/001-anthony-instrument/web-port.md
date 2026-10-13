@@ -21,7 +21,9 @@ the approved constitution and Spec Kit helpers were retained.
 - Glowing fire/light balls, skeleton and fingers, visible lock/ownership/direction
   feedback, reset, merge and root-mode controls.
 
-MIDI/Ableton is excluded by request. Unbuilt spells, games, true 3D and additional
+MIDI/Ableton was excluded from this initial translation. The subsequent explicit
+[desktop MIDI request](desktop-midi.md) now authorizes that separate feature.
+Unbuilt spells, games, true 3D and additional
 finger modes remain deferred. Existing web harmony, mixer, mapping, drums,
 recording and microphone exports remain available alongside the new mode.
 

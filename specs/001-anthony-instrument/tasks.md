@@ -196,16 +196,30 @@ synth input, held while the ball is active; P pauses/resumes.
 
 ## Browser translation: 2026-10-13
 
-- [X] T051 Record explicit JavaScript port authorization, preserved Python contracts,
+- [X] T065 Record explicit JavaScript port authorization, preserved Python contracts,
   browser adaptations and the selected iPhone tracking/audio arrangement in web-port.md.
-- [X] T052 Merge relevant main recording/iOS updates into anthony-explorations locally,
+- [X] T066 Merge relevant main recording/iOS updates into anthony-explorations locally,
   preserving the approved constitution and native-shell helpers.
-- [X] T053 Translate catalogue/voice leading, interval roots and controller state;
+- [X] T067 Translate catalogue/voice leading, interval roots and controller state;
   connect body-wrist geometry, hand confirmation, six-voice audio, visuals and controls.
-- [X] T054 Implement and validate the Python HTTPS/certificate boundary, then connect
+- [X] T068 Implement and validate the Python HTTPS/certificate boundary, then connect
   --phone to iPhone Safari with local tracking/audio, rear-camera defaults and trust instructions.
-- [X] T055 Verify native replay/90,000 transition parity, Node audio/adapter checks,
+- [X] T069 Verify native replay/90,000 transition parity, Node audio/adapter checks,
   Python HTTPS/CLI checks and browser/recording integration; inspect previews and render sound.
-- [ ] T056 On the actual iPhone, install/trust the local CA and review gestures,
+- [ ] T070 On the actual iPhone, install/trust the local CA and review gestures,
   audible sound, heat/FPS and movement-to-sound latency. Automated desktop results
   do not establish device/performer acceptance.
+- [X] T071 Record explicit desktop MIDI authorization and both output modes;
+  implement/validate the pure Python MIDI lifecycle before JavaScript translation.
+- [X] T072 Add the Ableton section, Web MIDI connection/port/channel selectors,
+  all-chord/root-only output, browser/MIDI/both routing, expression and cleanup.
+- [X] T073 Verify native MIDI parity, permissions, ports, held notes, failures,
+  watchdog, browser lifecycle, existing web tests; document setup/evidence/status
+  and refresh the local AST graph once.
+- [ ] T074 Test a real virtual MIDI driver and Ableton instrument in desktop
+  Chrome, Edge and Firefox; verify CC11 mapping, listening and end-to-end latency.
+- [ ] T075 Deferred by Anthony: design what chord hand gestures do when sending
+  only one trigger note to Ableton (e.g. select a chord preset or send mapped CCs).
+  Ask for the musical mapping/device contract before implementing; currently
+  quality gestures affect only visual/browser chords in root-only MIDI mode.
+- [ ] T076 Deferred: iPhone MIDI transport/bridge; desktop routing is the current scope.

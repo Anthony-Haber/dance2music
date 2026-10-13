@@ -340,3 +340,13 @@ the phone's sound. Browser FPS/inference times and audio latency estimates are
 diagnostics; a real-device trial is needed to establish movement-to-sound latency
 and gesture usability. See the [port contract](../specs/001-anthony-instrument/web-port.md)
 and [iPhone usage](FEATURE_TUTORIALS.md#iphone-camera-and-sound).
+
+Desktop MIDI output translates the already selected Anthony chord to MIDI
+messages; it does not change the tracking or musical controller. The pure
+Python lifecycle in `instrument/midi_lifecycle.py` is mirrored in `web/live/midi.js` and
+checked byte-for-byte with a native fixture. Web MIDI sends directly to a
+selected local port, including when the site is served over public HTTPS.
+All-note mode holds common pitches; root-only mode holds the register's root
+and leaves quality-gesture effects in Ableton for a future design task. Gain
+uses CC11 expression; note releases and a stale-frame watchdog limit stuck
+notes. See the [desktop MIDI contract](../specs/001-anthony-instrument/desktop-midi.md).
