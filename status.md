@@ -792,3 +792,17 @@
   browser/recording smoke, lint/format/mypy pass. Native MIDI files remain intact;
   web Python reference/test files are renamed
   to avoid collisions. User authorized commit and push to fork/ableton; no deployment.
+
+## 2026-10-13 - Remove separate upstream recording work
+
+- State: Cleanup validated locally; branch isolation requested for all three Anthony branches.
+- Changes: Selectively undo Samir recording/pose ZIP/microphone additions and their
+  assets/metadata/audio-session helpers. Restore ordinary media recording, retaining
+  Anthony instrument, ball/hand controls, phone server and MIDI on existing branches.
+- Governance: .specify and .agents match pre-merge 1ee972f; no Samir Spec Kit
+  changes survived. Preserve our installation and all prior commits. AGENTS.md now
+  requires explicit authorization for specific upstream imports.
+- Verification: 68 Node tests and real-browser smoke pass on ableton, including
+  gestures/MIDI and restored video/audio recording. Core modules/phone/native MIDI
+  are unchanged. Scope/audit is in upstream-isolation.md.
+- Publication: Local cleanup commits only; no upstream or remote-history rewrite.

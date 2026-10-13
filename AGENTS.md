@@ -22,6 +22,8 @@ The initial Python prototype will reuse Joseph's glowing 2D ball design; depth/3
   locally in Python first; translate them into the JavaScript website only on explicit user request.
 - Keep project work local until explicitly authorized otherwise, ask the user about design dilemmas,
   and update `status.md` after each user-requested task.
+- Keep Anthony's branches separate from Samir's upstream work. Do not merge or cherry-pick
+  upstream work without explicit authorization for the specific changes being imported.
 - Add or update concise usage instructions in `docs/FEATURE_TUTORIALS.md` for each implemented feature.
 
 ## Spec Kit platforms

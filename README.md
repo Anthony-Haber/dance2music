@@ -111,12 +111,6 @@ See the [chord tutorial](docs/FEATURE_TUTORIALS.md#play-sustained-chords-in-able
 See the [Ableton setup tutorial](docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
 for monitoring, the camera-free demo and existing IAC/loopMIDI cables.
 
-Browser **Record** now downloads one ZIP with the video (or sound only), raw
-33-point body pose, detailed hands when enabled, timestamps, and model/session
-metadata. It preserves data for later embedding and other offline analysis.
-The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
-describe the files and tests. Direct import into Zones requires a future importer.
-
 ---
 
 # Dance → the rope's music engine

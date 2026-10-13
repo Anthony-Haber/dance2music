@@ -25,7 +25,9 @@ MIDI/Ableton was excluded from this initial translation. The subsequent explicit
 [desktop MIDI request](desktop-midi.md) now authorizes that separate feature.
 Unbuilt spells, games, true 3D and additional
 finger modes remain deferred. Existing web harmony, mixer, mapping, drums,
-recording and microphone exports remain available alongside the new mode.
+ordinary video/audio recording remain available alongside the new mode.
+Samir's raw-observation ZIP and separate microphone work was subsequently removed
+at Anthony's request; it remains isolated on its upstream branch.
 
 ## Browser adaptation
 

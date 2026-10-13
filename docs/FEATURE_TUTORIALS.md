@@ -502,10 +502,10 @@ instrument mode keeps the pad sounding while a ball is active. Legacy harmony,
 mapping, drum and gesture-action modes remain available in the Harmony selector.
 In instrument mode, signs control chords/balls rather than legacy drum/preset actions.
 
-Record still exports a ZIP containing video/sound, pose/hand observations and
-configuration history, now including instrument state. Microphone recording
-remains an explicit separate option. Use the Record button in instrument mode
-because R is its reset shortcut. Existing microphone/bundle behavior comes from main.
+Record exports one video/audio file with the preview and browser sound, as before
+the separate upstream recording work was imported. Raw pose/hand ZIP export and
+separate microphone recording are removed from Anthony's branches. Use the
+Record button in instrument mode because R is its reset shortcut.
 
 ## iPhone camera and sound
 
