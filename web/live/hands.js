@@ -38,7 +38,8 @@ class Hand {             // debounced state of one hand
   constructor() { this.reset(); }
   reset() { this.seen = false; this.fingers = 0; this.open = 0; this.gesture = 'None'; this.score = 0;
             this.candG = 'None'; this.candGSince = 0; this.candF = 0; this.candFSince = 0; this.lastSeen = -1e9;
-            this.lm = null; this.box = null; this.rawG = 'None'; }
+            this.lm = null; this.box = null; this.rawG = 'None'; this.rawScore = 0;
+            this.gestureSince = null; this.tPrev = null; }
   update(res, t) {
     if (!res) { if (t - this.lastSeen > 0.4) { this.seen = false; this.lm = null; } return; }
     this.seen = true; this.lastSeen = t; this.lm = res.lm; this.box = res.box;
@@ -48,10 +49,30 @@ class Hand {             // debounced state of one hand
     if (st.fingers !== this.candF) { this.candF = st.fingers; this.candFSince = t; }
     if (t - this.candFSince >= HS.fingersHoldS) this.fingers = this.candF;
     const g = res.gesture && res.score >= HS.gestureMin ? res.gesture : 'None';
-    this.rawG = g;
+    this.rawG = g; this.rawScore = res.score;
     if (g !== this.candG) { this.candG = g; this.candGSince = t; }
-    if (t - this.candGSince >= HS.gestureHoldS) { this.gesture = this.candG; this.score = res.score; }
+    if (t - this.candGSince >= HS.gestureHoldS) {
+      this.gesture = this.candG; this.score = res.score; this.gestureSince = this.candGSince;
+    }
   }
+}
+
+// Instrument near mode requires distinct evidence for each ordered sign. A
+// single detection belongs to its nearest body wrist, never to both hands.
+export function associateHands(found, wrists) {
+  const sides = ['L', 'R'].filter(side => wrists[side]);
+  const distance = (hand, side) => Math.hypot(hand.lm[0].px - wrists[side][0], hand.lm[0].py - wrists[side][1]);
+  if (found.length >= 2 && sides.length === 2) {
+    const straight = distance(found[0], 'L') + distance(found[1], 'R');
+    const crossed = distance(found[1], 'L') + distance(found[0], 'R');
+    return straight <= crossed ? { L: found[0], R: found[1] } : { L: found[1], R: found[0] };
+  }
+  let best = null;
+  for (const side of sides) for (const hand of found) {
+    const d = distance(hand, side);
+    if (!best || d < best.distance) best = { side, hand, distance: d };
+  }
+  return best ? { [best.side]: best.hand } : {};
 }
 
 export class Hands {
@@ -65,7 +86,9 @@ export class Hands {
     this.requestedMode = mode; this.loading = mode !== 'off'; this.loadError = null;
     if (mode === 'off') { this.mode = mode; this.L.reset(); this.R.reset(); return; }
     try {
-      const asset = await modelAsset(MODEL);
+      const local = new URL('vendor/mediapipe/gesture_recognizer.task', location.href).href;
+      const path = (await fetch(local, { method: 'HEAD' }).catch(() => null))?.ok ? local : MODEL;
+      const asset = await modelAsset(path);
       const opts = (numHands, delegate) => ({ baseOptions: { modelAssetBuffer: asset.bytes, delegate }, runningMode: 'VIDEO',
         numHands, minHandDetectionConfidence: 0.3, minHandPresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
       const make = async (key, n) => {
@@ -75,7 +98,7 @@ export class Hands {
           try { recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
           catch (e) { delegate = 'CPU'; recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
           this.rec[key] = recognizer;
-          this.models[key] = { family: 'GestureRecognizer', asset: MODEL, asset_sha256: asset.sha256,
+          this.models[key] = { family: 'GestureRecognizer', asset: path, asset_sha256: asset.sha256,
             runtime: runtimeIdentity(vision), delegate: delegate.toLowerCase(), running_mode: 'video',
             num_hands: n, detection_threshold: 0.3, presence_threshold: 0.3, tracking_threshold: 0.3 };
         })().finally(() => { delete this.pending[key]; });
@@ -95,13 +118,15 @@ export class Hands {
     const keys = this.mode === 'far' ? ['L', 'R'] : this.mode === 'near' ? ['F'] : [];
     return { mode: this.mode, requested_mode: this.requestedMode, loading: this.loading,
       load_error: this.loadError || null, models: Object.fromEntries(keys.map(k => [k, this.models[k]])),
-      crop_policy: this.mode === 'far' ? HS : null, association_policy: 'browser-pose-wrist-v1' };
+      crop_policy: this.mode === 'far' ? HS : null,
+      association_policy: this.instrument ? 'anthony-mirrored-joint-v1' : 'browser-pose-wrist-v1' };
   }
 
   // f: live features (pose, in video pixels), tMs: a rising timestamp
   detect(video, f, tMs, capture = false) {
     const observation = { mode: this.mode, status: 'skipped', reason: null, inferences: [] };
     if (this.loading || this.mode === 'off' || !f) {
+      if (!f) { this.L.update(null, tMs / 1000); this.R.update(null, tMs / 1000); }
       observation.status = this.loading ? 'skipped' : this.mode === 'off' ? 'disabled' : 'skipped';
       observation.reason = this.loading ? 'model_loading' : this.mode === 'off' ? 'tracking_off' : 'pose_unavailable';
       return observation;
@@ -109,7 +134,7 @@ export class Hands {
     const t = tMs / 1000, t0 = performance.now(), W = video.videoWidth, H = video.videoHeight;
     if (this.mode === 'far') {
       // alternate hands frame by frame: each hand at half the frame rate
-      const side = this.n++ % 2 ? 'R' : 'L', wj = side === 'L' ? J.L_WR : J.R_WR, ej = side === 'L' ? J.L_EL : J.R_EL;
+      const side = this.n++ % 2 ? 'R' : 'L', joints = this.joints(side), wj = joints[0], ej = joints[1];
       const w = f.pos(wj), e = f.pos(ej), hand = this[side];
       if (!w || f.conf(wj) < 0.3) { hand.update(null, t);
         observation.reason = 'wrist_unavailable'; observation.attempted_side = side; return observation; }
@@ -131,8 +156,16 @@ export class Hands {
       if (raw) observation.inferences.push(raw);
       // assign detected hands to her wrists by distance (handedness labels assume a mirrored selfie)
       const found = (r.landmarks || []).map((lm, i) => this.pick(r, i, [0, 0, W, H], W, H));
+      const matched = this.instrument ? associateHands(found, Object.fromEntries(['L', 'R'].map(side => {
+        const joint = this.joints(side)[0]; return [side, f.conf(joint) >= 0.3 ? f.pos(joint) : null];
+      }))) : null;
       for (const side of ['L', 'R']) {
-        const w = f.pos(side === 'L' ? J.L_WR : J.R_WR);
+        if (matched) {
+          const best = matched[side] || null;
+          if (raw) raw.associations[side] = best?.candidateIndex ?? null;
+          this[side].update(best, t); continue;
+        }
+        const w = f.pos(this.joints(side)[0]);
         let best = null, bd = Infinity;
         for (const h of found) { const dx = h.lm[0].px - (w ? w[0] : 1e9), dy = h.lm[0].py - (w ? w[1] : 1e9), dd = dx * dx + dy * dy;
           if (dd < bd) { bd = dd; best = h; } }
@@ -151,6 +184,11 @@ export class Hands {
     const sx = Math.max(0, x), sy = Math.max(0, y), ex = Math.min(W, x + w), ey = Math.min(H, y + h);
     if (ex <= sx || ey <= sy) return;
     g.drawImage(video, sx, sy, ex - sx, ey - sy, (sx - x) / w * S, (sy - y) / h * S, (ex - sx) / w * S, (ey - sy) / h * S);
+  }
+
+  joints(side) {
+    const left = this.instrument ? side === 'R' : side === 'L';
+    return left ? [J.L_WR, J.L_EL] : [J.R_WR, J.R_EL];
   }
 
   // one detected hand → landmarks (also in video pixels, for drawing) + gesture

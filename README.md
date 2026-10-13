@@ -37,6 +37,7 @@ for relocated dependency files and the model setup command.
     python synths.py --serve                         # the page, http://127.0.0.1:5091/
     python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
     python live.py --offline                         # same, with MediaPipe downloaded for a venue without internet
+    python live.py --phone                           # trusted local HTTPS; tracking and sound on iPhone Safari
 
 | file | what |
 |---|---|
@@ -78,7 +79,11 @@ the confirmed gesture and raw model result separately; joint shape never overrid
 
 See [the Python quickstart](specs/001-anthony-instrument/quickstart.md) for setup,
 gestures, headless replay, local exports and checks; [decisions](specs/001-anthony-instrument/decisions.md)
-records provisional choices for Anthony's review. True 3D and JavaScript translation remain deferred.
+records provisional choices for Anthony's review. The implemented instrument has
+now been translated into JavaScript on explicit request; true 3D remains deferred.
+Choose **Anthony instrument · 300 chords** in the browser. For iPhone camera and
+sound, run `python live.py --phone` and follow the printed certificate setup URL.
+See [browser and iPhone instructions](docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
 The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
 model/device checks, measured latency and the remaining performer/listening review.
 For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).

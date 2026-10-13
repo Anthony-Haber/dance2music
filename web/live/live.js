@@ -8,6 +8,10 @@ import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
+import { InstrumentController } from './instrument-controller.js';
+import { InstrumentFrames, instrumentChord, cameraConstraints } from './instrument-frame.js';
+import { ROOT_NAMES, QUALITY_ROWS, SUFFIXES, symbol, rootColor } from './instrument-harmony.js';
+import { DIRECTIONS, STEP_ROWS, handOrigins } from './instrument-root.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -23,7 +27,18 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 let poseModel = null, modelGeneration = 0, currentSource = null;
 const feats = new Features(), engine = new Engine();
-let follower = new ChordFollower(store.get('mode', 'six'));
+const phone = new URLSearchParams(location.search).has('phone');
+const initialMode = store.get('mode', 'instrument');
+let follower = new ChordFollower(initialMode === 'instrument' ? 'six' : initialMode);
+const instrument = new InstrumentController({ root_mode: store.get('rootMode', 'interval') });
+const instrumentFrames = new InstrumentFrames();
+let lastInstrument = null, controllerMs = 0;
+const isInstrument = () => $('mode').value === 'instrument';
+function currentChord() {
+  return isInstrument() ? instrumentChord(lastInstrument || {
+    ...instrument.chord, symbol: symbol(instrument.chord.root, instrument.chord.quality),
+    root_midi: instrument.root_midi, notes: instrument.notes }) : follower.chord();
+}
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
@@ -65,10 +80,12 @@ async function loadLandmarker() {
 async function listDevices() {
   const devs = await navigator.mediaDevices.enumerateDevices();
   const cams = devs.filter(d => d.kind === 'videoinput');
-  const want = store.get('cam', '');
-  $('cam').innerHTML = cams.map((d, i) =>
+  const want = $('cam').value || store.get('cam', phone ? 'facing:environment' : '');
+  $('cam').innerHTML = '<option value="">default camera</option>' +
+    '<option value="facing:environment">rear camera</option><option value="facing:user">front camera</option>' + cams.map((d, i) =>
     `<option value="${d.deviceId}" ${d.deviceId === want ? 'selected' : ''}>${d.label || 'camera ' + (i + 1)}</option>`).join('')
-    || '<option value="">no camera found</option>';
+    ;
+  if ([...$('cam').options].some(o => o.value === want)) $('cam').value = want;
   const outs = devs.filter(d => d.kind === 'audiooutput');
   const canSink = 'setSinkId' in AudioContext.prototype;
   $('outRow').hidden = !canSink;
@@ -83,8 +100,9 @@ async function openCamera() {
   const [w, h] = $('res').value.split('x').map(Number);
   const id = $('cam').value;
   if (stream) stream.getTracks().forEach(t => t.stop());
-  stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
-    deviceId: id ? { exact: id } : undefined, width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: 60 } } });
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('camera needs trusted HTTPS; follow the phone setup page');
+  stream = await navigator.mediaDevices.getUserMedia(cameraConstraints({ width: w, height: h, phone,
+    facing: id.startsWith('facing:') ? id.slice(7) : '', deviceId: id.startsWith('facing:') ? '' : id }));
   v.srcObject = stream; v.src = '';
   await v.play();
   currentSource = { id: crypto.randomUUID(), type: 'camera', width: v.videoWidth, height: v.videoHeight };
@@ -111,11 +129,14 @@ async function start() {
     status('opening source…');
     if ($('source').value === 'camera') await openCamera(); else await openFile();
     feats.reset(); follower.reset(); bounce.reset(); bounceOn = false;
+    instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
+    hands.instrument = isInstrument(); lastG = { L: 'None', R: 'None' };
     if ($('handMode').value !== 'off') status('loading hand model…');
     const th = performance.now();
     await hands.load(vision, $('handMode').value);
 
     await engine.start($('out').value || undefined);
+    engine.setChord(currentChord(), true);
     applyMix(); applySens();
     watchAudio();
     running = true; $('hint').hidden = true; $('badge').hidden = false;
@@ -123,6 +144,8 @@ async function start() {
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
     loop();
   } catch (e) {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null; v.pause(); await engine.stop();
     status('could not start: ' + e.message); $('go').disabled = false;
   }
 }
@@ -135,6 +158,8 @@ async function stop() {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
   await engine.stop();
+  lastF = null; lastVals = null; sparks = []; sparkGroups = {};
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); $('badge').hidden = true;
   $('go').textContent = 'Start'; $('hint').hidden = false; $('tap').hidden = true; status('stopped');
 }
 
@@ -147,6 +172,7 @@ function watchAudio() {
 }
 $('tap').onclick = () => { engine.unlock(); setTimeout(() => { if (engine.ctx) $('tap').hidden = engine.ctx.state === 'running'; }, 300); };
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden && running) engine.idle();
   if (!document.hidden && running && engine.ctx && engine.ctx.state !== 'running') $('tap').hidden = false; });
 
 // ── the loop: one pose per new video frame ────────────────────────────
@@ -175,6 +201,14 @@ function loop() {
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
         try { rawHands = hands.detect(v, f, now, recorder.active); }
         catch (error) { rawHands = { mode: hands.mode, status: 'error', error: error.message, inferences: [] }; }
+        if (isInstrument()) {
+          const started = performance.now();
+          lastInstrument = instrument.update(instrumentFrames.read(lms, hands, now / 1000, W, H));
+          if (lastInstrument.events.some(event => event === 'split' || event === 'merge' || event.startsWith('transfer:'))) {
+            sparks = []; sparkGroups = {};
+          }
+          controllerMs = performance.now() - started; instrumentReadout();
+        }
         if (f) {
           // hips: raw landmark heights (no smoothing: the filter is the smoothing)
           const lh = lms[23], rh = lms[24];
@@ -184,10 +218,11 @@ function loop() {
           const bo = lastBounce;
           Object.assign(f, hands.sources(), { bounce: bo ? bo.prob : 0,
                                               bounceTempoN: bo ? Math.min(1, Math.max(0, (bo.tempo - 50) / 130)) : 0 });
-          gestureActions(t);
-          follower.update(f, t, hands, frozen);
-          engine.setChord(follower.chord());
+          if (isInstrument()) { frozen = false; frameGestureEvents = lastInstrument.events.map(action => ({ action })); }
+          else { gestureActions(t); follower.update(f, t, hands, frozen); }
+          engine.setChord(currentChord());
           lastVals = evaluate(mapping, f);
+          if (isInstrument()) { f.instrumentGain = lastInstrument.gain; lastVals['pad.level'] = 1; }
           updateBounceGate(bo, t);
           const drums = { hits: drumMode.includes('hits'), groove: drumMode.includes('body'),
                           clock: t - engine.ctx.currentTime, enabled: drumsEnabled,
@@ -200,7 +235,8 @@ function loop() {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose, hands: rawHands,
           analysis: { features: f, hand_display_state: handDisplayState(hands, recorder.t0),
-            bounce: lastBounce, chord: follower.chord(), mapped_controls: f ? lastVals : null,
+            bounce: lastBounce, chord: currentChord(), mapped_controls: f ? lastVals : null,
+            instrument: isInstrument() ? lastInstrument : null,
             drums_enabled: drumsEnabled, bounce_gate: bounceOn, chord_held: frozen,
             feature_clock_offset_s: (t0 - recorder.t0) / 1000,
             gesture_transitions: f ? frameGestureEvents : [] } });
@@ -208,6 +244,11 @@ function loop() {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
           pose: rawPose || snapshotPose(null, error.message), hands: rawHands, analysis: null, analysis_error: error.message });
         status('frame analysis failed: ' + error.message);
+        engine.idle(); lastF = null;
+        if (isInstrument() && now / 1000 > (instrument.last_time ?? -1)) {
+          lastInstrument = instrument.update(instrumentFrames.read(null, hands, now / 1000, W, H));
+          instrumentReadout();
+        }
       }
       fpsT.push(now); while (fpsT.length && fpsT[0] < now - 1000) fpsT.shift();
       draw();
@@ -269,8 +310,8 @@ function draw() {
   const box = $('stage').getBoundingClientRect();
   const s = Math.min(box.width / W, box.height / H);
   const dw = Math.round(W * s), dh = Math.round(H * s);
-  if (cv.width !== dw * devicePixelRatio) {
-    cv.width = dw * devicePixelRatio; cv.height = dh * devicePixelRatio;
+  if (cv.width !== Math.round(dw * devicePixelRatio) || cv.height !== Math.round(dh * devicePixelRatio)) {
+    cv.width = Math.round(dw * devicePixelRatio); cv.height = Math.round(dh * devicePixelRatio);
     cv.style.width = dw + 'px'; cv.style.height = dh + 'px';
   }
   v.style.width = dw + 'px'; v.style.height = dh + 'px';
@@ -280,10 +321,11 @@ function draw() {
   g.clearRect(0, 0, cv.width, cv.height);
   g.setTransform(mirror() ? -k : k, 0, 0, k, mirror() ? cv.width : 0, 0);
   const f = lastF;
-  if (!f) { g.setTransform(1, 0, 0, 1, 0, 0); return; }
+  if (!f) { sparks = []; sparkGroups = {}; g.setTransform(1, 0, 0, 1, 0, 0); return; }
   const p = f.pos, lw = 2 / s;
   // rule guides
-  const r = follower.last;
+  const r = isInstrument() ? null : follower.last;
+  if (isInstrument()) drawInstrumentGuides(s);
   if (r && r.guides && r.guides.six) drawRegions(r);
   else if (r && r.guides && follower.mode !== 'fixed') {
     const gd = r.guides, L = gd.L, lit = (rule, c) => (g.strokeStyle = r.rule === rule ? c : 'rgba(150,150,150,.5)',
@@ -308,7 +350,14 @@ function draw() {
     if (n > 160 / s) { dx *= 160 / s / n; dy *= 160 / s / n; }
     if (n > 4) line(q[0], q[1], q[0] + dx, q[1] + dy);
   });
-  if ($('sphereShow').value !== 'off') drawSphere(f, s);
+  if ($('sphereShow').value !== 'off') {
+    if (isInstrument()) {
+      const active = lastInstrument?.balls || [];
+      for (const key of Object.keys(sparkGroups)) if (!active.some(ball => ball.anchor === key)) delete sparkGroups[key];
+      for (const ball of active) drawSphere({ ...f, sphereC: [W - ball.center[0], ball.center[1]],
+        sphereR: ball.radius, sphere: 1, energy: instrumentFrames.previous?.energy ?? 0 }, s, ball.anchor);
+    } else drawSphere(f, s);
+  }
   // hands: landmarks, and each hand's state
   for (const side of ['L', 'R']) {
     const h = hands[side]; if (!h.seen || !h.lm) continue;
@@ -341,9 +390,11 @@ function draw() {
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   // chord badge and rule list
-  const c = follower.chord();
-  $('sym').textContent = c.symbol; $('sym').style.color = DEG[c.degree];
+  const c = currentChord();
+  $('sym').textContent = c.symbol; $('sym').style.color = isInstrument() ? rootColor(instrument.chord.root) : DEG[c.degree];
   $('deg').textContent = c.degree;
+  if (isInstrument()) $('deg').textContent = lastInstrument?.locked ? 'ROOT LOCKED' :
+    lastInstrument?.ball_owner ? `BALL ${lastInstrument.ball_owner}` : lastInstrument?.split ? 'TWO BALLS' : 'MIDPOINT';
   document.querySelectorAll('#rules [data-r]').forEach(d =>
     d.classList.toggle('now', !!r && d.dataset.r === r.rule));
   handReadout();
@@ -372,15 +423,16 @@ function drawRegions(r) {
 }
 // the sphere between the hands: a glowing ball, radius = half the hands'
 // distance, flickering with energy and throwing sparks that rise like fire
-let sparks = [], sparkT = performance.now();
-function drawSphere(f, s) {
-  const c = f.sphereC, R = f.sphereR, now = performance.now(), dt = Math.min(0.1, (now - sparkT) / 1000);
-  sparkT = now;
-  if (!c || R < 2 || f.sphere <= 0) { sparks = []; return; }
+let sparks = [], sparkGroups = {};
+function drawSphere(f, s, anchor = 'legacy') {
+  const state = sparkGroups[anchor] ||= { sparks: [], time: performance.now() };
+  const c = f.sphereC, R = f.sphereR, now = performance.now(), dt = Math.min(0.1, (now - state.time) / 1000);
+  state.time = now; sparks = state.sparks;
+  if (!c || R < 2 || f.sphere <= 0) { state.sparks = []; return; }
   const e = f.energy, style = $('sphereShow').value;
   const fl = 1 + 0.05 * Math.sin(now / 45) + 0.035 * Math.sin(now / 23 + 1) + 0.08 * e * Math.sin(now / 11);
   const r = Math.max(4 / s, R * fl);
-  const col = style === 'light' ? hexRgb(DEG[follower.chord().degree] || '#ffffff') : null;
+  const col = style === 'light' ? hexRgb(isInstrument() ? rootColor(instrument.chord.root) : DEG[currentChord().degree] || '#ffffff') : null;
   const stops = col ? [[0, `rgba(255,255,255,.95)`], [0.3, `rgba(${col},.75)`], [0.75, `rgba(${col},.3)`], [1, `rgba(${col},0)`]]
                     : [[0, 'rgba(255,250,225,.95)'], [0.3, 'rgba(255,200,90,.8)'], [0.65, 'rgba(255,100,30,.45)'], [1, 'rgba(190,30,10,0)']];
   g.save(); g.globalCompositeOperation = 'lighter';
@@ -395,6 +447,7 @@ function drawSphere(f, s) {
     sparks.push({ x: c[0] + r * Math.cos(a), y: c[1] + r * Math.sin(a), vx: sp * Math.cos(a), vy: sp * Math.sin(a) - (col ? 0 : 60 / s),
                   life: 0.4 + 0.5 * Math.random(), age: 0 }); }
   sparks = sparks.filter(p => (p.age += dt) < p.life).slice(-300);
+  state.sparks = sparks;
   for (const p of sparks) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= (col ? 0 : 120 / s) * dt;
     const a = 1 - p.age / p.life;
     g.fillStyle = col ? `rgba(${col},${0.8 * a})` : `rgba(255,${Math.round(140 + 100 * a)},60,${0.85 * a})`;
@@ -402,6 +455,31 @@ function drawSphere(f, s) {
   g.restore();
 }
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
+
+function drawInstrumentGuides(s) {
+  const frame = instrumentFrames.previous;
+  if (!frame?.torso_center || !frame.torso_px) return;
+  const point = p => [v.videoWidth - p[0], p[1]], L = frame.torso_px;
+  const text = (label, p) => {
+    g.save(); g.translate(...point(p)); if (mirror()) g.scale(-1, 1);
+    g.font = `${Math.max(12 / s, 0.13 * L)}px -apple-system, sans-serif`;
+    g.textAlign = 'center'; g.fillStyle = '#efe9df'; g.fillText(label, 0, 0); g.restore();
+  };
+  g.strokeStyle = 'rgba(220,210,190,.55)'; g.lineWidth = 1.2 / s;
+  if (instrument.root_mode === 'midpoint') {
+    const [x, y] = frame.torso_center, radius = L * 1.2;
+    const c = point(frame.torso_center);
+    g.beginPath(); g.arc(...c, L * instrument.config.dead_zone_torsos, 0, Math.PI * 2); g.stroke();
+    for (let root = 0; root < 12; root++) {
+      const a = root * Math.PI / 6, boundary = a - Math.PI / 12;
+      const p = point([x + radius * Math.cos(boundary), y + radius * Math.sin(boundary)]);
+      line(...c, ...p); text(ROOT_NAMES[root], [x + radius * Math.cos(a), y + radius * Math.sin(a)]);
+    }
+  } else for (const [side, origin] of Object.entries(handOrigins(frame))) {
+    const c = point(origin), radius = L * instrument.config.interval_neutral_torsos;
+    g.beginPath(); g.arc(...c, radius, 0, Math.PI * 2); g.stroke(); text(side, [origin[0], origin[1] + radius + L * 0.15]);
+  }
+}
 
 function line(x0, y0, x1, y1) { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
 
@@ -432,7 +510,8 @@ function meters(f) {
   if (now - statusAt > 500 && engine.ctx) {
     statusAt = now;
     const lat = 1000 * ((engine.ctx.baseLatency || 0) + (engine.ctx.outputLatency || 0));
-    status(`${fpsT.length} fps · pose ${inferMs.toFixed(0)} ms · audio ${lat.toFixed(0)} ms · ` +
+    status(`${fpsT.length} fps · pose ${inferMs.toFixed(0)} ms · hands ${hands.ms.toFixed(0)} ms` +
+      (isInstrument() ? ` · control ${controllerMs.toFixed(1)} ms` : '') + ` · audio estimate ${lat.toFixed(0)} ms · ` +
            `${v.videoWidth}×${v.videoHeight}${vision && vision.local ? ' · offline models' : ''}`);
   }
 }
@@ -541,7 +620,7 @@ $('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!
   try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
         mapChanged(); } catch (e) { status('could not read that mapping'); } };
 $('drumMode').value = drumMode;
-$('timbre').value = store.get('timbre', 'saw'); engine.timbre = $('timbre').value;
+$('timbre').value = store.get('timbre', initialMode === 'instrument' ? 'native' : 'saw'); engine.timbre = $('timbre').value;
 $('timbre').onchange = () => { store.set('timbre', $('timbre').value); engine.setTimbre($('timbre').value); };
 $('sphereShow').value = store.get('sphereShow', 'fire');
 $('sphereShow').onchange = () => store.set('sphereShow', $('sphereShow').value);
@@ -570,6 +649,12 @@ presetList(); renderMapping();
 for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
   const saved = store.get(id, null); if (saved !== null) $(id).value = saved;
 }
+$('mode').value = initialMode;
+if (phone) {
+  $('source').value = 'camera'; $('model').value = 'lite'; $('res').value = '640x480';
+  $('cam').innerHTML = '<option value="facing:environment">rear camera</option><option value="facing:user">front camera</option>';
+  $('cam').value = 'facing:environment';
+}
 $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
 $('go').onclick = () => (running ? stop() : start());
 const RULES = {
@@ -584,12 +669,53 @@ RULES.fingers = [['I', '1 finger (both hands together)'], ['ii', '2 fingers'], [
                  ['IV', '4 fingers'], ['V', '5 fingers'], ['vi', '6 or more'], ['', 'no fingers (fists) holds the chord; needs hand tracking on']];
 function showRules() {
   const m = $('mode').value;
+  $('instrumentControls').hidden = m !== 'instrument'; $('gestures').hidden = m === 'instrument';
+  $('gestureNote').hidden = m !== 'instrument';
   $('rules').innerHTML = (RULES[m] || []).map(([d, t]) =>
     `<div data-r="${d}"><b style="color:${DEG[d]}">${d}</b>${t}</div>`).join('') +
     (m === 'six' ? '<div class="note">“hands” = their midpoint, relative to your torso; left/right as you face the camera</div>' : '');
 }
-$('mode').onchange = () => { store.set('mode', $('mode').value); follower = new ChordFollower($('mode').value);
-                              showRules(); if (engine.ctx) engine.setChord(follower.chord(), true); };
+$('mode').onchange = () => {
+  store.set('mode', $('mode').value);
+  follower = new ChordFollower(isInstrument() ? 'six' : $('mode').value);
+  instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
+  hands.instrument = isInstrument(); hands.L.reset(); hands.R.reset();
+  if (isInstrument() && $('handMode').value === 'off') { $('handMode').value = 'far'; $('handMode').onchange(); }
+  showRules(); instrumentReadout(); if (engine.ctx) engine.setChord(currentChord(), true);
+};
+hands.instrument = isInstrument();
+if (isInstrument() && $('handMode').value === 'off') $('handMode').value = 'far';
+$('rootMode').value = instrument.root_mode;
+$('rootMode').onchange = () => { instrument.setRootMode($('rootMode').value); store.set('rootMode', instrument.root_mode); instrumentReadout(); };
+$('mergeBall').onclick = () => { instrument.merge(); sparks = []; sparkGroups = {}; };
+$('resetInstrument').onclick = () => {
+  instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {}; instrumentReadout();
+  if (engine.ctx) { engine.idle(); engine.setChord(currentChord(), true); }
+};
+const signNames = ['Palm', 'Point', 'V', 'Thumb up', 'Thumb down'];
+const chart = (headers, rows) => '<table style="font-size:12px;border-collapse:collapse"><thead><tr><th>R ↓ / L →</th>' +
+  headers.map(s => `<th style="padding:6px">${s}</th>`).join('') + '</tr></thead><tbody>' +
+  rows.map((row, i) => `<tr><th style="padding:6px">${headers[i]}</th>` + row.map(cell =>
+    `<td style="border:1px solid #444;padding:6px;text-align:center">${cell}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+$('chordChart').innerHTML = chart(signNames, QUALITY_ROWS.map(row => row.map(q => SUFFIXES[q] || 'major')));
+$('intervalChart').innerHTML = chart(DIRECTIONS, DIRECTIONS.map((_, right) => DIRECTIONS.map((_, left) => {
+  const step = STEP_ROWS[left][right]; return `${step > 0 ? '+' : ''}${step}`;
+})));
+function instrumentReadout() {
+  if (!isInstrument()) return;
+  const state = lastInstrument;
+  $('instrumentState').textContent = state ? `${state.symbol} · root ${ROOT_NAMES[state.root]} (${Math.floor(state.root_midi / 12) - 1})` +
+    ` · ${state.locked ? 'ROOT LOCKED' : 'root unlocked'}\n` +
+    (state.pending_transfer ? `Transferring to ${state.pending_transfer}…` : state.pending_lock ? 'Fist control pending…' :
+      state.ball_owner ? `Ball owned by ${state.ball_owner}` : state.split ? 'Two balls' : 'Midpoint ball') +
+    `${state.balls.length ? '' : ' · body/wrist tracking missing'}\n` +
+    (state.root_mode === 'interval' ? `L: ${state.hand_directions[0] || '—'} · R: ${state.hand_directions[1] || '—'}` +
+      (state.interval_candidate !== null ? ` · ${state.interval_candidate > 0 ? '+' : ''}${state.interval_candidate} semitones` : '') +
+      `\n${state.root_feedback}` :
+      'Hold the wrist midpoint in a root sector; center holds the current root.') :
+      instrument.root_mode === 'interval' ? 'C · Center both wrists to arm' : 'C · Move the wrist midpoint to choose a root';
+}
+instrumentReadout();
 showRules();
 $('source').onchange = () => { store.set('source', $('source').value);
   $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file'; };
@@ -605,12 +731,14 @@ $('file').onchange = () => { if (running) openFile(); };
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
   if (e.key === ' ') { e.preventDefault(); running ? stop() : start(); }
-  else if (e.key === 'r') { if (running) toggleRecord(); }
+  else if (e.key === 'r') { if (isInstrument()) $('resetInstrument').click(); else if (running) toggleRecord(); }
+  else if (e.key === 't' && isInstrument()) { instrument.toggleRootMode(); $('rootMode').value = instrument.root_mode; $('rootMode').onchange(); }
   else if (e.key === 'f') { document.body.classList.toggle('perf');
     if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {}); }
   else if ('12345'.includes(e.key)) { $('mode').value = ['six', 'fingers', 'twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
-  else if (e.key === 'm') { engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol); }
+  else if (e.key === 'm') { if (isInstrument()) $('mergeBall').click();
+    else engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol); }
 });
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement) document.body.classList.remove('perf'); });
@@ -622,7 +750,8 @@ if (!window.isSecureContext) status('needs https or localhost for the camera');
 function handReadout() {
   if (hands.mode === 'off') { $('handTxt').textContent = 'hand tracking off'; return; }
   const one = (h, n) => !h.seen ? `${n}: —` : `${n}: ${h.fingers} finger${h.fingers === 1 ? '' : 's'}, open ${(100 * h.open).toFixed(0)}%` +
-    (h.gesture !== 'None' ? `, ${h.gesture.replace('_', ' ')}` : '');
+    (h.gesture !== 'None' ? `, ${h.gesture.replace('_', ' ')}` : '') +
+    (isInstrument() ? ` · confirmed ${h.gesture} · raw ${h.rawG}` : '');
   $('handTxt').textContent = `${one(hands.L, 'left')} · ${one(hands.R, 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
     (frozen ? ' · chord held' : '') + (gestureLog ? `\nlast: ${gestureLog}` : '');
 }
@@ -632,7 +761,8 @@ function recordingConfiguration() {
   return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
     pose_model: poseModel, hands: hands.configuration(),
     preview_mirrored: mirror(), video_mirrored: mirror(),
-    harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
+    harmony_mode: $('mode').value, instrument: isInstrument() ? { ...instrument.config, root_mode: instrument.root_mode } : null,
+    mapping, sensitivity: P, gesture_actions: isInstrument() ? {} : actions,
     drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
 }
 function recordConfiguration() {
@@ -729,7 +859,7 @@ async function toggleRecord() {
         audioOnly: $('recWhat').value === 'audio',
         recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
         configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
-        label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
+        label: () => { const c = currentChord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
       if (recorder.starting) {
         $('rec').textContent = 'Cancel recording';
         $('recMsg').textContent = 'Waiting for microphone permission… Press Cancel recording to cancel.';

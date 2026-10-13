@@ -77,7 +77,11 @@
   @media (max-width: 800px) {
     body { grid-template-columns: 1fr; }
     aside { height: auto; border-left: 0; border-top: 1px solid var(--line); }
+    label { grid-template-columns: 86px minmax(0, 1fr); }
+    #badge b { font-size: 32px; }
+    #badge span { font-size: 13px; }
   }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -118,15 +122,31 @@
   <div class="status" id="status">idle</div>
 
   <h2>Harmony</h2>
-  <label>Mode <select id="mode"><option value="six">six chords from the hands</option>
+  <label>Mode <select id="mode"><option value="instrument">Anthony instrument · 300 chords</option>
+    <option value="six">six chords from the hands</option>
     <option value="fingers">six chords from fingers (needs hands)</option>
     <option value="twofive">ii–V–I from pose</option>
     <option value="twofive_alt">ii–V–I, strong movement alters V</option>
     <option value="fixed">one chord (A minor add9)</option></select></label>
   <div class="rules" id="rules"></div>
+  <div id="instrumentControls" hidden>
+    <label>Root control <select id="rootMode"><option value="interval">relative intervals</option>
+      <option value="midpoint">12-sector midpoint ring</option></select></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="mergeBall">Merge ball (M)</button><button id="resetInstrument">Reset (R)</button>
+    </div>
+    <div id="instrumentState" class="status" role="status" style="white-space:pre-line"></div>
+    <details><summary>Chord gesture chart</summary><div id="chordChart" style="overflow-x:auto"></div></details>
+    <details><summary>Interval directions</summary><div id="intervalChart" style="overflow-x:auto"></div></details>
+    <p class="note">Fist + palm: ball follows the fist. Fist + another sign: toggle root lock.
+      Nearby two fists: split/merge. Reopen before repeating. Both palms for 1.5s: major.
+      Center both wrists to arm an interval, hold a direction pair, then return to center.
+      T switches root control. Left/right labels follow your body, including crossed hands.</p>
+  </div>
 
   <h2>Sound</h2>
-  <label>Pad timbre <select id="timbre"><option value="saw">saw (warm, plain)</option>
+  <label>Pad timbre <select id="timbre"><option value="native">native instrument (sine + harmonic)</option>
+    <option value="saw">saw (warm, plain)</option>
     <option value="strings">strings (two saws, vibrato)</option><option value="glass">glass (FM bells)</option>
     <option value="organ">organ (drawbars)</option><option value="choir">choir (vowels: map “pad vowel”)</option></select></label>
   <label>Sphere <select id="sphereShow"><option value="fire">fire, between the hands</option>
@@ -158,6 +178,7 @@
     <option value="far">far: crop around each wrist (dancer in full view)</option>
     <option value="near">near: whole frame (close to the camera)</option></select></label>
   <div class="status" id="handTxt" style="white-space:pre-line">hand tracking off</div>
+  <p id="gestureNote" class="note" hidden>Instrument mode uses the chord chart and ball controls above.</p>
   <div class="dgrid" id="gestures"></div>
 
   <h2>Movement</h2>

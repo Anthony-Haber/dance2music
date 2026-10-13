@@ -665,3 +665,39 @@
 - Outstanding: Restart Python and retest both-hand combinations on camera; listen
   to the fuller extensions. Automated results do not establish model accuracy or
   performer acceptance. Additional jazz alterations, MIDI and spells remain future work.
+## 2026-10-13 - JavaScript instrument translation and iPhone camera server
+
+- State: Implemented and validated locally; actual iPhone/performer/listening
+  acceptance remains pending. Explicit Stage 2 authorization is recorded in
+  specs/001-anthony-instrument/web-port.md.
+- Branch: Remained on anthony-explorations. Merged fetched main's recording,
+  pose export and iOS audio updates locally at 83433fc, preserving the current
+  constitution and Spec Kit helpers. No pushes, deployment or MIDI/Ableton port.
+- Changes: Browser instrument mode preserves persistent root lock, split/merge,
+  fist+palm ownership/area/gain, 12 roots × 25 qualities, bounded six-tone voice
+  leading, interval/octave control and midpoint mode. Added touch/keyboard controls,
+  chord/interval charts, corrected body-hand identities, confidence-gated wrist
+  geometry, raw/confirmed gesture feedback, six audio slots and native tone.
+  Existing web modes/mixer/drums/recording remain available; signs are reserved
+  for instrument controls in the new mode. Stop clears stale visuals.
+- iPhone: live.py --phone creates/reuses local OpenSSL certificates and serves
+  HTTPS plus a certificate setup page. Tracking and sound run on the iPhone;
+  rear camera, lite model and 640×480/30fps capture are defaults. Certificate
+  installation/full trust is manual; private keys remain outside the served tree.
+- Verification: 56 Node tests, 4,020 native replay observations and all 90,000
+  catalogue transitions pass; 123 affected pytest tests + 240 subtests pass;
+  changed Python lint/format/types pass. Browser smoke and 13 upstream recording
+  groups pass. Inspected phone/desktop previews; native six-note C13 render is
+  finite/unclipped (peak 0.27312, RMS 0.08752). Core desktop p95 ≈0.006ms (<5ms).
+- Baseline limitations: Full pytest still has the two documented Windows Spec Kit
+  newline failures; full Ruff reports 27 untouched upstream test-script issues.
+  Affected checks pass. Detailed commands/results/artifacts are in feature evidence.
+- Documentation: Updated tutorials, README, vision, explanation, decisions,
+  quickstart, spec/plan authorization links, port contract, tasks and evidence.
+  Generated assets stay in output/.
+- Graphify: Completed one local AST refresh via the module CLI: 1,675 nodes,
+  3,006 edges and 164 communities, no API cost. The launcher trampoline was
+  unavailable; the installed Python module successfully queried and updated it.
+- Outstanding: Actual iPhone CA setup, Safari camera/gesture trials, listening,
+  heat/FPS and movement-to-sound latency. Browser estimates are not measured
+  end-to-end latency. Spells, games and true 3D remain future scope.

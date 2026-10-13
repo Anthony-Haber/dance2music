@@ -5,7 +5,7 @@ pythonpath = ["."]
 [tool.ruff]
 target-version = "py314"
 line-length = 100
-include = ["instrument/**/*.py", "tests/**/*.py"]
+include = ["instrument/**/*.py", "tests/**/*.py", "live.py", "web/phone_server.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]

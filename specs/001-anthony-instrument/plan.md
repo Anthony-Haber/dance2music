@@ -125,3 +125,12 @@ with raw/confirmed diagnostics and replay metadata to avoid double fist dwell. P
 controls in a separate 110px panel, preserve every camera pixel and use a resizable
 window. Request widescreen capture with optional width/height overrides; verify the
 Windows DirectShow/MJPEG boundary after Media Foundation rejects the wider mode.
+## Authorized JavaScript translation plan
+
+Anthony's 2026-10-13 request starts Stage 2 for the implemented native controls.
+The [web-port plan](web-port.md) identifies Python behavior to preserve, browser
+adaptations, iPhone HTTPS setup, file placement and the validation approach.
+Native source behavior remains authoritative; its replay and catalogue outputs
+provide JS parity evidence. MIDI/Ableton and unbuilt future ideas are excluded.
+The new HTTPS boundary was first implemented and tested in Python. All work
+remains local on `anthony-explorations`; device/listening acceptance is pending.

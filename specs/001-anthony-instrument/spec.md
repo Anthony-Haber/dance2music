@@ -116,3 +116,11 @@ Measure core update latency (p95 < 5 ms on replay frames); record camera/model
 performance separately rather than claiming a hardware-independent latency.
 Manual camera/gesture usability and listening remain acceptance observations,
 not facts that can be inferred from unit tests.
+## Stage 2 authorization, 2026-10-13
+
+The native scope below remains the source for implemented behavior. Anthony now
+explicitly authorized its JavaScript translation, excluding MIDI/Ableton, on
+`anthony-explorations`. He selected tracking and sound on the iPhone with the
+laptop serving the app. The [web-port contract](web-port.md) defines this extension,
+browser differences and validation. Earlier web exclusions describe Stage 1;
+spells, games and true 3D remain future scope.
