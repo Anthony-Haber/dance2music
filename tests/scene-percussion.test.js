@@ -2,7 +2,7 @@ import {SCENE_MODES,INSTRUMENTS,sceneMode,instrumentScan,buildInstrument} from '
 import {BodyInteractions,touchPose,instrumentDistance} from '../web/live/scene/touch.js';
 import {SceneRenderer} from '../web/live/scene/renderer.js';
 import {SceneController} from '../web/live/scene/controller.js';
-import {project} from '../web/live/scene/geometry.js';
+import {project,basis} from '../web/live/scene/geometry.js';
 import {SurfaceDrag} from '../web/live/scene/drag.js';
 import {dragFixture} from './scene-drag.test.js';
 import {Engine} from '../web/live/audio.js';
@@ -17,6 +17,99 @@ function frame(t,point=[0,.16,-3],part='body',z=-point[2]) {
   }
   return {depth:{width:w,height:h,timestamp:t,aligned:true,inverse,person:{width:w,height:h,data:mask}},
     pose:{timestamp:t,points:part==='body'?[]:[{joint:part,part,x:(x+.5)/w,y:(y+.5)/h}]}};
+}
+function multiFrame(t,limbs) {
+  const f=frame(t);f.depth.person.data.fill(0);f.pose.points=[];
+  for(const [part,point,joint=part] of limbs){
+    const limb=frame(t,point,part);f.pose.points.push(...limb.pose.points.map(p=>({...p,joint})));
+    for(let i=0;i<f.depth.inverse.length;i++)if(limb.depth.person.data[i]){f.depth.person.data[i]=1;f.depth.inverse[i]=limb.depth.inverse[i];}
+  }
+  return f;
+}
+export function percussionTapFrame(t,o,lift=0,part='left hand') {
+  const anchors={kick:[0,.46,.3],snare:[0,.82,0],hat:[0,.87,0],conga:[0,.89,0],bongo:[-.235,.83,0],
+    djembe:[0,.96,0],cowbell:[0,.64,0],triangle:[-.175,.555,0],cymbal:[0,.86,0]};
+  const [x,y,z]=anchors[o.instrument],[u,v]=basis(o.normal);
+  return frame(t,o.support.map((p,i)=>p+o.size*(x*u[i]+(y+lift)*o.normal[i]-z*v[i])),part);
+}
+export async function runPercussionRetriggerTests() {
+  const c=new BodyInteractions(),o=object(),ground=[0,.16,-3];
+  const step=(t,point=ground,part='left hand')=>{const f=frame(t,point,part);return c.update([o],f.depth,f.pose,f.pose,t);};
+  for(const part of ['left hand','right hand','left foot','right foot','left elbow']){
+    for(const direction of [[0,.14,0],[.14,0,0]]){
+      c.reset();assert(step(1000,ground,part).length===1,'first strike immediate');
+      const retreat=ground.map((v,i)=>v+direction[i]);
+      assert(instrumentDistance(retreat,o)===0,'repeated taps can stay inside the solid drum');
+      for(let n=0;n<4;n++){
+        const t=1050+n*160;
+        assert(!step(t,retreat,part).length&&!step(t+30,retreat,part).length,'withdrawal does not attack');
+        const hits=step(t+80,ground,part);
+        assert(hits.length===1&&hits[0].reason==='repeated-strike'&&hits[0].part===part,`${part} top/side tap repeats without exiting the contact volume`);
+        assert(!step(t+110,ground,part).length,'returned hold never repeats');
+      }
+    }
+  }
+  // Every scene uses component geometry for both the initial and repeated hit.
+  for(const id of Object.keys(INSTRUMENTS)){
+    const drum=object(id);c.reset();
+    for(const [t,lift] of [[1000,0],[1050,.14],[1080,.14],[1130,0]]){
+      const f=percussionTapFrame(t,drum,lift),events=c.update([drum],f.depth,f.pose,f.pose,t);
+      assert(t===1000||t===1130?events.length===1&&events[0].instrument===id:!events.length,`${id} contact and repeated strike`);
+    }
+  }
+  c.reset();step(1000);
+  for(let n=0;n<20;n++)assert(!step(1030+n*30,[n%2?.015:-.015,.16+(n%2?.015:-.015),-3]).length,'small positional jitter does not rearm');
+  assert(!step(1700,[0,.3,-3]).length&&!step(1730).length,'one high outlier does not rearm');
+  for(let t=1760;t<=1820;t+=30){const f=frame(t,ground,'left hand',3.25);assert(!c.update([o],f.depth,f.pose,f.pose,t).length,'depth-only drift cannot rearm');}
+  assert(!step(1850).length,'depth drift returning does not strike');
+  step(1880,[0,.3,-3]);step(1910,[0,.3,-3]);
+  for(let t=1940;t<2200;t+=30)assert(!step(t,[0,.3,-3]).length,'holding a withdrawn hand does not auto-repeat');
+  assert(step(2230)[0]?.reason==='repeated-strike','return after a held withdrawal strikes once');
+  c.reset();step(3000);step(3050,[0,.3,-3]);
+  const duplicate=frame(3050,[0,.3,-3],'left hand');
+  assert(!c.observe([o],duplicate.pose,3090).length&&!step(3100).length,'duplicate pose callback cannot confirm a retreat');
+  step(3130,[0,.3,-3]);step(3160,[0,.3,-3]);
+  const stale=frame(3290,ground,'left hand');c.observe([o],stale.pose,3361);
+  assert(!step(3390).length,'stale depth clears pending stroke');
+  step(3420,[0,.3,-3]);step(3450,[0,.3,-3]);assert(!step(3600).length,'long pose gaps clear pending stroke');
+  c.reset();step(4000);step(4050,[0,.3,-3]);step(4080,[0,.3,-3]);
+  const changed=frame(4130,ground,'left hand');changed.pose.points[0].joint='finger';
+  assert(!c.update([o],changed.depth,changed.pose,changed.pose,4130).length,'landmark fallback cannot finish another joint\'s stroke');
+  // A short cooldown caps noise; a suppressed stroke is consumed immediately,
+  // rather than queued to sound later while the player is resting.
+  c.reset();step(5000);step(5030,[0,.3,-3]);step(5060,[0,.3,-3]);assert(!step(5090).length&&!step(5130).length,'fast suppressed stroke never produces a delayed attack');
+  c.reset();
+  const play=(t,left,right,other=true)=>{
+    const limbs=[['left hand',left,15],['left hand',left,19],['right hand',right,16]];
+    if(other)limbs.push(['body',ground]);
+    const f=multiFrame(t,limbs);return c.update([o],f.depth,f.pose,f.pose,t);
+  };
+  const l=[-.2,.16,-3],r=[.2,.16,-3],lu=[-.2,.3,-3],ru=[.2,.3,-3];
+  assert(play(6000,l,r).length===1,'multiple landmarks and two resting hands produce one initial hit');
+  play(6050,lu,r);play(6080,lu,r);
+  assert(play(6130,l,r)[0]?.part==='left hand','left hand repeats with torso and right hand still touching');
+  play(6180,l,ru);play(6210,l,ru);
+  assert(play(6260,l,r)[0]?.part==='right hand','alternating right hand repeats without full body release');
+  play(6310,lu,ru);play(6340,lu,ru);assert(play(6390,l,r).length===1,'two simultaneous returning limbs coalesce into one instrument hit');
+  assert(!play(6550,l,r).length,'multiple hand landmarks cannot duplicate a stroke');
+  c.reset();const stationary=[['right foot',[.2,.16,-3]]];
+  for(const [t,x] of [[7000,-.8],[7030,-.8],[7140,-.2]]){
+    const f=multiFrame(t,[...stationary,['left hand',[x,.16,-3]]]),events=c.update([o],f.depth,f.pose,f.pose,t);
+    assert(t===7030?!events.length:events.length===1,'a visibly approaching hand can strike a drum held by a stationary foot');
+  }
+  // Clear stroke motion through controller lifecycle paths, including drag.
+  const controller=new SceneController();
+  try{
+    for(const action of ['stop','rescan','visibility','drag']){
+      controller.setMode('percussion-kit');controller.scan={...dragFixture(),objects:[o]};controller.state='active';
+      controller.renderer={setScan(){},setTouchEnabled(){},dispose(){},clearTouch(){},moveObject(){}};controller.worker={terminate(){}};
+      for(const [t,y] of [[1000,.16],[1050,.3],[1080,.3]]){const f=frame(t,[0,y,-3],'left hand');controller.interactions.update([o],f.depth,f.pose,f.pose,t);}
+      if(action==='drag'){controller.pick=()=>({id:o.id,point:o.position});controller.beginDrag(.5,.5);controller.endDrag();}
+      else controller[action]();
+      assert(!controller.interactions.states.size,action+' clears pending percussion strokes');controller.stop();
+    }
+  }finally{controller.dispose();}
+  return ['repeated hand/foot top and side taps inside drum volumes, all nine instruments, resting-body overlap, alternating limbs, landmark grouping, jitter/outlier/depth/freshness guards, cooldown and lifecycle cleanup'];
 }
 export async function runPercussionTests() {
   const passed=[];

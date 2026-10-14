@@ -31,6 +31,8 @@ particles, and ripples as the preview, and its audio includes chord-based contac
 notes. `scene.touch` records interaction settings; Mix has an objects fader.
 Percussion recordings add `scene.mode` (`percussion-kit`, `percussion-hand`, or
 `percussion-metal`) and `instrument` identities on scan objects and touch events.
+Repeated taps carry `reason: repeated-strike`; scene touch settings record the
+pull-back/return detection thresholds and minimum interval between strikes.
 Their contact events include the estimated body region in `part` (or `body`
 when no nearby pose landmark can identify it), plus synthesized voice identity,
 stereo pan, and audio time in `sound`. Percussion sound metadata has no chord or

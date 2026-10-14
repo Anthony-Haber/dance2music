@@ -19,8 +19,10 @@ Fewer than three usable placements means fewer instruments, reported in scene
 status. Each instrument is built locally from lightweight geometry; its voice
 is synthesized with Web Audio and requires no samples or additional downloads.
 Touch any visible body part to an instrument for its sound, glow, sparks, and
-ring. A sustained contact plays once; leave for 120 ms and return to strike
-again. Different instruments can play simultaneously. Percussion interactions
+ring. A sustained contact plays once. Pull your hand or foot back and tap again
+to strike repeatedly, without leaving the instrument's whole contact region.
+Each limb is tracked separately, so another resting limb or your body can stay
+nearby while you play. Different instruments can play simultaneously. Percussion interactions
 are always enabled; the optional Touch effects checkbox applies to 3D Models.
 Instrument sounds use the **objects** fader and master volume, independently of
 movement-driven drum gating, and are included in recordings. They play
@@ -32,6 +34,15 @@ Head, torso, arms, and legs can trigger it even when hands and feet are away.
 Empty space between components, uncertain mask pixels, stale depth, and people
 passing clearly in front of or behind an instrument are rejected. Contact is
 still approximate; fast motion or occlusion may miss a strike.
+
+Repeated strikes require a pull-back visible in both the image and reconstructed
+position, confirmed for 25 ms, followed by a return near the previous contact
+inside an instrument component. Small jitter, depth-only fluctuations, and
+single-frame outliers do not rearm a strike. Wrist/finger and ankle/toe landmarks
+share a limb tracker; a landmark switch resets its motion baseline. Strikes have
+a 120 ms minimum interval per instrument, and stale pose/depth clears pending
+stroke motion. Ordinary leave-and-return contact still works. Recording touch
+settings include these thresholds; repeated hits carry `reason: repeated-strike`.
 
 Start opens the camera, loads the models, and scans three sequential frames
 before music starts. **Cancel** releases the scene worker and camera. Up to three
@@ -283,7 +294,7 @@ accuracy and occlusion remain approximate, particularly during fast movement.
 
 Percussion coverage adds all five scene selections, preference migration, nine
 procedural instrument bounds and composite picking, whole-body depth contact,
-one-hit holds and release/re-entry, simultaneous instruments, and distinct
+one-hit holds, repeated limb taps/bumps and release/re-entry, simultaneous instruments, and distinct
 synthesized voice signatures. Tests encode/decode actual percussion audio and
 verify instrument identity and scene selection in the app's recorded metadata.
 The existing scene video-compositing and recording/microphone suites remain

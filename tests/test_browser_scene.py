@@ -237,11 +237,27 @@ def percussion_controls(context, origin):
         assert page.evaluate('dragScene.interactions.enabled')
         page.locator('#rec').click()
         page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
-        page.evaluate("""()=>{
-          const now=performance.now(),c=dragScene,o=c.scan.objects[0];
-          c.publishTouches([{object_id:o.id,instrument:o.instrument,shape:o.shape,part:'torso',x:.5,position:o.position,
-            timestamp_ms:now,depth_timestamp_ms:now,effect_timestamp_ms:now,approximate:true}]);
+        hits=page.evaluate("""async()=>{
+          const {percussionTapFrame}=await import('/tests/scene-percussion.test.js');
+          const c=dragScene,o=c.scan.objects[0],observe=c.observePose,hits=[];
+          c.observePose=()=>{};
+          const step=lift=>{
+            const now=performance.now(),f=percussionTapFrame(now,o,lift);
+            const events=c.interactions.update([o],f.depth,f.pose,f.pose,now);
+            hits.push(...events);c.publishTouches(events);
+          };
+          try{
+            step(0);
+            for(let n=0;n<3;n++){
+              await new Promise(resolve=>setTimeout(resolve,50));step(.3);
+              await new Promise(resolve=>setTimeout(resolve,40));step(.3);
+              await new Promise(resolve=>setTimeout(resolve,60));step(0);
+            }
+            await new Promise(resolve=>setTimeout(resolve,50));step(0);
+            return hits;
+          }finally{c.observePose=observe;}
         }""")
+        assert len(hits)==4 and all(e['reason']=='repeated-strike' for e in hits[1:]), hits
         page.wait_for_timeout(350)
         with page.expect_download() as download: page.locator('#rec').click()
         with zipfile.ZipFile(io.BytesIO(Path(download.value.path()).read_bytes())) as archive:
@@ -250,12 +266,14 @@ def percussion_controls(context, origin):
         config=manifest['configurations'][0]['settings']['scene']
         assert config['mode']==mode and config['scan']['objects'][0]['instrument']==instrument
         assert config['touch']['parts']==['whole body'] and config['touch']['enabled']
+        assert config['touch']['retrigger']=='limb-pullback-and-return'
         events=[e for row in rows for e in (row.get('analysis') or {}).get('scene_touch_events',[])]
-        assert len(events)==1 and events[0]['part']=='torso' and events[0]['sound']['instrument']==instrument
+        assert len(events)==4 and all(e['part']=='left hand' and e['sound']['instrument']==instrument for e in events), events
+        assert sum(e['reason']=='repeated-strike' for e in events)==3
         page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Start'")
     page.evaluate("localStorage.removeItem('d2m:sceneMode')")
     page.close()
-    print('PASS actual app percussion selection/start/stop, instrument scene snapshots and live contact sound metadata in recordings',flush=True)
+    print('PASS actual app percussion selection/start/stop, repeated limb contact through real sound, and all strikes/settings in recordings for each percussion set',flush=True)
 
 def interactive_percussion(page, origin, output, resolution):
     """Leave a real-camera window available while collecting human hit evidence."""
@@ -338,7 +356,8 @@ def main():
                 for name in page.evaluate('(async name=>{const m=await import("/tests/scene.test.js");return await m[name]();})',test): print('PASS',name,flush=True)
             (args.output/'touch-effects.png').write_bytes(base64.b64decode(page.evaluate('touchEffectPreview').split(',',1)[1]))
             for name in page.evaluate('(async()=>{const m=await import("/tests/scene-drag.test.js");return m.runDragTests();})'): print('PASS',name,flush=True)
-            for name in page.evaluate('(async()=>{const m=await import("/tests/scene-percussion.test.js");return m.runPercussionTests();})'): print('PASS',name,flush=True)
+            for test in ['runPercussionTests','runPercussionRetriggerTests']:
+                for name in page.evaluate('(async name=>{const m=await import("/tests/scene-percussion.test.js");return m[name]();})',test): print('PASS',name,flush=True)
             (args.output/'percussion-preview.png').write_bytes(base64.b64decode(page.evaluate('percussionPreview').split(',',1)[1]))
             if not args.camera:
                 live_controls(context,origin)

@@ -55,7 +55,8 @@ The Scene dropdown also offers three **Percussions** sets: Drum kit
 (kick/snare/hi-hat), Hand drums (conga/bongo/djembe), and Metallic
 (cowbell/triangle/cymbal). These place recognizable draggable instruments that
 respond to any visible body part with their own synthesized sound and effects.
-One touch plays one hit; move away and return to strike again. Use **None** for
+Pull your hand or foot back and tap again for repeated hits, even while your
+body still overlaps the instrument. Resting contact plays once. Use **None** for
 no scene objects. All instrument visuals and sounds work offline.
 See [3D objects, offline setup, and validation](docs/3d-objects.md).
 

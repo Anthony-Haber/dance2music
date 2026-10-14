@@ -150,7 +150,7 @@ function lockSessionOptions() {
   $('sceneTouchRow').hidden=percussion||$('sceneMode').value==='magenta'||isPiano;
   $('sceneDragHelp').textContent=isPiano?'Drag the whole keyboard onto clear detected floor. At an edge it settles at the closest fitting spot. Esc cancels; Rescan rebuilds placement. Dragging releases all notes.':'Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.';
   $('sceneInteractionHelp').textContent=percussion
-    ? SCENE_MODES[$('sceneMode').value].instruments.map(id=>INSTRUMENTS[id].label).join(' · ')+'. Touch with any body part for sparks and its sound. Move away to strike again. Adjust “objects” in Mix. Touches are approximate.'
+    ? SCENE_MODES[$('sceneMode').value].instruments.map(id=>INSTRUMENTS[id].label).join(' · ')+'. Tap or bump with any body part for sound and sparks. Pull your hand or foot back and tap again to repeat; resting contact plays once. Adjust “objects” in Mix. Touches are approximate.'
     : 'Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.';
   $('sceneTouchHelp').textContent=percussion
     ? 'Yellow boxes surround instruments. Cyan dots have body depth; yellow dots are waiting for depth. Gaps between instrument parts do not trigger hits.'

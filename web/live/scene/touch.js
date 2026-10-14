@@ -143,8 +143,10 @@ export class TouchInteractions {
   }
 }
 
-export const PERCUSSION_TOUCH_SETTINGS=Object.freeze({...TOUCH_SETTINGS,version:1,parts:['whole body'],
-  confirm_ms:0,cooldown_ms:120,sound:'synthesized-percussion',contact:'component-volumes'});
+export const PERCUSSION_TOUCH_SETTINGS=Object.freeze({...TOUCH_SETTINGS,version:2,parts:['whole body'],
+  confirm_ms:0,cooldown_ms:120,retrigger_confirm_ms:25,retrigger_travel_fraction:.08,
+  retrigger_pixels:6,retrigger_return_fraction:.4,preview_width:640,
+  sound:'synthesized-percussion',contact:'component-volumes',retrigger:'limb-pullback-and-return'});
 
 export function instrumentDistance(point,object) {
   const [u,v]=basis(object.normal),d=point.map((p,i)=>(p-object.support[i])/object.size);
@@ -171,6 +173,56 @@ export function instrumentDistance(point,object) {
   return distance;
 }
 const bodyTolerance=o=>Math.min(o.size*.3,o.size*.08+(-o.position[2])*.025);
+
+// Follow one stable landmark per limb: a wrist and fingertip (or ankle and toe)
+// belong to the same stroke. Other body overlap must not hold a tapping limb off.
+function strokeLimb(part) {
+  const side=part.startsWith('left ')?'left':part.startsWith('right ')?'right':null;
+  if(side&&/hand|arm|elbow|shoulder/.test(part))return side+' arm';
+  if(side&&/foot|leg|knee|hip/.test(part))return side+' leg';
+  return part;
+}
+function strokePoints(points,strokes) {
+  const groups=new Map(),rank=p=>/hand|foot/.test(p.part)?0:/elbow|knee/.test(p.part)?1:2;
+  for(const p of points){const limb=strokeLimb(p.part),old=groups.get(limb),joint=strokes.get(limb)?.joint;
+    if(!old||p.joint===joint||(old.joint!==joint&&rank(p)<rank(old)))groups.set(limb,p);
+  }
+  return groups;
+}
+function percussionStroke(strokes,limb,p,inside,object,depth,timestamp) {
+  const settings=PERCUSSION_TOUCH_SETTINGS;
+  const pixels=(a,b)=>Math.hypot((a.x-b.x)*depth.width,(a.y-b.y)*depth.height)*settings.preview_width/depth.width;
+  const distance=(a,b)=>Math.hypot(...a.position.map((v,i)=>v-b.position[i]));
+  const travel=object.size*settings.retrigger_travel_fraction;
+  const moved=(a,b)=>distance(a,b)>=travel&&pixels(a,b)>=settings.retrigger_pixels;
+  let s=strokes.get(limb);
+  if(!s||s.joint!==p.joint||timestamp-s.timestamp>settings.pose_age_ms){
+    strokes.set(limb,{joint:p.joint,origin:p,contacted:inside,timestamp,start:timestamp,retreat:null,peak:null});return false;
+  }
+  if(timestamp<=s.timestamp)return false;
+  s.timestamp=timestamp;
+  if(!s.contacted){
+    // A second limb may approach while the first remains resting on the drum.
+    const hit=inside&&timestamp-s.start>=settings.retrigger_confirm_ms&&moved(p,s.origin);
+    if(inside){s.origin=p;s.contacted=true;s.retreat=null;s.peak=null;}
+    return hit;
+  }
+  if(!s.peak){
+    if(moved(p,s.origin)){
+      s.retreat??=timestamp;
+      if(timestamp-s.retreat>=settings.retrigger_confirm_ms)s.peak=p;
+    }else s.retreat=null;
+    return false;
+  }
+  if(distance(p,s.origin)>distance(s.peak,s.origin))s.peak=p;
+  // The visible limb must return near its previous contact, inside an actual
+  // component. Depth wobble alone, a single outlier, or resting at the lifted
+  // position cannot strike. No full-volume exit or 120 ms absence is required.
+  if(inside&&distance(p,s.origin)<=distance(s.peak,s.origin)*settings.retrigger_return_fraction&&moved(p,s.peak)){
+    s.origin=p;s.retreat=null;s.peak=null;return true;
+  }
+  return false;
+}
 
 // Whole-person foreground samples complement the pose skeleton. Work is bounded
 // to roughly 300 candidates per instrument, only when a new depth result arrives.
@@ -207,7 +259,10 @@ export class BodyInteractions extends TouchInteractions {
   observe(objects,current,now) {
     if(!this.enabled)return [];
     const d=this.depth;
-    if(!d||now<d.timestamp||now-d.timestamp>200){this.points=[];this.previous=null;this.reason='Waiting for fresh depth';return [];}
+    if(!d||now<d.timestamp||now-d.timestamp>200){
+      for(const s of this.states.values())s.strokes?.clear();
+      this.points=[];this.previous=null;this.reason='Waiting for fresh depth';return [];
+    }
     const fresh=current&&Number.isFinite(current.timestamp)&&now>=current.timestamp&&now-current.timestamp<=120;
     const points=[],w=d.width,h=d.height;
     for(const p of fresh?current.points:[]){
@@ -215,13 +270,18 @@ export class BodyInteractions extends TouchInteractions {
       points.push({...p,z:a.z,position:ray(p.x*w-.5,p.y*h-.5,w,h).map(n=>n*a.z)});
     }
     this.points=points;this.reason='Move into an instrument';const events=[];
-    const previous=this.previous&&fresh&&current.timestamp-this.previous.timestamp<=120?this.previous:null;
+    const previous=this.previous&&fresh&&current.timestamp>this.previous.timestamp&&current.timestamp-this.previous.timestamp<=120?this.previous:null;
     for(const object of objects){
       let s=this.states.get(object.id);
-      if(!s){s={active:false,lastHit:-Infinity,lastNear:-Infinity,lastSample:-Infinity,proximity:0};this.states.set(object.id,s);}
+      if(!s){s={active:false,lastHit:-Infinity,lastNear:-Infinity,lastSample:-Infinity,proximity:0,strokes:new Map()};this.states.set(object.id,s);}
       s.lastSample=now;s.proximity=0;
       const tolerance=bodyTolerance(object),box=touchBounds(object,w,h),padding=3;
-      let contact=now-d.timestamp<=120?this.body.get(object.id):null;
+      let contact=now-d.timestamp<=120?this.body.get(object.id):null,repeat=null;
+      for(const [limb,stroke] of s.strokes)if(now-stroke.timestamp>120)s.strokes.delete(limb);
+      for(const [limb,p] of strokePoints(points,s.strokes)){
+        const inside=instrumentDistance(p.position,object)<=tolerance;
+        if(percussionStroke(s.strokes,limb,p,inside,object,d,current.timestamp))repeat=p;
+      }
       for(const p of points){
         const old=previous?.points.find(q=>q.joint===p.joint);
         if(!overlap(p,box,w,h,padding)&&(!old||!crosses(old,p,box,w,h,padding)))continue;
@@ -235,13 +295,14 @@ export class BodyInteractions extends TouchInteractions {
         }
         if(contact)break;
       }
+      if(repeat)contact=repeat;
       if(contact){
         this.reason=`Contact: ${contact.part}`;s.lastNear=now;
-        if(!s.active&&now-s.lastHit>=120){
+        if((!s.active||repeat)&&now-s.lastHit>=PERCUSSION_TOUCH_SETTINGS.cooldown_ms){
           s.active=true;s.lastHit=now;this.count++;
           events.push({type:'touch',object_id:object.id,shape:object.shape,instrument:object.instrument,part:contact.part,
             position:contact.position,x:contact.x,timestamp_ms:fresh?current.timestamp:d.timestamp,
-            depth_timestamp_ms:d.timestamp,effect_timestamp_ms:now,approximate:true});
+            depth_timestamp_ms:d.timestamp,effect_timestamp_ms:now,approximate:true,reason:repeat?'repeated-strike':'contact'});
         }
       }else if(now-s.lastNear>=120)s.active=false;
     }
