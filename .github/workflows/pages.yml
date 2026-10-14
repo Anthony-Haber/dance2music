@@ -1,5 +1,5 @@
 # Publish the live tool and the methods page to GitHub Pages on every push to main.
-# Only web/live, the methods pages and KaTeX go online; the comparison page
+# Only web/live, web/experiments, the methods pages and KaTeX go online; the comparison page
 # (web/index.html) needs local renders and stays local.
 name: pages
 on:
@@ -24,7 +24,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r web/live web/vendor web/about.html web/methods.html _site/
+          cp -r web/live web/vendor web/experiments web/about.html web/methods.html _site/
           rm -rf _site/live/vendor
           printf '<!doctype html><meta charset="utf-8"><title>Dance2Music</title><meta http-equiv="refresh" content="0; url=live/"><a href="live/">Dance2Music Live</a>\n' > _site/index.html
           touch _site/.nojekyll
