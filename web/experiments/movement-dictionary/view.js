@@ -1,13 +1,16 @@
 // Movement Dictionary: what is measured, drawn on the body (video pixels).
 const COL = { axis: '#78dc78', warn: '#ffaa50', hot: '#fa6060', spine: '#c8b4ff', head: '#5ab4ff', pair: '#f0a050', circle: '#5ac8c8', dim: 'rgba(235,230,220,.35)' };
 const lerpCol = u => (u < 0.5 ? COL.axis : u < 0.8 ? COL.warn : COL.hot);
+const VCOL = { bass: 'rgba(120,220,120,1)', tenor: 'rgba(200,180,255,1)', alto: 'rgba(240,160,80,1)', soprano: 'rgba(90,180,255,1)' };
+const OWNER_LABEL = { bass: 'axis', tenor: 'spine', alto: 'elbows, knees', soprano: 'head' };
+const CHORD_NAME = { I: 'D', ii: 'Em', iii: 'F♯m', IV: 'G', V: 'A', vi: 'Bm', 'vii°': 'C♯°' };
 const J = { NOSE: 0, LSH: 11, RSH: 12, LEL: 13, REL: 14, LWR: 15, RWR: 16, LHIP: 23, RHIP: 24, LKN: 25, RKN: 26 };
 
 export class View {
   constructor(canvas) { this.cv = canvas; this.g = canvas.getContext('2d'); this.trails = {}; this.flash = []; }
 
   // f: the frame from measure.js; S: studies and switches; k: pixel scale (canvas px per video px)
-  draw(f, S, k, mirror) {
+  draw(f, S, k, mirror, choir = null) {
     const g = this.g, cv = this.cv;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
     if (!f) return;
@@ -81,5 +84,34 @@ export class View {
       if (!p) continue;
       g.strokeStyle = `rgba(255,255,255,${a})`; g.lineWidth = 3 * s; g.beginPath(); g.arc(p[0], p[1], (10 + 30 * (1 - a)) * s, 0, 7); g.stroke();
     }
+    if (!choir) return;
+    // the body part that owns a voice glows in that voice's colour when the voice moves
+    const own = { vertical: hip, spine: sh, pairs: P(J.LEL) && P(J.LKN) ? [(P(J.LEL)[0] + P(J.LKN)[0]) / 2, (P(J.LEL)[1] + P(J.LKN)[1]) / 2] : null, head };
+    for (const m of choir.moves) {
+      const p = own[m.owner]; if (!p) continue;
+      const a = 1 - (now - m.at) / 900;
+      g.fillStyle = VCOL[m.voice].replace('1)', `${0.25 * a})`); g.beginPath(); g.arc(p[0], p[1], (26 + 20 * (1 - a)) * s, 0, 7); g.fill();
+      g.strokeStyle = VCOL[m.voice].replace('1)', `${a})`); g.lineWidth = 3 * s; g.stroke();
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    this.choirPanel(choir, now);
+  }
+
+  // the chord and the four voices, bottom left (screen pixels); a voice that just moved is lit
+  choirPanel({ desc, moves }, now) {
+    const g = this.g, d = devicePixelRatio || 1, x0 = 18 * d, w = 210 * d, rows = ['soprano', 'alto', 'tenor', 'bass'];
+    const y0 = this.cv.height - 18 * d - (rows.length * 22 + 54) * d;
+    g.save(); g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x0 - 10 * d, y0 - 8 * d, w, (rows.length * 22 + 62) * d);
+    g.textBaseline = 'top'; g.fillStyle = '#efe9df'; g.font = `600 ${26 * d}px -apple-system, sans-serif`;
+    g.fillText(`${desc.chord}  ${CHORD_NAME[desc.chord] || ''}`, x0, y0);
+    if (desc.target !== desc.chord) { g.font = `${13 * d}px -apple-system, sans-serif`; g.fillStyle = '#9a9086'; g.fillText(`→ ${desc.target} ${CHORD_NAME[desc.target] || ''}`, x0 + 120 * d, y0 + 10 * d); }
+    rows.forEach((v, i) => {
+      const y = y0 + (40 + i * 22) * d, m = moves.filter(x => x.voice === v).pop(), a = m ? 1 - (now - m.at) / 900 : 0;
+      if (a > 0) { g.fillStyle = VCOL[v].replace('1)', `${0.3 * a})`); g.fillRect(x0 - 6 * d, y - 2 * d, w - 8 * d, 20 * d); }
+      g.font = `${13 * d}px -apple-system, sans-serif`; g.fillStyle = VCOL[v]; g.fillText(v, x0, y);
+      g.fillStyle = '#efe9df'; g.font = `600 ${14 * d}px -apple-system, sans-serif`; g.fillText(desc.names[v], x0 + 70 * d, y);
+      g.fillStyle = '#9a9086'; g.font = `${11.5 * d}px -apple-system, sans-serif`; g.fillText(OWNER_LABEL[v], x0 + 118 * d, y + 1 * d);
+    });
+    g.restore();
   }
 }

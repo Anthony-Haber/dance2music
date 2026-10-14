@@ -3,6 +3,7 @@
 import { Dictionary } from './measure.js';
 import { Sound } from './sound.js';
 import { View } from './view.js';
+import { Choir } from './harmony.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -11,22 +12,23 @@ const store = { get(k, d) { try { const x = localStorage.getItem('md:' + k); ret
                 set(k, v) { try { localStorage.setItem('md:' + k, JSON.stringify(v)); } catch {} } };
 
 const STUDIES = {
-  vertical: ['<b>Verticality.</b> Upright, the body is a steady hum on one note. Tilt and the hum shifts: it detunes, bends up to a semitone at 45° and opens up; leaning to a side pans it there, leaning forward brightens it, back darkens it. Hold a lean past 25° for a second and the harmony steps that way; come back upright and it returns home.',
+  vertical: ['<b>Verticality: the bass.</b> Upright is home: the choir sings the tonic (D major) over a steady hum. Tilt and the hum shifts: it detunes, bends and opens; a side lean pans it. Hold a lean to your left for half a second and the choir moves to IV (G), to your right to V (A), one voice at a time; come back upright and it walks home.',
              { vertical: true }],
-  spine: ['<b>Spine, head and tail.</b> The spine is the hum itself. When a movement starts at the head, a bright sweep falls through the hum from top to bottom; when it starts at the tail, it rises from the bottom. The time the movement takes to travel from one end to the other is the length of the sweep. Curving the spine stretches the hum\'s overtones: straight is pure, curved is metallic.',
+  spine: ['<b>Spine: the tenor.</b> When a movement starts at the head, a bright sweep falls through the hum; when it starts at the tail, it rises. The time it takes to travel along the spine is the sweep\'s length. Curling forward bends the tenor a step down, arching back a step up, and it returns when you straighten; curving also makes the hum metallic.',
           { spine: true }],
-  head: ['<b>The head, on its own.</b> Where the head points steers the sound. Looking down gives an "oo", level an "ah", up an "ee"; turning to a side moves the voice to that side. A sharp turn of the head sounds a soft accent in the new direction. The spine and the head are measured separately, so turning the head changes nothing else.',
+  head: ['<b>Head: the soprano.</b> The choir sings the vowel of your head: looking down "oo", level "ah", up "ee"; turning moves the choir to that side. Looking up past 12° lifts the soprano a step, looking down lowers it, like a suspension that resolves when you look ahead again. A sharp turn sounds a soft accent.',
          { head: true }],
-  pairs: ['<b>Elbows and knees.</b> Each elbow and knee is a pair of voices. Touching is one note (unison); close, the two notes slowly beat against each other; as they part the interval opens to a third, a fifth, an octave. A touch strikes a note. A crossed pair (an elbow to the opposite knee) adds a tense upper voice as it closes.',
+  pairs: ['<b>Elbows and knees: the alto.</b> Fold an elbow towards the knee on the same side and the choir moves to the relative chord: one voice changes (I becomes vi, Bm). Bring an elbow towards the opposite knee and it moves to the other neighbour (I becomes iii, F♯m). Open again and it returns. With a lean they combine: IV goes to ii or vi, V to iii or vii°. A touch strikes the alto\'s note.',
           { pairs: true }],
-  circles: ['<b>Circles.</b> A hand, the head or the hips travelling in a circle plays the chord one note per quarter turn, and the sound travels round with it. The faster the circle, the faster the notes; small circles are high and quiet, big circles low and full; reversing reverses the notes, with an accent. Spinning the whole body turns the whole sound round.',
+  circles: ['<b>Circles.</b> A hand, the head or the hips travelling in a circle plays the choir\'s chord one note per quarter turn, and the sound travels round with it. The faster the circle, the faster the notes; small circles are high, big circles low; reversing reverses the notes, with an accent. Spinning the whole body turns the whole sound round.',
             { circles: true }],
-  together: ['<b>Together.</b> All five at once: the hum from the axis and the spine, steered by the head, with elbows and knees and circles on top.',
+  together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
              { vertical: true, spine: true, head: true, pairs: true, circles: true }],
 };
 
 const v = $('v'), cv = $('c');
-const dict = new Dictionary(), sound = new Sound(), view = new View(cv);
+const dict = new Dictionary(), sound = new Sound(), view = new View(cv), choir = new Choir();
+let moves = [];
 let vision = null, landmarker = null, modelKey = '', stream = null, running = false, moving = 0, last = null;
 let study = store.get('study', 'vertical');
 const rows = []; let recorder = null, chunks = [], recT0 = 0;
@@ -79,7 +81,7 @@ async function start() {
       v.srcObject = stream;
     }
     await v.play();
-    dict.reset(); running = true; $('hint').hidden = true;
+    dict.reset(); choir.reset(); running = true; $('hint').hidden = true;
     $('go').textContent = 'Stop'; $('cal').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
   } catch (e) { status('could not start: ' + e.message); }
@@ -88,8 +90,6 @@ async function start() {
 async function stop() {
   if (recorder) await toggleRecord();
   running = false; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; v.pause();
-  sound.update({ vertical: { tilt: 0, left: 0, forward: 0 }, spine: { curve: 0 }, head: {}, pairs: {}, circles: {}, spin: {} },
-               { pairMode: 'both' }, 0);
   if (sound.ctx) await sound.ctx.suspend();
   $('go').textContent = 'Start'; $('cal').disabled = true; $('rec').disabled = true; $('hint').hidden = false; status('stopped');
 }
@@ -109,11 +109,15 @@ function loop() {
       const S = settings();
       if (f) {
         moving += 0.05 * (Math.min(1, Math.max(f.spine.speedHead, f.spine.speedTail) / 1.5) - moving);
-        sound.update(f, S, moving);
-        for (const e of f.events) sound.event(e, S, f);
-        if (recorder) rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }));
+        const cev = choir.update(f, S, f.t);
+        sound.update(f, S, moving, choir);
+        for (const e of [...f.events, ...cev]) sound.event(e, S, choir);
+        for (const e of cev) if (e.type === 'move') moves.push({ ...e, at: performance.now() });
+        moves = moves.filter(m => performance.now() - m.at < 900);
+        if (recorder) { const c = choir.describe();
+          rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }) + `,${c.chord},${Object.values(c.names).join(' ')},${cev.filter(e => e.type === 'move').map(e => e.voice).join(' ')}`); }
       }
-      layout(W, H); view.draw(f, S, cv.width / W, $('mirror').value === '1');
+      layout(W, H); view.draw(f, S, cv.width / W, $('mirror').value === '1', { desc: choir.describe(), moves });
       readout(f);
       fps.push(now); while (fps.length && fps[0] < now - 1000) fps.shift();
       status(f ? `${fps.length} fps` : `${fps.length} fps · no body in view: step back so your whole body is seen`);
@@ -134,6 +138,8 @@ function layout(W, H) {
 function readout(f) {
   if (!f) { $('read').innerHTML = '<span>body</span><span>not in view</span>'; return; }
   const r = [];
+  const c = choir.describe();
+  r.push(['choir', `${c.chord}${c.target !== c.chord ? ' → ' + c.target : ''}`], ['voices', `${c.names.bass} ${c.names.tenor} ${c.names.alto} ${c.names.soprano}`]);
   const S = STUDIES[study][1], n = (x, d = 0) => (x === null || x === undefined ? '–' : x.toFixed(d));
   if (S.vertical) r.push(['tilt', `${n(f.vertical.tilt)}°`], ['direction', f.vertical.tilt < 4 ? 'upright' : `${n(f.vertical.dir)}° (0 forward, 90 her left)`]);
   if (S.spine) r.push(['spine curve', `${n(f.spine.curve)}°`], ['last start', f.spine.lead ? `${f.spine.lead.lead}, ${n(f.spine.lead.lag, 2)} s to travel` : '–']);
@@ -173,7 +179,7 @@ async function toggleRecord() {
     const ext = r.mimeType.includes('mp4') ? 'mp4' : 'webm';
     save(new Blob(chunks, { type: r.mimeType.split(';')[0] }), `movement-dictionary-${study}-${stamp}.${ext}`);
     const meta = `# study=${study} ${JSON.stringify(settings())}\n`;
-    setTimeout(() => save(new Blob([meta + Dictionary.csvHeader() + '\n' + rows.join('\n')], { type: 'text/csv' }), `movement-dictionary-${study}-${stamp}.csv`), 400);
+    setTimeout(() => save(new Blob([meta + Dictionary.csvHeader() + ',chord,voices,moved\n' + rows.join('\n')], { type: 'text/csv' }), `movement-dictionary-${study}-${stamp}.csv`), 400);
     $('rec').textContent = '● Record'; $('rec').classList.remove('on'); $('recDot').hidden = true;
   }
 }

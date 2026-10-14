@@ -14,10 +14,10 @@ downloads the view with its sound and a CSV of the measurements (no images).
 
 | | Her note | What is measured | What you hear |
 |---|---|---|---|
-| 1 | **Spine: head and tail.** Movement starts from the head or the tail and travels between them. | The spine's curve (hips → shoulders → head); which end starts a movement (the one that speeds up first after rest) and how long it takes to reach the other. | The hum is the spine. Head-led: a bright sweep falls through its overtones; tail-led: it rises. The travel time is the sweep's length. Curving the spine stretches the overtones (pure → metallic). |
-| 2 | **Head: independent.** Direction set by the eyes or nose, independent of the spine. | Head turn (yaw) and tilt (pitch) relative to the shoulders; fast turns. | A vowel filter on the hum: down "oo", level "ah", up "ee"; the voice moves to the side the head turns to; a sharp turn sounds a soft accent. |
-| 3 | **Elbows and knees.** The distance and relationship between two points. | Four distances in torso lengths: left elbow to left knee, right to right, and the two crossed; contact. | Two voices per pair: touching = unison, close = slow beating, then a third, a fifth, an octave as they part. A touch strikes a note; a closing crossed pair adds a tense voice. |
-| 4 | **Verticality.** Upright is a continuous base hum; tilting shifts it by its degree and direction. | Tilt of the hip-to-head axis from vertical, in any direction (left/right and forward/back, from the 3D landmarks). | Upright: a steady hum. Tilt detunes it, bends it up to a semitone at 45° and opens it; a side lean pans it, forward brightens, back darkens. A lean held past 25° for a second steps the harmony that way; upright returns home. |
+| 1 | **Spine: head and tail.** Movement starts from the head or the tail and travels between them. | The spine's curve (hips → shoulders → head); which end starts a movement (the one that speeds up first after rest) and how long it takes to reach the other. | The tenor: head-led, a bright sweep falls through the hum; tail-led, it rises; the travel time is the sweep's length. Curling bends the tenor a step down, arching a step up; curving makes the hum metallic. |
+| 2 | **Head: independent.** Direction set by the eyes or nose, independent of the spine. | Head turn (yaw) and tilt (pitch) relative to the shoulders; fast turns. | The soprano: the choir sings the head's vowel (down "oo", level "ah", up "ee") and moves to the side it turns to; looking up or down bends the soprano a step; a sharp turn sounds a soft accent. |
+| 3 | **Elbows and knees.** The distance and relationship between two points. | Four distances in torso lengths: left elbow to left knee, right to right, and the two crossed; contact. | The alto: folding an elbow to the knee on the same side moves the choir to the relative chord (I→vi), to the opposite knee to the other neighbour (I→iii), one voice changing. A touch strikes a note. |
+| 4 | **Verticality.** Upright is a continuous base hum; tilting shifts it by its degree and direction. | Tilt of the hip-to-head axis from vertical, in any direction (left/right and forward/back, from the 3D landmarks). | The bass: upright, the choir sings the tonic over a steady hum. Tilt detunes, bends and opens the hum; a side lean pans it. A lean held to her left moves the choir to IV, to her right to V, one voice at a time; upright walks home. |
 | 5 | **Circularity.** Speed, size and change of direction; one part or the whole body. | Each hand, the head and the hips: whether it travels in a circle, how fast, how big, which way, each quarter turn, reversals; the whole body spinning. | One chord note per quarter turn, travelling round in stereo. Faster circle = faster notes; small = high and quiet, big = low and full; reversing reverses the notes with an accent; a spin turns the whole sound. |
 
 **Questions to try** (switches on the page, the dancer's open questions):
@@ -27,6 +27,30 @@ down like a top.
 
 **Calibrate**: stand upright, look ahead, press Calibrate; three seconds later
 that posture is zero for the tilt, the spine's curve and the head.
+
+## The choir (`harmony.js`)
+
+The five notes play a four-voice choir in D major, and every chord change
+happens **one voice at a time**, the way a choir moves: the common tones hold,
+one voice steps (and swells a little), then the next. Each voice belongs to a
+part of the body:
+
+| Voice | Body | What it does |
+|---|---|---|
+| bass (the hum) | the axis | upright = **I** (D); a lean held 0.35 s past 22° to her left = **IV** (G), to her right = **V** (A); back under 10° = home |
+| tenor | the spine | curling forward bends it a scale step down, arching back a step up, until she straightens (e.g. V with the tenor bent to G = A7) |
+| alto | elbows and knees | an elbow folding towards the knee on the same side (under 0.75 torsos) = the **relative** chord: I→vi, IV→ii, V→iii; an elbow towards the opposite knee (under 0.95) = the **other neighbour**: I→iii, IV→vi, V→vii°. Both are one note away. A touch strikes the alto's note |
+| soprano | the head | looking up past 12° lifts it a scale step, down past −15° lowers it: a suspension that resolves when she looks ahead |
+
+The target chord comes from the lean and the pairs; the choir walks to it,
+at most one voice every 0.35 s, the smallest step first and the bass last.
+Circles arpeggiate whatever the choir is singing. On three short dance clips
+the choir used I, ii, iii, IV, V, vi and vii° this way.
+
+Voices: tenor, alto and soprano are two detuned saws each with vibrato
+(5.2 Hz, ±14 cents) through three vowel formants, gliding 0.09 s to a new note;
+the head's vowel (oo / ah / ee) shapes all three. The bass is the hum, an
+octave below the bass voice.
 
 ## How it is measured
 
@@ -60,27 +84,27 @@ its `MD` object, and the sound's in `SD` (`sound.js`).
 
 ## How it sounds (`sound.js`)
 
-- **Hum**: 10 sine partials on D2, each doubled by a detuned copy. Tilt u =
-  tilt/45° (capped at 1): detune 22u cents, bend 100u cents, low-pass
-  380·2^(3u) Hz, ×2^(1.2·forward); pan from the sideways lean. Held lean past
-  25° for 1 s: root up a fourth (her left) or a fifth (her right); below 10°:
-  home. Spine curve c (curve/45°): partial n at f·n·√(1 + 0.0025·c²·n²).
+- **Hum**: 10 sine partials an octave below the bass voice, each doubled by a
+  detuned copy. Tilt u = tilt/45° (capped at 1): detune 18u cents, bend 60u
+  cents, low-pass 320·2^(3u) Hz, ×2^(1.2·forward); pan from the sideways lean.
+  Spine curve c (curve/45°): partial n at f·n·√(1 + 0.0025·c²·n²).
   A lead: each partial is struck in turn from the leading end over the travel
   time (0.12 to 1.2 s).
-- **Head**: two band-pass formants on the hum, oo (300, 870 Hz) ↔ ah (730,
-  1090) ↔ ee (270, 2290) with pitch ±30°; panned with the yaw (±60°).
-- **Elbows and knees**: per side, two triangle tones two octaves above the
-  root; the second is above the first by 0 → 30 → 400 → 700 → 1200 cents at
-  0, 0.3, 0.6, 0.9, 1.3 torsos. Contact: a struck bar (partials 1, 2.756, 5.404,
-  8.933). Crossed: a sawtooth a minor ninth up, louder as the pair closes.
-- **Circles**: the chord (root, third, fifth, octave …) one note per quarter
-  turn, moving up for anticlockwise and down for clockwise; register two, one
-  or zero octaves up for small, medium, big circles; panned round with the
-  circle.
+- **Head**: the choir's three formants move oo (300, 870, 2240 Hz) ↔ ah (730,
+  1090, 2440) ↔ ee (270, 2290, 3010) with pitch ±30°; the choir pans with the
+  yaw (±60°); a sharp turn strikes the soprano's note an octave up.
+- **Elbows and knees**: contact strikes a bar (partials 1, 2.756, 5.404, 8.933)
+  on the alto's note.
+- **Circles**: the choir's notes (tenor, alto, soprano, then an octave up) one
+  per quarter turn, up for anticlockwise and down for clockwise; an octave up
+  for small circles, down for big ones; panned round with the circle.
 
 ## Tests
 
-`node --test tests/movement_dictionary.test.mjs` checks the measurements on
-synthetic bodies: upright and leaning, forward, a curled spine, a head turn,
+`node --test tests/movement_dictionary.test.mjs tests/movement_dictionary_choir.test.mjs`
+(14 tests). The choir tests check the tonic, IV and V by leaning, the relatives
+by folding, that each step moves exactly one voice, and the bends. The
+measurement tests check
+the measurements on synthetic bodies: upright and leaning, forward, a curled spine, a head turn,
 elbow–knee contact, a circling hand with its rate, quarter turns and a
 reversal, and a head-led movement with its travel time.
