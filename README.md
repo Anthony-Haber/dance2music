@@ -15,7 +15,7 @@ Code only in git: clips go in `videos/`, everything generated lands in
     python synths.py                                 # render every demo for every clip
     python synths.py --serve                         # the page, http://127.0.0.1:5091/
     python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
-    python live.py --offline                         # download pose, hand, and 3D assets for a venue without internet
+    python live.py --offline                         # prepare pose, hands, 3D, and native Magenta for offline use
 
 | file | what |
 |---|---|
@@ -58,6 +58,14 @@ respond to any visible body part with their own synthesized sound and effects.
 One touch plays one hit; move away and return to strike again. Use **None** for
 no scene objects. All instrument visuals and sounds work offline.
 See [3D objects, offline setup, and validation](docs/3d-objects.md).
+
+Choose **Google Magenta** for local MRT2 music guided by three editable spatial
+prompts and the original movement-generated audio. **Audio + notes** also sends
+the synth's pitched note activity; **Continue recent phrase** captures a recent
+phrase for native continuation. Use the blend control or independent Original
+and Magenta levels. Initial preparation builds a native helper and installs
+both model sizes; venue sessions use local assets only. See
+[Google Magenta setup, controls, and verification](docs/google-magenta.md).
 
 ---
 

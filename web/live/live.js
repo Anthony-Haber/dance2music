@@ -11,6 +11,7 @@ import { ScenePointerControls } from './scene/drag.js';
 import { sceneMode, isPercussion, SCENE_MODES, INSTRUMENTS } from './scene/instruments.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
+import { MagentaScene } from './magenta.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -37,6 +38,7 @@ const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => reco
 const feats = new Features(), engine = new Engine();
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
+const magenta = new MagentaScene(engine,scene,{store,mirror:()=>$('mirror').value==='1',onChange:()=>recordConfiguration()});
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
 
@@ -138,14 +140,16 @@ function lockSessionOptions() {
   $('sceneMode').disabled = running || starting || stopping || $('source').value !== 'camera';
   for (const id of ['source', 'cam', 'res', 'model', 'file']) $(id).disabled = starting || stopping;
   $('sceneControls').hidden = !sceneWanted();
+  $('magentaControls').hidden = $('sceneMode').value!=='magenta'||!sceneWanted();
   const percussion=isPercussion($('sceneMode').value);
-  $('sceneTouchRow').hidden=percussion;
+  $('sceneTouchRow').hidden=percussion||$('sceneMode').value==='magenta';
   $('sceneInteractionHelp').textContent=percussion
     ? SCENE_MODES[$('sceneMode').value].instruments.map(id=>INSTRUMENTS[id].label).join(' · ')+'. Touch with any body part for sparks and its sound. Move away to strike again. Adjust “objects” in Mix. Touches are approximate.'
     : 'Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.';
   $('sceneTouchHelp').textContent=percussion
     ? 'Yellow boxes surround instruments. Cyan dots have body depth; yellow dots are waiting for depth. Gaps between instrument parts do not trigger hits.'
     : 'Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.';
+  if($('sceneMode').value==='magenta')$('sceneInteractionHelp').textContent='Approach a colored prompt with any visible body part to change the music. Click its label to edit. Sidebar prompts remain available when objects are hidden.';
   $('sceneNote').textContent = $('source').value === 'camera'
     ? 'Live camera · stop to change · Chrome on Apple Silicon' : '3D objects are unavailable for video files.';
 }
@@ -177,6 +181,7 @@ async function start() {
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
     status('camera running — waiting for movement');
     loop();
+    if(sceneWanted()&&$('sceneMode').value==='magenta')magenta.start();
   } catch (e) {
     if (generation !== sessionGeneration) return;
     await stop(); status('could not start: ' + e.message);
@@ -187,12 +192,13 @@ async function stop() {
   if (stopping) return;
   stopping = true; starting = false; ++sessionGeneration; ++sourceGeneration; ++modelGeneration;
   running = false; scene.stop(); $('go').disabled = true; lockSessionOptions();
+  const magentaStopped=magenta.stop();
   if (recorder.starting) cancelRecordingStart();
   if (recorder.recording) await finishRecording();
   $('rec').disabled = true;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
-  await engine.stop();
+  await magentaStopped;await engine.stop();
   stopping = false; $('go').textContent = 'Start'; $('go').disabled = false;
   $('hint').hidden = false; $('tap').hidden = true; lockSessionOptions(); status('stopped');
 }
@@ -233,6 +239,7 @@ function loop() {
         rawPose = recorder.active ? snapshotPose(res) : null;
         const lms = res.landmarks && res.landmarks[0];
         scene.observePose(lms,now);
+        magenta.observe(lms,now);
         const touchEvents=scene.takeTouchEvents();
         const t = (now - t0) / 1000;
         const f = lms ? feats.update(lms.map(p => ({ x: p.x, y: p.y, visibility: p.visibility })), t, W, H) : null;
@@ -268,6 +275,7 @@ function loop() {
             drums_enabled: drumsEnabled, bounce_gate: bounceOn, chord_held: frozen,
             feature_clock_offset_s: (t0 - recorder.t0) / 1000,
             gesture_transitions: f ? frameGestureEvents : [],
+            ...($('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0),magenta_weights:[...magenta.spatial.weights]}:{}),
             scene_touch_events: touchEvents.filter(event=>event.effect_timestamp_ms>=recorder.t0).map(event=>({...event,timestamp_s:(event.timestamp_ms-recorder.t0)/1000})) } });
       }); } catch (error) {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
@@ -622,10 +630,12 @@ $('accent').value = store.get('accent', 'down'); $('accent').onchange = () => st
 $('handMode').value = store.get('handMode', 'off');
 $('handMode').onchange = async () => { store.set('handMode', $('handMode').value);
   if (running && vision) { status('loading hand model…');
+    const restartMagenta=magenta.active,session=sessionGeneration;
+    if(restartMagenta)await magenta.stop();
     const loading = hands.load(vision, $('handMode').value); recordConfiguration();
     try { await loading; status('hands: ' + hands.mode); }
     catch (error) { status('could not load hands: ' + error.message); }
-    finally { recordConfiguration(); } } };
+    finally { recordConfiguration();if(restartMagenta&&running&&session===sessionGeneration)magenta.start(); } } };
 $('gestures').innerHTML = GESTURES.map(gname => `<span>${gname.replace('_', ' ')}</span><select data-g="${gname}">` +
   ACTIONS.map(([k, n]) => `<option value="${k}" ${actions[gname] === k ? 'selected' : ''}>${n}</option>`).join('') + '</select>').join('');
 $('gestures').onchange = e => { const gname = e.target.dataset.g; if (!gname) return;
@@ -675,12 +685,13 @@ showRules();
 async function changeSource() {
   if (!running) return;
   const session = sessionGeneration, change = sourceGeneration + 1;
-  scene.stop();
+  scene.stop();await magenta.stop();
   try {
     if ($('source').value === 'camera') await openCamera(); else await openFile();
     if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
     await loadLandmarker();
     if (sceneWanted() && running && session === sessionGeneration && change === sourceGeneration) await scene.start(v, currentSource.id, $('sceneMode').value);
+    if(sceneWanted()&&$('sceneMode').value==='magenta'&&running&&session===sessionGeneration&&change===sourceGeneration)magenta.start();
   } catch (error) { status('could not change source: ' + error.message); }
 }
 $('source').onchange = () => { store.set('source', $('source').value);
@@ -690,13 +701,18 @@ $('cam').onchange = () => { store.set('cam', $('cam').value); changeSource(); };
 $('res').onchange = () => { store.set('res', $('res').value); changeSource(); };
 $('mirror').onchange = () => { scenePointer.cancel();store.set('mirror', $('mirror').value); recordConfiguration(); };
 $('model').onchange = async () => { store.set('model', $('model').value);
-  if (running) try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); } };
+  if (running) {
+    const restartMagenta=magenta.active,session=sessionGeneration;
+    if(restartMagenta)await magenta.stop();
+    try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); }
+    finally {if(restartMagenta&&running&&session===sessionGeneration)magenta.start();}
+  } };
 $('out').onchange = async () => { store.set('out', $('out').value);
   if (engine.ctx && engine.ctx.setSinkId) await engine.ctx.setSinkId($('out').value || ''); };
 $('file').onchange = () => changeSource();
 
 document.addEventListener('keydown', e => {
-  if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.closest('dialog')) return;
   if (e.key === ' ') { e.preventDefault(); running || starting ? stop() : start(); }
   else if (e.key === 'r') { if (running) toggleRecord(); }
   else if (e.key === 'f') { document.body.classList.toggle('perf');
@@ -724,7 +740,7 @@ function handReadout() {
 function recordingConfiguration() {
   return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
     pose_model: poseModel, hands: hands.configuration(),
-    scene: { ...scene.configuration(), selected: $('sceneMode').value !== 'none' },
+    scene: { ...scene.configuration(), selected: $('sceneMode').value !== 'none',...($('sceneMode').value==='magenta'?{magenta:magenta.configuration()}:{}) },
     preview_mirrored: mirror(), video_mirrored: mirror(),
     harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
     drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
@@ -823,6 +839,7 @@ async function toggleRecord() {
         audioOnly: $('recWhat').value === 'audio',
         recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
         configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
+        finalAnalysis: () => $('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0)}:null,
         label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
       if (recorder.starting) {
         $('rec').textContent = 'Cancel recording';

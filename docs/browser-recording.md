@@ -38,6 +38,20 @@ MIDI fields. The original shapes use `scene.mode: "models"`; disabled selection
 uses `none`. All fields remain additive in recording schema version 1.
 See [3D objects](3d-objects.md) for assumptions and scene validation.
 
+Google Magenta recordings use `scene.mode: "magenta"` and add
+`scene.magenta` with prompts, musical controls, requested/effective model,
+conditioning latencies, and asset provenance. `analysis.magenta_weights` stores
+the current spatial blend; `analysis.magenta_events` stores timestamped prompt
+edits/encoding states, applied weights, note controls, phrase captures, tracking,
+and fallback events. Their `timestamp_s` is relative to recording start.
+Events pending after the final pose observation, including Stop's note release,
+are retained in `manifest.final_analysis.magenta_events`.
+Video includes the preview's prompt labels and influence meters. Main audio
+contains the final Original/Magenta listening mix after master volume. Rolling
+conditioning audio, full depth maps, and masks are not saved. The optional
+microphone remains a separate artifact and never conditions the model. See
+[Google Magenta](google-magenta.md) for the native input semantics and tests.
+
 Mouse-dragged object positions appear in the composited video and configuration
 snapshots. Moved objects have `placement: "manual"` with updated support, centre,
 orientation, and surface; earlier snapshots keep their original transforms.

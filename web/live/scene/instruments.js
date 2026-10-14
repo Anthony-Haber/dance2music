@@ -2,6 +2,7 @@
 // size: x/z stay inside its footprint, y runs from the support to one size up.
 export const SCENE_MODES=Object.freeze({
   none:{label:'None',instruments:[]}, models:{label:'3D Models',instruments:[]},
+  magenta:{label:'Google Magenta',instruments:[]},
   'percussion-kit':{label:'Percussions — Drum kit',instruments:['kick','snare','hat']},
   'percussion-hand':{label:'Percussions — Hand drums',instruments:['conga','bongo','djembe']},
   'percussion-metal':{label:'Percussions — Metallic',instruments:['cowbell','triangle','cymbal']},

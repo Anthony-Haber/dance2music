@@ -12,7 +12,7 @@ const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out sl
 const cents = m => 100 * (m - 69);
 
 export class Engine {
-  constructor() { this.ctx = null; this.layers = {}; this.chord = null; }
+  constructor() { this.ctx = null; this.layers = {}; this.chord = null;this.activeNotes=new Map();this.noteListeners=new Set();this.noteId=0; }
 
   // Must run synchronously inside the user's tap: iOS only lets an
   // AudioContext make sound if it was created or resumed during a gesture,
@@ -44,14 +44,18 @@ export class Engine {
     const wet = this.wet = ctx.createGain(); wet.gain.value = 0.2;
     const verb = ctx.createConvolver(); verb.buffer = this.impulse(); verb.normalize = false;
     this.master = ctx.createGain(); this.master.gain.value = 1;
+    this.originalMix=ctx.createGain();this.originalMonitor=ctx.createGain();
+    this.originalMix.connect(this.originalMonitor).connect(this.master);
+    this.magentaMonitor=ctx.createGain();this.magentaMonitor.gain.value=0;
+    this.magentaTracking=ctx.createGain();this.magentaTracking.connect(this.magentaMonitor).connect(this.master);
     const lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20;
     lim.attack.value = 0.003; lim.release.value = 0.1;
     // instrument volume (a mapping destination: e.g. the sphere) sits before the reverb split
     this.inst = ctx.createGain(); this.inst.gain.value = 1;
     this.bus.connect(this.inst);
-    this.inst.connect(dry).connect(this.master);
-    this.inst.connect(verb).connect(wet).connect(this.master);
+    this.inst.connect(dry).connect(this.originalMix);
+    this.inst.connect(verb).connect(wet).connect(this.originalMix);
     this.master.connect(lim).connect(ctx.destination);
     this.meter = ctx.createAnalyser(); this.meter.fftSize = 512; lim.connect(this.meter);
     this.limiter = lim; this.recDest = null;
@@ -205,6 +209,7 @@ export class Engine {
     this.res.forEach(r => set(r.f.detune, cents(this.chord.voices[r.v] + r.o), 0.25));
     set(this.bc.detune, cents(this.chord.bass), 0.12);
     set(this.bm.detune, cents(this.chord.bass), 0.12);
+    this.syncNotes();
   }
 
   // f: live features, mirror: whether the picture (and so pan) is mirrored
@@ -230,6 +235,7 @@ export class Engine {
     set(this.wet.gain, 'reverb'); this.ar(this.dry.gain, 1 - v['reverb'], t, 0.3, 0.3);
     set(this.dlevel.gain, 'drums.level');
     this.pluckLevel = v['plucks.level'];
+    this.noteLevels={pad:v['pad.level']*v['inst.level'],bass:v['bass.level']*v['inst.level'],tuned:v['tuned.level']*v['inst.level']};this.syncNotes();
     for (const ev of f.events) {
       this.pluck(ev, sx(ev.x));
       if (drums.hits) this.hit({ lfoot: 'kick', rfoot: 'kick', lhand: 'snare', rhand: 'hat' }[ev.part],
@@ -309,6 +315,7 @@ export class Engine {
     const t = this.ctx.currentTime;
     for (const g of [this.wamp, this.tamp]) g.gain.setTargetAtTime(0, t, 0.3);
     for (const g of [this.pamp, this.bamp]) { g.gain.setTargetAtTime(0, t, 0.6); g.gain._target = 0; }
+    this.noteLevels={};this.syncNotes();
   }
 
   pluck(ev, pan) {
@@ -328,6 +335,10 @@ export class Engine {
     const g = ctx.createGain(); g.gain.value = (this.pluckLevel ?? 1) * 0.55 * (0.25 + 0.75 * ev.strength);
     const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
     s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
+    if(g.gain.value*this.layers.plucks.gain.value*this.inst.gain.value>.001){
+      const owner='pluck-'+(++this.noteId);this.note(owner,midi,true,ctx.currentTime,true);
+      s.onended=()=>this.note(owner,midi,false,ctx.currentTime);
+    }
   }
 
   // A bright chord accent, independent of the movement-driven instrument gate.
@@ -353,7 +364,8 @@ export class Engine {
     const env=ctx.createGain();env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(.3,t+.006);
     env.gain.exponentialRampToValueAtTime(.0001,t+duration);env.connect(out);
     const nodes=[out,env],oscillators=[];
-    const finish=()=>{for(const o of oscillators){o.onended=null;try{o.stop();}catch{}}for(const n of nodes)n.disconnect();this.objectVoices.delete(finish);};
+    const owner='object-'+(++this.noteId);this.note(owner,midi,true,t,true);
+    const finish=()=>{this.note(owner,midi,false,ctx.currentTime);for(const o of oscillators){o.onended=null;try{o.stop();}catch{}}for(const n of nodes)n.disconnect();this.objectVoices.delete(finish);};
     this.objectVoices.add(finish);
     for(const [ratio,gain] of [[1,1],[shape==='sphere'?3:2,.35]]) {
       const o=ctx.createOscillator(),g=ctx.createGain();o.type=shape==='cylinder'?'triangle':'sine';o.frequency.value=hz*ratio;g.gain.value=gain;
@@ -372,6 +384,33 @@ export class Engine {
   level(name, v) {
     const g = name === 'drums' ? this.drumFader : this.layers[name];
     if (g) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+    this.noteFaders??={};this.noteFaders[name]=v;this.syncNotes();
+  }
+  note(owner,midi,on,time=this.ctx?.currentTime||0,attack=false){
+    const old=this.activeNotes.get(owner);
+    if(old!==undefined&&(!on||old!==midi)){this.activeNotes.delete(owner);for(const fn of this.noteListeners)fn({owner,note:old,on:false,time});}
+    if(on&&(old!==midi||attack)){this.activeNotes.set(owner,midi);for(const fn of this.noteListeners)fn({owner,note:midi,on:true,time,attack});}
+  }
+  syncNotes(){
+    if(!this.chord)return;
+    const levels=this.noteLevels||{},faders=this.noteFaders||{};
+    this.chord.voices.forEach((n,i)=>this.note('pad-'+i,n,(levels.pad||0)*(faders.pad??1)>.005));
+    this.note('bass',this.chord.bass,(levels.bass||0)*(faders.bass??1)>.005);
+    this.chord.voices.forEach((n,i)=>{for(const oct of [12,24])this.note('tuned-'+i+'-'+oct,n+oct,(levels.tuned||0)*(faders['wind tuned']??1)>.005);});
+  }
+  magentaMix(original,generated,seconds=.3){
+    if(!this.ctx||!this.originalMonitor)return;
+    const now=this.ctx.currentTime;
+    for(const [node,value] of [[this.originalMonitor,original],[this.magentaMonitor,generated]]){
+      node.gain.cancelAndHoldAtTime?.(now);
+      const from=node.gain.value,curve=Float32Array.from({length:64},(_,i)=>Math.sqrt((1-i/63)*from*from+i/63*value*value));
+      node.gain.setValueCurveAtTime(curve,now,seconds);
+    }
+  }
+  magentaTrackingLost(lost){
+    if(!this.ctx||!this.magentaTracking)return;
+    const now=this.ctx.currentTime,g=this.magentaTracking.gain;
+    g.cancelAndHoldAtTime?.(now);g.setValueAtTime(g.value,now);g.linearRampToValueAtTime(lost?0:1,now+(lost?1:.3));
   }
   masterLevel(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
   peak() {
@@ -380,6 +419,8 @@ export class Engine {
     let m = 0; for (const x of a) m = Math.max(m, Math.abs(x)); return m;
   }
   async stop() {
+    for(const [owner,note] of [...this.activeNotes])this.note(owner,note,false);
+    this.noteLevels={};this.noteFaders={};
     for(const finish of this.objectVoices||[])finish();
     this.objectNotes?.clear();
     if (this.ctx) await this.ctx.close();

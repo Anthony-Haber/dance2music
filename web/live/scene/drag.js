@@ -94,7 +94,10 @@ export class ScenePointerControls {
     this.point=e=>pointerInView(e.clientX,e.clientY,element.getBoundingClientRect(),mirror(),this.pointer!==null);
     this.down=e=>{
       if(e.button!==0||this.pointer!==null)return;
-      const p=this.point(e);if(!p||!scene.beginDrag(p.x,p.y))return;
+      const p=this.point(e);if(!p)return;
+      const label=scene.pickLabel?.(p.x,p.y);
+      if(label){e.preventDefault();scene.onLabelClick?.(label.id);return;}
+      if(!scene.beginDrag(p.x,p.y))return;
       e.preventDefault();this.pointer=e.pointerId;element.setPointerCapture(e.pointerId);
       element.style.cursor='grabbing';onHint('Drag onto a detected surface. Esc cancels.');
     };

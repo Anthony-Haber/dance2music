@@ -62,11 +62,12 @@ export class Recorder {
   // engine: for its audio tap; video, overlay: the elements to composite;
   // label(): text to burn in (the chord); mirror(): whether to flip the video
   async start({ engine, video, overlay, label, mirror, audioOnly, configuration, onUnexpectedStop, sceneLayer,
-    recordMicrophone = false, onMicrophoneStatus }) {
+    recordMicrophone = false, onMicrophoneStatus, finalAnalysis }) {
     if (this.starting || this.recording || this.busy || this.pending) throw new Error('Finish or recover the previous recording first');
     let cancel;
     const cancelled = new Promise(resolve => { cancel = () => resolve(null); });
     const request = { cancel }; this.startRequest = request;
+    this.finalAnalysis = finalAnalysis;
     this.microphone = { selected: recordMicrophone, outcome: recordMicrophone ? 'unavailable' : 'disabled',
       error: null, mime_type: null, settings: null, start_offset_s: null, end_offset_s: null };
     this.microphoneRec = null; this.microphoneDone = null; this.microphoneChunks = [];
@@ -185,6 +186,7 @@ export class Recorder {
     if (this.busy) return null;
     if (!this.rec) return null;
     this.busy = true; this.endMs ??= performance.now();
+    const finalAnalysis = this.finalAnalysis?.();
     try {
       if (this.rec.state !== 'inactive') this.rec.stop();
       this.stopMicrophone();
@@ -192,6 +194,7 @@ export class Recorder {
       const media = new Blob(this.chunks, { type: this.type.split(';')[0] });
       const ext = this.type.includes('mp4') ? (this.type.startsWith('audio') ? 'm4a' : 'mp4') : 'webm';
       const { observations, manifest } = this.observations.finish(this.endMs);
+      if (finalAnalysis) manifest.final_analysis = finalAnalysis;
       manifest.media.error = this.mediaError; manifest.media.complete = !this.mediaError;
       const microphone = this.microphoneChunks.length ? new Blob(this.microphoneChunks,
         { type: this.microphone.mime_type.split(';')[0] }) : null;

@@ -65,7 +65,7 @@ export class SceneRenderer {
       if(object.instrument)meshes=buildInstrument(T,object.instrument,s);
       else {
         const geometry=object.shape==='cube'?new T.BoxGeometry(s,s,s):object.shape==='sphere'?new T.SphereGeometry(s/2,20,12):new T.CylinderGeometry(s/2,s/2,s,20);
-        const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:[0xee9e52,0x65bde3,0xc195e7][object.id],roughness:.65}));
+        const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:object.color||[0xee9e52,0x65bde3,0xc195e7][object.id],roughness:.65}));
         mesh.position.set(0,s/2,0);meshes=[mesh];
       }
       meshes.forEach(mesh=>{mesh.userData.objectId=object.id;mesh.userData.placementIndex=this.groups.length;group.add(mesh);});

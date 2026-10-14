@@ -120,7 +120,7 @@ export class SceneController {
   }
   // Called INSIDE MediaPipe's callback; mask data is callback-owned.
   observePose(landmarks,now){
-    this.currentTouchPose=this.worker?touchPose(landmarks,now,isPercussion(this.mode)):null;
+    this.currentTouchPose=this.worker?touchPose(landmarks,now,isPercussion(this.mode)||this.mode==='magenta'):null;
     if(this.latest?.aligned)this.publishTouches(this.interactions.observe(this.touchObjects(),this.currentTouchPose,now));
   }
   touchObjects(){return this.scan.objects.filter(o=>o.id!==this.drag?.original.id);}
@@ -155,10 +155,11 @@ export class SceneController {
     this.interactions.states.delete(original.id);this.interactions.body?.delete(original.id);this.onDragEnd?.();
   }
   publishTouches(events){
+    if(this.mode==='magenta')return;
     for(const event of events){this.renderer?.touch(event);this.touchEvents.push({...event,generation:this.generation});}
     this.touchEvents=this.touchEvents.slice(-16);
   }
-  setTouchEnabled(enabled){this.touchPreference=enabled;enabled=isPercussion(this.mode)||enabled;this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
+  setTouchEnabled(enabled){this.touchPreference=enabled;enabled=isPercussion(this.mode)||this.mode==='magenta'||enabled;this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
   takeTouchEvents(){return this.touchEvents.splice(0);}
   copyPerson(mask,now) {
     if(!this.worker)return;
@@ -213,7 +214,36 @@ export class SceneController {
     if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
     const visible=this.visible(now);this.suppressed=this.scan.objects.length-visible.filter(Boolean).length;
     this.ctx.clearRect(0,0,w,h);
-    if(visible.some(Boolean)){this.updateOcclusion(now);this.ctx.drawImage(this.renderer.render(w,h,visible,now,this.interactions.visual(now)),0,0);}
+    if(visible.some(Boolean)){this.updateOcclusion(now);this.ctx.drawImage(this.renderer.render(w,h,visible,now,
+      this.mode==='magenta'&&this.magentaDisplay?this.scan.objects.map(o=>({id:o.id,proximity:o.capture?0:this.magentaDisplay.weights[o.id],active:false})):this.interactions.visual(now)),0,0);}
+    this.labelRects=[];
+    if(this.mode==='magenta'&&this.magentaDisplay&&visible.some(Boolean)){
+      const display=this.magentaDisplay;
+      for(const object of this.scan.objects){
+        const b=touchBounds(object,w,h),cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2;
+        if(this.renderer.pick(cx/w,cy/h,visible)?.id!==object.id)continue;
+        const label=object.capture?'Use recent phrase':display.prompts[object.id];
+        const weight=object.capture?0:display.weights[object.id],state=object.capture?display.capture:display.states[object.id];
+        const text=label.length>34?label.slice(0,31)+'…':label;
+        this.ctx.font='14px system-ui';
+        const width=Math.min(w-8,Math.max(110,this.ctx.measureText(text).width+16)),height=state&&state!=='ready'?44:34;
+        const x=Math.max(4,Math.min(w-width-4,cx-width/2));
+        let y=Math.max(4,Math.min(h-height-4,b.top-height-4));
+        const collides=top=>this.labelRects.some(r=>x<r.x*w+r.width*w+4&&x+width+4>r.x*w&&top<r.y*h+r.height*h+4&&top+height+4>r.y*h);
+        if(collides(y)){
+          const candidates=[];
+          for(let offset=height+6;offset<h;offset+=height+6)candidates.push(y-offset,y+offset);
+          y=candidates.find(top=>top>=4&&top+height<=h-4&&!collides(top))??y;
+        }
+        this.ctx.save();this.ctx.translate(x+width/2,y);
+        if(display.mirror)this.ctx.scale(-1,1);
+        this.ctx.fillStyle='#171323ee';this.ctx.fillRect(-width/2,0,width,height);
+        this.ctx.fillStyle=object.color||['#ee9e52','#65bde3','#c195e7'][object.id];this.ctx.fillRect(-width/2,height-4,object.capture?width:width*weight,4);
+        this.ctx.fillStyle='#fff';this.ctx.textAlign='center';this.ctx.fillText(text,0,18);
+        if(height===44){this.ctx.font='11px system-ui';this.ctx.fillText(state,0,33);}
+        this.ctx.restore();this.labelRects.push({id:object.id,x:x/w,y:y/h,width:width/w,height:height/h});
+      }
+    }
     if(this.debug&&this.scan.projection) {
       const sx=w/this.scan.projection.width,sy=h/this.scan.projection.height;
       this.ctx.fillStyle='#58d6a1aa';for(const surface of this.scan.surfaces)for(const [x,y] of surface.boundary)this.ctx.fillRect(x*sx,y*sy,2,2);
@@ -230,6 +260,7 @@ export class SceneController {
     return this.canvas;
   }
   clear(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
+  pickLabel(x,y){if(this.mode!=='magenta'||this.state!=='active'||!this.visible(performance.now()).some(Boolean))return null;return (this.labelRects||[]).find(r=>x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height);}
   configuration(){return {enabled:this.state!=='off',mode:this.mode,state:this.state,provenance:this.provenance||null,scan:this.snapshot,show_surfaces:this.debug,max_depth_age_ms:200,
     touch:{enabled:this.interactions.enabled,...(isPercussion(this.mode)?PERCUSSION_TOUCH_SETTINGS:TOUCH_SETTINGS)}};}
   metrics(){return `scan ${((this.scanMs||0)/1000).toFixed(1)} s · depth ${Math.round(this.depthLatency||0)} ms · ${((this.rateTimes||[]).filter(t=>t>performance.now()-2000).length/2).toFixed(1)} Hz · ${this.suppressed||0} stale hidden · ${this.interactions.count} touches · ${this.interactions.reason} · pose budget ${Math.round(this.baseline||0)} fps`;}
