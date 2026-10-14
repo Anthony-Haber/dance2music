@@ -67,9 +67,10 @@ def controls(context, origin):
         const {footFrame}=await import('/tests/piano.test.js'),c=dragScene,observe=c.observePose;
         const previous=pianoPlayer.held.get('piano-60');c.observePose=()=>{};
         try{
-          for(const up of [.03,.03,0,0]){
+          for(const up of [.014,.014,0,0]){
             const t=performance.now(),f=footFrame(t,[[.4375,.06,up]],c.scan.objects[0]);
-            c.publishTouches(c.interactions.update(c.scan.objects,f.depth,f.pose,f.pose,t));
+            // Takeoff can happen entirely between the slower depth results.
+            c.publishTouches(up?c.interactions.observe(c.scan.objects,f.pose,t):c.interactions.update(c.scan.objects,f.depth,f.pose,f.pose,t));
             await new Promise(resolve=>setTimeout(resolve,35));
           }
           return !!previous&&pianoPlayer.held.has('piano-60')&&pianoPlayer.held.get('piano-60')!==previous;
@@ -185,6 +186,22 @@ def main():
                   const {PianoPlayer}=await import('/web/live/piano.js');const log=PianoPlayer.prototype.log;
                   window.physicalPianoEvents=[];
                   PianoPlayer.prototype.log=function(e){window.physicalPianoEvents.push(e);return log.call(this,e);};
+                  const {PianoInteractions}=await import('/web/live/scene/piano-touch.js');
+                  const {pianoLocal}=await import('/web/live/scene/piano-layout.js');
+                  const observe=PianoInteractions.prototype.observe;window.pianoContactTrace=[];
+                  PianoInteractions.prototype.observe=function(objects,pose,now){
+                    const events=observe.call(this,objects,pose,now),o=objects.find(o=>o.shape==='keyboard');
+                    if(o&&this.depth){
+                      pianoContactTrace.push({timestamp:now,pose_timestamp:pose?.timestamp,depth_age:now-this.depth.timestamp,
+                        generation:pianoScene.generation,keyboard:{size:o.size,normal:o.normal,support:o.support,black_keys_near_camera:o.black_keys_near_camera},
+                        feet:(pose?.points||[]).map(p=>{const s=this.states.get(p.foot),point=this.points.find(q=>q.foot===p.foot);
+                          return {foot:p.foot,joint:p.joint,x:p.x,y:p.y,ankle_y:p.anchor?.y,landmark_y:p.landmarkY,key:s?.key,airborne:s?.airborne,
+                            lift_since:s?.liftSince,peak_rise:s?.peakRise,peak_ankle_rise:s?.peakAnkleRise,
+                            ground:s?.ground,local:point?pianoLocal(o,point.position):null};})});
+                      if(pianoContactTrace.length>600)pianoContactTrace.splice(0,pianoContactTrace.length-600);
+                    }
+                    return events;
+                  };
                 }''')
                 page.locator('#res').select_option('640x480')
                 page.locator('#sceneMode').select_option('floor-piano')
@@ -192,6 +209,8 @@ def main():
                 page.wait_for_function("document.querySelector('#go').textContent==='Stop'", timeout=240000)
                 print('PHYSICAL PIANO READY', page.locator('#sceneStatus').inner_text(), flush=True)
                 page.on('download', lambda download: download.save_as(output/download.suggested_filename))
+                trace_path = output/f'physical-contact-{server.server_port}.jsonl'
+                trace_timestamp = -1
                 for second in range(args.seconds):
                     if page.is_closed(): break
                     page.wait_for_timeout(1000)
@@ -200,19 +219,28 @@ def main():
                           depth_age_ms:pianoScene.latest?performance.now()-pianoScene.latest.timestamp:null,
                           reason:pianoScene.interactions.reason,feet:pianoScene.currentTouchPose?.points,
                           keys:pianoScene.scan.objects.length,events:physicalPianoEvents,
+                          contact_trace:pianoContactTrace,
                           visibility:pianoVisibility,
                           configuration:pianoScene.configuration()})''')
                         result['browser_errors'] = errors
                         (output/'physical-results.json').write_text(json.dumps(result, indent=2))
+                        # Keep the complete numerical trace for a reported miss;
+                        # the browser retains only a bounded rolling window.
+                        with trace_path.open('a') as trace:
+                            trace.write(json.dumps({'configuration': result['configuration']})+'\n')
+                            for row in result['contact_trace']:
+                                if row['timestamp'] > trace_timestamp:
+                                    trace.write(json.dumps(row)+'\n')
+                                    trace_timestamp = row['timestamp']
                         # Capturing GPU canvases repeatedly can itself interrupt
                         # depth inference and make an interactive test flicker.
                         if second == 0: page.screenshot(path=str(output/'physical-preview.png'))
-                        print('PHYSICAL', json.dumps({k:v for k,v in result.items() if k not in ['configuration','feet','events']}), 'events', len(result['events']), flush=True)
+                        print('PHYSICAL', json.dumps({k:v for k,v in result.items() if k not in ['configuration','feet','events','contact_trace']}), 'events', len(result['events']), flush=True)
                 if not page.is_closed() and page.locator('#go').inner_text() == 'Stop': page.locator('#go').click()
                 browser.close()
                 return
             page.goto(origin+'/tests/browser.html')
-            for test in ['runPianoGeometry', 'runPianoOrientation', 'runPianoContact', 'runPianoJump', 'runPianoVisibility', 'runPianoAudio', 'runPianoLifecycle']:
+            for test in ['runPianoGeometry', 'runPianoOrientation', 'runPianoContact', 'runPianoJump', 'runPianoSmallJumps', 'runPianoShiftedLandings', 'runPianoAnkleBounces', 'runPianoJumpReplay', 'runPianoBounceReplay', 'runPianoVisibility', 'runPianoAudio', 'runPianoLifecycle']:
                 for result in page.evaluate('async name=>(await import("/tests/piano.test.js"))[name]()', test):
                     print('PASS', result, flush=True)
                 if test == 'runPianoGeometry':

@@ -2,20 +2,25 @@ import {ray} from './geometry.js';
 import {touchDepth} from './touch.js';
 import {pianoLocal,pianoKeyAt,PIANO_KEYS} from './piano-layout.js';
 
-export const PIANO_TOUCH_SETTINGS=Object.freeze({version:2,parts:['feet'],pose_age_ms:120,max_depth_age_ms:200,
+export const PIANO_TOUCH_SETTINGS=Object.freeze({version:5,parts:['feet'],pose_age_ms:120,max_depth_age_ms:200,
   confirm_ms:25,release_ms:120,boundary_hysteresis:.008,floor_tolerance:.045,
-  lift_confirm_ms:25,lift_height:.025,landing_margin:.012,lift_pixels:6,preview_width:640,
+  lift_confirm_ms:25,landing_margin:.02,lift_pixels:4,ankle_lift_pixels:2,landing_pixels:2,preview_width:640,
+  bounce_toe_slop_pixels:1,bounce_ankle_pixels:3,landing_descent_fraction:.5,ankle_descent_fraction:.35,
+  settle_pixels:.5,settle_confirm_ms:25,
+  lift_detection:'pose-rise-from-confirmed-contact',
   sound:'sampled-piano',sound_layer:'objects'});
 export function pianoPose(landmarks,timestamp) {
   const valid=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1&&(p.visibility??0)>=.65&&(p.presence??1)>=.65;
   const points=[];
   for(const [foot,toe,heel,ankle] of [['left',31,29,27],['right',32,30,28]]) {
     const joint=valid(landmarks?.[toe])?toe:heel,p=landmarks?.[joint],anchor=landmarks?.[ankle];
-    if(valid(p))points.push({foot,joint,part:foot+' foot',x:p.x,y:p.y,anchor:valid(anchor)?{x:anchor.x,y:anchor.y}:null});
+    if(valid(p))points.push({foot,joint,part:foot+' foot',x:p.x,y:p.y,anchor:valid(anchor)?{x:anchor.x,y:anchor.y}:null,
+      landmarkY:Object.fromEntries([toe,heel].filter(i=>valid(landmarks[i])).map(i=>[i,landmarks[i].y]))});
   }
   return {timestamp,points};
 }
 const fresh=(t,now,age)=>Number.isFinite(t)&&now>=t&&now-t<=age;
+const landing=(p,height,key)=>({height,y:p.y,joint:p.joint,ankleY:p.anchor?.y??null,landmarkY:p.landmarkY,key});
 export class PianoInteractions {
   constructor(){this.enabled=true;this.reset();}
   reset(){this.states=new Map();this.owners=new Map();this.anchors=new Map();this.depth=null;this.lastTimestamp=-Infinity;this.points=[];this.count=0;this.reason='Waiting for feet on the floor';}
@@ -62,33 +67,75 @@ export class PianoInteractions {
         this.points.push({...p,position});
         if(Math.abs(height)<=settings.floor_tolerance)key=pianoKeyAt(x,z,state.key,object.keys)?.id||null;
       }
-      // Compare with this foot's last landing, not the broad floor tolerance.
-      // Both height and visible upward motion must agree, so depth noise alone
-      // cannot retrigger a planted foot. Toe/heel switches get a new baseline.
-      if(state.key&&height!==null&&state.ground?.joint!==p.joint){state.ground={height,y:p.y,joint:p.joint};state.liftSince=null;}
-      const rising=state.key&&height!==null&&state.ground&&
-        height-state.ground.height>=settings.lift_height&&
-        (state.ground.y-p.y)*h*settings.preview_width/w>=settings.lift_pixels;
+      // Once depth has established foot contact, follow takeoff at pose speed.
+      // A jump can leave the small depth-anchor neighborhood between 10 Hz depth
+      // frames. Its minimum lift must not grow with the full keyboard's width.
+      // A visible ankle corroborates the toe/heel rise, rejecting foot flexes.
+      if(state.key&&height!==null&&state.ground?.joint!==p.joint){state.ground=landing(p,height,state.key);state.liftSince=null;}
+      const groundY=p&&(state.ground?.joint===p.joint?state.ground.y:state.ground?.landmarkY?.[p.joint]),scale=h*settings.preview_width/w;
+      const comparable=Number.isFinite(groundY),rise=comparable?(groundY-p.y)*scale:null;
+      const ankleRise=p?.anchor&&state.ground?.ankleY!=null?(state.ground.ankleY-p.anchor.y)*scale:null;
+      // During a short bounce the pose model can pin the toe near the floor
+      // while the ankle clearly moves. Corroborated ankle motion can therefore
+      // arm a replay even with a stationary toe. The toe must remain confident
+      // and must not be moving down beyond the small tracking-noise allowance.
+      const rising=state.key&&comparable&&((rise>=settings.lift_pixels&&
+        (ankleRise===null||ankleRise>=settings.ankle_lift_pixels))||
+        (rise>=-settings.bounce_toe_slop_pixels&&ankleRise!==null&&ankleRise>=settings.bounce_ankle_pixels));
       if(rising){
         state.liftSince??=current.timestamp;
         if(current.timestamp-state.liftSince>=settings.lift_confirm_ms){
           state.airborne=true;state.takeoff=current.timestamp;state.key=null;state.candidate=null;state.liftSince=null;lifted.add(foot);
+          state.peakRise=Number.isFinite(state.motion?.rise)?Math.min(rise,state.motion.rise):rise;
+          state.peakAnkleRise=ankleRise===null?null:state.motion?.ankleRise==null?ankleRise:Math.min(ankleRise,state.motion.ankleRise);
         }
       }else state.liftSince=null;
-      // Latch the airborne state through a quick hop. Landing must use depth
-      // captured after takeoff; a new pose with pre-jump depth is insufficient.
+      if(state.airborne&&state.motion?.timestamp<current.timestamp){
+        // Require two distinct poses at a height before accepting a higher peak.
+        // A single raised-landmark outlier while hovering must not look like a
+        // new peak followed by a landing on the next frame.
+        if(comparable&&Number.isFinite(state.motion.rise))state.peakRise=Math.max(state.peakRise,Math.min(rise,state.motion.rise));
+        if(ankleRise!==null&&state.motion.ankleRise!==null)state.peakAnkleRise=Math.max(state.peakAnkleRise??0,Math.min(ankleRise,state.motion.ankleRise));
+      }
+      // Small hops may stay inside the floor-depth tolerance. Require the pose
+      // to come back down too, so an airborne depth estimate cannot replay a key.
+      // If a newly visible heel has neither a saved baseline nor an ankle,
+      // reacquire it only in a tighter floor band instead of latching airborne.
+      const fallbackFloor=!comparable&&ankleRise===null&&height!==null&&Math.abs(height)<=settings.landing_margin/2;
+      // A landing can settle a few pixels above the original pose. Recognize
+      // the downward half of the jump instead of requiring that exact position.
+      const footReturned=comparable&&(rise<=settings.landing_pixels||
+        state.peakRise-rise>=Math.max(settings.landing_pixels,state.peakRise*settings.landing_descent_fraction));
+      const ankleReturned=ankleRise===null||ankleRise<=settings.landing_pixels||
+        (state.peakAnkleRise!==null&&state.peakAnkleRise-ankleRise>=Math.max(1,state.peakAnkleRise*settings.landing_descent_fraction));
+      // Ankle descent also resolves bounces whose toe stays pinned at its new
+      // image height. Require a confirmed peak, appreciable downward travel and
+      // no continuing toe ascent, in addition to fresh floor contact below.
+      const ankleLanded=ankleRise!==null&&state.peakAnkleRise!==null&&
+        state.peakAnkleRise-ankleRise>=Math.max(settings.landing_pixels,state.peakAnkleRise*settings.ankle_descent_fraction)&&
+        (!comparable||state.motion?.rise!=null&&rise<=state.motion.rise+settings.settle_pixels);
+      const returned=fallbackFloor||((comparable?footReturned:ankleRise!==null)&&ankleReturned)||ankleLanded;
       if(state.airborne&&!(height!==null&&this.depth.timestamp>state.takeoff&&
-        height<=Math.max(settings.landing_margin,state.ground.height+settings.landing_margin)))key=null;
+        returned&&height<=Math.max(settings.landing_margin,state.ground.height+settings.landing_margin)))key=null;
       if(key===state.key&&key){state.lastNear=current.timestamp;state.candidate=null;}
       else if(key) {
         if(state.candidate!==key){state.candidate=key;state.since=current.timestamp;}
         if(current.timestamp-state.since>=settings.confirm_ms){
           if(state.airborne)landed.add(foot);
           state.key=key;state.lastNear=current.timestamp;state.candidate=null;state.airborne=false;
-          state.ground={height,y:p.y,joint:p.joint};
+          state.ground=landing(p,height,key);
         }
         else if(current.timestamp-state.lastNear>=settings.release_ms)state.key=null;
       }else {state.candidate=null;if(current.timestamp-state.lastNear>=settings.release_ms)state.key=null;}
+      // Contact is often first confirmed on the way down. Learn the settled
+      // pose, so the next short jump is measured from the actual resting foot.
+      if(state.key===key&&key&&!state.airborne&&rise<=settings.settle_pixels&&
+        (ankleRise===null||ankleRise<=settings.settle_pixels)&&
+        (rise<-settings.settle_pixels||ankleRise!==null&&ankleRise<-settings.settle_pixels)){
+        state.settleSince??=current.timestamp;
+        if(current.timestamp-state.settleSince>=settings.settle_confirm_ms){state.ground=landing(p,height,key);state.settleSince=null;}
+      }else state.settleSince=null;
+      state.motion={timestamp:current.timestamp,rise,ankleRise};
       if(!state.key&&!state.airborne)state.ground=null;
       if(state.key){const owners=next.get(state.key)||[];owners.push(foot);next.set(state.key,owners);}
     }

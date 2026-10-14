@@ -1,6 +1,6 @@
 import {pianoScan,orientPiano,pianoFits,pianoKeyPixels,pianoPoint,pianoKeyAt,pianoFloorDepth,PIANO_KEYS} from '../web/live/scene/piano-layout.js';
 import {PianoInteractions,pianoPose} from '../web/live/scene/piano-touch.js';
-import {project,reconstruct,exclusion,alignDepth} from '../web/live/scene/geometry.js';
+import {project,ray,reconstruct,exclusion,alignDepth} from '../web/live/scene/geometry.js';
 import {compositingDepth} from '../web/live/scene/occlusion.js';
 import {fixture as floorFixture} from './scene.test.js';
 import {SurfaceDrag,pointerInView} from '../web/live/scene/drag.js';
@@ -181,12 +181,13 @@ export async function runPianoJump() {
   c.reset();const ground=[[-.4375,.06]],air=[[-.4375,.06,.03]];
   step(2000,ground);step(2025,ground);
   for(let i=0;i<12;i++)assert(!step(2050+i*30,[[-.4375,.06,i%2?.018:.005]]).length,'small height jitter does not lift');
+  assert(!step(2400,ground).length,'jitter returns to the resting baseline');
   assert(!step(2420,[[-.4375,.06,.04]]).length&&!step(2450,ground).length,'a single high outlier does not lift');
   assert(!step(2480,[]).length&&!step(2510,ground).length,'a brief missing foot keeps ordinary release debounce');
   const fallback=footFrame(2540,[[-.4375,.06,.035]]);fallback.pose.points[0].joint=29;
   assert(!c.update([o],fallback.depth,fallback.pose,fallback.pose,2540).length&&!step(2570,ground).length,'toe/heel baseline changes do not create a jump');
-  // Depth can wobble while the image-space foot is planted. Both signals are
-  // required for lift confirmation, including when height remains admissible.
+  // Depth can wobble while the image-space foot is planted; it must never be
+  // sufficient to rearm a key on its own.
   c.reset();step(3000,[[-.4375,-.1]]);step(3025,[[-.4375,-.1]]);
   for(const t of [3050,3080,3110]){
     const f=footFrame(t,[[-.4375,-.1]]);f.depth.inverse=f.depth.inverse.map(v=>v/.93);
@@ -210,6 +211,168 @@ export async function runPianoJump() {
   c.reset();step(7000,ground);step(7025,ground);step(7050,air);step(7080,air);
   assert(!c.watchdog({timestamp:7281,points:[]},7281).length&&!c.owners.size&&!c.states.size,'stale input clears airborne state without a phantom landing');
   return ['all 13 same-key hops, fast lift/landing confirmation, no airborne repeat, height jitter/outlier/fallback guards, fresh landing depth, repeated two-foot chords and shared-key ownership'];
+}
+export async function runPianoSmallJumps() {
+  const c=new PianoInteractions();
+  const ankles=f=>{for(const p of f.pose.points)p.anchor={x:p.x,y:p.y-.05};return f;};
+  // Real capture cadence: pose at ~30 Hz, depth at 10 Hz with a frame of latency.
+  // A 3.5 cm fixture hop is the same physical height on either keyboard size.
+  for(const size of [2,4])for(const near of [true,false]){
+    const o=orientPiano({objects:[{...keyboard(),size}]},near).objects[0];
+    for(const key of o.keys){
+      c.reset();const z=key.black?key.z:-.06,ground=[[key.x,z]],air=[[key.x,z,.035/size]];
+      const pose=(t,feet)=>ankles(footFrame(t,feet,o)).pose;
+      const depth=(captured,now,feet,current=feet)=>{
+        const f=ankles(footFrame(captured,feet,o));return c.update([o],f.depth,f.pose,pose(now,current),now);
+      };
+      depth(1000,1000,ground);assert(c.observe([o],pose(1033,ground),1033)[0]?.midi===key.midi,'small-hop fixture starts grounded');
+      for(let n=0;n<3;n++){
+        const t=1000+n*200;
+        if(n)depth(t,t+33,ground);
+        assert(!c.observe([o],pose(t+66,air),t+66).length,'one upward pose does not rearm');
+        assert(c.observe([o],pose(t+99,air),t+99)[0]?.reason==='lift-off','small hop releases before the next depth result');
+        assert(!depth(t+100,t+133,air).length,'held airborne foot cannot replay within the widened landing depth margin');
+        assert(!c.observe([o],pose(t+166,ground),t+166).length,'landing still requires contact confirmation');
+        const on=c.observe([o],pose(t+199,ground),t+199);
+        assert(on.length===1&&on[0].reason==='landing'&&on[0].midi===key.midi,`${key.label} small hop replays on size ${size}, black keys near ${near}`);
+      }
+    }
+  }
+  const o=keyboard(),ground=[[-.3125,-.06]],air=[[-.3125,-.06,.08]];
+  const step=(t,feet)=>{const f=ankles(footFrame(t,feet,o));return c.update([o],f.depth,f.pose,f.pose,t);};
+  c.reset();step(2000,ground);step(2030,ground);
+  for(const t of [2060,2090]){
+    const f=ankles(footFrame(t,air,o)),events=c.observe([o],f.pose,t);
+    assert(!c.points.length,'fast airborne foot is outside the strict depth-anchor neighborhood');
+    assert(t===2060?!events.length:events[0]?.reason==='lift-off','takeoff remains detectable when depth has not caught up');
+  }
+  assert(!c.observe([o],ankles(footFrame(2120,ground,o)).pose,2120).length,'pre-takeoff depth cannot authorize a landing');
+  step(2150,ground);assert(step(2180,ground)[0]?.reason==='landing','fresh landing depth recovers a fast jump');
+  // Monocular depth can underestimate a small jump, even reporting floor height.
+  // The image-space return requirement prevents attacks while it remains raised.
+  c.reset();step(3000,ground);step(3030,ground);
+  const small=[[-.3125,-.06,.018]];
+  for(const t of [3060,3090,3120,3150]){
+    const f=ankles(footFrame(t,small,o)),p=f.pose.points[0],{width:w,height:h}=f.depth;
+    const z=o.support[1]/ray(p.x*w-.5,p.y*h-.5,w,h)[1];
+    for(let i=0;i<f.depth.inverse.length;i++)if(f.depth.person.data[i])f.depth.inverse[i]=1/z;
+    const events=c.update([o],f.depth,f.pose,f.pose,t);
+    assert(t===3090?events[0]?.reason==='lift-off':!events.length,'flattened airborne depth cannot prevent lift or cause an early replay');
+  }
+  step(3180,ground);assert(step(3210,ground)[0]?.reason==='landing','small-hop landing replays after flattened depth');
+  c.reset();step(4000,ground);step(4030,ground);
+  const ankleY=c.states.get('left').ground.ankleY;
+  for(let t=4060;t<4240;t+=30){const f=ankles(footFrame(t,small,o));f.pose.points[0].anchor.y=ankleY;
+    assert(!c.update([o],f.depth,f.pose,f.pose,t).length&&!c.states.get('left').airborne,'toe flex alone with planted ankle does not lift');}
+  // A confidently observed heel supplies its own baseline if the toe becomes
+  // uncertain during a jump; ankle motion can also confirm return after fallback.
+  c.reset();let f=ankles(footFrame(5000,ground,o));f.pose.points[0].landmarkY={29:f.pose.points[0].y-.004};
+  c.update([o],f.depth,f.pose,f.pose,5000);f={...f,pose:{...f.pose,timestamp:5030}};c.observe([o],f.pose,5030);
+  step(5060,small);step(5090,small);
+  for(const t of [5120,5150]){const f=ankles(footFrame(t,ground,o));f.pose.points[0].joint=29;
+    const events=c.update([o],f.depth,f.pose,f.pose,t);assert(t===5120?!events.length:events[0]?.reason==='landing','heel fallback after takeoff can land');}
+  c.reset();
+  for(const [t,feet] of [[6000,ground],[6030,ground],[6060,small],[6090,small],[6120,small],[6150,ground],[6180,ground]]){
+    const f=footFrame(t,feet,o);if(t>=6120)f.pose.points[0].joint=29;
+    const events=c.update([o],f.depth,f.pose,f.pose,t);
+    if(t===6120)assert(!events.length,'unknown heel without ankle cannot land above the tighter floor band');
+    if(t===6180)assert(events[0]?.reason==='landing','fresh floor depth recovers a newly visible heel without latching airborne');
+  }
+  return ['small hops on all 13 keys, both keyboard sizes/orientations, realistic pose/depth cadence, fast motion beyond depth anchors, flattened depth, planted-ankle guard and airborne heel fallback'];
+}
+export async function runPianoShiftedLandings() {
+  const c=new PianoInteractions(),o=keyboard();
+  const step=(t,height)=>{const f=footFrame(t,[[-.4375,-.06,height],[.4375,-.06,height]],o);
+    for(const p of f.pose.points)p.anchor={x:p.x,y:p.y-.05};
+    return c.update([o],f.depth,f.pose,f.pose,t);
+  };
+  step(1000,0);step(1030,0);step(1060,.03);assert(step(1090,.03).length===2,'both feet lift');
+  assert(!step(1120,.1).length&&!step(1150,.03).length&&!step(1180,.03).length,'one airborne pose outlier cannot create a false landing peak');
+  step(1210,.012);let events=step(1240,.012);
+  assert(events.length===2&&events.every(e=>e.reason==='landing'),'both feet land a few pixels above the original pose');
+  for(let t=1270;t<=1510;t+=30)assert(!step(t,.012).length,'shifted resting pose stays held without repeats');
+  step(1540,.03);assert(step(1570,.03).length===2,'next small hop uses the new landing baseline');
+  step(1600,.012);assert(step(1630,.012).length===2,'next chord replays once');
+  assert(!step(1660,0).length&&!step(1690,0).length,'settling the feet lower does not attack');
+  step(1720,.018);assert(step(1750,.018).length===2,'small hop is measured from the settled floor pose, not early landing');
+  step(1780,0);events=step(1810,0);
+  assert(events.length===2&&events.every(e=>e.type==='piano-note-on'&&e.reason==='landing'),'settled-baseline chord replays on landing');
+  return ['shifted two-foot landings, repeated short chords, learned resting baseline, no held repeats and airborne peak-outlier rejection'];
+}
+export async function runPianoAnkleBounces() {
+  const c=new PianoInteractions(),o=keyboard();
+  const step=(t,rise,depth=true,poseTime=t)=>{
+    const f=footFrame(t,[[-.4375,-.06],[.4375,-.06]],o);
+    for(const p of f.pose.points)p.anchor={x:p.x,y:p.y-.05-rise/480};
+    f.pose.timestamp=poseTime;
+    return depth?c.update([o],f.depth,f.pose,f.pose,t):c.observe([o],f.pose,t);
+  };
+  step(1000,0);step(1033,0);
+  for(let i=0;i<30;i++)assert(!step(1066+i*33,i%2?1.2:-1.2).length,'small ankle jitter with still toes cannot replay');
+  assert(!step(2056,0).length,'ankle returns to rest');
+  assert(!step(2089,8).length&&!step(2122,8,true,2089).length&&!step(2155,0).length,
+    'one high ankle pose cannot arm a bounce even when a depth callback repeats it');
+  for(let n=0;n<3;n++){
+    const t=2200+n*350;
+    step(t,0);step(t+33,0);step(t+66,5);
+    assert(step(t+99,5).filter(e=>e.type==='piano-note-off').length===2,'visible ankle rise arms both stationary-toe contacts');
+    assert(!step(t+132,5).length&&!step(t+165,5).length,'held raised ankles cannot repeat even with floor-like toe depth');
+    step(t+198,0);const events=step(t+231,0);
+    assert(events.length===2&&events.every(e=>e.reason==='landing'),'ankle descent replays the chord once');
+    assert(!step(t+264,0).length&&!step(t+297,0).length,'still feet after a bounce remain held');
+  }
+  const t=3300;step(t,5);step(t+33,5);
+  assert(!step(t+66,0,false).length&&!step(t+99,0,false).length,'ankle return alone cannot reuse pre-takeoff depth');
+  step(t+132,0);assert(step(t+165,0).length===2,'fresh post-takeoff depth permits the ankle landing');
+  return ['stationary-toe ankle bounces, two-foot chords, stillness/jitter, repeated-pose outliers, raised-foot hold and fresh landing depth'];
+}
+export async function runPianoJumpReplay() {
+  const fixture=await (await fetch('/tests/fixtures/piano-jump-return.json')).json();
+  const o={...fixture.keyboard,keys:PIANO_KEYS},c=new PianoInteractions(),events=[];
+  let x=.5,lastPose=null,poseTimestamp=0;
+  for(const [time,age,joint,y,ankleY,local] of fixture.frames){
+    const now=1000+time,position=local?pianoPoint(o,local[0],local[2],local[1]):null;
+    if(position)x=(project(position,160,120)[0]+.5)/160;
+    const signature=JSON.stringify([joint,y,ankleY]);if(signature!==lastPose){poseTimestamp=now;lastPose=signature;}
+    const point={foot:'left',joint,part:'left foot',x,y,anchor:ankleY===null?null:{x,y:ankleY}};
+    // Replay measured inputs at the contact-tracker boundary. An absent local
+    // position means the original frame had no usable foreground depth anchor.
+    c.depth={width:160,height:120,timestamp:now-age};c.anchors.clear();
+    if(position)c.anchors.set('left',{...point,z:-position[2]});
+    events.push(...c.observe([o],{timestamp:poseTimestamp,points:[point]},now));
+  }
+  const replay=events.filter(e=>e.type==='piano-note-on'&&e.midi===65&&e.timestamp_ms>=4300&&e.timestamp_ms<5100);
+  assert(replay.length===1&&replay[0].reason==='landing','recorded downward return must replay F4 promptly despite its shifted resting pose: '+JSON.stringify(events.map(e=>[e.timestamp_ms,e.type,e.midi,e.reason])));
+  assert(!events.some(e=>e.type==='piano-note-on'&&e.timestamp_ms>5100),'standing still after the recorded jump must not repeat');
+  assert(c.owners.get('piano-65')?.includes('left'),'recorded landed foot must not remain stuck airborne');
+  return ['real-camera missed-jump trace: shifted landing replays F4 promptly, then remains held without repeated attacks'];
+}
+export async function runPianoBounceReplay() {
+  const fixture=await (await fetch('/tests/fixtures/piano-bounces.json')).json();
+  const o={...fixture.keyboard,keys:PIANO_KEYS},c=new PianoInteractions(),events=[],landings=[];
+  for(const [time,poseTime,age,feet] of fixture.frames){
+    const now=1000+time,points=[];
+    c.depth={width:160,height:120,timestamp:now-age};c.anchors.clear();
+    for(const [foot,joint,x,y,ankleY,local] of feet){
+      const point={foot,joint,x,y,anchor:ankleY===null?null:{x,y:ankleY}};points.push(point);
+      if(local)c.anchors.set(foot,{...point,z:-pianoPoint(o,local[0],local[2],local[1])[2]});
+    }
+    const wasAirborne=new Set([...c.states].filter(([,s])=>s.airborne).map(([foot])=>foot));
+    events.push(...c.observe([o],{timestamp:1000+poseTime,points},now));
+    for(const foot of wasAirborne)if(c.states.get(foot)?.key&&!c.states.get(foot).airborne)landings.push([now,foot]);
+  }
+  // Ten visible ankle rise/return cycles, including toes nearly fixed by the
+  // pose model and both feet initially sharing E4. These windows describe the
+  // measured downward returns, not idealized full-height toe trajectories.
+  const windows=[[2750,2900],[3300,3500],[3850,4000],[4300,4450],[4650,4850],[5080,5250],
+    [5550,5750],[6040,6200],[6440,6630],[6850,7050]];
+  for(const [start,end] of windows)for(const foot of ['left','right'])
+    assert(landings.filter(([t,f])=>f===foot&&t>=start&&t<=end).length===1,
+      `recorded ${foot} bounce ${start}–${end} must land once: ${JSON.stringify(landings)}`);
+  assert(!events.some(e=>e.type==='piano-note-on'&&e.timestamp_ms>1800&&e.timestamp_ms<2500),'recorded still contact before the bounces cannot repeat');
+  assert(events.filter(e=>e.type==='piano-note-on').every(e=>e.timestamp_ms<1800||windows.some(([a,b])=>e.timestamp_ms>=a&&e.timestamp_ms<=b)),
+    'recorded attacks occur only on confirmed contacts and downward returns');
+  return ['real-camera two-foot bounce trace: ten returns per foot despite nearly stationary toes, shared-key ownership and quiet resting contact'];
 }
 export async function runPianoVisibility() {
   const reference=floorFixture(),brighter={...reference,rgb:Uint8Array.from(reference.rgb,x=>Math.min(255,x+45))};

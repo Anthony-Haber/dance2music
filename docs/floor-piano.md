@@ -34,10 +34,19 @@ Feet must be close to the reconstructed floor; hands, knees and image overlap
 alone cannot play. Two feet may own one key without retriggering it, or play two
 different notes. Confirmation takes 25 ms; ordinary release debounce is 120 ms.
 A confirmed lift bypasses that debounce so quick hops can replay the same key.
-Lift detection requires both increased height above the landing position and
-upward foot motion for 25 ms. Landing requires fresh foreground depth captured
-after takeoff and another 25 ms of floor contact. Small height fluctuations,
-toe/heel fallback changes and holding still do not retrigger. Boundary
+After depth establishes contact, lift detection follows foot pose independently
+of the slower depth updates: a four-pixel rise at preview width 640, sustained
+for 25 ms, releases the key. When the ankle is confidently visible it must rise
+too. Short bounces can also rearm an established contact with a sustained
+three-pixel ankle rise, even if the pose model leaves the toe almost stationary.
+This allows heel bounces as well as full jumps. These thresholds do not grow
+with keyboard size. Landing follows confirmed downward foot or ankle travel;
+it does not require a return to the exact original image position.
+It still requires fresh foreground depth captured after takeoff and another
+25 ms of floor contact. The resting baseline follows the foot as it settles, so
+subsequent short hops work too. Two distinct poses confirm a higher jump peak,
+preventing a single tracking outlier from creating a false landing. Depth fluctuations,
+single-frame pose outliers, toe/heel fallback changes and holding still do not retrigger. Boundary
 hysteresis reduces jitter. Camera depth and foot contact remain approximate.
 
 One entry triggers one sample. Holding does not loop or restart the sample.
@@ -81,6 +90,10 @@ Run `python -m unittest discover -s tests -p 'test_piano_assets.py'` and
 `python tests/test_browser_piano.py` with Playwright and Chrome installed.
 The browser test blocks external networking and uses real prepared samples,
 Web Audio, GPU rendering and recording with explicit camera/foot fixtures.
+It also replays measured missed-jump traces to check shifted landings, ten
+consecutive bounces per foot with nearly stationary toes, and held contact.
+Interactive camera checks retain a complete numerical
+contact trace under `/private/tmp/d2m-piano-validation` for diagnosing misses.
 Physical white/black key contact, two-foot playing, step-off damping and
 recorded-playback listening still require a person and a suitable camera view;
 fixture tests do not certify those checks.
