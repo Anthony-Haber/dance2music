@@ -20,10 +20,12 @@ const STUDIES = {
          { head: true }],
   pairs: ['<b>Elbows and knees: the alto.</b> Fold an elbow towards the knee on the same side and the choir moves to the relative chord: one voice changes (I becomes vi, Bm). Bring an elbow towards the opposite knee and it moves to the other neighbour (I becomes iii, F♯m). Open again and it returns. With a lean they combine: IV goes to ii or vi, V to iii or vii°. A touch strikes the alto\'s note.',
           { pairs: true }],
+  arms: ['<b>Arms: the breath.</b> Not one of her five notes: an addition. How far your hands reach from your body is how much the choir breathes. Arms by your sides, it hums, quiet and dark; reaching out (to the sides, forward or up) it opens to full voice, brighter, with breath in it. The harmony does not change: only how fully it is sung.',
+          { arms: true }],
   circles: ['<b>Circles.</b> A hand, the head or the hips travelling in a circle plays the choir\'s chord one note per quarter turn, and the sound travels round with it. The faster the circle, the faster the notes; small circles are high, big circles low; reversing reverses the notes, with an accent. Spinning the whole body turns the whole sound round.',
             { circles: true }],
-  together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
-             { vertical: true, spine: true, head: true, pairs: true, circles: true }],
+  together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. The arms set how fully it sings. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
+             { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true }],
 };
 
 const v = $('v'), cv = $('c');
@@ -38,6 +40,7 @@ function settings() {
   S.fadeStill = $('fadeStill').value === '1';
   S.spineLead = $('spineMode').value !== 'curve'; S.spineCurve = $('spineMode').value !== 'lead';
   S.pairMode = $('pairMode').value; S.windDown = $('windDown').value === '1';
+  S.trigger = $('trigger').value === '1'; S.triggerAt = +$('triggerAt').value;
   return S;
 }
 function showStudy(s) {
@@ -46,12 +49,14 @@ function showStudy(s) {
   $('what').innerHTML = STUDIES[s][0];
 }
 document.querySelectorAll('#studies button').forEach(b => (b.onclick = () => showStudy(b.dataset.s)));
-for (const id of ['fadeStill', 'spineMode', 'pairMode', 'windDown', 'mirror', 'model', 'source']) {
+for (const id of ['fadeStill', 'spineMode', 'pairMode', 'windDown', 'trigger', 'triggerAt', 'mirror', 'model', 'source']) {
   const x = store.get(id, null); if (x !== null) $(id).value = x;
   $(id).addEventListener('change', () => store.set(id, $(id).value));
 }
 $('source').addEventListener('change', () => { $('fileRow').hidden = $('source').value !== 'file'; });
 $('fileRow').hidden = $('source').value !== 'file';
+const trigRow = () => ($('trigRow').hidden = $('trigger').value !== '1');
+$('trigger').addEventListener('change', trigRow); trigRow();
 showStudy(study);
 const status = s => ($('status').textContent = s);
 
@@ -115,7 +120,7 @@ function loop() {
         for (const e of cev) if (e.type === 'move') moves.push({ ...e, at: performance.now() });
         moves = moves.filter(m => performance.now() - m.at < 900);
         if (recorder) { const c = choir.describe();
-          rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }) + `,${c.chord},${Object.values(c.names).join(' ')},${cev.filter(e => e.type === 'move').map(e => e.voice).join(' ')}`); }
+          rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }) + `,${c.chord},${Object.values(c.names).join(' ')},${cev.filter(e => e.type === 'move').map(e => e.voice).join(' ')},${(sound.breath ?? 0).toFixed(3)},${(sound.drive ?? 1).toFixed(3)}`); }
       }
       layout(W, H); view.draw(f, S, cv.width / W, $('mirror').value === '1', { desc: choir.describe(), moves });
       readout(f);
@@ -145,6 +150,9 @@ function readout(f) {
   if (S.spine) r.push(['spine curve', `${n(f.spine.curve)}°`], ['last start', f.spine.lead ? `${f.spine.lead.lead}, ${n(f.spine.lead.lag, 2)} s to travel` : '–']);
   if (S.head) r.push(['head turn', `${n(Math.abs(f.head.yaw))}° ${f.head.yaw > 0 ? 'left' : 'right'}`], ['head tilt', `${n(Math.abs(f.head.pitch))}° ${f.head.pitch > 0 ? 'up' : 'down'}`]);
   if (S.pairs) r.push(['left elbow–knee', n(f.pairs.LL, 2)], ['right elbow–knee', n(f.pairs.RR, 2)], ['crossed', `${n(f.pairs.LR, 2)} · ${n(f.pairs.RL, 2)}`]);
+  if (S.arms) r.push(['reach', `left ${n(f.arms.reachL, 2)} · right ${n(f.arms.reachR, 2)}`], ['breath', `${n(100 * (f.arms.breath ?? 0))}%`]);
+  const T = settings();
+  if (T.trigger) r.push(['movement', `${n(f.motion.speed, 1)} body lengths/s (sounds above ${T.triggerAt})`]);
   if (S.circles) for (const [k, c] of Object.entries(f.circles)) if (c.active) r.push([`circle: ${k}`, `${n(Math.abs(c.rate), 1)} turns/s ${c.dir > 0 ? 'anticlockwise' : 'clockwise'}`]);
   if (S.circles && f.spin.active) r.push(['spin', `${n(Math.abs(f.spin.rate))}°/s`]);
   $('read').innerHTML = r.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('') + '<span class="note">distances in torso lengths</span><span></span>';
@@ -179,7 +187,7 @@ async function toggleRecord() {
     const ext = r.mimeType.includes('mp4') ? 'mp4' : 'webm';
     save(new Blob(chunks, { type: r.mimeType.split(';')[0] }), `movement-dictionary-${study}-${stamp}.${ext}`);
     const meta = `# study=${study} ${JSON.stringify(settings())}\n`;
-    setTimeout(() => save(new Blob([meta + Dictionary.csvHeader() + ',chord,voices,moved\n' + rows.join('\n')], { type: 'text/csv' }), `movement-dictionary-${study}-${stamp}.csv`), 400);
+    setTimeout(() => save(new Blob([meta + Dictionary.csvHeader() + ',chord,voices,moved,breath,trigger\n' + rows.join('\n')], { type: 'text/csv' }), `movement-dictionary-${study}-${stamp}.csv`), 400);
     $('rec').textContent = '● Record'; $('rec').classList.remove('on'); $('recDot').hidden = true;
   }
 }

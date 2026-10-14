@@ -61,6 +61,14 @@ export class View {
         if (P(a) && P(b)) label([(P(a)[0] + P(b)[0]) / 2, (P(a)[1] + P(b)[1]) / 2], d.toFixed(2), COL.pair);
       }
     }
+    // arms: shoulder → elbow → wrist, wider and brighter as they open; the breath at the hand
+    if (S.arms && f.arms.reach !== null) {
+      for (const [sh_, el, wr, r] of [[J.LSH, J.LEL, J.LWR, f.arms.reachL], [J.RSH, J.REL, J.RWR, f.arms.reachR]]) {
+        if (r === null) continue; const u = Math.max(0, Math.min(1, (r - 0.5) / 0.8)), col = `rgba(255,220,150,${0.3 + 0.7 * u})`;
+        line(P(sh_), P(el), col, 2 + 6 * u); line(P(el), P(wr), col, 2 + 6 * u); dot(P(wr), col, 5 + 6 * u);
+      }
+      if (sh) label([sh[0], sh[1] - f.geo.torsoI * 0.35], `breath ${Math.round(100 * f.arms.breath)}%`, 'rgba(255,220,150,1)');
+    }
     // 5 circles: a trail per point while it circles
     if (S.circles) {
       const pos = { lhand: P(J.LWR), rhand: P(J.RWR), head, hips: hip };

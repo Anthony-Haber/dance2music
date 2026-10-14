@@ -20,6 +20,13 @@ downloads the view with its sound and a CSV of the measurements (no images).
 | 4 | **Verticality.** Upright is a continuous base hum; tilting shifts it by its degree and direction. | Tilt of the hip-to-head axis from vertical, in any direction (left/right and forward/back, from the 3D landmarks). | The bass: upright, the choir sings the tonic over a steady hum. Tilt detunes, bends and opens the hum; a side lean pans it. A lean held to her left moves the choir to IV, to her right to V, one voice at a time; upright walks home. |
 | 5 | **Circularity.** Speed, size and change of direction; one part or the whole body. | Each hand, the head and the hips: whether it travels in a circle, how fast, how big, which way, each quarter turn, reversals; the whole body spinning. | One chord note per quarter turn, travelling round in stereo. Faster circle = faster notes; small = high and quiet, big = low and full; reversing reverses the notes with an accent; a spin turns the whole sound. |
 
+Two additions from the lab, not from her notes:
+
+| | Addition | What is measured | What you hear |
+|---|---|---|---|
+| 6 | **Arms: the breath.** | Reach: each wrist's 3D distance from the trunk (the hips to shoulders segment), in torso lengths; 0.7 of the more open arm plus 0.3 of the other. Breath = (reach − 0.5) / 0.8, from 0 (arms by the sides) to 1 (wide open, forward or up). | How fully the choir sings, not what: level 0.25 + breath, a low-pass at 600·2^(4·breath) Hz (dark hum to bright), and breath noise through the vowel formants as the arms open. With the study off the breath stays at 0.75 (the choir as it was). |
+| – | **Sound only on quick movement** (switch: "Sound plays"). | The second fastest of head, elbows, wrists, knees and hips, in body lengths per second (the body's largest visible segment: torso, 1.4 × shoulders, or a thigh), smoothed 0.05 s; jumps above 8 are ignored. Taking the second fastest means one landmark that glitches is not a movement. | Everything is silent until movement passes the "How quick" threshold (default 2 body lengths/s): it opens in 15 ms and closes over 0.2 s, full at 2.5 × the threshold. The reverb still rings after. On her clips her movement's median is 1.5 to 2, her quick moves 4 to 7. |
+
 **Questions to try** (switches on the page, the dancer's open questions):
 hum on when still, or fading; spine by which end starts, by curve, or both;
 elbows and knees same side, crossed, or both; circles stop with you, or wind
@@ -102,9 +109,10 @@ its `MD` object, and the sound's in `SD` (`sound.js`).
 ## Tests
 
 `node --test tests/movement_dictionary.test.mjs tests/movement_dictionary_choir.test.mjs`
-(14 tests). The choir tests check the tonic, IV and V by leaning, the relatives
+(16 tests). The choir tests check the tonic, IV and V by leaning, the relatives
 by folding, that each step moves exactly one voice, and the bends. The
 measurement tests check
 the measurements on synthetic bodies: upright and leaning, forward, a curled spine, a head turn,
-elbow–knee contact, a circling hand with its rate, quarter turns and a
+elbow–knee contact, the arms' reach (by the sides, out, forward), a quick
+movement against a single landmark jumping, a circling hand with its rate, quarter turns and a
 reversal, and a head-led movement with its travel time.

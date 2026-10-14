@@ -13,6 +13,10 @@
 //   pairs   (3) elbow and knee touching strike a note of the chord
 //   circles (5) the chord's notes one per quarter turn, travelling round; a
 //           reversal reverses them; a whole-body spin turns the whole sound
+//   arms    (added) the choir's breath: arms by the sides it hums, quiet and
+//           dark; reaching out it opens to full voice, bright and breathy
+//   trigger (a switch) sound only while something moves quickly: a fast
+//           attack when a point passes the threshold, a short release after
 //
 // Every constant is in SD and in README.md.
 
@@ -22,6 +26,9 @@ export const SD = {
   tiltFull: 45, maxBendCents: 60, maxDetuneCents: 18,
   inharm: 0.0025, curveFull: 45, sweepMin: 0.12, sweepMax: 1.2,
   circleLevel: 0.2,
+  breathRest: 0.75,               // the breath when the arms study is off (the choir as it was)
+  breathFloor: 0.25, cutLow: 600, cutOctaves: 4, airLevel: 0.4,    // level 0.25 + b, low-pass 600·2^(4b) Hz, breath noise
+  trigFull: 2.5, trigAttack: 0.015, trigRelease: 0.2,              // full at 2.5× the threshold; attack and release (s)
 };
 const mtof = m => 440 * 2 ** ((m - 69) / 12);
 const clip = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -39,7 +46,8 @@ export class Sound {
     const rev = this.reverb(ctx, 2.4), wet = ctx.createGain(); wet.gain.value = 0.28;
     this.master = ctx.createGain(); this.master.gain.value = 0.9;
     this.spinPan = ctx.createStereoPanner();
-    this.master.connect(this.spinPan); this.spinPan.connect(comp); this.spinPan.connect(rev).connect(wet).connect(comp);
+    this.gate = ctx.createGain(); this.gate.gain.value = 1;            // the trigger
+    this.master.connect(this.gate).connect(this.spinPan); this.spinPan.connect(comp); this.spinPan.connect(rev).connect(wet).connect(comp);
     comp.connect(ctx.destination);
     this.rec = ctx.createMediaStreamDestination(); comp.connect(this.rec);
     // ── the hum (bass voice) ──
@@ -57,7 +65,13 @@ export class Sound {
     }
     // ── the choir ──
     this.choirPan = ctx.createStereoPanner(); this.choirGain = ctx.createGain(); this.choirGain.gain.value = 0;
-    this.choirPan.connect(this.choirGain).connect(this.master);
+    this.choirLP = ctx.createBiquadFilter(); this.choirLP.type = 'lowpass'; this.choirLP.Q.value = 0.5; this.choirLP.frequency.value = 4800;
+    this.choirPan.connect(this.choirLP).connect(this.choirGain).connect(this.master);
+    // breath noise, shared by the voices, shaped by their formants
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource(); noise.buffer = nb; noise.loop = true; noise.start();
+    this.air = ctx.createGain(); this.air.gain.value = 0; noise.connect(this.air);
     const vib = ctx.createOscillator(); vib.frequency.value = SD.vibratoHz; vib.start();
     this.voices = {};
     for (const name of ['tenor', 'alto', 'soprano']) {
@@ -67,6 +81,7 @@ export class Sound {
       const oscs = [-7, 7].map(c => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = c; vd.connect(o.detune); o.connect(src); o.start(); return o; });
       const forms = VOWEL.ah.map(([fq, gn]) => { const b = ctx.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = fq; b.Q.value = 9;
         const g = ctx.createGain(); g.gain.value = gn * 3; src.connect(b).connect(g).connect(out); return { b, g }; });
+      this.air.connect(src);
       out.connect(lvl).connect(pan).connect(this.choirPan);
       this.voices[name] = { oscs, forms, lvl, pan, note: null };
     }
@@ -92,8 +107,18 @@ export class Sound {
     const fwd = S.vertical ? clip(v.forward * 1.5, -1, 1) : 0;
     this.set(this.hFilter.frequency, 320 * 2 ** (3 * u) * 2 ** (1.2 * fwd));
     this.set(this.hPan.pan, S.vertical ? clip(-v.left * 1.6, -1, 1) : 0);
-    // ── the choir ──
-    this.set(this.choirGain.gain, fade, 0.2);
+    // ── the choir, breathing with the arms ──
+    const b = S.arms && f.arms.breath !== null ? f.arms.breath : SD.breathRest;
+    this.breath = b;
+    this.set(this.choirGain.gain, fade * (SD.breathFloor + b), 0.12);
+    this.set(this.choirLP.frequency, SD.cutLow * 2 ** (SD.cutOctaves * b), 0.12);
+    this.set(this.air.gain, S.arms ? SD.airLevel * b * b : 0, 0.12);
+    // ── the trigger: sound only while moving quickly ──
+    if (S.trigger) {
+      const on = S.triggerAt, d = clip((f.motion.speed - on) / (on * (SD.trigFull - 1)));
+      this.drive = d; this.set(this.gate.gain, Math.sqrt(d), d > (this.lastDrive ?? 0) ? SD.trigAttack : SD.trigRelease);
+      this.lastDrive = d;
+    } else { this.drive = 1; this.set(this.gate.gain, 1, 0.1); }
     for (const [name, V] of Object.entries(this.voices)) {
       const fq = mtof(sing[name]);
       if (V.note !== sing[name]) { V.oscs.forEach(o => this.set(o.frequency, fq, SD.glide)); V.note = sing[name]; }
