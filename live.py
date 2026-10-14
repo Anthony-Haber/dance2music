@@ -5,13 +5,17 @@
     python live.py --offline    # prepare browser assets and the native Magenta
                                 # helper/models for later use without internet
 
+Opens Chrome when installed, otherwise the default browser.
 The page prefers the local copy when it exists and falls back to the CDN.
 """
 import argparse
 import functools
 import http.server
 import os
+import shutil
 import signal
+import subprocess
+import sys
 import urllib.request
 import webbrowser
 from scene_assets import prepare as prepare_scene_assets
@@ -26,6 +30,30 @@ MODEL = ('https://storage.googleapis.com/mediapipe-models/pose_landmarker/'
          'pose_landmarker_{m}/float16/latest/pose_landmarker_{m}.task')
 FILES = ['vision_bundle.mjs'] + [f'wasm/vision_wasm{v}_internal.{e}'
                                  for v in ('', '_module', '_nosimd') for e in ('js', 'wasm')]
+
+
+def open_browser(url):
+    """Prefer Chrome, falling back to the default browser if unavailable."""
+    if sys.platform == 'darwin':
+        # Launch Services finds Chrome even when it is not the default browser.
+        try:
+            if subprocess.run(['open', '-a', 'Google Chrome', url],
+                              stderr=subprocess.DEVNULL).returncode == 0:
+                return True
+        except OSError:
+            pass
+    else:
+        candidates = ['google-chrome', 'google-chrome-stable', 'chrome']
+        if sys.platform == 'win32':
+            candidates += [os.path.join(os.environ[root], 'Google', 'Chrome',
+                                       'Application', 'chrome.exe')
+                           for root in ('LOCALAPPDATA', 'PROGRAMFILES', 'PROGRAMFILES(X86)')
+                           if os.environ.get(root)]
+        for candidate in candidates:
+            executable = shutil.which(candidate)
+            if executable and webbrowser.BackgroundBrowser(executable).open(url):
+                return True
+    return webbrowser.open(url)
 
 
 def offline(magenta=True):
@@ -79,7 +107,7 @@ def main():
     url = f'http://127.0.0.1:{a.port}/live/'
     print(url)
     if not a.no_browser:
-        webbrowser.open(url)
+        open_browser(url)
     def terminate(signum, frame):
         raise SystemExit(0)
     signal.signal(signal.SIGTERM, terminate)
