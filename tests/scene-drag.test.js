@@ -2,6 +2,7 @@ import {SurfaceDrag,pointerInView} from '../web/live/scene/drag.js';
 import {SceneRenderer} from '../web/live/scene/renderer.js';
 import {project,dot,footprintFits} from '../web/live/scene/geometry.js';
 import {TouchInteractions} from '../web/live/scene/touch.js';
+import {instrumentScan} from '../web/live/scene/instruments.js';
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 export function dragFixture() {
   const width=160,height=120,runs=[];
@@ -14,8 +15,8 @@ export function dragFixture() {
 }
 // A controlled scene in the actual app, using the real renderer and controls.
 // Real-model depth/occlusion is covered separately in scene.test.js.
-export async function installDragFixture(c,video) {
-  c.stop();c.video=video;c.source='drag-fixture';c.scan=dragFixture();c.snapshot={...c.scan};
+export async function installDragFixture(c,video,mode='models') {
+  c.stop();c.setMode(mode);c.video=video;c.source='drag-fixture';c.scan=instrumentScan(dragFixture(),mode);c.snapshot={...c.scan};
   const T=await import('../web/live/vendor/scene/three/three.module.js');
   c.renderer=new SceneRenderer(T);c.renderer.setScan(c.scan);
   const inverse=new Float32Array(160*120).fill(.1);

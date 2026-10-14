@@ -1,6 +1,7 @@
 import {alignDepth,normalize,exclusion} from './geometry.js';
 import {SceneRenderer} from './renderer.js';
-import {TouchInteractions,touchPose,touchBounds,TOUCH_SETTINGS} from './touch.js';
+import {TouchInteractions,BodyInteractions,touchPose,touchBounds,TOUCH_SETTINGS,PERCUSSION_TOUCH_SETTINGS} from './touch.js';
+import {isPercussion,instrumentScan,sceneMode} from './instruments.js';
 import {compositingDepth} from './occlusion.js';
 import {PersonMaskReader} from './person-mask.js';
 import {SurfaceDrag} from './drag.js';
@@ -9,7 +10,7 @@ export class SceneController {
   constructor({canvas=document.createElement('canvas'),onStatus=()=>{},onChange=()=>{},workerFactory=()=>new Worker(new URL('./worker.js',import.meta.url),{type:'module'}),rendererFactory=(T,loss)=>new SceneRenderer(T,loss)}={}) {
     Object.assign(this,{canvas,onStatus,onChange,workerFactory,rendererFactory});
     this.ctx=canvas.getContext('2d');this.generation=0;this.id=0;this.state='off';this.scan=empty();this.debug=false;this.snapshot=null;
-    this.interactions=new TouchInteractions();this.touchEvents=[];this.currentTouchPose=null;
+    this.mode='models';this.touchPreference=true;this.interactions=new TouchInteractions();this.touchEvents=[];this.currentTouchPose=null;
     this.maskReader=new PersonMaskReader();
     this.thumb=document.createElement('canvas');this.thumb.width=160;this.thumb.height=120;this.tg=this.thumb.getContext('2d',{willReadFrequently:true});
     this.visibility=()=>{
@@ -27,8 +28,13 @@ export class SceneController {
     document.addEventListener('visibilitychange',this.visibility);
   }
   status(state,message){this.state=state;this.message=message;this.onStatus({state,message});}
-  async start(video,source) {
-    this.stop();this.video=video;this.source=source;this.scan=empty();this.snapshot=null;this.provenance=null;
+  setMode(mode) {
+    this.mode=sceneMode(mode);this.interactions=isPercussion(this.mode)?new BodyInteractions():new TouchInteractions();
+    this.setTouchEnabled(this.touchPreference);this.currentTouchPose=null;
+  }
+  async start(video,source,mode=this.mode) {
+    this.stop();this.setMode(mode);this.video=video;this.source=source;this.scan=empty();this.snapshot=null;this.provenance=null;
+    if(this.mode==='none')return false;
     this.interval=100;this.poseTimes=[];this.baseline=0;this.baselineUntil=0;this.rateTimes=[];this.suppressed=0;this.depthLatency=0;
     this.status('loading','Loading 3D models…');
     if(!navigator.gpu){this.fail('3D objects need Chrome with WebGPU');return false;}
@@ -68,10 +74,10 @@ export class SceneController {
       this.frames.push(result);this.status('scanning',`Scanning surfaces (${this.frames.length}/3)…`);
       if(this.frames.length===3) {
         if(!result.scanResult)throw new Error('Scene worker omitted surface results');
-        this.scan=result.scanResult;this.reference=this.frames[0];this.scanMs=performance.now()-this.scanStart;
+        this.scan=instrumentScan(result.scanResult,this.mode);this.reference=this.frames[0];this.scanMs=performance.now()-this.scanStart;
         this.snapshot={generation:this.generation,scanned_at_ms:performance.now(),duration_ms:this.scanMs,...this.scan,transforms:result.transforms};
         this.frames=[];this.renderer.setScan(this.scan);clearTimeout(this.timeout);
-        this.status(this.scan.objects.length?'active':'empty',this.scan.objects.length?`${this.scan.objects.length} objects placed`:'No suitable surface found.');
+        this.status(this.scan.objects.length?'active':'empty',this.scan.objects.length?`${this.scan.objects.length}${isPercussion(this.mode)?' of 3 instruments':' objects'} placed`:'No suitable surface found.');
         this.nextRetry=performance.now()+15000;this.nextInference=0;this.latest=null;
         if(!this.baseline){this.baselineUntil=performance.now()+2000;this.poseTimes=[];}
         this.resolveStart?.(true);this.resolveStart=null;this.onChange();
@@ -114,7 +120,7 @@ export class SceneController {
   }
   // Called INSIDE MediaPipe's callback; mask data is callback-owned.
   observePose(landmarks,now){
-    this.currentTouchPose=this.worker?touchPose(landmarks,now):null;
+    this.currentTouchPose=this.worker?touchPose(landmarks,now,isPercussion(this.mode)):null;
     if(this.latest?.aligned)this.publishTouches(this.interactions.observe(this.touchObjects(),this.currentTouchPose,now));
   }
   touchObjects(){return this.scan.objects.filter(o=>o.id!==this.drag?.original.id);}
@@ -129,6 +135,7 @@ export class SceneController {
     if(!this.scan.surfaces.some(s=>s.runs?.length))return false;
     this.drag=new SurfaceDrag(this.scan,object,hit.point);
     this.interactions.states.delete(object.id);this.touchEvents=this.touchEvents.filter(e=>e.object_id!==object.id);
+    this.interactions.body?.delete(object.id);
     this.renderer.clearTouch(object.id);return true;
   }
   moveDrag(x,y) {
@@ -145,13 +152,13 @@ export class SceneController {
     if(!this.drag)return;
     const original=this.drag.original;this.drag=null;
     if(cancel)this.placeObject(original);
-    this.interactions.states.delete(original.id);this.onDragEnd?.();
+    this.interactions.states.delete(original.id);this.interactions.body?.delete(original.id);this.onDragEnd?.();
   }
   publishTouches(events){
     for(const event of events){this.renderer?.touch(event);this.touchEvents.push({...event,generation:this.generation});}
     this.touchEvents=this.touchEvents.slice(-16);
   }
-  setTouchEnabled(enabled){this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
+  setTouchEnabled(enabled){this.touchPreference=enabled;enabled=isPercussion(this.mode)||enabled;this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
   takeTouchEvents(){return this.touchEvents.splice(0);}
   copyPerson(mask,now) {
     if(!this.worker)return;
@@ -223,8 +230,8 @@ export class SceneController {
     return this.canvas;
   }
   clear(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
-  configuration(){return {enabled:this.state!=='off',state:this.state,provenance:this.provenance||null,scan:this.snapshot,show_surfaces:this.debug,max_depth_age_ms:200,
-    touch:{enabled:this.interactions.enabled,...TOUCH_SETTINGS}};}
+  configuration(){return {enabled:this.state!=='off',mode:this.mode,state:this.state,provenance:this.provenance||null,scan:this.snapshot,show_surfaces:this.debug,max_depth_age_ms:200,
+    touch:{enabled:this.interactions.enabled,...(isPercussion(this.mode)?PERCUSSION_TOUCH_SETTINGS:TOUCH_SETTINGS)}};}
   metrics(){return `scan ${((this.scanMs||0)/1000).toFixed(1)} s · depth ${Math.round(this.depthLatency||0)} ms · ${((this.rateTimes||[]).filter(t=>t>performance.now()-2000).length/2).toFixed(1)} Hz · ${this.suppressed||0} stale hidden · ${this.interactions.count} touches · ${this.interactions.reason} · pose budget ${Math.round(this.baseline||0)} fps`;}
   fail(message){this.stop();this.status('failed','3D unavailable: '+message+'. Music can continue.');this.onChange();}
   stop() {

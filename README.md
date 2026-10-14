@@ -38,7 +38,7 @@ metadata. It preserves data for later embedding and other offline analysis.
 The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
 describe the files and tests. Direct import into Zones requires a future importer.
 
-Enable **3D objects** before Start to scan visible floor and tabletop regions and
+Choose **3D Models** in **Scene** before Start to scan visible floor and tabletop regions and
 place up to three shapes. This optional feature targets Chrome on Apple Silicon
 and live cameras. It uses local WebGPU depth and segmentation models; no inference
 server, camera movement, or calibration is needed. Music starts after the scan.
@@ -51,6 +51,12 @@ With **Touch effects** on, reach toward a shape with a hand or foot to make it
 glow, emit sparks and a ripple, and play a note from the current chord. Adjust
 the **objects** fader in Mix. Contact is estimated from pose and scene depth;
 visuals and sounds are included in recordings.
+The Scene dropdown also offers three **Percussions** sets: Drum kit
+(kick/snare/hi-hat), Hand drums (conga/bongo/djembe), and Metallic
+(cowbell/triangle/cymbal). These place recognizable draggable instruments that
+respond to any visible body part with their own synthesized sound and effects.
+One touch plays one hit; move away and return to strike again. Use **None** for
+no scene objects. All instrument visuals and sounds work offline.
 See [3D objects, offline setup, and validation](docs/3d-objects.md).
 
 ---

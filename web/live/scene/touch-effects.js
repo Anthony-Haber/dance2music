@@ -3,14 +3,19 @@ import {TOUCH_SETTINGS} from './touch.js';
 // particle uses the scene's normal depth compositor, including in recordings.
 export class TouchEffects {
   constructor(T,group,mesh,object,sprite) {
+    this.meshes=Array.isArray(mesh)?mesh:[mesh];mesh=this.meshes[0];
     Object.assign(this,{T,group,mesh,object});this.enabled=true;this.started=-Infinity;this.sequence=0;
     const s=object.size,color=mesh.material.color;
     // Distant shapes still need a burst that can be seen across the room.
     this.spread=Math.max(s,-(object.position?.[2]??object.support[2])*.12);
     this.ringSpread=this.spread;
-    mesh.material.emissive.copy(color);mesh.material.roughness=.4;mesh.material.metalness=.12;
-    this.glow=new T.Mesh(mesh.geometry.clone(),new T.MeshBasicMaterial({color,side:T.BackSide,transparent:true,opacity:.07,depthWrite:true}));
-    this.glow.position.copy(mesh.position);this.glow.scale.setScalar(1.12);group.add(this.glow);
+    this.glows=this.meshes.map(m=>{
+      m.material.emissive.copy(m.material.color);
+      if(!object.instrument){m.material.roughness=.4;m.material.metalness=.12;}
+      const glow=new T.Mesh(m.geometry.clone(),new T.MeshBasicMaterial({color:m.material.color,side:T.BackSide,transparent:true,opacity:.07,depthWrite:true}));
+      glow.position.copy(m.position);glow.quaternion.copy(m.quaternion);glow.scale.setScalar(1.12);group.add(glow);return glow;
+    });
+    this.glow=this.glows[0];
     this.ring=new T.Mesh(new T.RingGeometry(this.spread*.48,this.spread*.58,48),new T.MeshBasicMaterial({color:color.clone().lerp(new T.Color(0xffffff),.4),side:T.DoubleSide,transparent:true,opacity:0,depthWrite:true}));
     this.ring.rotation.x=-Math.PI/2;this.ring.position.y=s*.015;this.ring.visible=false;group.add(this.ring);
     this.count=TOUCH_SETTINGS.particles_per_object;
@@ -47,9 +52,8 @@ export class TouchEffects {
     const held=contact.active ? .75 : 0,near=(contact.proximity||0)*.4;
     const energy=this.enabled?Math.max(burst,held,near):0;
     const breathe=this.enabled ? .5+.5*Math.sin(now*.0025+this.object.id*2) : 0;
-    this.mesh.material.emissiveIntensity=this.enabled ? .06+.06*breathe+energy*3 : 0;
-    this.glow.visible=this.enabled;this.glow.material.opacity=.035+.025*breathe+energy*.45;
-    this.glow.scale.setScalar(1.06+energy*.12);
+    this.meshes.forEach(m=>m.material.emissiveIntensity=this.enabled ? .06+.06*breathe+energy*3 : 0);
+    this.glows.forEach(g=>{g.visible=this.enabled;g.material.opacity=.035+.025*breathe+energy*.45;g.scale.setScalar(1.06+energy*.12);});
     const alive=this.enabled&&age>=0&&age<duration;
     this.ring.visible=alive;
     if(alive) {

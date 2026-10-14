@@ -1,6 +1,7 @@
 // Camera depth supplies room Z; pose supplies responsive image-space motion.
 // Body-relative MediaPipe Z is never compared with room geometry.
 import {basis,dot,ray,project} from './geometry.js';
+import {contactParts} from './instruments.js';
 export const TOUCH_SETTINGS=Object.freeze({version:3,parts:['hands','feet'],max_depth_age_ms:200,
   pose_age_ms:120,confirm_ms:25,release_ms:120,cooldown_ms:320,particles_per_object:56,
   burst_duration_ms:1800,min_particle_pixels:7,
@@ -8,13 +9,26 @@ export const TOUCH_SETTINGS=Object.freeze({version:3,parts:['hands','feet'],max_
 const JOINTS=[[15,'left hand',13],[19,'left hand',15],[16,'right hand',14],[20,'right hand',16],
   [27,'left foot',25],[29,'left foot',27],[31,'left foot',27],
   [28,'right foot',26],[30,'right foot',28],[32,'right foot',28]];
-export function touchPose(landmarks,timestamp) {
+const BODY_JOINTS=[[0,'head',11],[7,'head',0],[8,'head',0],[11,'left shoulder',12],[12,'right shoulder',11],
+  [13,'left elbow',11],[14,'right elbow',12],[23,'left hip',24],[24,'right hip',23],[25,'left knee',23],[26,'right knee',24]];
+const SEGMENTS=[[11,13,'left arm'],[13,15,'left arm'],[12,14,'right arm'],[14,16,'right arm'],
+  [23,25,'left leg'],[25,27,'left leg'],[24,26,'right leg'],[26,28,'right leg'],
+  [11,23,'torso'],[12,24,'torso'],[11,24,'torso'],[12,23,'torso'],[11,12,'torso'],[23,24,'torso']];
+export function touchPose(landmarks,timestamp,wholeBody=false) {
   const valid=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1&&
     (p.visibility??0)>=.5&&(p.presence??1)>=.5;
-  return {timestamp,points:JOINTS.flatMap(([joint,part,parent])=>{
+  const points=(wholeBody?[...JOINTS,...BODY_JOINTS]:JOINTS).flatMap(([joint,part,parent])=>{
     const p=landmarks?.[joint],anchor=landmarks?.[parent];
     return valid(p)?[{joint,part,x:p.x,y:p.y,anchor:valid(anchor)?{x:anchor.x,y:anchor.y}:null}]:[];
-  })};
+  });
+  if(wholeBody)SEGMENTS.forEach(([a,b,part],i)=>{
+    if(!valid(landmarks?.[a])||!valid(landmarks?.[b]))return;
+    for(let step=1;step<=3;step++){
+      const t=step/4,x=landmarks[a].x*(1-t)+landmarks[b].x*t,y=landmarks[a].y*(1-t)+landmarks[b].y*t;
+      points.push({joint:`segment-${i}-${step}`,part,x,y});
+    }
+  });
+  return {timestamp,points};
 }
 export function distanceToObject(point,object) {
   const [u,v]=basis(object.normal),d=point.map((x,i)=>x-object.position[i]);
@@ -121,5 +135,112 @@ export class TouchInteractions {
     if(!this.enabled)return [];
     return Array.from(this.states,([id,s])=>({id,active:s.active&&now-s.lastNear<=TOUCH_SETTINGS.max_depth_age_ms,
       proximity:now-s.lastSample<=TOUCH_SETTINGS.max_depth_age_ms?s.proximity:0}));
+  }
+}
+
+export const PERCUSSION_TOUCH_SETTINGS=Object.freeze({...TOUCH_SETTINGS,version:1,parts:['whole body'],
+  confirm_ms:0,cooldown_ms:120,sound:'synthesized-percussion',contact:'component-volumes'});
+
+export function instrumentDistance(point,object) {
+  const [u,v]=basis(object.normal),d=point.map((p,i)=>(p-object.support[i])/object.size);
+  const local=[dot(d,u),dot(d,object.normal),-dot(d,v)];
+  let distance=Infinity;
+  for(const p of contactParts(object.instrument)) {
+    let q=local.map((x,i)=>x-p.position[i]),value;const dims=p.dimensions;
+    const angle=p.rotation[0],c=Math.cos(angle),s=Math.sin(angle);
+    q=[q[0],c*q[1]+s*q[2],-s*q[1]+c*q[2]];
+    if(p.type==='rod') {
+      const [a,b,r]=dims,ab=b.map((x,i)=>x-a[i]),aq=local.map((x,i)=>x-a[i]);
+      const t=Math.max(0,Math.min(1,dot(aq,ab)/dot(ab,ab)));
+      value=Math.max(0,Math.hypot(...aq.map((x,i)=>x-ab[i]*t))-r);
+    }else if(p.type==='cylinder') {
+      // Current drums only rotate about X (upright shells or forward kick).
+      const t=Math.max(0,Math.min(1,q[1]/dims[2]+.5)),radius=dims[1]*(1-t)+dims[0]*t;
+      value=Math.hypot(Math.max(0,Math.hypot(q[0],q[2])-radius),Math.max(0,Math.abs(q[1])-dims[2]/2));
+    }else {
+      const half=p.type==='bell'?[.22,.19,.29]:dims.map(x=>x/2);
+      value=Math.hypot(...q.map((x,i)=>Math.max(0,Math.abs(x)-half[i])));
+    }
+    distance=Math.min(distance,value*object.size);
+  }
+  return distance;
+}
+const bodyTolerance=o=>Math.min(o.size*.3,o.size*.08+(-o.position[2])*.025);
+
+// Whole-person foreground samples complement the pose skeleton. Work is bounded
+// to roughly 300 candidates per instrument, only when a new depth result arrives.
+export function bodyContact(object,depth,pose) {
+  if(!depth.person)return null;
+  const {width:w,height:h,inverse}=depth,b=touchBounds(object,w,h),tolerance=bodyTolerance(object);
+  const left=Math.max(0,Math.floor(b.left)),right=Math.min(w-1,Math.ceil(b.right));
+  const top=Math.max(0,Math.floor(b.top)),bottom=Math.min(h-1,Math.ceil(b.bottom));
+  const stride=Math.max(1,Math.ceil(Math.sqrt((right-left+1)*(bottom-top+1)/256)));
+  for(let y=top;y<=bottom;y+=stride)for(let x=left;x<=right;x+=stride) {
+    const inv=inverse[y*w+x];if(!(inv>.01))continue;
+    const pixel={x:(x+.5)/w,y:(y+.5)/h};
+    const raw=ray(x,y,w,h).map(n=>n/inv);
+    if(instrumentDistance(raw,object)>tolerance)continue;
+    const z=touchDepth(pixel,depth);if(!z)continue;
+    const position=ray(x,y,w,h).map(n=>n*z);
+    if(instrumentDistance(position,object)>tolerance)continue;
+    let part='body',nearest=Infinity;
+    for(const p of pose?.points||[]){const d=Math.hypot((p.x-pixel.x)*w,(p.y-pixel.y)*h);if(d<nearest){nearest=d;part=p.part;}}
+    return {...pixel,position,z,part:nearest<Math.max(6,w*.06)?part:'body'};
+  }
+  return null;
+}
+export class BodyInteractions extends TouchInteractions {
+  reset(){super.reset();this.body=new Map();this.reason='Waiting for body contact';}
+  update(objects,depth,captured,current,now) {
+    if(!depth?.aligned||!Number.isFinite(depth.timestamp)||now-depth.timestamp<0||now-depth.timestamp>200||depth.timestamp<=this.lastTimestamp)return [];
+    this.lastTimestamp=depth.timestamp;this.depth={timestamp:depth.timestamp,width:depth.width,height:depth.height};this.anchors.clear();this.body.clear();
+    const pose=captured&&Math.abs(depth.timestamp-captured.timestamp)<=120?captured:null;
+    for(const p of pose?.points||[]){const z=touchDepth(p,depth);if(z)this.anchors.set(p.joint,{...p,z});}
+    for(const o of objects){const p=bodyContact(o,depth,pose);if(p)this.body.set(o.id,p);}
+    return this.observe(objects,current,now);
+  }
+  observe(objects,current,now) {
+    if(!this.enabled)return [];
+    const d=this.depth;
+    if(!d||now<d.timestamp||now-d.timestamp>200){this.points=[];this.previous=null;this.reason='Waiting for fresh depth';return [];}
+    const fresh=current&&Number.isFinite(current.timestamp)&&now>=current.timestamp&&now-current.timestamp<=120;
+    const points=[],w=d.width,h=d.height;
+    for(const p of fresh?current.points:[]){
+      const a=this.anchors.get(p.joint);if(!a||Math.hypot((p.x-a.x)*w,(p.y-a.y)*h)>Math.max(12,w*.09))continue;
+      points.push({...p,z:a.z,position:ray(p.x*w-.5,p.y*h-.5,w,h).map(n=>n*a.z)});
+    }
+    this.points=points;this.reason='Move into an instrument';const events=[];
+    const previous=this.previous&&fresh&&current.timestamp-this.previous.timestamp<=120?this.previous:null;
+    for(const object of objects){
+      let s=this.states.get(object.id);
+      if(!s){s={active:false,lastHit:-Infinity,lastNear:-Infinity,lastSample:-Infinity,proximity:0};this.states.set(object.id,s);}
+      s.lastSample=now;s.proximity=0;
+      const tolerance=bodyTolerance(object),box=touchBounds(object,w,h),padding=3;
+      let contact=now-d.timestamp<=120?this.body.get(object.id):null;
+      for(const p of points){
+        const old=previous?.points.find(q=>q.joint===p.joint);
+        if(!overlap(p,box,w,h,padding)&&(!old||!crosses(old,p,box,w,h,padding)))continue;
+        if(Math.abs(p.z+object.position[2])>object.size+tolerance&&(!old||Math.abs(old.z+object.position[2])>object.size+tolerance))continue;
+        const distance=instrumentDistance(p.position,object);
+        s.proximity=Math.max(s.proximity,Math.max(0,1-distance/(object.size*.5)));
+        if(distance<=tolerance){contact=p;break;}
+        if(old)for(let i=1;i<12;i++){
+          const position=old.position.map((x,j)=>x+(p.position[j]-x)*i/12);
+          if(instrumentDistance(position,object)<=tolerance){contact={...p,position};break;}
+        }
+        if(contact)break;
+      }
+      if(contact){
+        this.reason=`Contact: ${contact.part}`;s.lastNear=now;
+        if(!s.active&&now-s.lastHit>=120){
+          s.active=true;s.lastHit=now;this.count++;
+          events.push({type:'touch',object_id:object.id,shape:object.shape,instrument:object.instrument,part:contact.part,
+            position:contact.position,x:contact.x,timestamp_ms:fresh?current.timestamp:d.timestamp,
+            depth_timestamp_ms:d.timestamp,effect_timestamp_ms:now,approximate:true});
+        }
+      }else if(now-s.lastNear>=120)s.active=false;
+    }
+    this.previous=fresh?{timestamp:current.timestamp,points}:null;
+    return events;
   }
 }

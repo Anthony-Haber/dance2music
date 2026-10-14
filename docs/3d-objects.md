@@ -1,9 +1,37 @@
 # Automatic 3D objects
 
-Enable **3D objects** before Start, using a live camera in Chrome on Apple
+Select **3D Models** in the **Scene** dropdown before Start, using a live camera in Chrome on Apple
 Silicon. The selection is remembered and locked until Stop. Video-file sources
 disable it. Keep the camera stationary and leave some floor or tabletop visible.
-No manual calibration or camera movement is required.
+No manual calibration or camera movement is required. **None** disables scene
+objects. Existing saved checkbox preferences migrate to None or 3D Models.
+
+The dropdown also offers three percussion sets, with up to one of each instrument:
+
+| Selection | Instruments |
+| --- | --- |
+| Percussions — Drum kit | Kick drum, snare drum, hi-hat |
+| Percussions — Hand drums | Conga, bongo, djembe |
+| Percussions — Metallic | Cowbell, triangle, cymbal |
+
+Percussion uses the same scanning, occlusion, dragging, and rescan controls.
+Fewer than three usable placements means fewer instruments, reported in scene
+status. Each instrument is built locally from lightweight geometry; its voice
+is synthesized with Web Audio and requires no samples or additional downloads.
+Touch any visible body part to an instrument for its sound, glow, sparks, and
+ring. A sustained contact plays once; leave for 120 ms and return to strike
+again. Different instruments can play simultaneously. Percussion interactions
+are always enabled; the optional Touch effects checkbox applies to 3D Models.
+Instrument sounds use the **objects** fader and master volume, independently of
+movement-driven drum gating, and are included in recordings. They play
+immediately rather than being quantized or transposed to the current chord.
+
+Whole-body contact combines visible pose joints/segments with consistent
+person-mask depth neighborhoods inside each instrument's component regions.
+Head, torso, arms, and legs can trigger it even when hands and feet are away.
+Empty space between components, uncertain mask pixels, stale depth, and people
+passing clearly in front of or behind an instrument are rejected. Contact is
+still approximate; fast motion or occlusion may miss a strike.
 
 Start opens the camera, loads the models, and scans three sequential frames
 before music starts. **Cancel** releases the scene worker and camera. Up to three
@@ -12,7 +40,7 @@ locations. Uncertain surfaces are rejected. **Show surfaces** displays accepted
 boundaries and placement points; **Rescan** is optional. Objects remain anchored
 when someone moves or leaves the view.
 
-Drag a visible shape with the mouse to reposition it. The cursor becomes a hand
+Drag a visible shape or instrument with the mouse to reposition it. The cursor becomes a hand
 over a selectable shape. It follows the detected floor or tabletop, retaining
 its size and the point where you grabbed it; it can move between accepted
 surfaces. The entire footprint must fit. If the cursor points to an invalid
@@ -24,8 +52,8 @@ switching windows, changing mirroring, or resizing cancels an unfinished drag.
 Dropped placements remain anchored for this session; **Rescan**, camera changes,
 and starting a new session generate a new automatic layout.
 
-Mouse positioning does not play a touch note. Hand/foot interaction pauses for
-the shape being dragged and resumes at its new location after release. The
+Mouse positioning does not play a touch note. Body interaction pauses for
+the object being dragged and resumes at its new location after release. The
 other shapes and music continue. Picking respects depth occlusion, so an object
 hidden behind a person or furniture cannot be grabbed through that obstruction.
 
@@ -213,8 +241,7 @@ touch accuracy in a particular room still depends on the camera and model depth.
 Drag tests exercise actual app pointer events in both mirror modes, letterbox
 coordinates, GPU ray picking and foreground occlusion, surface/footprint holes,
 tabletop transfer, nearest-position drops, sliding along edges, cancellation,
-resize, Stop, and Rescan. They
-also check changed recording configurations and hand contacts at the new position
+resize, Stop, and Rescan. They also check changed recording configurations and hand contacts at the new position
 instead of the old one.
 
 On 2026-10-12, Chrome 147.0.7727.56 on the available Apple Silicon/Metal-3
@@ -252,3 +279,42 @@ with external networking blocked, along with the existing recording/microphone
 regressions. Audio contexts remained running during the benchmarks. These checks
 and the user's live feedback establish operation in this room; monocular touch
 accuracy and occlusion remain approximate, particularly during fast movement.
+
+
+Percussion coverage adds all five scene selections, preference migration, nine
+procedural instrument bounds and composite picking, whole-body depth contact,
+one-hit holds and release/re-entry, simultaneous instruments, and distinct
+synthesized voice signatures. Tests encode/decode actual percussion audio and
+verify instrument identity and scene selection in the app's recorded metadata.
+The existing scene video-compositing and recording/microphone suites remain
+regression checks. All browser scene tests block external asset requests.
+
+For a live percussion check (opens Chrome and leaves it available for testing):
+
+```sh
+python tests/test_browser_scene.py --interactive-percussion --resolution 1280x720
+```
+
+It first measures the 3D Models baseline, switches to Drum kit, and logs real
+contacts and throughput under the selected output directory. Stop to select
+Hand drums or Metallic, then Start to test those sets. Close the browser when
+finished. Synthesized test events are never injected by this live check.
+
+
+On 2026-10-14, the live percussion check used Chrome 147 on the same Apple
+Silicon Mac and Logitech BRIO at 1280 × 720 with the full pose model. The
+3D Models baseline was 29.8 fps. Fresh-depth samples with two placed instruments
+averaged 30.2 fps for Drum kit and 30.1 fps for Hand drums, with median depth
+latencies of 42.0 and 42.5 ms respectively. These exceed the 85% baseline target.
+The trace recorded actual kick, snare, conga, and bongo contacts from hands,
+feet, and legs; the user confirmed that sounds and effects work. The room scan
+accepted two placements, and the UI reported that count instead of forcing a
+third instrument. The live evidence does not qualify every instrument or every
+body region; all nine voices/models and broader contact cases are covered by
+controlled browser tests.
+
+A separate fresh-profile run completed real-model scanning, recording, and
+rescanning with external requests blocked. Its synthetic camera had no suitable
+surfaces and was correctly rejected; this check establishes offline operation,
+not visible-object performance. Scene, audio, drag, recording, and microphone
+regression suites passed.

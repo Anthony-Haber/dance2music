@@ -2,6 +2,7 @@
 // at composition time, so neither can retain objects after depth expires.
 import {basis} from './geometry.js';
 import {TouchEffects,particleSprite} from './touch-effects.js';
+import {buildInstrument} from './instruments.js';
 
 export class SceneRenderer {
   constructor(THREE,onLoss=()=>{}) {
@@ -60,16 +61,21 @@ export class SceneRenderer {
     this.groups=[];this.effects=[];this.meshes=[];
     for(const object of scan.objects) {
       const group=new T.Group(), s=object.size;
-      const geometry=object.shape==='cube'?new T.BoxGeometry(s,s,s):object.shape==='sphere'?new T.SphereGeometry(s/2,20,12):new T.CylinderGeometry(s/2,s/2,s,20);
-      const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:[0xee9e52,0x65bde3,0xc195e7][object.id],roughness:.65}));
-      mesh.position.set(0,s/2,0);group.add(mesh);
+      let meshes;
+      if(object.instrument)meshes=buildInstrument(T,object.instrument,s);
+      else {
+        const geometry=object.shape==='cube'?new T.BoxGeometry(s,s,s):object.shape==='sphere'?new T.SphereGeometry(s/2,20,12):new T.CylinderGeometry(s/2,s/2,s,20);
+        const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:[0xee9e52,0x65bde3,0xc195e7][object.id],roughness:.65}));
+        mesh.position.set(0,s/2,0);meshes=[mesh];
+      }
+      meshes.forEach(mesh=>{mesh.userData.objectId=object.id;mesh.userData.placementIndex=this.groups.length;group.add(mesh);});
       // Cheap contact shadow lies on the support plane, with its own depth.
       const shadow=new T.Mesh(new T.CircleGeometry(s*.48,24),new T.MeshBasicMaterial({color:0x161020,transparent:true,opacity:.22,depthWrite:true}));
       shadow.rotation.x=-Math.PI/2;shadow.position.y=.002;group.add(shadow);
       this.placeGroup(group,object);
-      const effect=new TouchEffects(T,group,mesh,object,this.sprite);effect.setEnabled(this.touchEnabled);this.effects.push(effect);
+      const effect=new TouchEffects(T,group,meshes,object,this.sprite);effect.setEnabled(this.touchEnabled);this.effects.push(effect);
       group.traverse(child=>{if(child.material)this.occludeMaterial(child.material);});
-      this.scene.add(group);this.groups.push(group);this.meshes.push(mesh);
+      this.scene.add(group);this.groups.push(group);this.meshes.push(...meshes);
     }
   }
   placeGroup(group,object) {
@@ -88,9 +94,9 @@ export class SceneRenderer {
     const {data,width,height}=this.depth.image;
     const inv=data[Math.min(height-1,Math.floor(y*height))*width+Math.min(width-1,Math.floor(x*width))];
     if(!(inv>.01))return null;
-    const hits=this.raycaster.intersectObjects(this.meshes.filter((_,i)=>visible[i]),false);
+    const hits=this.raycaster.intersectObjects(this.meshes.filter(mesh=>visible[mesh.userData.placementIndex]),false);
     const hit=hits.find(h=>-h.point.z<=1/inv+.015);
-    return hit?{id:this.effects[this.meshes.indexOf(hit.object)].object.id,point:hit.point.toArray()}:null;
+    return hit?{id:hit.object.userData.objectId,point:hit.point.toArray()}:null;
   }
   setDepth(data,width,height) {
     this.depth.image={data,width,height};this.depth.needsUpdate=true;

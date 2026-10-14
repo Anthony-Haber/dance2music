@@ -18,7 +18,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*_args): pass
 
-def real_models(page, origin, camera, output, resolution):
+def real_models(page, origin, camera, output, resolution, mode="models"):
     page.goto(origin+'/web/live/')
     page.evaluate('''async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
@@ -39,10 +39,10 @@ def real_models(page, origin, camera, output, resolution):
     baseline=page.evaluate('poseSamples.length/6')
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent==='Start'")
-    page.locator('#sceneObjects').check()
+    page.locator('#sceneMode').select_option(mode)
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent==='Stop'",timeout=240000)
-    assert page.locator('#sceneObjects').is_disabled()
+    assert page.locator('#sceneMode').is_disabled()
     assert page.evaluate("['active','empty'].includes(sceneUnderTest.state)"),page.locator('#sceneStatus').inner_text()
     if not camera:
         assert page.evaluate("sceneUnderTest.state==='empty' && sceneUnderTest.scan.objects.length===0"),'test-pattern camera must reject placements'
@@ -101,22 +101,32 @@ def live_controls(context, origin):
     page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
     page.route('**/scene/worker.js',lambda r:r.fulfill(body="self.onmessage=({data})=>postMessage({...data,type:'status',message:'Loading test scene…'});",content_type='text/javascript'))
     page.goto(origin+'/web/live/')
-    assert not page.locator('#sceneObjects').is_checked()
-    page.locator('#sceneObjects').check()
+    assert page.locator('#sceneMode').input_value()=='none'
+    page.evaluate("localStorage.removeItem('d2m:sceneMode');localStorage.setItem('d2m:sceneObjects','true')")
+    page.reload()
+    assert page.locator('#sceneMode').input_value()=='models','legacy enabled setting migrates'
+    for mode in ['percussion-kit','percussion-hand','percussion-metal']:
+        page.locator('#sceneMode').select_option(mode)
+        assert not page.locator('#sceneTouch').is_visible()
+        assert 'any body part' in page.locator('#sceneInteractionHelp').inner_text()
+        page.reload()
+        assert page.locator('#sceneMode').input_value()==mode
+    page.locator('#sceneMode').select_option('models')
+    page.locator('#sceneMode').select_option('models')
     assert page.locator('#sceneTouch').is_checked()
     page.locator('#sceneTouch').uncheck()
     page.reload()
-    assert page.locator('#sceneObjects').is_checked()
+    assert page.locator('#sceneMode').input_value()=='models'
     assert not page.locator('#sceneTouch').is_checked()
     page.locator('#sceneTouch').check()
     page.locator('#source').select_option('file')
-    assert page.locator('#sceneObjects').is_disabled()
+    assert page.locator('#sceneMode').is_disabled()
     page.locator('#source').select_option('camera')
-    assert not page.locator('#sceneObjects').is_disabled()
+    assert not page.locator('#sceneMode').is_disabled()
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#sceneStatus').textContent.includes('Loading test scene')")
     assert page.locator('#go').inner_text()=='Cancel'
-    assert page.locator('#sceneObjects').is_disabled()
+    assert page.locator('#sceneMode').is_disabled()
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent==='Start'")
     assert page.evaluate("document.querySelector('#v').srcObject.getTracks().every(t=>t.readyState==='ended')")
@@ -147,7 +157,7 @@ def live_controls(context, origin):
     assert event['sound']['midi']==row['analysis']['chord']['bass']+36
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent==='Start'")
-    page.evaluate("localStorage.removeItem('d2m:sceneObjects')")
+    page.evaluate("localStorage.removeItem('d2m:sceneObjects');localStorage.removeItem('d2m:sceneMode')")
     page.close()
     print('PASS live scene controls, cancellation/fallback, and live contact-to-chord audio metadata in recording',flush=True)
 
@@ -161,7 +171,7 @@ def drag_controls(context, origin):
       const {installDragFixture}=await import('/tests/scene-drag.test.js');
       SceneController.prototype.start=function(video){return installDragFixture(this,video);};
     }''')
-    page.locator('#res').select_option('640x480');page.locator('#sceneObjects').check();page.locator('#go').click()
+    page.locator('#res').select_option('640x480');page.locator('#sceneMode').select_option('models');page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent==='Stop'")
     page.wait_for_timeout(150)
     def position(): return page.evaluate('dragScene.scan.objects[0].support')
@@ -205,17 +215,111 @@ def drag_controls(context, origin):
     x,y=begin();page.mouse.move(x-15,y,steps=3);page.evaluate("document.querySelector('#sceneRescan').click()");page.mouse.up()
     assert not page.evaluate('!!dragScene.drag') and not page.evaluate('dragScene.scan.objects.length'),'rescan invalidates the drag and placements'
     page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Start'")
-    page.evaluate("localStorage.removeItem('d2m:sceneObjects')");page.close()
+    page.evaluate("localStorage.removeItem('d2m:sceneObjects');localStorage.removeItem('d2m:sceneMode')");page.close()
     print('PASS actual app mouse dragging, mirror modes, nearest-position drop beyond image edge, Escape/cancel/resize/stop, no mouse-triggered notes, and recording placement snapshots',flush=True)
 
+def percussion_controls(context, origin):
+    page=context.new_page()
+    page.route('**/vision_bundle.mjs',lambda r:r.fulfill(body=(ROOT/'tests/vision-fixture.js').read_text(),content_type='text/javascript'))
+    page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
+    page.goto(origin+'/web/live/')
+    page.evaluate("""async()=>{
+      const {SceneController}=await import('/web/live/scene/controller.js');
+      const {installDragFixture}=await import('/tests/scene-drag.test.js');
+      SceneController.prototype.start=function(video,source,mode){return installDragFixture(this,video,mode);};
+    }""")
+    for mode,instrument in [('percussion-kit','kick'),('percussion-hand','conga'),('percussion-metal','cowbell')]:
+        page.locator('#sceneMode').select_option(mode)
+        page.locator('#go').click()
+        page.wait_for_function("document.querySelector('#go').textContent==='Stop'")
+        assert page.locator('#sceneMode').is_disabled()
+        assert page.evaluate('dragScene.scan.objects[0].instrument')==instrument
+        assert page.evaluate('dragScene.interactions.enabled')
+        page.locator('#rec').click()
+        page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+        page.evaluate("""()=>{
+          const now=performance.now(),c=dragScene,o=c.scan.objects[0];
+          c.publishTouches([{object_id:o.id,instrument:o.instrument,shape:o.shape,part:'torso',x:.5,position:o.position,
+            timestamp_ms:now,depth_timestamp_ms:now,effect_timestamp_ms:now,approximate:true}]);
+        }""")
+        page.wait_for_timeout(350)
+        with page.expect_download() as download: page.locator('#rec').click()
+        with zipfile.ZipFile(io.BytesIO(Path(download.value.path()).read_bytes())) as archive:
+            manifest=json.loads(archive.read('manifest.json'))
+            rows=[json.loads(line) for line in archive.read('observations.jsonl').splitlines()]
+        config=manifest['configurations'][0]['settings']['scene']
+        assert config['mode']==mode and config['scan']['objects'][0]['instrument']==instrument
+        assert config['touch']['parts']==['whole body'] and config['touch']['enabled']
+        events=[e for row in rows for e in (row.get('analysis') or {}).get('scene_touch_events',[])]
+        assert len(events)==1 and events[0]['part']=='torso' and events[0]['sound']['instrument']==instrument
+        page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Start'")
+    page.evaluate("localStorage.removeItem('d2m:sceneMode')")
+    page.close()
+    print('PASS actual app percussion selection/start/stop, instrument scene snapshots and live contact sound metadata in recordings',flush=True)
+
+def interactive_percussion(page, origin, output, resolution):
+    """Leave a real-camera window available while collecting human hit evidence."""
+    page.goto(origin+'/web/live/')
+    page.evaluate("""async()=>{
+      const {SceneController}=await import('/web/live/scene/controller.js');
+      const {Engine}=await import('/web/live/audio.js');
+      window.percussionDiag={poses:[],hits:[]};
+      const pose=SceneController.prototype.pose;
+      SceneController.prototype.pose=function(now){
+        percussionDiag.scene=this;percussionDiag.poses.push(now);
+        if(percussionDiag.poses.length>2400)percussionDiag.poses.splice(0,1200);
+        return pose.call(this,now);
+      };
+      const touch=Engine.prototype.touchObject;
+      Engine.prototype.touchObject=function(event,mirror){
+        const sound=touch.call(this,event,mirror);
+        if(sound)percussionDiag.hits.push({...event,sound});
+        return sound;
+      };
+      document.title='Dance2Music — percussion test';
+    }""")
+    page.locator('#res').select_option(resolution)
+    page.locator('#sceneMode').select_option('models')
+    page.locator('#go').click()
+    page.wait_for_function("document.querySelector('#go').textContent==='Stop'",timeout=240000)
+    page.wait_for_timeout(2500)
+    page.evaluate('percussionDiag.poses=[]')
+    page.wait_for_timeout(6000)
+    baseline=page.evaluate('percussionDiag.poses.length/6')
+    page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Start'")
+    page.locator('#sceneMode').select_option('percussion-kit')
+    page.locator('#go').click();page.wait_for_function("document.querySelector('#go').textContent==='Stop'",timeout=240000)
+    page.locator('details').first.evaluate('(el)=>el.open=true')
+    print('LIVE PERCUSSION READY',page.evaluate('({baseline:percussionDiag.poses.length,mode:percussionDiag.scene.mode,state:percussionDiag.scene.state,objects:percussionDiag.scene.scan.objects.map(o=>o.instrument)})'),flush=True)
+    samples=[];last_hits=0
+    for i in range(1800):
+        if page.is_closed():break
+        page.wait_for_timeout(1000)
+        row=page.evaluate("""()=>{
+          const c=percussionDiag.scene,now=performance.now();
+          return {mode:c.mode,state:c.state,pose_fps:percussionDiag.poses.filter(t=>t>now-1000).length,
+            depth_ms:c.depthLatency,depth_age_ms:c.latest?now-c.latest.timestamp:null,interval_ms:c.interval,
+            hits:percussionDiag.hits.length,reason:c.interactions.reason,objects:c.scan.objects.map(o=>o.instrument),
+            mask_foreground:c.person?.data.reduce((n,p)=>n+(p>.55),0)||0};
+        }""")
+        samples.append(row)
+        if i%5==0 or row['hits']!=last_hits:
+            result={'baseline_3d_models_fps':baseline,'samples':samples,'hits':page.evaluate('percussionDiag.hits')}
+            (output/'percussion-live.json').write_text(json.dumps(result,indent=2))
+            print('LIVE',json.dumps(row),flush=True)
+        if row['hits']!=last_hits or i==3:
+            page.screenshot(path=str(output/'percussion-live.png'))
+        last_hits=row['hits']
+
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--real-models',action='store_true');parser.add_argument('--camera',action='store_true');parser.add_argument('--resolution',default='640x480',choices=['640x480','1280x720']);parser.add_argument('--output',type=Path,default=Path('/private/tmp/d2m-scene-validation'));args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
+    parser=argparse.ArgumentParser();parser.add_argument('--real-models',action='store_true');parser.add_argument('--camera',action='store_true');parser.add_argument('--resolution',default='640x480',choices=['640x480','1280x720']);parser.add_argument('--output',type=Path,default=Path('/private/tmp/d2m-scene-validation'));parser.add_argument('--interactive-percussion',action='store_true');parser.add_argument('--scene-mode',default='models',choices=['models','percussion-kit','percussion-hand','percussion-metal']);args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
+    if args.interactive_percussion: args.camera=True
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=ROOT));threading.Thread(target=server.serve_forever,daemon=True).start()
     try:
         with sync_playwright() as p:
             options=['--autoplay-policy=no-user-gesture-required']
             if not args.camera: options+=['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']
-            browser=p.chromium.launch(channel='chrome',headless=True,args=options)
+            browser=p.chromium.launch(channel='chrome',headless=not args.interactive_percussion,args=options)
             context=browser.new_context(permissions=['camera'],accept_downloads=True)
             external=[]
             def route(request):
@@ -225,15 +329,22 @@ def main():
             page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('console',lambda m:errors.append(m.text) if 'GL_INVALID_OPERATION' in m.text and 'readpixels' in m.text.lower() else None)
             origin=f'http://127.0.0.1:{server.server_port}'
+            if args.interactive_percussion:
+                interactive_percussion(page,origin,args.output,args.resolution)
+                browser.close()
+                return
             page.goto(origin+'/tests/browser.html')
             for test in ['runGeometryTests','runRendererTests','runPersonMaskTests','runTouchTests','runTouchEffectsTests','runMotionOcclusionTests','runTouchControllerTests','runTouchAudioTests','runLifecycleTests','runSceneRecordingTests']:
                 for name in page.evaluate('(async name=>{const m=await import("/tests/scene.test.js");return await m[name]();})',test): print('PASS',name,flush=True)
             (args.output/'touch-effects.png').write_bytes(base64.b64decode(page.evaluate('touchEffectPreview').split(',',1)[1]))
             for name in page.evaluate('(async()=>{const m=await import("/tests/scene-drag.test.js");return m.runDragTests();})'): print('PASS',name,flush=True)
+            for name in page.evaluate('(async()=>{const m=await import("/tests/scene-percussion.test.js");return m.runPercussionTests();})'): print('PASS',name,flush=True)
+            (args.output/'percussion-preview.png').write_bytes(base64.b64decode(page.evaluate('percussionPreview').split(',',1)[1]))
             if not args.camera:
                 live_controls(context,origin)
                 drag_controls(context,origin)
-            if args.real_models: real_models(page,origin,args.camera,args.output,args.resolution)
+                percussion_controls(context,origin)
+            if args.real_models: real_models(page,origin,args.camera,args.output,args.resolution,args.scene_mode)
             # MediaPipe 1.0.1 attempts telemetry; it is blocked too and is not
             # an asset dependency. Any other external request is a failure.
             assert all(url == 'https://odml.pa.googleapis.com/v1/log' for url in external),external

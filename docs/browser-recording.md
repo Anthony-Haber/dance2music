@@ -19,7 +19,7 @@ download the recovery files before clearing the recording (including the
 microphone file when captured). Recovery
 manifests have `packaging_incomplete: true` and lack artifact checksums.
 
-When **3D objects** is enabled for a live camera, its freshly rendered scene
+When **Scene** selects 3D Models or a percussion set for a live camera, its freshly rendered scene
 layer is composited between camera video and existing overlays. Video includes
 the same estimated depth occlusion, mirroring, and **Show surfaces** display as
 the preview. Configuration history adds a `scene` field with selected/effective
@@ -29,6 +29,13 @@ store per-frame depth maps or masks, and does not change schema version 1.
 When **Touch effects** is enabled, the video also includes the same glow,
 particles, and ripples as the preview, and its audio includes chord-based contact
 notes. `scene.touch` records interaction settings; Mix has an objects fader.
+Percussion recordings add `scene.mode` (`percussion-kit`, `percussion-hand`, or
+`percussion-metal`) and `instrument` identities on scan objects and touch events.
+Their contact events include the estimated body region in `part` (or `body`
+when no nearby pose landmark can identify it), plus synthesized voice identity,
+stereo pan, and audio time in `sound`. Percussion sound metadata has no chord or
+MIDI fields. The original shapes use `scene.mode: "models"`; disabled selection
+uses `none`. All fields remain additive in recording schema version 1.
 See [3D objects](3d-objects.md) for assumptions and scene validation.
 
 Mouse-dragged object positions appear in the composited video and configuration

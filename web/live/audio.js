@@ -5,6 +5,8 @@
 // so, as offline, every semitone step sounds equal.
 import { CHORDS } from './harmony.js';
 import { prepareAudioPlayback } from './audio-session.js';
+import { percussionVoice } from './percussion.js';
+import { INSTRUMENTS } from './scene/instruments.js';
 const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out slowly
 
 const cents = m => 100 * (m - 69);
@@ -263,25 +265,7 @@ export class Engine {
   // ── percussion ─────────────────────────────────────────────────────
   // Three synthesised voices; each hit is a handful of nodes that stop themselves.
   hit(kind, t, vel, pan = 0) {
-    const ctx = this.ctx, out = ctx.createStereoPanner(); out.pan.value = Math.max(-1, Math.min(1, pan));
-    out.connect(this.layers['drums']);
-    const env = (g, peak, decay) => { g.gain.setValueAtTime(peak, t); g.gain.exponentialRampToValueAtTime(1e-4, t + decay); };
-    const noise = (hp, bp) => { const n = ctx.createBufferSource(); n.buffer = this.noiseBuf;
-      n.loopStart = Math.random() * 3; const f = ctx.createBiquadFilter();
-      f.type = hp ? 'highpass' : 'bandpass'; f.frequency.value = hp || bp; f.Q.value = hp ? 0.7 : 0.8;
-      n.connect(f); n.start(t, Math.random() * 3); n.stop(t + 0.4); return f; };
-    vel = 0.35 + 0.65 * Math.min(1, vel);
-    if (kind === 'kick') {                 // sine, pitch falling 150 → 45 Hz
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-      env(g, 0.9 * vel, 0.4); o.connect(g).connect(out); o.start(t); o.stop(t + 0.45);
-    } else if (kind === 'snare') {         // band-passed noise + a short 185 Hz body
-      const g = ctx.createGain(); env(g, 0.5 * vel, 0.18); noise(0, 1800).connect(g).connect(out);
-      const o = ctx.createOscillator(), go = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 185;
-      env(go, 0.35 * vel, 0.1); o.connect(go).connect(out); o.start(t); o.stop(t + 0.15);
-    } else {                               // hat: high-passed noise, 50 ms
-      const g = ctx.createGain(); env(g, 0.25 * vel, 0.05); noise(7000).connect(g).connect(out);
-    }
+    percussionVoice(this.ctx,this.noiseBuf,this.layers.drums,kind,t,vel,pan);
   }
 
   // A beat at the detected tempo, phase-locked to her onsets: kick on 1 and 3,
@@ -349,11 +333,18 @@ export class Engine {
   // A bright chord accent, independent of the movement-driven instrument gate.
   touchObject(event, mirror=false) {
     const ctx=this.ctx,c=this.chord;
-    if(!ctx||ctx.state!=='running'||!c||!this.layers.objects||performance.now()-event.effect_timestamp_ms>200)return null;
+    if(!ctx||ctx.state!=='running'||(!event.instrument&&!c)||!this.layers.objects||performance.now()-event.effect_timestamp_ms>200)return null;
+    if(event.instrument&&!Object.hasOwn(INSTRUMENTS,event.instrument))return null;
     const key=`${event.generation}:${event.object_id}:${event.timestamp_ms}`;
     if(this.objectNotes.get(event.object_id)===key)return null;
     this.objectNotes.set(event.object_id,key);
     if(this.objectVoices.size>=6)this.objectVoices.values().next().value();
+    if(event.instrument){
+      const t=ctx.currentTime+.005,pan=Math.max(-1,Math.min(1,((mirror?1-(event.x??.5):(event.x??.5))*2-1)));
+      const voice=percussionVoice(ctx,this.noiseBuf,this.layers.objects,event.instrument,t,1,pan,finish=>this.objectVoices.delete(finish));
+      this.objectVoices.add(voice);
+      return {instrument:event.instrument,timbre:'synthesized-percussion',pan,audio_time_s:t};
+    }
     const shape=event.shape||['cube','sphere','cylinder'][event.object_id%3];
     const midi=shape==='cube'?c.bass+36:shape==='sphere'?c.voices[1]+12:c.voices[2]+12;
     const hz=440*2**((midi-69)/12),duration=shape==='sphere'?1.1:shape==='cube'?.85:.65,t=ctx.currentTime+.005;

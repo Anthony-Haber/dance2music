@@ -8,6 +8,7 @@ import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
 import { SceneController } from './scene/controller.js';
 import { ScenePointerControls } from './scene/drag.js';
+import { sceneMode, isPercussion, SCENE_MODES, INSTRUMENTS } from './scene/instruments.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
 
@@ -25,7 +26,7 @@ const store = {
 let vision = null, landmarker = null, landmarkerKey = '', stream = null, running = false;
 let poseModel = null, modelGeneration = 0, currentSource = null;
 let starting = false, stopping = false, sessionGeneration = 0, sourceGeneration = 0, sourceURL = null;
-const sceneWanted = () => $('sceneObjects').checked && $('source').value === 'camera';
+const sceneWanted = () => $('sceneMode').value !== 'none' && $('source').value === 'camera';
 const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => recordConfiguration(),
   onStatus: ({state, message}) => {
     $('sceneStatus').textContent = message;
@@ -134,9 +135,17 @@ async function openFile() {
 }
 
 function lockSessionOptions() {
-  $('sceneObjects').disabled = running || starting || stopping || $('source').value !== 'camera';
+  $('sceneMode').disabled = running || starting || stopping || $('source').value !== 'camera';
   for (const id of ['source', 'cam', 'res', 'model', 'file']) $(id).disabled = starting || stopping;
   $('sceneControls').hidden = !sceneWanted();
+  const percussion=isPercussion($('sceneMode').value);
+  $('sceneTouchRow').hidden=percussion;
+  $('sceneInteractionHelp').textContent=percussion
+    ? SCENE_MODES[$('sceneMode').value].instruments.map(id=>INSTRUMENTS[id].label).join(' · ')+'. Touch with any body part for sparks and its sound. Move away to strike again. Adjust “objects” in Mix. Touches are approximate.'
+    : 'Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.';
+  $('sceneTouchHelp').textContent=percussion
+    ? 'Yellow boxes surround instruments. Cyan dots have body depth; yellow dots are waiting for depth. Gaps between instrument parts do not trigger hits.'
+    : 'Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.';
   $('sceneNote').textContent = $('source').value === 'camera'
     ? 'Live camera · stop to change · Chrome on Apple Silicon' : '3D objects are unavailable for video files.';
 }
@@ -158,7 +167,7 @@ async function start() {
     if ($('handMode').value !== 'off') status('loading hand model…');
     await hands.load(vision, $('handMode').value);
     if (generation !== sessionGeneration) return;
-    if (sceneWanted()) await scene.start(v, currentSource.id);
+    if (sceneWanted()) await scene.start(v, currentSource.id, $('sceneMode').value);
     if (generation !== sessionGeneration) return;
     await engine.start($('out').value || undefined);
     if (generation !== sessionGeneration) { await engine.stop(); return; }
@@ -633,8 +642,10 @@ for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
   const saved = store.get(id, null); if (saved !== null) $(id).value = saved;
 }
 $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
-$('sceneObjects').checked = store.get('sceneObjects', false);
-$('sceneObjects').onchange = () => { store.set('sceneObjects', $('sceneObjects').checked); lockSessionOptions(); };
+$('sceneMode').value = sceneMode(store.get('sceneMode', null), store.get('sceneObjects', false));
+store.set('sceneMode', $('sceneMode').value);
+scene.setMode($('sceneMode').value);
+$('sceneMode').onchange = () => { store.set('sceneMode', $('sceneMode').value);scene.setMode($('sceneMode').value);lockSessionOptions(); };
 $('sceneDebug').onchange = () => { scene.debug = $('sceneDebug').checked; $('sceneTouchHelp').hidden=!scene.debug;recordConfiguration(); };
 $('sceneTouch').checked = store.get('sceneTouch',true); scene.setTouchEnabled($('sceneTouch').checked);
 $('sceneTouch').onchange = () => { store.set('sceneTouch',$('sceneTouch').checked);scene.setTouchEnabled($('sceneTouch').checked);recordConfiguration(); };
@@ -669,7 +680,7 @@ async function changeSource() {
     if ($('source').value === 'camera') await openCamera(); else await openFile();
     if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
     await loadLandmarker();
-    if (sceneWanted() && running && session === sessionGeneration && change === sourceGeneration) await scene.start(v, currentSource.id);
+    if (sceneWanted() && running && session === sessionGeneration && change === sourceGeneration) await scene.start(v, currentSource.id, $('sceneMode').value);
   } catch (error) { status('could not change source: ' + error.message); }
 }
 $('source').onchange = () => { store.set('source', $('source').value);
@@ -713,7 +724,7 @@ function handReadout() {
 function recordingConfiguration() {
   return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
     pose_model: poseModel, hands: hands.configuration(),
-    scene: { ...scene.configuration(), selected: $('sceneObjects').checked },
+    scene: { ...scene.configuration(), selected: $('sceneMode').value !== 'none' },
     preview_mirrored: mirror(), video_mirrored: mirror(),
     harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
     drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };

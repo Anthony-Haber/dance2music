@@ -109,13 +109,18 @@
   <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
     <option value="0">as the camera sees</option></select></label>
   <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
-  <label class="mic-option"><input type="checkbox" id="sceneObjects">3D objects</label>
+  <label>Scene <select id="sceneMode">
+    <option value="none">None</option><option value="models">3D Models</option>
+    <option value="percussion-kit">Percussions — Drum kit</option>
+    <option value="percussion-hand">Percussions — Hand drums</option>
+    <option value="percussion-metal">Percussions — Metallic</option>
+  </select></label>
   <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
   <div id="sceneControls" hidden>
-    <p class="note">Drag a shape with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <p class="note">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
     <div class="status" id="sceneDragStatus" role="status" aria-live="polite" hidden></div>
-    <label class="mic-option"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
-    <div class="note">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
+    <label class="mic-option" id="sceneTouchRow"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
+    <div class="note" id="sceneInteractionHelp">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
     <label class="mic-option"><input type="checkbox" id="sceneDebug">Show surfaces</label>
     <div class="note" id="sceneTouchHelp" hidden>Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.</div>
     <button id="sceneRescan" disabled>Rescan</button>
