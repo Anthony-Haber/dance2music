@@ -59,6 +59,23 @@ One touch plays one hit; move away and return to strike again. Use **None** for
 no scene objects. All instrument visuals and sounds work offline.
 See [3D objects, offline setup, and validation](docs/3d-objects.md).
 
+Choose **Floor Piano** for a floor-mounted C4–C5 acoustic piano (eight white
+keys and five black keys). **Black keys toward camera** is on by default so you
+can step forward onto them while facing the camera. Toggle it off to put them
+on the far edge; your choice is saved and can change while playing.
+Clear the floor during scanning, then step onto keys
+with visible feet. Holding a key lets its sample decay; stepping off damps it.
+Lift your foot or jump and land on the same key to replay it. Two feet can play
+two notes, including repeated two-foot jumps. Drag the whole
+keyboard to move it; Rescan rebuilds its placement. **Listening** defaults to
+**Piano only**, with **Piano + body music** available while running. The
+**objects** fader controls piano volume without changing other mixer settings.
+Prepare samples with `python live.py --offline --without-magenta`; Floor Piano
+runs entirely in the browser and needs no native helper or C++ compiler.
+Samples are [Salamander Grand Piano by Alexander Holm](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander),
+licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), transposed
+from five pinned roots. See [Floor Piano details and validation](docs/floor-piano.md).
+
 Choose **Google Magenta** for local MRT2 music guided by three editable spatial
 prompts and the original movement-generated audio. **Audio + notes** also sends
 the synth's pitched note activity; **Continue recent phrase** captures a recent

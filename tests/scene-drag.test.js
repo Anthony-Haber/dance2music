@@ -16,7 +16,7 @@ export function dragFixture() {
 // A controlled scene in the actual app, using the real renderer and controls.
 // Real-model depth/occlusion is covered separately in scene.test.js.
 export async function installDragFixture(c,video,mode='models') {
-  c.stop();c.setMode(mode);c.video=video;c.source='drag-fixture';c.scan=instrumentScan(dragFixture(),mode);c.snapshot={...c.scan};
+  c.stop();c.setMode(mode);c.video=video;c.source='drag-fixture';c.scan=instrumentScan(dragFixture(),mode,{pianoNearCamera:c.pianoNearCamera});c.snapshot={...c.scan};
   const T=await import('../web/live/vendor/scene/three/three.module.js');
   c.renderer=new SceneRenderer(T);c.renderer.setScan(c.scan);
   const inverse=new Float32Array(160*120).fill(.1);

@@ -12,6 +12,7 @@ import { sceneMode, isPercussion, SCENE_MODES, INSTRUMENTS } from './scene/instr
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
 import { MagentaScene } from './magenta.js';
+import { PianoPlayer } from './piano.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -29,6 +30,7 @@ let poseModel = null, modelGeneration = 0, currentSource = null;
 let starting = false, stopping = false, sessionGeneration = 0, sourceGeneration = 0, sourceURL = null;
 const sceneWanted = () => $('sceneMode').value !== 'none' && $('source').value === 'camera';
 const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => recordConfiguration(),
+  onPianoEvent: event => piano.event(event,scene),
   onStatus: ({state, message}) => {
     $('sceneStatus').textContent = message;
     $('sceneStatus').hidden = state === 'off';
@@ -36,6 +38,7 @@ const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => reco
     if (state === 'failed') disableSceneMask();
   }});
 const feats = new Features(), engine = new Engine();
+const piano = new PianoPlayer(engine);
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 const magenta = new MagentaScene(engine,scene,{store,mirror:()=>$('mirror').value==='1',onChange:()=>recordConfiguration()});
@@ -141,8 +144,11 @@ function lockSessionOptions() {
   for (const id of ['source', 'cam', 'res', 'model', 'file']) $(id).disabled = starting || stopping;
   $('sceneControls').hidden = !sceneWanted();
   $('magentaControls').hidden = $('sceneMode').value!=='magenta'||!sceneWanted();
+  const isPiano=$('sceneMode').value==='floor-piano';
+  $('pianoControls').hidden=!isPiano;
   const percussion=isPercussion($('sceneMode').value);
-  $('sceneTouchRow').hidden=percussion||$('sceneMode').value==='magenta';
+  $('sceneTouchRow').hidden=percussion||$('sceneMode').value==='magenta'||isPiano;
+  $('sceneDragHelp').textContent=isPiano?'Drag the whole keyboard onto clear detected floor. At an edge it settles at the closest fitting spot. Esc cancels; Rescan rebuilds placement. Dragging releases all notes.':'Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.';
   $('sceneInteractionHelp').textContent=percussion
     ? SCENE_MODES[$('sceneMode').value].instruments.map(id=>INSTRUMENTS[id].label).join(' · ')+'. Touch with any body part for sparks and its sound. Move away to strike again. Adjust “objects” in Mix. Touches are approximate.'
     : 'Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.';
@@ -150,6 +156,10 @@ function lockSessionOptions() {
     ? 'Yellow boxes surround instruments. Cyan dots have body depth; yellow dots are waiting for depth. Gaps between instrument parts do not trigger hits.'
     : 'Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.';
   if($('sceneMode').value==='magenta')$('sceneInteractionHelp').textContent='Approach a colored prompt with any visible body part to change the music. Click its label to edit. Sidebar prompts remain available when objects are hidden.';
+  if(isPiano){
+    $('sceneInteractionHelp').textContent='Step onto a key with a visible foot near the floor. Hold to let the piano decay. Lift your foot or jump, then land on the same key to replay; stepping off also damps it. Use Objects in Mix for volume. Clear the floor during scanning. Foot contact is approximate.';
+    $('sceneTouchHelp').textContent='Cyan dots have foreground foot depth. Only toes (or heels when toes are uncertain) close to the floor play keys. Hands and knees do not play.';
+  }
   $('sceneNote').textContent = $('source').value === 'camera'
     ? 'Live camera · stop to change · Chrome on Apple Silicon' : '3D objects are unavailable for video files.';
 }
@@ -171,11 +181,17 @@ async function start() {
     if ($('handMode').value !== 'off') status('loading hand model…');
     await hands.load(vision, $('handMode').value);
     if (generation !== sessionGeneration) return;
+    if(sceneWanted()&&$('sceneMode').value==='floor-piano'){
+      await piano.load(message=>{$('pianoStatus').textContent=message;});
+      if(generation!==sessionGeneration)return;
+      $('pianoStatus').textContent='Piano samples ready';
+    }
     if (sceneWanted()) await scene.start(v, currentSource.id, $('sceneMode').value);
     if (generation !== sessionGeneration) return;
     await engine.start($('out').value || undefined);
     if (generation !== sessionGeneration) { await engine.stop(); return; }
     applyMix(); applySens(); watchAudio();
+    piano.setListening($('pianoListening').value,sceneWanted()&&$('sceneMode').value==='floor-piano');
     running = true; starting = false; $('badge').hidden = false;
     $('go').textContent = 'Stop'; $('go').disabled = false; lockSessionOptions();
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
@@ -185,6 +201,7 @@ async function start() {
   } catch (e) {
     if (generation !== sessionGeneration) return;
     await stop(); status('could not start: ' + e.message);
+    if($('sceneMode').value==='floor-piano')$('pianoStatus').textContent=e.message;
   }
 }
 
@@ -192,13 +209,17 @@ async function stop() {
   if (stopping) return;
   stopping = true; starting = false; ++sessionGeneration; ++sourceGeneration; ++modelGeneration;
   running = false; scene.stop(); $('go').disabled = true; lockSessionOptions();
+  piano.stop();
   const magentaStopped=magenta.stop();
   if (recorder.starting) cancelRecordingStart();
+  // Include the note-off damping tail in the final audible mix and the events
+  // in final_analysis even when pose callbacks have already stopped.
+  if(recorder.recording&&$('sceneMode').value==='floor-piano')await new Promise(resolve=>setTimeout(resolve,180));
   if (recorder.recording) await finishRecording();
   $('rec').disabled = true;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
-  await magentaStopped;await engine.stop();
+  await magentaStopped;piano.dispose();await engine.stop();
   stopping = false; $('go').textContent = 'Start'; $('go').disabled = false;
   $('hint').hidden = false; $('tap').hidden = true; lockSessionOptions(); status('stopped');
 }
@@ -276,6 +297,7 @@ function loop() {
             feature_clock_offset_s: (t0 - recorder.t0) / 1000,
             gesture_transitions: f ? frameGestureEvents : [],
             ...($('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0),magenta_weights:[...magenta.spatial.weights]}:{}),
+            ...($('sceneMode').value==='floor-piano'?{piano_events:piano.takeEvents(recorder.t0)}:{}),
             scene_touch_events: touchEvents.filter(event=>event.effect_timestamp_ms>=recorder.t0).map(event=>({...event,timestamp_s:(event.timestamp_ms-recorder.t0)/1000})) } });
       }); } catch (error) {
         if (recorder.active) recorder.observe({ ...timing, configuration: recordingConfiguration(),
@@ -655,6 +677,13 @@ $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('so
 $('sceneMode').value = sceneMode(store.get('sceneMode', null), store.get('sceneObjects', false));
 store.set('sceneMode', $('sceneMode').value);
 scene.setMode($('sceneMode').value);
+$('pianoListening').value=store.get('pianoListening','piano-only')==='piano-body'?'piano-body':'piano-only';
+piano.listening=$('pianoListening').value;
+$('pianoListening').onchange=()=>{store.set('pianoListening',$('pianoListening').value);piano.setListening($('pianoListening').value,sceneWanted()&&$('sceneMode').value==='floor-piano');recordConfiguration();};
+$('pianoNearCamera').checked=store.get('pianoNearCamera',true)!==false;
+scene.setPianoNearCamera($('pianoNearCamera').checked);
+$('pianoNearCamera').onchange=()=>{scenePointer.cancel();store.set('pianoNearCamera',$('pianoNearCamera').checked);scene.setPianoNearCamera($('pianoNearCamera').checked);};
+scene.mirror=$('mirror').value==='1';
 $('sceneMode').onchange = () => { store.set('sceneMode', $('sceneMode').value);scene.setMode($('sceneMode').value);lockSessionOptions(); };
 $('sceneDebug').onchange = () => { scene.debug = $('sceneDebug').checked; $('sceneTouchHelp').hidden=!scene.debug;recordConfiguration(); };
 $('sceneTouch').checked = store.get('sceneTouch',true); scene.setTouchEnabled($('sceneTouch').checked);
@@ -686,10 +715,15 @@ async function changeSource() {
   if (!running) return;
   const session = sessionGeneration, change = sourceGeneration + 1;
   scene.stop();await magenta.stop();
+  piano.setListening($('pianoListening').value,sceneWanted()&&$('sceneMode').value==='floor-piano');
   try {
     if ($('source').value === 'camera') await openCamera(); else await openFile();
     if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
     await loadLandmarker();
+    if(sceneWanted()&&$('sceneMode').value==='floor-piano'&&!piano.buffers){
+      await piano.load(message=>{$('pianoStatus').textContent=message;});
+      $('pianoStatus').textContent='Piano samples ready';
+    }
     if (sceneWanted() && running && session === sessionGeneration && change === sourceGeneration) await scene.start(v, currentSource.id, $('sceneMode').value);
     if(sceneWanted()&&$('sceneMode').value==='magenta'&&running&&session===sessionGeneration&&change===sourceGeneration)magenta.start();
   } catch (error) { status('could not change source: ' + error.message); }
@@ -699,7 +733,7 @@ $('source').onchange = () => { store.set('source', $('source').value);
   lockSessionOptions(); changeSource(); };
 $('cam').onchange = () => { store.set('cam', $('cam').value); changeSource(); };
 $('res').onchange = () => { store.set('res', $('res').value); changeSource(); };
-$('mirror').onchange = () => { scenePointer.cancel();store.set('mirror', $('mirror').value); recordConfiguration(); };
+$('mirror').onchange = () => { scenePointer.cancel();scene.mirror=mirror();store.set('mirror', $('mirror').value); recordConfiguration(); };
 $('model').onchange = async () => { store.set('model', $('model').value);
   if (running) {
     const restartMagenta=magenta.active,session=sessionGeneration;
@@ -740,7 +774,7 @@ function handReadout() {
 function recordingConfiguration() {
   return { source: currentSource && { ...currentSource, width: v.videoWidth, height: v.videoHeight },
     pose_model: poseModel, hands: hands.configuration(),
-    scene: { ...scene.configuration(), selected: $('sceneMode').value !== 'none',...($('sceneMode').value==='magenta'?{magenta:magenta.configuration()}:{}) },
+    scene: { ...scene.configuration(), selected: $('sceneMode').value !== 'none',...($('sceneMode').value==='magenta'?{magenta:magenta.configuration()}:{}),...($('sceneMode').value==='floor-piano'?{piano:piano.configuration()}:{}) },
     preview_mirrored: mirror(), video_mirrored: mirror(),
     harmony_mode: $('mode').value, mapping, sensitivity: P, gesture_actions: actions,
     drum_mode: drumMode, timbre: engine.timbre, mix, sync_offset_ms: +$('syncOff').value };
@@ -839,7 +873,7 @@ async function toggleRecord() {
         audioOnly: $('recWhat').value === 'audio',
         recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
         configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
-        finalAnalysis: () => $('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0)}:null,
+        finalAnalysis: () => $('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0)}:$('sceneMode').value==='floor-piano'?{piano_events:piano.takeEvents(recorder.t0)}:null,
         label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
       if (recorder.starting) {
         $('rec').textContent = 'Cancel recording';

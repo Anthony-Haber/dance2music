@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "source": "https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander",
+  "revision": "869b6f8d9cddb47d966238c012041480b1ce517a",
+  "attribution": "Salamander Grand Piano by Alexander Holm; MP3 distribution from Tone.js. Playback transposes nearest sample root.",
+  "license": "CC BY 3.0",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/",
+  "files": [
+    {
+      "path": "C4.mp3",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/C4.mp3",
+      "size": 78718,
+      "sha256": "689eaa4c2fd7f29a2cc0e386eec462156d523a87d701269e5e2458e66056f4f6",
+      "midi": 60
+    },
+    {
+      "path": "Ds4.mp3",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/Ds4.mp3",
+      "size": 73519,
+      "sha256": "663e8bb3e2d0fa23a30526dcd7ab0e42609c193c07025647ef46badcf81ec211",
+      "midi": 63
+    },
+    {
+      "path": "Fs4.mp3",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/Fs4.mp3",
+      "size": 68219,
+      "sha256": "613652f5c96e35736ce6a46bc4ddb6ba1076d1fb16a35a4c22c14e67efdde57c",
+      "midi": 66
+    },
+    {
+      "path": "A4.mp3",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/A4.mp3",
+      "size": 61148,
+      "sha256": "a62df24a2c84cea8d18c1fa8aca7c18c877ba2b76a00a591256fa74d3ce54ac3",
+      "midi": 69
+    },
+    {
+      "path": "C5.mp3",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/C5.mp3",
+      "size": 68920,
+      "sha256": "2f5b0f7422063010fb379e684bfdf2daa3911dcd2251413d79fa2a53029fdc30",
+      "midi": 72
+    },
+    {
+      "path": "README",
+      "url": "https://raw.githubusercontent.com/Tonejs/audio/869b6f8d9cddb47d966238c012041480b1ce517a/salamander/README",
+      "size": 1883,
+      "sha256": "04ddba91bcafcb4c53dee7b004479f79af47bb92574f06bbe741b00c3ca64e0e"
+    }
+  ]
+}

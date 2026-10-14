@@ -82,7 +82,7 @@ async function infer(request) {
       // Own these small grid arrays: the returned buffers transfer to the UI.
       scanFrames.push({width:w,height:h,depth:depth.slice(),labels:labels.slice(),confidence:confidence.slice(),rgb:rgb.slice(),
         person:request.person?{...request.person,data:request.person.data.slice()}:null});
-      if(scanFrames.length===3){scanResult=reconstruct(scanFrames);scanFrames=[];}
+      if(scanFrames.length===3){scanResult=reconstruct(scanFrames,{floorPiano:request.mode==='floor-piano'});scanFrames=[];}
     }
     send(request,{type:'result',width:w,height:h,depth,labels,confidence,rgb,person:request.person,touchPose:request.touchPose,transforms,scanResult,timings:{depth_ms:depthMs,total_ms:performance.now()-started}},
       [depth.buffer,rgb.buffer,...(labels?[labels.buffer,confidence.buffer]:[]),...(request.person?[request.person.data.buffer]:[])]);

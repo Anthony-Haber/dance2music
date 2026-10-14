@@ -1,15 +1,18 @@
 // Procedural, offline instruments. Coordinates are fractions of the placement
 // size: x/z stay inside its footprint, y runs from the support to one size up.
+import {pianoScan} from './piano-layout.js';
 export const SCENE_MODES=Object.freeze({
   none:{label:'None',instruments:[]}, models:{label:'3D Models',instruments:[]},
   magenta:{label:'Google Magenta',instruments:[]},
+  'floor-piano':{label:'Floor Piano',instruments:[]},
   'percussion-kit':{label:'Percussions — Drum kit',instruments:['kick','snare','hat']},
   'percussion-hand':{label:'Percussions — Hand drums',instruments:['conga','bongo','djembe']},
   'percussion-metal':{label:'Percussions — Metallic',instruments:['cowbell','triangle','cymbal']},
 });
 export const sceneMode=(saved,legacy=false)=>Object.hasOwn(SCENE_MODES,saved)?saved:legacy?'models':'none';
 export const isPercussion=mode=>!!SCENE_MODES[mode]?.instruments.length;
-export function instrumentScan(scan,mode) {
+export function instrumentScan(scan,mode,{pianoNearCamera=true}={}) {
+  if(mode==='floor-piano')return pianoScan(scan,pianoNearCamera);
   const ids=SCENE_MODES[mode]?.instruments||[];
   return {...scan,objects:scan.objects.map((o,i)=>ids[i]?{...o,instrument:ids[i]}:o)};
 }

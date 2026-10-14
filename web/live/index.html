@@ -122,10 +122,18 @@
     <option value="percussion-hand">Percussions — Hand drums</option>
     <option value="percussion-metal">Percussions — Metallic</option>
     <option value="magenta">Google Magenta</option>
+    <option value="floor-piano">Floor Piano</option>
   </select></label>
   <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
   <div id="sceneControls" hidden>
-    <p class="note">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <p class="note" id="sceneDragHelp">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <div id="pianoControls" hidden>
+      <label>Listening <select id="pianoListening"><option value="piano-only">Piano only</option><option value="piano-body">Piano + body music</option></select></label>
+      <label class="mic-option"><input id="pianoNearCamera" type="checkbox" checked>Black keys toward camera</label>
+      <div class="note">Turn off to put the black keys on the far edge. You can change this while playing.</div>
+      <div class="status" id="pianoStatus" role="status" aria-live="polite"></div>
+      <p class="note">Acoustic piano: <a href="https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander">Salamander by Alexander Holm</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Samples transposed for intervening notes.</p>
+    </div>
     <div class="status" id="sceneDragStatus" role="status" aria-live="polite" hidden></div>
     <label class="mic-option" id="sceneTouchRow"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
     <div class="note" id="sceneInteractionHelp">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>

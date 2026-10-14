@@ -1,4 +1,5 @@
 import {basis,dot,ray,project,supportPoint,footprintFits} from './geometry.js';
+import {pianoFits,pianoKeyPixels,indexPianoMask} from './piano-layout.js';
 
 // The camera view is letterboxed by the page; use the actual overlay rectangle,
 // not the stage or device pixels. Geometry always stays unmirrored.
@@ -15,9 +16,10 @@ export class SurfaceDrag {
     const [u,v]=basis(object.normal),offset=hit.map((p,i)=>p-object.support[i]);
     this.grabHeight=dot(offset,object.normal);this.offset=[dot(offset,u),dot(offset,v)];
     const {width:w,height:h}=scan.projection;this.width=w;this.height=h;
-    this.surfaces=scan.surfaces.map(surface=>{
+    this.surfaces=scan.surfaces.filter(s=>object.shape!=='keyboard'||s.kind==='floor').map(surface=>{
       const mask=new Uint8Array(w*h);
       for(const [start,length] of surface.runs||[])mask.fill(1,start,start+length);
+      if(object.shape==='keyboard')indexPianoMask(mask,w,h);
       return {surface,mask};
     });
   }
@@ -33,14 +35,14 @@ export class SurfaceDrag {
       const [u,v]=basis(n),support=dir.map((d,i)=>d*z-n[i]*this.grabHeight-u[i]*this.offset[0]-v[i]*this.offset[1]);
       const [px,py]=project(support,w,h).map(Math.round);
       if(px<0||px>=w||py<0||py>=h||!mask[py*w+px])continue;
-      const position=support.map((p,i)=>p+n[i]*object.size/2);
+      const position=object.shape==='keyboard'?support:support.map((p,i)=>p+n[i]*object.size/2);
       candidates.push({target:{...object,surface:surface.id,support,position,normal:n,point:project(support,w,h),placement:'manual'},mask,z});
     }
     candidates.sort((a,b)=>a.z-b.z);
     const candidate=candidates[0],target=candidate?.target;
     // A table too small for the shape is an invalid target, not permission to
     // drop it onto the floor hidden underneath that table.
-    return target&&footprintFits(target.support,object.size,target.normal,candidate.mask,w,h)?target:null;
+    return target&&(object.shape==='keyboard'?(pianoFits(target,candidate.mask,w,h)&&pianoKeyPixels(target,w,h)>=12):footprintFits(target.support,object.size,target.normal,candidate.mask,w,h))?target:null;
   }
   grabPixel(object) {
     const [u,v]=basis(object.normal);

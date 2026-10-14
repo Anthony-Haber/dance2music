@@ -21,7 +21,7 @@ function frame(t,point=[0,.16,-3],part='body',z=-point[2]) {
 export async function runPercussionTests() {
   const passed=[];
   assert(sceneMode(null,true)==='models'&&sceneMode(null,false)==='none'&&sceneMode('percussion-hand',true)==='percussion-hand','preference migration and explicit mode precedence');
-  assert(sceneMode('invalid')==='none'&&Object.keys(SCENE_MODES).length===6&&sceneMode('magenta')==='magenta','invalid preferences safe and Magenta adds a sixth choice');
+  assert(sceneMode('invalid')==='none'&&Object.keys(SCENE_MODES).length===7&&sceneMode('magenta')==='magenta'&&sceneMode('floor-piano')==='floor-piano','invalid preferences safe and added scene choices preserved');
   const original=dragFixture();
   for(const mode of Object.keys(SCENE_MODES).filter(k=>k.startsWith('percussion-'))){
     const scan=instrumentScan(original,mode);assert(scan.objects.length===1&&scan.objects[0].instrument===SCENE_MODES[mode].instruments[0],'limited surface count decorates available placement');

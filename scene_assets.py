@@ -17,7 +17,7 @@ def digest(path):
     return value.hexdigest()
 
 
-def prepare(destination=VENDOR, lock_path=LOCK):
+def prepare(destination=VENDOR, lock_path=LOCK, name='scene'):
     lock = json.loads(lock_path.read_text())
     destination = Path(destination)
     (destination / 'ready.json').unlink(missing_ok=True)
@@ -27,13 +27,13 @@ def prepare(destination=VENDOR, lock_path=LOCK):
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix(target.suffix + '.partial')
-        print('get scene/' + asset['path'], flush=True)
+        print('get ' + name + '/' + asset['path'], flush=True)
         try:
             with urllib.request.urlopen(asset['url'], timeout=120) as response, temporary.open('wb') as out:
                 for block in iter(lambda: response.read(1024 * 1024), b''):
                     out.write(block)
             if temporary.stat().st_size != asset['size'] or digest(temporary) != asset['sha256']:
-                raise ValueError('Scene asset checksum mismatch: ' + asset['path'])
+                raise ValueError(name.title() + ' asset checksum mismatch: ' + asset['path'])
             temporary.replace(target)
         finally:
             temporary.unlink(missing_ok=True)
@@ -41,7 +41,7 @@ def prepare(destination=VENDOR, lock_path=LOCK):
     marker = destination / 'ready.json.partial'
     marker.write_text(json.dumps({'lock_sha256': digest(lock_path)}))
     marker.replace(destination / 'ready.json')
-    print('offline scene assets verified:', destination)
+    print('offline ' + name + ' assets verified:', destination)
 
 
 if __name__ == '__main__':

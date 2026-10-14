@@ -15,6 +15,7 @@ import signal
 import urllib.request
 import webbrowser
 from scene_assets import prepare as prepare_scene_assets
+from piano_assets import prepare as prepare_piano_assets
 from magenta_runtime import MagentaRuntime
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +42,7 @@ def offline(magenta=True):
             urllib.request.urlretrieve(url, dst)
     print('offline copy ready:', os.path.relpath(VENDOR, ROOT))
     prepare_scene_assets()
+    prepare_piano_assets()
     if magenta:
         from magenta_install import prepare as prepare_magenta
         prepare_magenta()

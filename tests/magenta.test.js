@@ -2,6 +2,7 @@ import {MagentaSpatial,inverseWeights,capturePlacement} from '../web/live/magent
 import {MagentaScene,listeningGains,settings} from '../web/live/magenta.js';
 import {project} from '../web/live/scene/geometry.js';
 import {dragFixture} from './scene-drag.test.js';
+import {Engine} from '../web/live/audio.js';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const near=(a,b)=>Math.abs(a-b)<1e-6;
 export function frame(point,timestamp){
@@ -43,6 +44,12 @@ export async function runMagentaTests(){
   assert(capturePlacement({objects:[],surfaces:[]},null)===null,'no surfaces leaves the capture button available');
   const s=settings({input:'invalid',model:'invalid',influence:999,blend:-4});assert(s.input==='audio-notes'&&s.model==='auto'&&s.influence===100&&s.blend===0,'invalid saved preferences are bounded');
   for(let blend=0;blend<=100;blend+=10){const [x,y]=listeningGains({...s,blend});assert(near(x*x+y*y,1),'blend is equal power');}
+  const audio=new OfflineAudioContext(1,48000,48000),engine=new Engine();engine.ctx=audio;
+  engine.originalMonitor=audio.createGain();engine.magentaMonitor=audio.createGain();
+  engine.originalMonitor.connect(audio.destination);engine.magentaMonitor.connect(audio.destination);
+  for(let i=0;i<20;i++)engine.magentaMix(i%2,1-i%2);
+  const signal=audio.createConstantSource();signal.offset.value=1;signal.connect(engine.originalMonitor);signal.start();
+  const rendered=await audio.startRendering();assert(rendered.getChannelData(0)[24000]>.99,'rapid same-quantum crossfades finish without overlapping automation curves');
   const calls=[],notes=Object.assign(Object.create(MagentaScene.prototype),{active:true,settings:{input:'audio-notes'},owners:new Map(),send:e=>calls.push(e),record:()=>{}});
   notes.note({owner:'pad',note:60,on:true});notes.note({owner:'pluck',note:60,on:true});notes.note({owner:'pad',note:60,on:false});
   assert(calls.length===1&&calls[0].on,'overlapping owners retain a held MIDI note');

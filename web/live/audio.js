@@ -53,7 +53,8 @@ export class Engine {
     lim.attack.value = 0.003; lim.release.value = 0.1;
     // instrument volume (a mapping destination: e.g. the sphere) sits before the reverb split
     this.inst = ctx.createGain(); this.inst.gain.value = 1;
-    this.bus.connect(this.inst);
+    this.movement=ctx.createGain();this.movement.gain.value=1;
+    this.bus.connect(this.movement).connect(this.inst);
     this.inst.connect(dry).connect(this.originalMix);
     this.inst.connect(verb).connect(wet).connect(this.originalMix);
     this.master.connect(lim).connect(ctx.destination);
@@ -402,9 +403,12 @@ export class Engine {
     if(!this.ctx||!this.originalMonitor)return;
     const now=this.ctx.currentTime;
     for(const [node,value] of [[this.originalMonitor,original],[this.magentaMonitor,generated]]){
-      node.gain.cancelAndHoldAtTime?.(now);
-      const from=node.gain.value,curve=Float32Array.from({length:64},(_,i)=>Math.sqrt((1-i/63)*from*from+i/63*value*value));
-      node.gain.setValueCurveAtTime(curve,now,seconds);
+      const g=node.gain;
+      if(g.cancelAndHoldAtTime)g.cancelAndHoldAtTime(now);else g.cancelScheduledValues(now);
+      const from=g.value;g.setValueAtTime(from,now);
+      // Ramp segments can be interrupted repeatedly at the same audio quantum.
+      // Truncated setValueCurveAtTime curves can overlap in Chrome after hold.
+      for(let i=1;i<=63;i++)g.linearRampToValueAtTime(Math.sqrt((1-i/63)*from*from+i/63*value*value),now+seconds*i/63);
     }
   }
   magentaTrackingLost(lost){
@@ -413,6 +417,12 @@ export class Engine {
     g.cancelAndHoldAtTime?.(now);g.setValueAtTime(g.value,now);g.linearRampToValueAtTime(lost?0:1,now+(lost?1:.3));
   }
   masterLevel(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
+  movementLevel(value){
+    if(!this.ctx||!this.movement)return;
+    const t=this.ctx.currentTime,g=this.movement.gain;
+    if(g.cancelAndHoldAtTime)g.cancelAndHoldAtTime(t);else {g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);}
+    g.linearRampToValueAtTime(value,t+.1);
+  }
   peak() {
     if (!this.meter) return 0;
     const a = new Float32Array(this.meter.fftSize); this.meter.getFloatTimeDomainData(a);

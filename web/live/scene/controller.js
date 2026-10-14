@@ -5,15 +5,18 @@ import {isPercussion,instrumentScan,sceneMode} from './instruments.js';
 import {compositingDepth} from './occlusion.js';
 import {PersonMaskReader} from './person-mask.js';
 import {SurfaceDrag} from './drag.js';
+import {PianoInteractions,pianoPose,PIANO_TOUCH_SETTINGS} from './piano-touch.js';
+import {pianoFloorDepth,orientPiano} from './piano-layout.js';
 const empty=()=>({objects:[],surfaces:[]});
 export class SceneController {
-  constructor({canvas=document.createElement('canvas'),onStatus=()=>{},onChange=()=>{},workerFactory=()=>new Worker(new URL('./worker.js',import.meta.url),{type:'module'}),rendererFactory=(T,loss)=>new SceneRenderer(T,loss)}={}) {
-    Object.assign(this,{canvas,onStatus,onChange,workerFactory,rendererFactory});
+  constructor({canvas=document.createElement('canvas'),onStatus=()=>{},onChange=()=>{},onPianoEvent=()=>{},workerFactory=()=>new Worker(new URL('./worker.js',import.meta.url),{type:'module'}),rendererFactory=(T,loss)=>new SceneRenderer(T,loss)}={}) {
+    Object.assign(this,{canvas,onStatus,onChange,onPianoEvent,workerFactory,rendererFactory});this.session=0;
     this.ctx=canvas.getContext('2d');this.generation=0;this.id=0;this.state='off';this.scan=empty();this.debug=false;this.snapshot=null;
-    this.mode='models';this.touchPreference=true;this.interactions=new TouchInteractions();this.touchEvents=[];this.currentTouchPose=null;
+    this.mode='models';this.pianoNearCamera=true;this.touchPreference=true;this.interactions=new TouchInteractions();this.touchEvents=[];this.currentTouchPose=null;
     this.maskReader=new PersonMaskReader();
     this.thumb=document.createElement('canvas');this.thumb.width=160;this.thumb.height=120;this.tg=this.thumb.getContext('2d',{willReadFrequently:true});
     this.visibility=()=>{
+      this.releasePiano('visibility');
       this.endDrag(true);
       this.latest=null;this.interactions.reset();this.touchEvents=[];this.clear();
       if(!document.hidden&&this.worker){
@@ -29,11 +32,22 @@ export class SceneController {
   }
   status(state,message){this.state=state;this.message=message;this.onStatus({state,message});}
   setMode(mode) {
-    this.mode=sceneMode(mode);this.interactions=isPercussion(this.mode)?new BodyInteractions():new TouchInteractions();
+    this.releasePiano('mode-change');
+    this.mode=sceneMode(mode);this.interactions=this.mode==='floor-piano'?new PianoInteractions():isPercussion(this.mode)?new BodyInteractions():new TouchInteractions();
     this.setTouchEnabled(this.touchPreference);this.currentTouchPose=null;
   }
+  setPianoNearCamera(enabled) {
+    enabled=!!enabled;if(enabled===this.pianoNearCamera)return;
+    this.endDrag(true);this.releasePiano('piano-orientation');this.currentTouchPose=null;
+    this.pianoNearCamera=enabled;
+    if(this.mode==='floor-piano'){
+      this.scan=orientPiano(this.scan,enabled);
+      if(this.snapshot)this.snapshot={...this.snapshot,...this.scan};
+      this.renderer?.setScan(this.scan);this.onChange();
+    }
+  }
   async start(video,source,mode=this.mode) {
-    this.stop();this.setMode(mode);this.video=video;this.source=source;this.scan=empty();this.snapshot=null;this.provenance=null;
+    this.stop();this.session++;this.setMode(mode);this.video=video;this.source=source;this.scan=empty();this.snapshot=null;this.provenance=null;
     if(this.mode==='none')return false;
     this.interval=100;this.poseTimes=[];this.baseline=0;this.baselineUntil=0;this.rateTimes=[];this.suppressed=0;this.depthLatency=0;
     this.status('loading','Loading 3D models…');
@@ -49,12 +63,13 @@ export class SceneController {
       this.timeout=setTimeout(()=>this.fail('3D model loading timed out'),240000);
       const animate=()=>{if(!this.worker)return;try{this.tick();this.render();this.raf=requestAnimationFrame(animate);}catch(error){this.fail(error.message);}};
       this.raf=requestAnimationFrame(animate);
+      this.watchdog=setInterval(()=>{if(this.mode==='floor-piano')this.publishTouches(this.interactions.watchdog(this.currentTouchPose,performance.now()));},25);
     }catch(error){this.fail(error.message);}
     return this.readyPromise;
   }
   async receive(result) {
     if(result.source!==this.source)return;
-    if(result.type==='fatal'){this.fail(result.message);return;}
+    if(result.type==='fatal'){if(result.generation===this.generation)this.fail(result.message);return;}
     if(result.id===this.pending){this.pending=null;this.busy=false;clearTimeout(this.inferTimeout);}
     if(result.generation!==this.generation)return;
     if(result.type==='status'){this.status('loading',result.message);return;}
@@ -74,18 +89,19 @@ export class SceneController {
       this.frames.push(result);this.status('scanning',`Scanning surfaces (${this.frames.length}/3)…`);
       if(this.frames.length===3) {
         if(!result.scanResult)throw new Error('Scene worker omitted surface results');
-        this.scan=instrumentScan(result.scanResult,this.mode);this.reference=this.frames[0];this.scanMs=performance.now()-this.scanStart;
+        this.scan=instrumentScan(result.scanResult,this.mode,{pianoNearCamera:this.pianoNearCamera});this.reference=this.frames[0];this.scanMs=performance.now()-this.scanStart;
         this.snapshot={generation:this.generation,scanned_at_ms:performance.now(),duration_ms:this.scanMs,...this.scan,transforms:result.transforms};
         this.frames=[];this.renderer.setScan(this.scan);clearTimeout(this.timeout);
         this.status(this.scan.objects.length?'active':'empty',this.scan.objects.length?`${this.scan.objects.length}${isPercussion(this.mode)?' of 3 instruments':' objects'} placed`:'No suitable surface found.');
+        if(this.mode==='floor-piano')this.status(this.scan.objects.length?'active':'empty',this.scan.objects.length?'Floor Piano ready · C4–C5':'More clear floor must be visible to fit all eight white keys (at least 12 pixels each). Clear the floor and Rescan.');
         this.nextRetry=performance.now()+15000;this.nextInference=0;this.latest=null;
         if(!this.baseline){this.baselineUntil=performance.now()+2000;this.poseTimes=[];}
         this.resolveStart?.(true);this.resolveStart=null;this.onChange();
       }
       return;
     }
-    const alignment=alignDepth(result,this.reference);
-    if(!alignment){this.latest=null;this.unreliableSince ||= performance.now();}
+    const alignment=alignDepth(result,this.reference,this.mode==='floor-piano');
+    if(!alignment){this.latest=null;this.releasePiano('depth-alignment');this.unreliableSince ||= performance.now();}
     else {
       this.unreliableSince=0;
       const currentPerson=exclusion(result), referencePerson=exclusion(this.reference);
@@ -95,16 +111,16 @@ export class SceneController {
         if(currentPerson[i]||referencePerson[i])continue;
         samples++;
         const aligned=result.depth[i]*alignment.scale+alignment.offset, old=this.reference.depth[i];
-        if(Math.abs(aligned-old)>.1*Math.max(.1,Math.abs(old))&&Math.abs(result.rgb[i]-this.reference.rgb[i])>20)changed++;
+        if(Math.abs(aligned-old)>.1*Math.max(.1,Math.abs(old))&&Math.abs(result.rgb[i]-this.reference.rgb[i]-(alignment.rgb_offset||0))>20)changed++;
       }
       const sceneChanged=alignment.changed_fraction>.16||(samples>20&&changed/samples>.2);
       if(sceneChanged)this.changedSince ||= performance.now();else this.changedSince=0;
-      if(sceneChanged)this.latest=null;
+      if(sceneChanged){this.latest=null;this.releasePiano('scene-changed');}
       if(this.scan.normalization && !sceneChanged) {
         this.latest={...result,aligned:true,inverse:normalize(result.depth,this.scan.normalization,alignment)};
         // Keep raw aligned depth for robust limb sampling. Display suppression
         // is applied separately, never fed back into contact detection.
-        this.publishTouches(this.interactions.update(this.touchObjects(),this.latest,result.touchPose,this.currentTouchPose,performance.now()));
+        if(this.mode!=='floor-piano'||result.timestamp>(this.contactAfter||0))this.publishTouches(this.interactions.update(this.touchObjects(),this.latest,result.touchPose,this.currentTouchPose,performance.now()));
       }
     }
     if((this.unreliableSince&&performance.now()-this.unreliableSince>2000)||(this.changedSince&&performance.now()-this.changedSince>2500))this.rescan('Scene changed — rescanning…');
@@ -112,15 +128,20 @@ export class SceneController {
   rescan(message='Scanning surfaces (0/3)…') {
     if(!this.renderer||!this.worker)return;
     this.endDrag(true);
+    this.releasePiano('rescan');this.currentTouchPose=null;
     this.generation++;this.frames=[];this.latest=null;this.reference=null;this.scan=empty();this.snapshot=null;this.renderer.setScan(this.scan);this.clear();
     this.interactions.reset();this.touchEvents=[];
     this.unreliableSince=0;this.changedSince=0;this.scanStart=performance.now();this.nextInference=0;this.lastVideoTime=-1;
     clearTimeout(this.timeout);this.timeout=setTimeout(()=>this.fail('Surface scan timed out'),45000);
     this.status('scanning',message);this.onChange();
+    if(this.mode==='floor-piano'){
+      this.scanDelayUntil=performance.now()+10000;this.nextInference=this.scanDelayUntil;this.scanCountdown=10;
+      this.status('scanning','Step out of view — floor scan starts in 10 seconds…');
+    }
   }
   // Called INSIDE MediaPipe's callback; mask data is callback-owned.
   observePose(landmarks,now){
-    this.currentTouchPose=this.worker?touchPose(landmarks,now,isPercussion(this.mode)||this.mode==='magenta'):null;
+    this.currentTouchPose=this.worker&&!this.drag?(this.mode==='floor-piano'?pianoPose(landmarks,now):touchPose(landmarks,now,isPercussion(this.mode)||this.mode==='magenta')):null;
     if(this.latest?.aligned)this.publishTouches(this.interactions.observe(this.touchObjects(),this.currentTouchPose,now));
   }
   touchObjects(){return this.scan.objects.filter(o=>o.id!==this.drag?.original.id);}
@@ -134,6 +155,7 @@ export class SceneController {
     const object=this.scan.objects.find(o=>o.id===hit.id);
     if(!this.scan.surfaces.some(s=>s.runs?.length))return false;
     this.drag=new SurfaceDrag(this.scan,object,hit.point);
+    this.releasePiano('drag-start');this.currentTouchPose=null;
     this.interactions.states.delete(object.id);this.touchEvents=this.touchEvents.filter(e=>e.object_id!==object.id);
     this.interactions.body?.delete(object.id);
     this.renderer.clearTouch(object.id);return true;
@@ -152,14 +174,20 @@ export class SceneController {
     if(!this.drag)return;
     const original=this.drag.original;this.drag=null;
     if(cancel)this.placeObject(original);
+    this.releasePiano('drag-end');this.currentTouchPose=null;
     this.interactions.states.delete(original.id);this.interactions.body?.delete(original.id);this.onDragEnd?.();
   }
   publishTouches(events){
     if(this.mode==='magenta')return;
+    if(this.mode==='floor-piano'){
+      for(const event of events)this.onPianoEvent({...event,generation:this.generation,session:this.session,source:this.source});
+      return;
+    }
     for(const event of events){this.renderer?.touch(event);this.touchEvents.push({...event,generation:this.generation});}
     this.touchEvents=this.touchEvents.slice(-16);
   }
-  setTouchEnabled(enabled){this.touchPreference=enabled;enabled=isPercussion(this.mode)||this.mode==='magenta'||enabled;this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
+  releasePiano(reason){if(this.mode==='floor-piano'){this.contactAfter=performance.now();this.publishTouches(this.interactions.release(this.contactAfter,reason));}}
+  setTouchEnabled(enabled){this.releasePiano('touch-setting');this.touchPreference=enabled;enabled=isPercussion(this.mode)||this.mode==='magenta'||this.mode==='floor-piano'||enabled;this.interactions.enabled=enabled;this.interactions.reset();this.touchEvents=[];this.renderer?.setTouchEnabled(enabled);}
   takeTouchEvents(){return this.touchEvents.splice(0);}
   copyPerson(mask,now) {
     if(!this.worker)return;
@@ -173,12 +201,19 @@ export class SceneController {
     if(this.baselineUntil && now>=this.baselineUntil){this.baseline=this.poseTimes.length/1.5;this.baselineUntil=0;}
     if(this.baseline&&this.poseTimes.length>8&&now-(this.lastThrottle||0)>2000) {
       const rate=this.poseTimes.length/1.5;
-      this.interval=rate<this.baseline*.85?Math.min(1000,this.interval*1.5):Math.max(100,this.interval*.95);
+      // Piano's release watchdog needs a new depth sample within 200 ms.
+      // Slowing inference beyond that budget makes held notes drop and re-enter.
+      this.interval=this.mode==='floor-piano'?100:rate<this.baseline*.85?Math.min(1000,this.interval*1.5):Math.max(100,this.interval*.95);
       this.lastThrottle=now;
     }
   }
   tick() {
     const now=performance.now();
+    if(this.mode==='floor-piano'&&this.state==='scanning'&&now<this.scanDelayUntil){
+      const seconds=Math.ceil((this.scanDelayUntil-now)/1000);
+      if(seconds!==this.scanCountdown){this.scanCountdown=seconds;this.status('scanning',`Step out of view — floor scan starts in ${seconds} seconds…`);}
+      return;
+    }
     if(!this.renderer||document.hidden||this.busy||this.capturing||now<(this.nextInference||0)||now<this.baselineUntil||this.video.readyState<2)return;
     if(this.state==='empty'){if(now>=this.nextRetry)this.rescan();return;}
     if(this.state==='loading'||this.state==='off'||this.state==='failed')return;
@@ -192,7 +227,7 @@ export class SceneController {
       this.capturing=false;
       if(this.worker!==worker||generation!==this.generation){image.close();return;}
       this.busy=true;this.pending=id;this.nextInference=timestamp+this.interval;
-      worker.postMessage({type:'infer',id,source,generation,timestamp,image,person,touchPose:pose,scan:this.state==='scanning'},[image,...(person?[person.data.buffer]:[])]);
+      worker.postMessage({type:'infer',id,source,generation,mode:this.mode,timestamp,image,person,touchPose:pose,scan:this.state==='scanning'},[image,...(person?[person.data.buffer]:[])]);
       this.inferTimeout=setTimeout(()=>this.fail('Scene inference timed out'),15000);
     }).catch(error=>{this.capturing=false;if(this.worker===worker)this.fail(error.message);});
   }
@@ -205,7 +240,10 @@ export class SceneController {
     this.thumb.width=w;this.thumb.height=h;this.tg.drawImage(this.video,0,0,w,h);
     const pixels=this.tg.getImageData(0,0,w,h).data;
     if(this.displayDepth?.length!==this.latest.inverse.length)this.displayDepth=new Float32Array(w*h);
-    compositingDepth(this.latest,this.person,pixels,now,this.displayDepth);
+    const keyboard=this.mode==='floor-piano'&&this.scan.objects[0];
+    if(keyboard&&(this.pianoFloor?.object!==keyboard||this.pianoFloor.width!==w||this.pianoFloor.height!==h))
+      this.pianoFloor={object:keyboard,width:w,height:h,data:pianoFloorDepth(keyboard,w,h)};
+    compositingDepth(this.latest,this.person,pixels,now,this.displayDepth,keyboard?this.pianoFloor.data:null);
     this.renderer.setDepth(this.displayDepth,w,h);
   }
   render(now=performance.now()) {
@@ -214,7 +252,7 @@ export class SceneController {
     if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
     const visible=this.visible(now);this.suppressed=this.scan.objects.length-visible.filter(Boolean).length;
     this.ctx.clearRect(0,0,w,h);
-    if(visible.some(Boolean)){this.updateOcclusion(now);this.ctx.drawImage(this.renderer.render(w,h,visible,now,
+    if(visible.some(Boolean)){this.updateOcclusion(now);this.renderer.setMirror?.(!!this.mirror);this.ctx.drawImage(this.renderer.render(w,h,visible,now,
       this.mode==='magenta'&&this.magentaDisplay?this.scan.objects.map(o=>({id:o.id,proximity:o.capture?0:this.magentaDisplay.weights[o.id],active:false})):this.interactions.visual(now)),0,0);}
     this.labelRects=[];
     if(this.mode==='magenta'&&this.magentaDisplay&&visible.some(Boolean)){
@@ -262,11 +300,13 @@ export class SceneController {
   clear(){this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
   pickLabel(x,y){if(this.mode!=='magenta'||this.state!=='active'||!this.visible(performance.now()).some(Boolean))return null;return (this.labelRects||[]).find(r=>x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height);}
   configuration(){return {enabled:this.state!=='off',mode:this.mode,state:this.state,provenance:this.provenance||null,scan:this.snapshot,show_surfaces:this.debug,max_depth_age_ms:200,
-    touch:{enabled:this.interactions.enabled,...(isPercussion(this.mode)?PERCUSSION_TOUCH_SETTINGS:TOUCH_SETTINGS)}};}
+    ...(this.mode==='floor-piano'?{black_keys_near_camera:this.pianoNearCamera}:{}),
+    touch:{enabled:this.interactions.enabled,...(this.mode==='floor-piano'?PIANO_TOUCH_SETTINGS:isPercussion(this.mode)?PERCUSSION_TOUCH_SETTINGS:TOUCH_SETTINGS)}};}
   metrics(){return `scan ${((this.scanMs||0)/1000).toFixed(1)} s · depth ${Math.round(this.depthLatency||0)} ms · ${((this.rateTimes||[]).filter(t=>t>performance.now()-2000).length/2).toFixed(1)} Hz · ${this.suppressed||0} stale hidden · ${this.interactions.count} touches · ${this.interactions.reason} · pose budget ${Math.round(this.baseline||0)} fps`;}
   fail(message){this.stop();this.status('failed','3D unavailable: '+message+'. Music can continue.');this.onChange();}
   stop() {
     this.endDrag(true);
+    this.releasePiano('stop');clearInterval(this.watchdog);
     this.generation++;this.worker?.terminate();this.worker=null;
     clearTimeout(this.timeout);clearTimeout(this.inferTimeout);cancelAnimationFrame(this.raf);
     this.renderer?.dispose();this.renderer=null;this.latest=null;this.reference=null;this.frames=[];this.person=null;this.displayDepth=null;

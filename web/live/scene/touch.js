@@ -2,6 +2,7 @@
 // Body-relative MediaPipe Z is never compared with room geometry.
 import {basis,dot,ray,project} from './geometry.js';
 import {contactParts} from './instruments.js';
+import {pianoCorners} from './piano-layout.js';
 export const TOUCH_SETTINGS=Object.freeze({version:3,parts:['hands','feet'],max_depth_age_ms:200,
   pose_age_ms:120,confirm_ms:25,release_ms:120,cooldown_ms:320,particles_per_object:56,
   burst_duration_ms:1800,min_particle_pixels:7,
@@ -60,6 +61,10 @@ export function touchDepth(p,depth) {
   return consistent[Math.floor(consistent.length/2)];
 }
 export function touchBounds(object,w,h) {
+  if(object.shape==='keyboard'){
+    const points=pianoCorners(object).map(p=>project(p,w,h));
+    return {left:Math.min(...points.map(p=>p[0])),right:Math.max(...points.map(p=>p[0])),top:Math.min(...points.map(p=>p[1])),bottom:Math.max(...points.map(p=>p[1]))};
+  }
   const [u,v]=basis(object.normal),points=[];
   for(const a of [-.5,.5])for(const b of [-.5,.5])for(const c of [-.5,.5])
     points.push(project(object.position.map((p,i)=>p+object.size*(a*u[i]+b*object.normal[i]+c*v[i])),w,h));

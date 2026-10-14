@@ -3,6 +3,7 @@
 import {basis} from './geometry.js';
 import {TouchEffects,particleSprite} from './touch-effects.js';
 import {buildInstrument} from './instruments.js';
+import {buildPiano} from './piano-layout.js';
 
 export class SceneRenderer {
   constructor(THREE,onLoss=()=>{}) {
@@ -57,12 +58,13 @@ export class SceneRenderer {
   }
   setScan(scan) {
     const T=this.T;
-    for(const group of this.groups){this.scene.remove(group);group.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+    for(const group of this.groups){this.scene.remove(group);group.traverse(o=>{o.geometry?.dispose();if(o.userData.pianoLabel)o.material.map.dispose();o.material?.dispose();});}
     this.groups=[];this.effects=[];this.meshes=[];
     for(const object of scan.objects) {
       const group=new T.Group(), s=object.size;
       let meshes;
-      if(object.instrument)meshes=buildInstrument(T,object.instrument,s);
+      if(object.shape==='keyboard')meshes=buildPiano(T,object);
+      else if(object.instrument)meshes=buildInstrument(T,object.instrument,s);
       else {
         const geometry=object.shape==='cube'?new T.BoxGeometry(s,s,s):object.shape==='sphere'?new T.SphereGeometry(s/2,20,12):new T.CylinderGeometry(s/2,s/2,s,20);
         const mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({color:object.color||[0xee9e52,0x65bde3,0xc195e7][object.id],roughness:.65}));
@@ -71,9 +73,9 @@ export class SceneRenderer {
       meshes.forEach(mesh=>{mesh.userData.objectId=object.id;mesh.userData.placementIndex=this.groups.length;group.add(mesh);});
       // Cheap contact shadow lies on the support plane, with its own depth.
       const shadow=new T.Mesh(new T.CircleGeometry(s*.48,24),new T.MeshBasicMaterial({color:0x161020,transparent:true,opacity:.22,depthWrite:true}));
-      shadow.rotation.x=-Math.PI/2;shadow.position.y=.002;group.add(shadow);
+      shadow.rotation.x=-Math.PI/2;shadow.position.y=.002;if(object.shape!=='keyboard')group.add(shadow);else {shadow.geometry.dispose();shadow.material.dispose();}
       this.placeGroup(group,object);
-      const effect=new TouchEffects(T,group,meshes,object,this.sprite);effect.setEnabled(this.touchEnabled);this.effects.push(effect);
+      const effect=object.shape==='keyboard'?{object,setEnabled(){},trigger(){}}:new TouchEffects(T,group,meshes,object,this.sprite);effect.setEnabled(this.touchEnabled);this.effects.push(effect);
       group.traverse(child=>{if(child.material)this.occludeMaterial(child.material);});
       this.scene.add(group);this.groups.push(group);this.meshes.push(...meshes);
     }
@@ -101,13 +103,18 @@ export class SceneRenderer {
   setDepth(data,width,height) {
     this.depth.image={data,width,height};this.depth.needsUpdate=true;
   }
+  setMirror(mirror){for(const mesh of this.meshes)if(mesh.userData.pianoLabel){const texture=mesh.material.map;texture.repeat.x=mirror?-1:1;texture.offset.x=mirror?1:0;}}
   setTouchEnabled(enabled){this.touchEnabled=enabled;this.effects.forEach(effect=>effect.setEnabled(enabled));}
   touch(event){this.effects.find(effect=>effect.object.id===event.object_id)?.trigger(event);}
   render(width,height,visible=[],now=performance.now(),contacts=[]) {
     this.sceneViewport.value.set(width,height);
     if(this.canvas.width!==width||this.canvas.height!==height){this.renderer.setSize(width,height,false);this.target.setSize(width,height);this.camera.aspect=width/height;this.camera.updateProjectionMatrix();}
     this.groups.forEach((g,i)=>g.visible=!!visible[i]);
-    this.effects.forEach(effect=>effect.update(now,contacts.find(c=>c.id===effect.object.id),height));
+    this.effects.forEach(effect=>{if(effect.object.shape!=='keyboard')effect.update(now,contacts.find(c=>c.id===effect.object.id),height);});
+    for(const mesh of this.meshes)if(mesh.userData.pianoKey){
+      const pressed=contacts.some(c=>c.key_id===mesh.userData.pianoKey.id&&c.active);
+      mesh.material.emissive.setHex(pressed?0x27b7cc:0);mesh.material.emissiveIntensity=pressed?.8:0;
+    }
     this.renderer.setRenderTarget(this.target);this.renderer.clear();this.renderer.render(this.scene,this.camera);
     this.renderer.setRenderTarget(null);this.renderer.clear();this.renderer.render(this.composite,this.screenCamera);
     return this.canvas;

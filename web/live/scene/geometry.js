@@ -44,14 +44,20 @@ export function exclusion(frame) {
 }
 // Robust affine inverse-depth alignment. RGB agreement prevents changed furniture
 // from pulling the fit; spatial coverage prevents alignment to one tiny wall.
-export function alignDepth(current, reference) {
+export function alignDepth(current, reference, compensateLighting=false) {
   if(current.width!==reference.width || current.height!==reference.height) return null;
   const a=exclusion(current), b=exclusion(reference), pairs=[], w=current.width, h=current.height;
+  // A person entering the view can change camera exposure across the whole
+  // room. Compare the background after removing that common brightness shift.
+  const differences=[];
+  if(compensateLighting&&current.rgb&&reference.rgb)for(let i=0;i<current.depth.length;i+=8)
+    if(!a[i]&&!b[i])differences.push(current.rgb[i]-reference.rgb[i]);
+  const rgbOffset=differences.length?quantile(differences,.5):0;
   let eligible=0, changed=0;
   for(let i=0;i<current.depth.length;i+=2) {
     if(a[i]||b[i]) continue;
     eligible++;
-    if(current.rgb && reference.rgb && Math.abs(current.rgb[i]-reference.rgb[i])>28) {changed++;continue;}
+    if(current.rgb && reference.rgb && Math.abs(current.rgb[i]-reference.rgb[i]-rgbOffset)>28) {changed++;continue;}
     const x=current.depth[i], y=reference.depth[i];
     if(Number.isFinite(x)&&Number.isFinite(y)) pairs.push([x,y,i]);
   }
@@ -76,7 +82,7 @@ export function alignDepth(current, reference) {
   for(const [x,y] of best){cov+=(x-mx)*(y-my);variance+=(x-mx)**2;}
   if(variance/best.length < xrange*xrange*.005) return null;
   const scale=cov/variance, offset=my-scale*mx;
-  return {scale,offset,inlier_fraction:best.length/pairs.length,changed_fraction:changed/Math.max(1,eligible)};
+  return {scale,offset,inlier_fraction:best.length/pairs.length,changed_fraction:changed/Math.max(1,eligible),rgb_offset:rgbOffset};
 }
 function plane3(p,q,r) {
   const normal=cross(q.map((x,i)=>x-p[i]),r.map((x,i)=>x-p[i]));
@@ -139,7 +145,7 @@ export function footprintFits(center,size,normal,mask,w,h) {
   }
   return true;
 }
-export function reconstruct(frames) {
+export function reconstruct(frames,{floorPiano=false}={}) {
   if(frames.length!==3)throw new Error('A scan requires three sequential frames');
   const first=frames[0], {width:w,height:h}=first, norm=normalization(first.depth);
   const empty={surfaces:[],objects:[],normalization:norm,projection:{vertical_fov_degrees:FOV,width:w,height:h,approximate:true,units:'arbitrary'}};
@@ -157,7 +163,10 @@ export function reconstruct(frames) {
     for(let n=0;n<3&&remaining.length>=80;n++) {
       const fit=fitPatch(remaining,maps[0],w,h);if(!fit)break;
       const mask=new Uint8Array(w*h);for(const i of fit.indices)mask[i]=1;
-      for(const region of components(erode(mask,w,h),w,h)) {
+      // A floor keyboard validates every footprint pixel itself. Re-eroding
+      // the already inset, person-excluded floor shrinks narrow clear strips
+      // drastically and fragments harmless depth noise into tiny placements.
+      for(const region of components(floorPiano&&k==='floor'?mask:erode(mask,w,h),w,h)) {
         const interior=new Uint8Array(w*h);region.forEach(i=>interior[i]=1);
         patches.push({...fit,kind:k,mask:interior,indices:region});
       }
