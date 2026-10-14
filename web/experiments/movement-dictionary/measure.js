@@ -37,8 +37,14 @@ export const MD = {
   circleTurns: 0.7,            // ... to at least this many turns
   reverseS: 1.5,               // a circle restarting the other way within this long is a reversal
   spinRate: 90,                // deg/s of body yaw counted as a spin
+  // arms (added by the lab, not one of her notes)
+  reachLow: 0.5, reachHigh: 1.3, // torsos from the trunk: arms by the sides → arms wide open
+  reachOpen: 0.7,              // reach = 0.7 · the more open arm + 0.3 · the other
+  motionS: 0.05,               // smoothing of the quick-movement speed (s): short, so a flick registers
+  motionCap: 8,                // body lengths/s: faster than this is a landmark jumping, not a body
 };
 
+const MOVERS = [0, 13, 14, 15, 16, 25, 26];                 // nose, elbows, wrists, knees (plus the hips): who can trigger
 const PTS = { NOSE: 0, LEAR: 7, REAR: 8, LSH: 11, RSH: 12, LEL: 13, REL: 14, LWR: 15, RWR: 16, LHIP: 23, RHIP: 24, LKN: 25, RKN: 26 };
 export const CIRCLE_POINTS = { lhand: PTS.LWR, rhand: PTS.RWR, head: PTS.NOSE, hips: 'hips' };
 
@@ -67,6 +73,7 @@ export class Dictionary {
     this.speed = { head: 0, tail: 0 }; this.rest = 0; this.armed = true; this.onset = null; this.lastLead = null;
     this.yawPrev = null; this.yawRate = 0; this.lastTurn = -1e9;
     this.contactPrev = {}; this.circ = {}; this.spinPrev = null; this.spinRate = 0; this.out = null;
+    this.mPrev = {}; this.mSpeed = 0;
   }
 
   // the dancer stands upright, looks ahead: her neutral becomes zero
@@ -159,6 +166,29 @@ export class Dictionary {
       this.contactPrev[k] = on;
     }
 
+    // ── arms: reach = each wrist's distance from the trunk (the hips→shoulders segment), in torsos ──
+    const fromTrunk = q => { const s0 = sub(sh, hip), u = Math.max(0, Math.min(1, dot(sub(q, hip), s0) / (dot(s0, s0) || 1)));
+                             return norm(sub(q, add(hip, mul(s0, u)))) / torsoW; };
+    const reachL = Wd[PTS.LWR] ? fromTrunk(Wd[PTS.LWR]) : null, reachR = Wd[PTS.RWR] ? fromTrunk(Wd[PTS.RWR]) : null;
+    const rs = [reachL, reachR].filter(x => x !== null);                   // the more open arm counts most
+    const reach = rs.length === 2 ? MD.reachOpen * Math.max(...rs) + (1 - MD.reachOpen) * Math.min(...rs) : rs.length ? rs[0] : null;
+    const arms = { reachL, reachR, reach,
+                   breath: reach === null ? null : Math.max(0, Math.min(1, (reach - MD.reachLow) / (MD.reachHigh - MD.reachLow))) };
+
+    // ── quick movement: the fastest of head, elbows, wrists, knees and hips, in torsos/s ──
+    // scaled by the body's largest visible segment (the torso alone shrinks when she lies down or turns),
+    // and the SECOND fastest point, so one landmark that jumps is not a movement
+    const seg = (i, j) => (I[i] && I[j] ? Math.hypot(I[i][0] - I[j][0], I[i][1] - I[j][1]) : 0);
+    const bodyI = Math.max(torsoI, 1.4 * seg(PTS.LSH, PTS.RSH), seg(PTS.LHIP, PTS.LKN), seg(PTS.RHIP, PTS.RKN));
+    const sp2 = [];
+    for (const [k, p] of [...MOVERS.map(i => [i, I[i]]), ['hips', tailI]]) {
+      if (!p) continue; const q = this.mPrev[k]; this.mPrev[k] = p;
+      if (q) sp2.push(Math.min(MD.motionCap, norm(sub(p, q)) / dt / bodyI));
+    }
+    sp2.sort((x, y) => y - x);
+    this.mSpeed += (1 - Math.exp(-dt / MD.motionS)) * ((sp2[1] ?? sp2[0] ?? 0) - this.mSpeed);
+    const motion = { speed: this.mSpeed };
+
     // ── 5 circles: the direction of travel turning steadily, per point ──
     const circles = {};
     for (const [name, idx] of Object.entries(CIRCLE_POINTS)) {
@@ -201,14 +231,14 @@ export class Dictionary {
     this.spinPrev = yawB;
     const spin = { rate: this.spinRate, active: Math.abs(this.spinRate) > MD.spinRate };
 
-    return (this.out = { t, vertical, spine, head: headOut, pairs, circles, spin, events,
+    return (this.out = { t, vertical, spine, head: headOut, pairs, arms, motion, circles, spin, events,
                          geo: { img: I, torsoI, headI, tailI } });
   }
 
   // one CSV row per frame (for recordings): the measured values, not the landmarks
   static csvHeader() {
     return 't,tilt,tilt_dir,tilt_left,tilt_forward,spine_curve,spine_curl,spine_bend,speed_head,speed_tail,lead,lead_lag,' +
-           'head_yaw,head_pitch,head_rate,elbow_knee_LL,elbow_knee_RR,elbow_knee_LR,elbow_knee_RL,' +
+           'head_yaw,head_pitch,head_rate,elbow_knee_LL,elbow_knee_RR,elbow_knee_LR,elbow_knee_RL,reach_L,reach_R,speed_max,' +
            'circle_lhand,circle_rhand,circle_head,circle_hips,spin_rate,events';
   }
   static csvRow(o) {
@@ -219,6 +249,7 @@ export class Dictionary {
     return [f(o.t), f(o.vertical.tilt), f(o.vertical.dir), f(o.vertical.left), f(o.vertical.forward), f(o.spine.curve), f(o.spine.curl),
             f(o.spine.bend), f(o.spine.speedHead), f(o.spine.speedTail), lead ? lead.lead : '', lead ? f(lead.lag) : '',
             f(o.head.yaw), f(o.head.pitch), f(o.head.rate), f(o.pairs.LL), f(o.pairs.RR), f(o.pairs.LR), f(o.pairs.RL),
+            f(o.arms.reachL), f(o.arms.reachR), f(o.motion.speed),
             c('lhand'), c('rhand'), c('head'), c('hips'), f(o.spin.rate),
             o.events.map(e => e.type + (e.point ? ':' + e.point : e.pair ? ':' + e.pair : '')).join(' ')].join(',');
   }

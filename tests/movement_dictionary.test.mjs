@@ -95,3 +95,30 @@ test('lead: the head moving before the hips is a head-led movement, with its tra
   assert.equal(lead.lead, 'head');
   assert.ok(lead.lag > 0.15 && lead.lag < 0.5, `lag ${lead.lag}`);
 });
+
+test('arms: by the sides the breath is low; out to the sides it is full', () => {
+  const d = new Dictionary();
+  const down = hold(d, BASE, 0, 0.5);
+  assert.ok(down.arms.breath < 0.1, `down: reach ${down.arms.reach} breath ${down.arms.breath}`);
+  const open = map(BASE, (p, i) => (i === 13 ? [0.45, -0.5, 0] : i === 14 ? [-0.45, -0.5, 0] : i === 15 ? [0.72, -0.5, 0] : i === 16 ? [-0.72, -0.5, 0] : p));
+  const o = hold(d, open, 1, 0.5);
+  assert.ok(o.arms.breath > 0.9, `open: reach ${o.arms.reach} breath ${o.arms.breath}`);
+  const fwd = map(BASE, (p, i) => (i === 15 ? [0.18, -0.5, -0.55] : i === 16 ? [-0.18, -0.5, -0.55] : p));
+  const r = hold(d, fwd, 2, 0.5);
+  assert.ok(r.arms.breath > 0.5, `forward: breath ${r.arms.breath}`);
+});
+
+test('quick movement: a flick of the arm is fast, standing still is not', () => {
+  const d = new Dictionary();
+  const still = hold(d, BASE, 0, 0.5);
+  assert.ok(still.motion.speed < 0.05, `still ${still.motion.speed}`);
+  let o;
+  for (let i = 0; i <= 6; i++) {              // the right wrist travels 0.4 m in 0.2 s, the elbow half that
+    const P = map(BASE, (p, k) => (k === 16 ? [p[0] - 0.4 * i / 6, p[1] - 0.2 * i / 6, p[2]] : k === 14 ? [p[0] - 0.2 * i / 6, p[1] - 0.1 * i / 6, p[2]] : p));
+    const { image, world } = frameOf(P); o = d.update(image, world, 0.6 + i / 30);
+  }
+  assert.ok(o.motion.speed > 1.5, `flick ${o.motion.speed}`);
+  hold(d, BASE, 1, 0.5);
+  const one = hold(d, map(BASE, (p, k) => (k === 15 ? [p[0] + 0.3, p[1], p[2]] : p)), 1.6, 1 / 30);   // one landmark jumps
+  assert.ok(one.motion.speed < 0.5, `a jump ${one.motion.speed}`);
+});
