@@ -197,7 +197,7 @@ and [Ableton virtual MIDI buses](https://help.ableton.com/hc/en-us/articles/2097
 
 ## Relative roots and switching modes
 
-**The root changes are implemented in the native Python instrument.** The default
+**Native Python and the website share the interval map.** The default
 is **INTERVAL**: each hand's position selects a signed change from the current root.
 **T** switches to the original **MIDPOINT** root ring and back. Restart the instrument
 after updates, focus its window, and check the top panel says **ROOT: INTERVAL**.
@@ -207,6 +207,9 @@ after updates, focus its window, and check the top panel says **ROOT: INTERVAL**
 ```
 
 ### First try: C → G → D
+
+These steps use the native Python labels. For the website, use the
+[displayed-hand map and exercise below](#website-relative-root-map).
 
 1. Press **R** to reset to C3, unlocked. Use open palms or your chosen quality signs;
    avoid fists while choosing intervals because they perform ball/lock actions.
@@ -227,22 +230,51 @@ signed interval, target note and hold progress.
 
 ### Complete relative root map
 
-Rows are the **left hand's position**; columns are the **right hand's position**.
+This first table uses the **native Python hand labels**: rows are left, columns
+right. Website users should use the [displayed-hand table below](#website-relative-root-map).
 Numbers are semitones from the current root. These are position directions,
 independent of the finger-sign table used for chord qualities below.
 
 | Left hand / Right hand | Left | Right | Up | Down |
 | --- | --- | --- | --- | --- |
-| Left | Fourth down **−5** | Fourth up **+5** | Fifth up **+7** | Fifth down **−7** |
-| Right | Whole step down **−2** | Whole step up **+2** | Half step up **+1** | Half step down **−1** |
-| Up | Minor third down **−3** | Minor third up **+3** | Octave up **+12** | Tritone down **−6** |
-| Down | Major third down **−4** | Major third up **+4** | Tritone up **+6** | Octave down **−12** |
+| Left | Fourth down **−5** | Whole step up **+2** | Fifth up **+7** | Fifth down **−7** |
+| Right | Whole step down **−2** | Fourth up **+5** | Half step up **+1** | Half step down **−1** |
+| Up | Minor third down **−3** | Major third up **+4** | Octave up **+12** | Tritone down **−6** |
+| Down | Minor third up **+3** | Major third down **−4** | Tritone up **+6** | Octave down **−12** |
 
 From C, +1 through +6 reach C#, D, Eb, E, F, F#; −1 through −6 reach B, Bb, A,
 Ab, G, F#. C plus these changes covers **all 12 root notes**. For example, left
 hand right + right hand down takes **C3 → B2** (−1), crossing into the lower octave.
 A fifth up (+7) and fourth down (−5) share a note name one octave apart; a fifth
 down (−7) reaches a different note name.
+
+### Website relative root map
+
+Use the website's **displayed** hand names, including the on-page **Interval
+directions** chart. Displayed L is stored R, and displayed R is stored L, so this
+table is the transpose of the native one. Directions follow the camera image.
+
+| Displayed left hand / displayed right hand | Left | Right | Up | Down |
+| --- | --- | --- | --- | --- |
+| Left | Fourth down **−5** | Whole step down **−2** | Minor third down **−3** | Minor third up **+3** |
+| Right | Whole step up **+2** | Fourth up **+5** | Major third up **+4** | Major third down **−4** |
+| Up | Fifth up **+7** | Half step up **+1** | Octave up **+12** | Tritone up **+6** |
+| Down | Fifth down **−7** | Half step down **−1** | Tritone down **−6** | Octave down **−12** |
+
+For mixed horizontal/vertical pairs, **keep the horizontal direction fixed and
+flip only up/down** to reverse the interval. For example, displayed left hand
+left + right hand up is a minor third down; left hand left + right hand down is
+a minor third up. If the left hand provides the vertical direction, up + left
+and down + left are fifth up/down. Both left/right are fourth down/up;
+left-right/right-left are whole step down/up. Both up/down are octave up/down;
+up-down/down-up are tritone up/down. Return both wrists to center between moves.
+
+From C3, both left gives G2 (−5); center, then both right restores C3 (+5).
+For the website C → G → D exercise, use **displayed left hand up + right hand left**
+twice, returning to center between steps. All 12 pitch classes remain reachable.
+
+This 2026-10-15 revision replaces the old map. In particular, both right now means
+fourth up (+5), replacing whole step up (+2). Finger-sign chord qualities are unchanged.
 
 ### Repeating, switching and recovery
 
@@ -484,7 +516,7 @@ The browser preserves the native controls:
 - **Relative intervals:** center both wrists in the marked chest circles for
   0.2 seconds, then hold a cardinal direction pair for 0.35 seconds. Each step
   applies once; return to center before another. Both up/down moves a real octave.
-  Consult the [interval map](../specs/001-anthony-instrument/relative-root.md).
+  Consult the [website interval map](#website-relative-root-map).
 - **Root control selector / T:** switch to the 12-sector midpoint ring or back
   without changing the current chord, register, ball ownership or lock.
 - **Merge ball / M:** return to midpoint. **Reset / R:** C major, unlocked, merged.
@@ -494,6 +526,12 @@ The ball uses body wrists, so finger-detail loss alone does not stop it. Missing
 required body/wrist tracking silences sound; persistent chord/lock/ownership
 survives recovery. Instrument L/R uses the same corrected joint identities as
 Python, including crossed hands, independent of whether the preview is mirrored.
+At Anthony's request, the website swaps the displayed hand names for the mirrored
+view: stored/controller L is shown as R and R as L. This applies to hand readouts,
+owner/transfer text, neutral guides and chart headings. Tracking identities,
+gesture identities, chord qualities, MIDI routing and native Python labels are
+unchanged by these display aliases. The revised root intervals above apply to
+both runtimes. The website chart reflects displayed names; native tutorials use native IDs.
 
 Choose **native instrument** for the sine-plus-harmonic tone. All existing web
 timbres now support three through six chord notes. Instrument loudness follows

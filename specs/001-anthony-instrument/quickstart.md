@@ -42,6 +42,9 @@ scale; missing torso or either wrist mutes sound. No body pose is fabricated.
   both wrists in the L CENTER / R CENTER circles for 0.20s, then hold a directional
   pair for 0.35s to move the current root once. Return both hands to center to rearm.
   Left hand left + right hand up = fifth up; both up/down = octave up/down.
+  Both left/right = fourth down/up. For mixed direction pairs, keep the horizontal
+  direction fixed and reverse up/down to reverse the interval. These are native
+  labels; the website's displayed-hand table is in the same reference below.
   See the [full interval map](relative-root.md). Finger signs still choose quality;
   root lock freezes interval and octave changes. The top panel shows the candidate
   change and its progress. R resets register/chord while retaining the active mode.

@@ -11,6 +11,45 @@ import { Hands, associateHands } from '../../web/live/hands.js';
 
 const native = JSON.parse(gunzipSync(readFileSync(new URL('./native-reference.json.gz', import.meta.url))));
 const controllerTimes = [];
+test('Displayed hand direction pairs reverse their intervals and restore the voicing', () => {
+  // Website displayed L is controller R; displayed R is controller L.
+  const pairs = [
+    [['left', 'left'], ['right', 'right'], -5],
+    [['left', 'right'], ['right', 'left'], -2],
+    [['left', 'up'], ['left', 'down'], -3],
+    [['right', 'up'], ['right', 'down'], 4],
+    [['up', 'left'], ['down', 'left'], 7],
+    [['up', 'right'], ['down', 'right'], 1],
+    [['up', 'up'], ['down', 'down'], 12],
+    [['up', 'down'], ['down', 'up'], 6],
+  ];
+  const offsets = { center: [0, 0], left: [-60, 0], right: [60, 0], up: [0, -60], down: [0, 60] };
+  for (let root = 0; root < 12; root++) for (const [a, b, delta] of pairs) {
+    for (const [forward, backward, step] of [[a, b, delta], [b, a, -delta]]) {
+      const controller = new InstrumentController({}, { root, quality: 'major9' });
+      let time = -0.04;
+      const hold = ([displayLeft, displayRight] = ['center', 'center']) => {
+        let state;
+        for (let i = 0; i < 12; i++) {
+          time += 0.04;
+          state = controller.update({ time_s: time, torso_center: [320, 240], torso_px: 100,
+            hands: [['L', 350, displayRight], ['R', 290, displayLeft]].map(([side, x, direction]) => ({
+              side, wrist: [x + offsets[direction][0], 240 + offsets[direction][1]], gesture: 'None', confidence: 0,
+            })) });
+        }
+        return state;
+      };
+      const original = hold(), moved = hold(forward);
+      assert.equal(moved.root_midi, original.root_midi + step);
+      assert.deepEqual(moved.notes, original.notes.map(note => note + step));
+      hold();
+      const restored = hold(backward);
+      assert.equal(restored.root_midi, original.root_midi);
+      assert.deepEqual(restored.notes, original.notes);
+      assert.equal(restored.quality, original.quality);
+    }
+  }
+});
 function compare(actual, expected, path = '') {
   if (typeof expected === 'number') assert.ok(Math.abs(actual - expected) < 1e-7, `${path}: ${actual} != ${expected}`);
   else if (expected && typeof expected === 'object') {

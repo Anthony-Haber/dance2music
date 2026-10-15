@@ -24,10 +24,10 @@ OFFSETS = {
     "diagonal": (60, 60),
 }
 EXPECTED = {
-    "left": (-5, 5, 7, -7),
-    "right": (-2, 2, 1, -1),
-    "up": (-3, 3, 12, -6),
-    "down": (-4, 4, 6, -12),
+    "left": (-5, 2, 7, -7),
+    "right": (-2, 5, 1, -1),
+    "up": (-3, 4, 12, -6),
+    "down": (3, -4, 6, -12),
 }
 
 
@@ -82,7 +82,30 @@ class RootControlTests(unittest.TestCase):
         self.assertEqual(moved.root_midi, 55)
         self.assertEqual(self.hold("right", "right", 30).root_midi, 55)
         self.hold()
-        self.assertEqual(self.hold("right", "right").root_midi, 57)
+        self.assertEqual(self.hold("right", "right").root_midi, 60)
+
+    def test_opposite_directions_reverse_each_interval_and_restore_the_voicing(self) -> None:
+        opposite = {"left": "right", "right": "left", "up": "down", "down": "up"}
+        for root in range(12):
+            for left in opposite:
+                for right in opposite:
+                    with self.subTest(root=root, left=left, right=right):
+                        self.setUp()
+                        self.controller = Controller(initial=Chord(root, "augmented"))
+                        original = self.hold()
+                        moved = self.hold(left, right)
+                        self.assertNotEqual(moved.root_midi, original.root_midi)
+                        self.hold()
+                        if left in ("left", "right") and right in ("up", "down"):
+                            reverse_pair = (left, opposite[right])
+                        elif left in ("up", "down") and right in ("left", "right"):
+                            reverse_pair = (opposite[left], right)
+                        else:
+                            reverse_pair = (opposite[left], opposite[right])
+                        restored = self.hold(*reverse_pair)
+                        self.assertEqual(restored.root_midi, original.root_midi)
+                        self.assertEqual(restored.notes, original.notes)
+                        self.assertEqual(restored.quality, original.quality)
 
     def test_tutorial_fifths_accumulate_and_downward_intervals_preserve_register(self) -> None:
         initial = self.hold()

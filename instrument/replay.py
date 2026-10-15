@@ -36,7 +36,7 @@ def demonstration(fps: int = 30, root_mode: str = "interval") -> Iterator[Frame]
             if 1 <= t < 7:
                 wrists = ((432.0, 360.0), (432.0, 264.0))
             elif 8.5 <= t < 10:
-                wrists = ((624.0, 360.0), (528.0, 360.0))
+                wrists = ((432.0, 360.0), (528.0, 360.0))
             elif 10 <= t < 12:
                 wrists = ((450.0, 360.0), (510.0, 360.0))
         yield Frame(

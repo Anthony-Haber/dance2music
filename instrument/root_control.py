@@ -7,7 +7,9 @@ from instrument.models import Config, Frame, Point
 
 DIRECTIONS = ("left", "right", "up", "down")
 # Rows: left-hand direction; columns: right-hand direction.
-STEP_ROWS = ((-5, 5, 7, -7), (-2, 2, 1, -1), (-3, 3, 12, -6), (-4, 4, 6, -12))
+# Mixed pairs reverse by flipping only the vertical direction; horizontal pairs
+# reverse both directions. The website swaps hand names for display, not these IDs.
+STEP_ROWS = ((-5, 2, 7, -7), (-2, 5, 1, -1), (-3, 4, 12, -6), (3, -4, 6, -12))
 ROOT_STEPS = {
     (left, right): step
     for left, row in zip(DIRECTIONS, STEP_ROWS, strict=True)

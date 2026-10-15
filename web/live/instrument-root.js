@@ -1,6 +1,7 @@
 // Translation of instrument/root_control.py. Positions use mirrored image pixels.
 export const DIRECTIONS = ['left', 'right', 'up', 'down'];
-export const STEP_ROWS = [[-5, 5, 7, -7], [-2, 2, 1, -1], [-3, 3, 12, -6], [-4, 4, 6, -12]];
+// Internal L rows / R columns. Mixed pairs reverse only their vertical direction.
+export const STEP_ROWS = [[-5, 2, 7, -7], [-2, 5, 1, -1], [-3, 4, 12, -6], [3, -4, 6, -12]];
 export const ROOT_MIDI_MIN = 0, ROOT_MIDI_MAX = 106;
 export function handOrigins(frame) {
   if (!frame.torso_center || !frame.torso_px) return {};

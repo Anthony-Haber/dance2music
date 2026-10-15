@@ -33,6 +33,8 @@ const instrument = new InstrumentController({ root_mode: store.get('rootMode', '
 const instrumentFrames = new InstrumentFrames();
 let lastInstrument = null, controllerMs = 0;
 const isInstrument = () => $('mode').value === 'instrument';
+// Display aliases only: tracking/controller/replay/MIDI retain their existing L/R IDs.
+const displayedHand = side => side === 'L' ? 'R' : side === 'R' ? 'L' : side;
 function currentChord() {
   return isInstrument() ? instrumentChord(lastInstrument || {
     ...instrument.chord, symbol: symbol(instrument.chord.root, instrument.chord.quality),
@@ -359,7 +361,7 @@ function draw() {
   $('sym').textContent = c.symbol; $('sym').style.color = isInstrument() ? rootColor(instrument.chord.root) : DEG[c.degree];
   $('deg').textContent = c.degree;
   if (isInstrument()) $('deg').textContent = lastInstrument?.locked ? 'ROOT LOCKED' :
-    lastInstrument?.ball_owner ? `BALL ${lastInstrument.ball_owner}` : lastInstrument?.split ? 'TWO BALLS' : 'MIDPOINT';
+    lastInstrument?.ball_owner ? `BALL ${displayedHand(lastInstrument.ball_owner)}` : lastInstrument?.split ? 'TWO BALLS' : 'MIDPOINT';
   document.querySelectorAll('#rules [data-r]').forEach(d =>
     d.classList.toggle('now', !!r && d.dataset.r === r.rule));
   handReadout();
@@ -442,7 +444,7 @@ function drawInstrumentGuides(s) {
     }
   } else for (const [side, origin] of Object.entries(handOrigins(frame))) {
     const c = point(origin), radius = L * instrument.config.interval_neutral_torsos;
-    g.beginPath(); g.arc(...c, radius, 0, Math.PI * 2); g.stroke(); text(side, [origin[0], origin[1] + radius + L * 0.15]);
+    g.beginPath(); g.arc(...c, radius, 0, Math.PI * 2); g.stroke(); text(displayedHand(side), [origin[0], origin[1] + radius + L * 0.15]);
   }
 }
 
@@ -656,7 +658,7 @@ $('resetInstrument').onclick = () => {
   if (engine.ctx) { engine.idle(); engine.setChord(currentChord(), true); }
 };
 const signNames = ['Palm', 'Point', 'V', 'Thumb up', 'Thumb down'];
-const chart = (headers, rows) => '<table style="font-size:12px;border-collapse:collapse"><thead><tr><th>R ↓ / L →</th>' +
+const chart = (headers, rows) => '<table style="font-size:12px;border-collapse:collapse"><thead><tr><th>L ↓ / R →</th>' +
   headers.map(s => `<th style="padding:6px">${s}</th>`).join('') + '</tr></thead><tbody>' +
   rows.map((row, i) => `<tr><th style="padding:6px">${headers[i]}</th>` + row.map(cell =>
     `<td style="border:1px solid #444;padding:6px;text-align:center">${cell}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
@@ -669,10 +671,10 @@ function instrumentReadout() {
   const state = lastInstrument;
   $('instrumentState').textContent = state ? `${state.symbol} · root ${ROOT_NAMES[state.root]} (${Math.floor(state.root_midi / 12) - 1})` +
     ` · ${state.locked ? 'ROOT LOCKED' : 'root unlocked'}\n` +
-    (state.pending_transfer ? `Transferring to ${state.pending_transfer}…` : state.pending_lock ? 'Fist control pending…' :
-      state.ball_owner ? `Ball owned by ${state.ball_owner}` : state.split ? 'Two balls' : 'Midpoint ball') +
+    (state.pending_transfer ? `Transferring to ${displayedHand(state.pending_transfer)}…` : state.pending_lock ? 'Fist control pending…' :
+      state.ball_owner ? `Ball owned by ${displayedHand(state.ball_owner)}` : state.split ? 'Two balls' : 'Midpoint ball') +
     `${state.balls.length ? '' : ' · body/wrist tracking missing'}\n` +
-    (state.root_mode === 'interval' ? `L: ${state.hand_directions[0] || '—'} · R: ${state.hand_directions[1] || '—'}` +
+    (state.root_mode === 'interval' ? `R: ${state.hand_directions[0] || '—'} · L: ${state.hand_directions[1] || '—'}` +
       (state.interval_candidate !== null ? ` · ${state.interval_candidate > 0 ? '+' : ''}${state.interval_candidate} semitones` : '') +
       `\n${state.root_feedback}` :
       'Hold the wrist midpoint in a root sector; center holds the current root.') :
@@ -714,7 +716,7 @@ function handReadout() {
   const one = (h, n) => !h.seen ? `${n}: —` : `${n}: ${h.fingers} finger${h.fingers === 1 ? '' : 's'}, open ${(100 * h.open).toFixed(0)}%` +
     (h.gesture !== 'None' ? `, ${h.gesture.replace('_', ' ')}` : '') +
     (isInstrument() ? ` · confirmed ${h.gesture} · raw ${h.rawG}` : '');
-  $('handTxt').textContent = `${one(hands.L, 'left')} · ${one(hands.R, 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
+  $('handTxt').textContent = `${one(hands.L, isInstrument() ? 'right' : 'left')} · ${one(hands.R, isInstrument() ? 'left' : 'right')}` + (hands.ms ? ` · ${hands.ms.toFixed(0)} ms` : '') +
     (frozen ? ' · chord held' : '') + (gestureLog ? `\nlast: ${gestureLog}` : '');
 }
 

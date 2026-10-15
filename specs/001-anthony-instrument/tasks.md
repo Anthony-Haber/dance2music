@@ -223,3 +223,12 @@ synth input, held while the ball is active; P pauses/resumes.
   Ask for the musical mapping/device contract before implementing; currently
   quality gestures affect only visual/browser chords in root-only MIDI mode.
 - [ ] T076 Deferred: iPhone MIDI transport/bridge; desktop routing is the current scope.
+
+## Opposite relative-root mappings: 2026-10-15
+
+- [X] T085 Record Anthony's corrected mixed-pair rule; revise and validate Python
+  mappings, exact round trips, reachability, MIDI demo and register contracts first.
+- [X] T086 Update the existing website mapping, displayed-hand chart/tutorial,
+  native parity fixture and tests; verify final checks and save evidence/status.
+- [ ] T087 Try all revised pairs with actual camera gestures and listen; verify
+  displayed identities and repeated reverse steps return to the original note.

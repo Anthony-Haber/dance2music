@@ -1,5 +1,30 @@
 # Validation evidence: local Python instrument
 
+## Opposite relative-root map, 2026-10-15
+
+- Corrected mixed-pair inversion per Anthony: retain left/right, flip up/down;
+  horizontal-only and vertical-only pairs reverse both directions. Native and
+  displayed-hand maps are authoritative in relative-root.md.
+- Regression before implementation: 96 failed and 96 passed subtests at 12 roots.
+  After Python table update: root/MIDI focused suite 76 passed, 384 subtests passed.
+  Demo keeps MIDI roots 48 → 55 → 57 by using the revised +2 gesture.
+- Full `.venv/bin/python -m pytest -q`: 241 passed, 2 optional skips, 434 subtests
+  passed in 15.50s. `node --test tests/web/*.test.mjs`: 79 passed. Browser regression
+  uses displayed hand names to verify both directions of all eight pairs at
+  all 12 roots, including exact voiced-note restoration. Regenerated native
+  references preserve 4,020-observation parity and 90,000 voicing transitions.
+- Controller p95 0.003ms; voice-leading p95 0.004ms (<5ms budget). Ruff check and
+  format for changed Python files pass; mypy explicit-package-bases for instrument,
+  live.py and both web servers passes (16 sources). Whitespace check passes.
+- Fresh headless installed Chrome, no camera/MIDI opened: actual running localhost
+  page's 16 interval entries match the displayed map; zero page errors. Inspected
+  output/anthony-instrument/root-mapping/interval-chart.png. The first check waited
+  for a collapsed table to be visible; corrected the check to wait for attachment
+  before opening its details panel, then it passed.
+- Local AST refresh per supplied AGENTS: 1,833 nodes, 3,344 edges, 176 communities;
+  no API cost. Actual performer recognition/listening remains pending.
+
+
 ## Direct held-chord Ableton synth input, 2026-10-12
 
 - Anthony explicitly dropped Expressive Chords and selected direct synth input,

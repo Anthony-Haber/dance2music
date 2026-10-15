@@ -1,5 +1,17 @@
 # Decisions made during ideas 0–2 implementation
 
+## Opposite relative-root mappings, 2026-10-15
+
+Anthony requested both left/right = fourth down/up and left-right/right-left =
+equal/opposite steps. He corrected the proposed mixed-pair rule: keep the
+horizontal direction fixed and flip only up/down, e.g. left-up ↔ left-down and
+right-up ↔ right-down. Apply the rule whichever hand supplies the vertical
+component. Retain both up/down octaves and the opposed tritone pair; all 12
+notes remain reachable. The [revised map](relative-root.md) documents native IDs
+and the website's transposed display labels. This supersedes the original
+2026-10-12 interval assignments without changing quality/hand tracking or MIDI.
+
+
 ## Direct chord MIDI, 2026-10-12
 
 Anthony requested chord work on ableton, then explicitly said to forget

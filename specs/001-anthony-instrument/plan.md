@@ -50,6 +50,14 @@ Only Stage 1 Python is authorized. Stage 2 JavaScript remains deferred.
 
 ## Implementation strategy
 
+### Opposite root mappings, 2026-10-15
+
+Follow the corrected rule and maps in [relative-root.md](relative-root.md).
+Validate Python's table and controller round trips first, preserving neutral,
+dwell, register limits and MIDI demo notes. Then update the already requested
+website mapping; verify displayed L/R aliases, chart transpose, native replay
+parity and the existing <5ms controller budget. No new files or dependencies.
+
 ### Direct sustained chord MIDI, 2026-10-12
 
 Observe the controller's existing voiced notes through a polyphonic extension of

@@ -1,5 +1,35 @@
 # Project Status
 
+## 2026-10-15 - Opposite relative-root mappings
+
+- State: Implemented and verified locally on ableton; performer/listening trial pending.
+- Task: Make opposing direction pairs reverse the same musical interval.
+- Decision: Anthony corrected the proposed mixed-pair rule: left-up reverses with
+  left-down, and right-up with right-down. Keep the horizontal direction fixed
+  and flip only the vertical direction, whichever hand supplies it. Both
+  left/right = fourth down/up; left-right/right-left = whole step down/up;
+  both up/down = octave up/down. Retain the opposed tritone pair and all 12 notes.
+- Changes: Revised Python table first, then the existing website translation.
+  Preserved backend handedness and displayed L/R aliases; chart and tutorial
+  show the transposed map using displayed names. Neutral/dwell, limits, quality,
+  ball controls and MIDI lifecycle stay intact. Demo uses the new whole-step
+  gesture while preserving its C → G → A musical/MIDI sequence. Updated native
+  parity fixture, accepted map, decisions and usage instructions.
+- Verification: New round-trip regression reproduced 96 old-map failures; now all
+  16 pairs reverse exact roots/voicings at all 12 starting notes. Full Python suite:
+  241 passed, 2 optional skips, 434 subtests passed (15.50s). Node: 79 passed,
+  including 4,020 parity observations and 90,000 voicing transitions; controller
+  p95 0.003ms (<5ms). Ruff lint/format and mypy (16 sources) pass. Fresh headless
+  browser verified all 16 rendered chart entries and zero page errors; chart
+  screenshot inspected at output/anthony-instrument/root-mapping/interval-chart.png.
+  Local AST update requested by the supplied AGENTS instructions: 1,833 nodes,
+  3,344 edges, 176 communities, no API cost.
+- Local state: Uncommitted; existing Safari changes preserved. No push or branch
+  import. Anthony website server restarted at http://127.0.0.1:5094/live/.
+- Outstanding: Refresh the page and try the revised gestures with actual hands;
+  listening/performer comfort and the existing Safari/Ableton trial remain manual.
+
+
 ## 2026-10-12 - Direct sustained chords to Ableton
 
 - State: Implemented and verified locally on ableton; performer/Ableton listening pending.
