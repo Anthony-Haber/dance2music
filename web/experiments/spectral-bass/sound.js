@@ -4,16 +4,21 @@
 //                  retuned every frame: the body moves the spectrum, the note glides
 //   roughness      fast movement detunes the partials against each other (they beat)
 //                  and flickers their levels (they shimmer)
+//   knobs          volume (dB), pan, a sub-octave sine, and an LFO whose target is a
+//                  switch: the peak (a slow wah), the brightness, the level (tremolo) or
+//                  the pitch (vibrato); peak and brightness are moved per frame, tremolo
+//                  and vibrato at audio rate
 //   accompaniment  a quiet groove (kick, snare, hats) and an open fifth (D, A, E) high
 //                  above, so the bass has a place; with it on, a hand stroke lands on
 //                  the next eighth note
 //
 // Every constant is in SB and in README.md.
-import { SP, spectrum, scaleStep } from './spectral.js';
+import { SP, spectrum, scaleStep, toSpectrum, lfoHz, volumeGain } from './spectral.js';
 
 export const SB = {
   bassLevel: 0.32, glide: 0.06, specTau: 0.05,
   roughCents: 28, roughFlicker: 0.55,
+  lfoPeak: 0.3, lfoBright: 0.4, lfoVibCents: 40, subLevel: 0.6,   // full-depth LFO swings: ±0.3 of the peak knob, ±0.4 of brightness, ±40 cents
   bpm: 92, drumLevel: 0.5, padLevel: 0.05, pad: [62, 69, 76],   // D4 A4 E5
 };
 const mtof = m => 440 * 2 ** ((m - 69) / 12);
@@ -31,12 +36,24 @@ export class Sound {
     this.out.connect(comp); this.out.connect(rev).connect(wet).connect(comp); comp.connect(ctx.destination);
     this.rec = ctx.createMediaStreamDestination(); comp.connect(this.rec);
     // the bass: one oscillator per partial
-    this.bass = ctx.createGain(); this.bass.gain.value = 0; this.bass.connect(this.out);
+    // bass → tremolo → volume → pan → out
+    this.pan = ctx.createStereoPanner(); this.vol = ctx.createGain(); this.vol.gain.value = 0;
+    this.trem = ctx.createGain(); this.trem.gain.value = 1;
+    this.bass = ctx.createGain(); this.bass.gain.value = 0;
+    this.bass.connect(this.trem).connect(this.vol).connect(this.pan).connect(this.out);
+    // the LFO at audio rate (tremolo, vibrato); the per-frame targets use its phase, kept in step
+    this.lfo = ctx.createOscillator(); this.lfo.frequency.value = 1; this.lfo.start(); this.lfoT0 = ctx.currentTime;
+    this.tremDepth = ctx.createGain(); this.tremDepth.gain.value = 0; this.lfo.connect(this.tremDepth).connect(this.trem.gain);
+    this.vibDepth = ctx.createGain(); this.vibDepth.gain.value = 0; this.lfo.connect(this.vibDepth);
+    this.phase = 0; this.tPrev = null;
+    this.sub = ctx.createOscillator(); this.subG = ctx.createGain(); this.subG.gain.value = 0;
+    this.sub.frequency.value = mtof(this.note) / 2; this.sub.connect(this.subG).connect(this.trem); this.sub.start();
+    this.vibDepth.connect(this.sub.detune);
     this.det = Array.from({ length: SP.partials }, (_, i) => (i === 0 ? 0 : Math.random() * 2 - 1));   // roughness: a fixed random tuning per partial
     this.parts = [];
     for (let n = 1; n <= SP.partials; n++) {
       const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = mtof(this.note) * n; g.gain.value = 0;
-      o.connect(g).connect(this.bass); o.start(); this.parts.push({ o, g });
+      o.connect(g).connect(this.bass); this.vibDepth.connect(o.detune); o.start(); this.parts.push({ o, g });
     }
     // the accompaniment
     this.drums = ctx.createGain(); this.drums.gain.value = SB.drumLevel; this.drums.connect(this.out);
@@ -52,20 +69,37 @@ export class Sound {
   now() { return this.ctx.currentTime; }
   set(p, v, tau) { p.setTargetAtTime(v, this.now(), tau); }
 
-  // c: controls (spectral.js); quantise: land strokes on the beat
-  update(c, opts) {
+  // k: knob values (spectral.js); opts: accompaniment, quantise, lfo target
+  update(k, opts) {
     if (!this.ctx) return;
+    const t = this.now();
     this.accomp = opts.accomp; this.quantise = opts.accomp && opts.quantise;
     this.set(this.drums.gain, opts.accomp ? SB.drumLevel : 0, 0.2); this.set(this.padBus.gain, opts.accomp ? SB.padLevel : 0, 0.4);
-    if (!this.quantise) this.flush(this.now());
+    if (!this.quantise) this.flush(t);
     this.set(this.bass.gain, SB.bassLevel, 0.2);
+    this.set(this.vol.gain, volumeGain(k.volume), 0.03);
+    this.set(this.pan.pan, 2 * k.pan - 1, 0.05);
+    this.set(this.subG.gain, SB.bassLevel * SB.subLevel * k.sub, 0.05);
+    this.set(this.sub.frequency, mtof(this.note) / 2, SB.glide);
+    // the LFO: one rate, one depth, one target
+    const hz = lfoHz(k.lfoRate), d = k.lfoDepth, tg = opts.lfoTarget;
+    this.set(this.lfo.frequency, hz, 0.05);
+    this.phase += 2 * Math.PI * hz * (this.tPrev === null ? 0 : Math.min(0.2, t - this.tPrev)); this.tPrev = t;
+    const wob = Math.sin(this.phase) * d;
+    this.lfoNow = wob;
+    this.set(this.tremDepth.gain, tg === 'tremolo' ? 0.5 * d : 0, 0.05);
+    this.set(this.trem.gain, tg === 'tremolo' ? 1 - 0.5 * d : 1, 0.05);
+    this.set(this.vibDepth.gain, tg === 'vibrato' ? SB.lfoVibCents * d : 0, 0.05);
+    const c = toSpectrum(k);
+    if (tg === 'peak') c.peak = Math.min(1, Math.max(0, c.peak + SB.lfoPeak * wob));
+    if (tg === 'bright') c.bright = Math.min(1, Math.max(0, c.bright + SB.lfoBright * wob));
     const sp = spectrum(mtof(this.note), c), e = c.energy;
     this.spec = sp;
     sp.freqs.forEach((fq, i) => {
       const p = this.parts[i];
       this.set(p.o.frequency, fq * 2 ** (SB.roughCents * e * this.det[i] / 1200), SB.glide);
       const flick = 1 - SB.roughFlicker * e * Math.random();
-      this.set(p.g.gain, sp.gains[i] * flick, SB.specTau);
+      this.set(p.g.gain, sp.gains[i] * flick, tg === 'peak' || tg === 'bright' ? 0.02 : SB.specTau);
     });
   }
 

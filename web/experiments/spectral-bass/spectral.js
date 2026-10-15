@@ -16,7 +16,8 @@ export const SP = {
   slopeDark: 2.0, slopeBright: 0.55,    // amplitude ∝ n^-slope: about −12 dB/oct (hands low) to −3.3 dB/oct (hands up)
   heightLow: -0.1, heightHigh: 2.0,     // torsos above the hips: hands by the sides → overhead
   spanLow: 0.3, spanHigh: 2.7,          // torsos between the wrists: together → wide open
-  peakLowHz: 110, peakOctaves: 5, peakGain: 3, peakWidth: 0.45,   // the peak: 110 Hz → 3.5 kHz, ×(1+3) at its centre, width in octaves
+  peakLowHz: 110, peakOctaves: 5,      // the peak travels 110 Hz → 3.5 kHz
+  peakGainMax: 8, peakWidthWide: 0.8, peakWidthNarrow: 0.2,   // sharpness 0 → 1: ×1 → ×9 at its centre, 0.8 → 0.2 octaves wide
   leanFull: 0.4,                        // sin(tilt) sideways for a full effect (~24°)
   fadeOdd: 0.92, fadeEven: 0.95,        // how much of the odd / even partials a full lean removes
   curveFull: 45, stretchMax: 0.0006,    // spine curve (deg) for the full stretch; f_n = f0·n·√(1 + B n²)
@@ -52,15 +53,70 @@ export function controls(f) {
   };
 }
 
+// ── the instrument: every pose of the Movement Dictionary is a SOURCE (0..1, 0.5 = neutral
+// for the two-sided ones), every synth parameter a KNOB; one source per knob, set in the
+// page. A knob follows its source and nothing else, so the instrument is predictable.
+const two = x => (clip(x, -1, 1) + 1) / 2;
+export const SOURCES = {
+  handsUp:    ['hands up (height)',            (f, c) => c.bright],
+  handsApart: ['hands apart',                  (f, c) => c.peak],
+  leanSide:   ['lean: right ↔ left',           (f, c) => (c.lean + 1) / 2],
+  leanFwd:    ['lean: back ↔ forward',         f => two(f.vertical.forward / SP.leanFull)],
+  tilt:       ['tilt, any direction',          f => clip(f.vertical.tilt / 30)],
+  spineCurl:  ['spine: arch ↔ curl',           f => two(f.spine.curl / 0.5)],
+  spineCurve: ['spine curve',                  (f, c) => c.stretch],
+  headPitch:  ['head: down ↔ up',              f => two(f.head.pitch / 30)],
+  headYaw:    ['head: right ↔ left',           f => two(f.head.yaw / 60)],
+  elbowKnee:  ['elbow to knee, same side',     f => 1 - clip((Math.min(f.pairs.LL ?? 9, f.pairs.RR ?? 9) - 0.3) / 1.0)],
+  elbowKneeX: ['elbow to the opposite knee',   f => 1 - clip((Math.min(f.pairs.LR ?? 9, f.pairs.RL ?? 9) - 0.3) / 1.0)],
+  reach:      ['arms reach (breath)',          f => f.arms.breath ?? 0],
+  circle:     ['a hand circling (how fast)',   f => clip(Math.max(...['lhand', 'rhand'].map(k => (f.circles[k] && f.circles[k].active ? Math.abs(f.circles[k].rate) : 0))) / 2)],
+  speed:      ['moving fast',                  (f, c) => c.energy],
+  openMax:    ['hand open (the more open)',    (f, c, h) => h.openMax],
+  openL:      ['left hand open',               (f, c, h) => h.openL],
+  openR:      ['right hand open',              (f, c, h) => h.openR],
+};
+// [id, label, default source, value when fixed, how the 0..1 knob reads]
+export const KNOBS = [
+  ['volume',   'volume',             'openMax',    0.8,  v => (v < 0.02 ? 'off' : `${Math.round(-36 * (1 - v))} dB`)],
+  ['bright',   'brightness',         'handsUp',    0.4,  v => `${Math.round(100 * v)}%`],
+  ['peak',     'peak position',      'handsApart', 0.4,  v => `${Math.round(SP.peakLowHz * 2 ** (SP.peakOctaves * v))} Hz`],
+  ['sharp',    'peak sharpness',     'leanFwd',    0.35, v => `${Math.round(100 * v)}%`],
+  ['lean',     'octaves ↔ hollow',   'leanSide',   0.5,  v => (Math.abs(v - 0.5) < 0.03 ? 'neither' : v > 0.5 ? `hollow ${Math.round(200 * (v - 0.5))}%` : `octaves ${Math.round(200 * (0.5 - v))}%`)],
+  ['stretch',  'stretch (bell)',     'spineCurve', 0,    v => `${Math.round(100 * v)}%`],
+  ['rough',    'roughness',          'speed',      0,    v => `${Math.round(100 * v)}%`],
+  ['lfoRate',  'LFO rate',           'headPitch',  0.5,  v => `${lfoHz(v).toFixed(2)} Hz`],
+  ['lfoDepth', 'LFO depth',          'elbowKnee',  0,    v => `${Math.round(100 * v)}%`],
+  ['pan',      'pan',                'headYaw',    0.5,  v => (Math.abs(v - 0.5) < 0.03 ? 'centre' : `${v > 0.5 ? 'left' : 'right'} ${Math.round(200 * Math.abs(v - 0.5))}%`)],
+  ['sub',      'sub octave',         'fixed',      0.3,  v => `${Math.round(100 * v)}%`],
+];
+export const lfoHz = v => 0.25 * 2 ** (5 * v);                 // 0.25 → 8 Hz, log
+export const volumeGain = v => (v < 0.02 ? 0 : 10 ** (-36 * (1 - v) / 20));   // the knob is in dB: −36 → 0
+// routing: { knobId: { src, value, inv } }
+export const defaultRouting = () => Object.fromEntries(KNOBS.map(([id, , src, value]) => [id, { src, value, inv: false }]));
+export function knobs(f, c, hands, routing) {
+  const out = {};
+  for (const [id, , , fixed] of KNOBS) {
+    const r = routing[id] || { src: 'fixed', value: fixed };
+    let v = r.src === 'fixed' || !SOURCES[r.src] ? r.value ?? fixed : SOURCES[r.src][1](f, c, hands);
+    if (r.inv && r.src !== 'fixed') v = 1 - v;
+    out[id] = clip(v);
+  }
+  return out;
+}
+// knob values → the spectrum's controls (lean is two-sided: hollow > 0.5 > octaves)
+export const toSpectrum = k => ({ bright: k.bright, peak: k.peak, sharp: k.sharp, lean: 2 * k.lean - 1, stretch: k.stretch, energy: k.rough });
+
 // the spectrum of a bass note at f0 under controls c: partial frequencies and gains (unit energy)
 export function spectrum(f0, c) {
   const slope = SP.slopeDark + (SP.slopeBright - SP.slopeDark) * c.bright;
   const fc = SP.peakLowHz * 2 ** (SP.peakOctaves * c.peak), B = SP.stretchMax * c.stretch * c.stretch;
+  const sharp = c.sharp ?? 0.35, pg = SP.peakGainMax * sharp, pw = SP.peakWidthWide + (SP.peakWidthNarrow - SP.peakWidthWide) * sharp;
   const freqs = [], gains = [];
   for (let n = 1; n <= SP.partials; n++) {
     const fn = f0 * n * Math.sqrt(1 + B * n * n);
     let g = n ** -slope;
-    g *= 1 + SP.peakGain * Math.exp(-((Math.log2(fn / fc)) ** 2) / (2 * SP.peakWidth ** 2));
+    g *= 1 + pg * Math.exp(-((Math.log2(fn / fc)) ** 2) / (2 * pw ** 2));
     if (n > 1) {
       if (c.lean > 0 && n % 2 === 0) g *= 1 - SP.fadeEven * c.lean;          // her left: hollow, like a clarinet
       if (c.lean < 0 && n % 2 === 1) g *= 1 + SP.fadeOdd * c.lean;           // her right: octaves, like an organ

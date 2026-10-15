@@ -7,7 +7,7 @@ export class View {
   constructor(canvas) { this.cv = canvas; this.g = canvas.getContext('2d'); this.flash = []; }
 
   // f: the frame (measure.js); c: controls; spec: the spectrum sounding; note: MIDI; strokes: this frame's
-  draw(f, k, mirror, c, spec, note, strokes) {
+  draw(f, k, mirror, c, spec, note, strokes, hands = null) {
     const g = this.g, cv = this.cv, now = performance.now(), d = devicePixelRatio || 1;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
     if (f) {
@@ -20,6 +20,13 @@ export class View {
       const col = `hsla(${40 - 30 * c.bright}, 90%, ${55 + 20 * c.bright}%, ${0.5 + 0.5 * c.bright})`;
       for (const [a, b, w] of [[J.LSH, J.LEL, J.LWR], [J.RSH, J.REL, J.RWR]]) { line(I[a], I[b], col, 3); line(I[b], I[w], col, 3); }
       if (I[J.LWR] && I[J.RWR]) { g.setLineDash([6 * s, 6 * s]); line(I[J.LWR], I[J.RWR], `rgba(120,200,255,${0.3 + 0.6 * c.peak})`, 2); g.setLineDash([]); }
+      // hands: the landmarks the hand model found, and a ring at the wrist as wide as the hand is open
+      if (hands) for (const [side, j] of [['left', J.LWR], ['right', J.RWR]]) {
+        const h = hands[side], w = I[j]; if (!w) continue;
+        if (h.lm) { g.fillStyle = 'rgba(255,255,255,.8)'; for (const p of h.lm) { g.beginPath(); g.arc(p[0], p[1], 1.8 * s, 0, 7); g.fill(); } }
+        g.strokeStyle = h.seen ? `rgba(255,240,200,${0.4 + 0.6 * h.open})` : 'rgba(255,255,255,.25)'; g.lineWidth = 2.5 * s;
+        g.setLineDash(h.seen ? [] : [4 * s, 4 * s]); g.beginPath(); g.arc(w[0], w[1], (8 + 26 * h.open) * s, 0, 7); g.stroke(); g.setLineDash([]);
+      }
       for (const e of strokes) this.flash.push({ e, at: now, p: I[e.hand === 'left' ? J.LWR : J.RWR] });
       this.flash = this.flash.filter(x => now - x.at < 600);
       for (const { e, at, p } of this.flash) {
