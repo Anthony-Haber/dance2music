@@ -232,7 +232,7 @@ export class Dictionary {
     const spin = { rate: this.spinRate, active: Math.abs(this.spinRate) > MD.spinRate };
 
     return (this.out = { t, vertical, spine, head: headOut, pairs, arms, motion, circles, spin, events,
-                         geo: { img: I, torsoI, headI, tailI } });
+                         geo: { img: I, wld: Wd, hip, torsoW, torsoI, bodyI, headI, tailI } });
   }
 
   // one CSV row per frame (for recordings): the measured values, not the landmarks
