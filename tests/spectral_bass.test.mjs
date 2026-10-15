@@ -3,7 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Dictionary } from '../web/experiments/movement-dictionary/measure.js';
-import { SP, controls, spectrum, centroid, scaleStep, Strokes } from '../web/experiments/spectral-bass/spectral.js';
+import { SP, controls, spectrum, centroid, scaleStep, Strokes, KNOBS, SOURCES, knobs, defaultRouting, volumeGain, lfoHz } from '../web/experiments/spectral-bass/spectral.js';
+import { openness } from '../web/experiments/spectral-bass/hands.js';
 
 // a body facing the camera, world metres (origin at the hips, y down)
 const BASE = {
@@ -71,4 +72,34 @@ test('a hand stroke up and then down steps once each; a sideways sweep does not'
   run(() => BASE, 0.6);
   const side = run(u => with_({ 16: [-0.24 - 0.8 * u, -0.1 * u, 0] }), 0.25);            // a sideways sweep
   assert.equal(side.length, 0);
+});
+
+test('knobs follow their routed pose only; ⇄ reverses; held knobs sit on their slider', () => {
+  const d = new Dictionary();
+  const f = hold(d, with_({ 13: [0.22, -0.8, 0], 14: [-0.22, -0.8, 0], 15: [0.2, -1.05, 0], 16: [-0.2, -1.05, 0] }), 0, 0.5);   // hands up
+  const c = controls(f), H = { openL: 0.2, openR: 0.9, openMax: 0.9 }, R = defaultRouting();
+  let k = knobs(f, c, H, R);
+  assert.equal(Object.keys(k).length, KNOBS.length);
+  assert.ok(k.bright > 0.9 && Math.abs(k.volume - 0.9) < 1e-9 && Math.abs(k.sub - 0.3) < 1e-9);
+  R.bright = { src: 'handsUp', inv: true }; R.volume = { src: 'openL' }; R.sub = { src: 'fixed', value: 0.7 };
+  k = knobs(f, c, H, R);
+  assert.ok(k.bright < 0.1 && Math.abs(k.volume - 0.2) < 1e-9 && Math.abs(k.sub - 0.7) < 1e-9);
+  for (const [id, , src] of KNOBS) assert.ok(src === 'fixed' || SOURCES[src], `${id} → ${src}`);
+});
+
+test('volume is in dB (−36 → 0) and off at the bottom; the LFO rate is logarithmic', () => {
+  assert.equal(volumeGain(0), 0); assert.equal(volumeGain(1), 1);
+  assert.ok(Math.abs(20 * Math.log10(volumeGain(0.5)) + 18) < 1e-9);
+  assert.ok(Math.abs(lfoHz(0) - 0.25) < 1e-9 && Math.abs(lfoHz(1) - 8) < 1e-9 && Math.abs(lfoHz(0.5) - Math.sqrt(2)) < 1e-9);
+});
+
+test('hand openness: a fist reads near 0, an open palm near 1, on a log scale', () => {
+  // a hand in its own frame: wrist at 0, knuckles 1 out, fingertips at r × the knuckles
+  const hand = r => { const L = Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 }));
+    [[5, 8], [9, 12], [13, 16], [17, 20]].forEach(([m, t], i) => { const x = (i - 1.5) * 0.25;
+      L[m] = { x, y: -1, z: 0 }; L[t] = { x: x * r, y: -r, z: 0 }; }); return L; };
+  assert.ok(openness(hand(1.0)).open < 0.05);
+  assert.ok(openness(hand(2.0)).open > 0.95);
+  const mid = openness(hand(Math.sqrt(1.05 * 1.9))).open;
+  assert.ok(Math.abs(mid - 0.5) < 0.02, `geometric middle reads ${mid}`);
 });
