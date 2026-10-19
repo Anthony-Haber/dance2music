@@ -1,5 +1,93 @@
 # Validation evidence: local Python instrument
 
+## Linear anatomical span, 2026-10-19
+
+- Python 3.11.17: 56 focused tests; full 281 passed, 2 optional skips and 434
+  subtests in 14.89s. Seventeen new span cases fail before implementation.
+- Synthetic constant-length arms (40-unit shoulders, two 80-unit arms) yield
+  exact normalized 0/.25/.5/.75/1 and MIDI 0/32/64/95/127 at scales .5/1/2.
+  At old 150-unit saturation distance, new velocity is 94. 3D rotation preserves
+  the fraction. Missing, NaN, mixed-dimension and degenerate geometry mute.
+- JavaScript: 82 tests pass. Existing 4,020 controller parity observations and
+  90,000 voicing transitions remain valid. Span tests also cover transfer
+  ownership, 3D confidence gating, loss, zero and 2D fallback.
+- Headless installed Chrome, Web MIDI disabled, actual HTTP synthetic MIDI driver:
+  frame/controller/span pipeline produces 0/32/64/95/127/0, even with pad/master
+  at 150%; mute still releases. Note/chord routing, panic, selection/close pass;
+  zero page errors. Script: tests/web/midi-bridge-smoke.cjs. Logs/screenshot:
+  output/anthony-instrument/safari-midi/. No user IAC output sent by tests.
+- Ruff check/format, mypy changed Python source and git diff --check pass.
+  Full localhost tests rerun successfully outside the socket-restricted sandbox.
+- Normal backend restarted at port 5094; live browser fetched entry/frame/MIDI
+  linear-span-1 URLs with 200. Synthetic server stopped; no capture test launched.
+  Graph AST update: 1,870 nodes, 3,407 edges, 175 communities, no API cost.
+- Actual performer/Ableton listening of this new scale pending; automatic anatomy
+  is an estimate and can be affected by tracking error. See desktop-midi.md.
+
+## Actual Safari/IAC/Ableton performer verification, 2026-10-15
+
+- Read-only MidiIn taps on IAC ARIA_IN, ARIA_OUT and dance2music during Anthony's
+  browser performance. Only dance2music carried messages. Before fresh modules:
+  924 messages, 54 attacks, all velocity 100; CC11 0–127. This directly identified
+  stale fixed-velocity code despite updated source on disk.
+- Versioned entry/MIDI URLs plus localhost Cache-Control: no-cache. Fresh requests
+  confirmed HTTP 200 for both versioned modules. Cache-header regression reproduced
+  missing header before fix; 30 bridge and 23 MIDI JS tests pass afterward.
+- After reload/reselection: 1,891 messages, 810 attacks on the same notes 48/52/55,
+  104 distinct velocities spanning 13–127 for every pitch. No overlapping repeated
+  Note Ons without prior Off. User confirmed Ableton sound changes with ball size.
+  JSONL and summary in output/anthony-instrument/live-midi-debug/. The monitor sent
+  no messages and closed all listeners after 180 seconds. No simulated input was
+  used for this performer check. Actual IAC delivery supersedes the earlier
+  temporary-port enumeration limitation as evidence for this user's route.
+- Ruff/format/mypy/whitespace pass; graph 1,848 nodes, 3,370 edges, 171 communities.
+
+## Continuous held-note velocity correction, 2026-10-15
+
+- Anthony rejected attack-only updates: resizing must affect the same held note
+  and common chord tones. Python same-note regression reproduced CC11-only output
+  before the fix. Updated Python reference first; 38 focused tests pass before
+  translating the lifecycle to JavaScript and regenerating MIDI parity fixtures.
+- Every frame compares the quantized attack level: change → Off before new On;
+  same level → sustain, including sub-step jitter and CC11 0→1 at velocity 1.
+  Verify increasing/decreasing gain, chord common tones, channel 2, root/chord,
+  tiny positive gain, zero/invalid/loss/recovery/panic and release ownership.
+- Full pytest: 263 passed, 2 optional skips, 434 subtests passed in 14.92s.
+  Node: 80 passed; routing p95 0.001416ms (<1ms). Ruff lint/format, mypy (16
+  sources) and whitespace pass. Browser/HTTP synthetic-driver smoke passes:
+  unchanged chord now resends Off/On velocity 64 → 32, common tones on quality
+  change refresh at velocity 127; panic/loss/close pass, zero page errors.
+- Additional real CoreMIDI probe (ignored output/.../velocity-verify.py) failed
+  before sending notes: its temporary test destination was absent from the
+  server's list, including a bounded 2s publication wait. Do not claim this
+  probe establishes live delivery. No notes sent to user IAC buses. Actual
+  Safari/Ableton listening remains pending; MIDI velocity refresh necessarily
+  restarts attacks and may yield repeated attacks/release tails while resizing.
+- Restarted Anthony server on port 5094 and verified updated page and source
+  via HTTP 200. Local AST refresh: 1,845 nodes, 3,368 edges, 171 communities.
+
+## Ball-size MIDI velocity, 2026-10-15
+
+- New ball-gain attack regression failed at all four gains before implementation.
+  Python browser lifecycle now maps gain 1e-9/0.25/0.5/1 to velocity 1/32/64/127.
+  New notes, added chord tones and recovery use current gain; common/held notes
+  do not retrigger. Existing CC11, zero/invalid release and transport cleanup hold.
+- Python-first focused suite: 36 passed. Geometry-to-MIDI cases verify radius
+  15/37.5/75/150 at torso 100 gives velocity 11/45/127/127, with equal results
+  at 2× camera scale and in split mode. Body-relative gain/transfer code unchanged.
+- Full pytest: 261 passed, 2 optional skips, 434 subtests passed in 15.60s.
+  Node: 80 passed including regenerated exact native MIDI fixture, root/chord,
+  tiny positive gain, recovery and Safari async delivery. Routing p95 0.0015ms
+  against <1ms budget. Ruff lint/format and mypy for 16 sources pass.
+- Fresh installed headless Chrome, Web MIDI disabled, synthetic HTTP driver:
+  tests/web/midi-bridge-smoke.cjs passed exact attacks at gain .5 (velocity 64)
+  and 1 (127), held notes, common-tone sustain, root/channel, panic/loss/close;
+  zero page errors. No actual user IAC bus or camera was used.
+- Tutorials, UI note, desktop contract and decisions updated. Local AST update:
+  1,840 nodes, 3,361 edges, 168 communities; no API cost. Actual velocity-sensitive
+  Ableton listening remains pending. The native CLI's explicit velocity setting
+  is independent of this website lifecycle.
+
 ## Opposite relative-root map, 2026-10-15
 
 - Corrected mixed-pair inversion per Anthony: retain left/right, flip up/down;
@@ -24,6 +112,49 @@
 - Local AST refresh per supplied AGENTS: 1,833 nodes, 3,344 edges, 176 communities;
   no API cost. Actual performer recognition/listening remains pending.
 
+## Safari IAC bridge and display-only hand labels, 2026-10-14
+
+- User requested same-Mac Safari support in the Ableton section, enumerating
+  existing IAC ports. Implemented the Python session/HTTP boundary and validated
+  it before adding the optional browser fallback. Existing direct Web MIDI,
+  root/chord selection, common-tone sustain and expression CC11 remain intact.
+- Full `.venv/bin/python -m pytest -q`: **240 passed, 2 optional skips,
+  242 subtests passed in 50.45s**. Thirty new Python bridge cases cover current
+  exact port choices, no automatic opens, malformed batches, partial send/release
+  errors, sequence/expiry, driver removal, duplicate ownership, shutdown and real
+  localhost HTTP origin/body/schema boundaries. An observed CoreMIDI hot-removal
+  unnamed endpoint is filtered from the selector, with a regression test.
+- `node --test tests/web/*.test.mjs`: **78 passed**, including ten new local
+  transport cases and all 4,020 controller observations/90,000 voicing transitions.
+  Routing p95 **0.0015ms**, controller/voice-leading p95 about **0.004ms**. No
+  controller/frame/harmony/hand-tracking implementation changed for hand labels.
+  Ruff check/format (33 files) and mypy (16 sources with explicit-package-bases)
+  pass; whitespace check passes.
+- Real macOS **26.6.2 arm64**, Python **3.11.17**, RtMidi **1.5.8**: the HTTP API
+  listed **IAC Driver ARIA_IN**, **ARIA_OUT** and **dance2music**. A temporary
+  CoreMIDI verification destination received **22 exact messages**, including
+  channel-2 held/replaced chords, gain-zero release, panic and server timeout
+  cleanup after an abandoned page. No notes were sent to existing IAC buses.
+  Over 104 localhost requests, HTTP round-trip p95 **0.642ms** (<10ms target).
+  Script/result: `output/anthony-instrument/safari-midi/verify.py`,
+  `coremidi-http.json`; run with PYTHONPATH=. against live.py on port 5094.
+- Browser regression `tests/web/midi-bridge-smoke.cjs` passed with **zero page
+  errors**, real HTTP and a synthetic IAC driver. Verified menu names, no open
+  on listing, selection, held chord/quality changes, panic, old-port cleanup,
+  root/channel changes, tracking loss and native close. It disables Web MIDI in
+  a separate headless Chromium test profile to exercise Safari's fallback.
+  Fixture: start `tests/web/midi_bridge_server.py` with PYTHONPATH=. and
+  MIDI_TEST_LOG=output/anthony-instrument/safari-midi/browser-midi.json; wait for
+  its ready marker, then run the Node smoke. CHROME_EXECUTABLE can select an
+  installed test browser; NODE_PATH can point to an existing Playwright package.
+  Inspected the generated browser preview under the same ignored output directory.
+- Actual Safari UI automation was unavailable: safaridriver is not enabled and
+  computer-use permissions were not granted. Those settings were not changed.
+  Actual Safari/Ableton listening, camera-to-sound latency and performer acceptance
+  of swapped labels remain manual checks. Native CoreMIDI and fallback protocol
+  checks do not imply those results. Work stays local/uncommitted on ableton;
+  no push or upstream import. Local AST refresh completed once: **1,827 nodes,
+  3,334 edges, 176 communities**, no API cost.
 
 ## Direct held-chord Ableton synth input, 2026-10-12
 

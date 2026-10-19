@@ -7,10 +7,10 @@ import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
 import { InstrumentController } from './instrument-controller.js';
-import { InstrumentFrames, instrumentChord, cameraConstraints } from './instrument-frame.js';
+import { InstrumentFrames, instrumentChord, cameraConstraints } from './instrument-frame.js?v=linear-span-1';
 import { ROOT_NAMES, QUALITY_ROWS, SUFFIXES, symbol, rootColor } from './instrument-harmony.js';
 import { DIRECTIONS, STEP_ROWS, handOrigins } from './instrument-root.js';
-import { MidiOutput } from './midi.js';
+import { MidiOutput, MidiSpan } from './midi.js?v=linear-span-1';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -31,6 +31,7 @@ const initialMode = store.get('mode', 'instrument');
 let follower = new ChordFollower(initialMode === 'instrument' ? 'six' : initialMode);
 const instrument = new InstrumentController({ root_mode: store.get('rootMode', 'interval') });
 const instrumentFrames = new InstrumentFrames();
+const midiSpan = new MidiSpan();
 let lastInstrument = null, controllerMs = 0;
 const isInstrument = () => $('mode').value === 'instrument';
 // Display aliases only: tracking/controller/replay/MIDI retain their existing L/R IDs.
@@ -116,7 +117,7 @@ async function start() {
     status('opening source…');
     if ($('source').value === 'camera') await openCamera(); else await openFile();
     feats.reset(); follower.reset(); bounce.reset(); bounceOn = false;
-    instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
+    instrument.reset(); instrumentFrames.reset(); midiSpan.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
     hands.instrument = isInstrument(); lastG = { L: 'None', R: 'None' };
     if ($('handMode').value !== 'off') status('loading hand model…');
     const th = performance.now();
@@ -182,12 +183,15 @@ function loop() {
         hands.detect(v, f, now);
         if (isInstrument()) {
           const started = performance.now();
-          lastInstrument = instrument.update(instrumentFrames.read(lms, hands, now / 1000, W, H));
+          const frame = instrumentFrames.read(lms, hands, now / 1000, W, H, res.worldLandmarks?.[0]);
+          lastInstrument = instrument.update(frame);
           if (lastInstrument.events.some(event => event === 'split' || event === 'merge' || event.startsWith('transfer:'))) {
             sparks = []; sparkGroups = {};
           }
           controllerMs = performance.now() - started; instrumentReadout();
-          if (!document.hidden) midi.update({ ...lastInstrument, gain: midiGain(lastInstrument.gain) });
+          const spanGain = midiSpan.update(frame.midi_landmarks, lastInstrument.ball_owner,
+            !!frame.torso_px && lastInstrument.balls.length > 0);
+          if (!document.hidden) midi.update({ ...lastInstrument, gain: midiGain(spanGain) });
         }
         if (f) {
           // hips: raw landmark heights (no smoothing: the filter is the smoothing)
@@ -642,7 +646,7 @@ $('mode').onchange = () => {
   midi.silence(true);
   store.set('mode', $('mode').value);
   follower = new ChordFollower(isInstrument() ? 'six' : $('mode').value);
-  instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
+  instrument.reset(); instrumentFrames.reset(); midiSpan.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
   hands.instrument = isInstrument(); hands.L.reset(); hands.R.reset();
   if (isInstrument() && $('handMode').value === 'off') { $('handMode').value = 'far'; $('handMode').onchange(); }
   showRules(); instrumentReadout(); configureMidi(); if (engine.ctx) { applyMix(); engine.setChord(currentChord(), true); }
@@ -654,7 +658,7 @@ $('rootMode').onchange = () => { instrument.setRootMode($('rootMode').value); st
 $('mergeBall').onclick = () => { instrument.merge(); sparks = []; sparkGroups = {}; };
 $('resetInstrument').onclick = () => {
   midi.silence(true);
-  instrument.reset(); instrumentFrames.reset(); lastInstrument = null; sparks = []; sparkGroups = {}; instrumentReadout();
+  instrument.reset(); instrumentFrames.reset(); midiSpan.reset(); lastInstrument = null; sparks = []; sparkGroups = {}; instrumentReadout();
   if (engine.ctx) { engine.idle(); engine.setChord(currentChord(), true); }
 };
 const signNames = ['Palm', 'Point', 'V', 'Thumb up', 'Thumb down'];
@@ -759,7 +763,9 @@ function configureMidi() {
     channel: +$('midiChannel').value, kind: $('midiKind').value });
 }
 function midiGain(gain) {
-  return Math.min(1, Math.max(0, gain * mix.master.vol * (mix.pad.mute ? 0 : mix.pad.vol)));
+  // Audio boosts must not make MIDI reach 127 before full extension.
+  // Keep mute/zero-level gating, but the positive velocity scale is span only.
+  return mix.master.vol > 0 && !mix.pad.mute && mix.pad.vol > 0 ? gain : 0;
 }
 for (let channel = 1; channel <= 16; channel++) $('midiChannel').add(new Option(String(channel), String(channel)));
 $('midiConnect').onclick = async () => {

@@ -37,16 +37,34 @@ test('optional output: no auto-selected port or notes', async () => {
   const f = fixture(); await f.output.connect(); f.output.update(state);
   assert.equal(f.output.port, null); assert.deepEqual(f.messages, []);
 });
-test('identical held chords do not retrigger and expression does not restart notes', async () => {
+test('identical velocity sustains; size changes restart the same notes at the new velocity', async () => {
   const f = await ready(); f.output.update(state); f.messages.length = 0;
   f.output.update(state); assert.deepEqual(f.messages, []);
-  f.output.update({ ...state, gain: 0.5 }); assert.deepEqual(f.messages, [[176, 11, 64]]);
+  f.output.update({ ...state, gain: 0.5 }); assert.deepEqual(f.messages, [
+    [128,48,0], [128,52,0], [128,55,0], [176,11,64], [144,48,64], [144,52,64], [144,55,64],
+  ]);
+  f.messages.length = 0; f.output.update({ ...state, gain: 0.5001 }); assert.deepEqual(f.messages, []);
+});
+test('ball gain sets chord and root attacks, including tiny positive sizes and recovery', async () => {
+  for (const kind of ['chord', 'root']) for (const [gain, velocity] of [[1e-9, 1], [0.25, 32], [0.5, 64], [1, 127]]) {
+    const f = await ready(); f.output.configure({ enabled: true, channel: 1, kind }); f.messages.length = 0;
+    f.output.update({ ...state, gain });
+    const expected = kind === 'chord' ? state.notes : [state.root_midi];
+    assert.deepEqual(f.messages.filter(m => m[0] === 144), expected.map(n => [144, n, velocity]));
+    f.messages.length = 0;
+    f.output.update({ ...state, gain: 0.75 });
+    assert.deepEqual(f.messages.filter(m => m[0] === 128), expected.map(n => [128, n, 0]));
+    assert.deepEqual(f.messages.filter(m => m[0] === 144), expected.map(n => [144, n, 95]));
+    f.output.update({ ...state, gain: 0 }); f.messages.length = 0;
+    f.output.update({ ...state, gain });
+    assert.deepEqual(f.messages.filter(m => m[0] === 144), expected.map(n => [144, n, velocity]));
+  }
 });
 test('root-only keeps quality changes silent but sends register changes', async () => {
   const f = await ready(); f.output.configure({ enabled: true, channel: 16, kind: 'root' }); f.messages.length = 0;
-  f.output.update(state); assert.deepEqual(f.messages, [[191, 11, 127], [159, 48, 100]]);
+  f.output.update(state); assert.deepEqual(f.messages, [[191, 11, 127], [159, 48, 127]]);
   f.messages.length = 0; f.output.update({ ...state, notes: [48, 51, 55] }); assert.deepEqual(f.messages, []);
-  f.output.update({ ...state, root_midi: 60 }); assert.deepEqual(f.messages, [[143, 48, 0], [159, 60, 100]]);
+  f.output.update({ ...state, root_midi: 60 }); assert.deepEqual(f.messages, [[143, 48, 0], [159, 60, 127]]);
 });
 test('loss and 500ms stale frame watchdog release once', async () => {
   const f = await ready(); f.output.update(state); f.messages.length = 0;
@@ -101,4 +119,63 @@ test('routing p95 stays below 1ms with six-note chords', () => {
   }
   times.sort((a, b) => a - b); const p95 = times[Math.floor(times.length * 0.95)];
   console.log('MIDI routing p95 ms:', p95); assert.ok(p95 < 1);
+});
+
+test('linear anatomical span covers 0–127 without early saturation, in both MIDI modes', async () => {
+  const { handSpanGain, MidiSpan } = await import('../../web/live/midi.js');
+  const pose = (fraction, scale = 1) => {
+    const span = 10 + 190 * fraction, height = Math.sqrt(Math.max(0, 1600 - ((span / 2 - 20) / 2) ** 2));
+    const points = Array(33).fill(null);
+    for (const [index, x, y] of [[11,-20,0],[12,20,0],[13,(-20-span/2)/2,height],
+      [14,(20+span/2)/2,height],[15,-span/2,0],[16,span/2,0]]) points[index] = [x*scale,y*scale];
+    return points;
+  };
+  for (const kind of ['root', 'chord']) {
+    const f = await ready(); f.output.configure({ enabled: true, channel: 1, kind });
+    for (const scale of [.5, 1, 2]) for (const [fraction, velocity] of [[0,0],[.25,32],[.5,64],[.75,95],[1,127]]) {
+      f.output.silence(); f.messages.length = 0;
+      const gain = handSpanGain(pose(fraction, scale));
+      assert.ok(Math.abs(gain-fraction) < 1e-10);
+      f.output.update({ ...state, gain });
+      assert.equal(f.output.notes.expression, velocity);
+      assert.equal(f.output.notes.active.size, velocity ? kind === 'root' ? 1 : 3 : 0);
+      assert.ok(f.messages.filter(m => m[0] === 144).every(m => m[2] === velocity));
+    }
+  }
+  const oldLimit = pose(140/190);
+  assert.ok(Math.abs(handSpanGain(oldLimit)-140/190) < 1e-10);
+  assert.equal(Math.round(handSpanGain(oldLimit)*127), 94);
+  assert.equal(handSpanGain(oldLimit.map(p => p && [0,p[1],p[0]])), handSpanGain(oldLimit));
+  const span = new MidiSpan();
+  assert.equal(span.update(pose(.5), 'L'), .5);
+  assert.equal(span.update([], 'L'), .5);
+  assert.equal(span.update([], 'L', false), 0);
+  assert.equal(span.update([], 'R'), .5);
+  assert.equal(span.update(pose(0)), 0);
+  span.reset(); assert.equal(span.update([], 'L'), 0);
+  for (const invalid of [null,[NaN,0],[0],[0,0,0]]) {
+    const points = pose(.5); points[13] = invalid; assert.equal(handSpanGain(points), 0);
+  }
+  assert.equal(handSpanGain([]), 0);
+  assert.equal(handSpanGain(Array(33).fill([0,0])), 0);
+});
+
+test('MIDI span frame uses 3D geometry and gates missing or low-confidence landmarks', async () => {
+  const { InstrumentFrames } = await import('../../web/live/instrument-frame.js');
+  const { handSpanGain } = await import('../../web/live/midi.js');
+  const image = Array.from({length:33}, () => ({x:.5,y:.5,visibility:1,presence:1}));
+  image[11] = {...image[11],x:.4,y:.3}; image[12] = {...image[12],x:.6,y:.3};
+  image[23] = {...image[23],x:.4,y:.7}; image[24] = {...image[24],x:.6,y:.7};
+  const world = image.map(p => ({x:p.x,y:p.y,z:0}));
+  const frames = new InstrumentFrames();
+  const frame = frames.read(image, {}, 0, 640, 480, world);
+  assert.deepEqual(frame.midi_landmarks[11], [.4,.3,0]);
+  assert.equal(frame.midi_landmarks[11].length, 3);
+  image[13].visibility = .1;
+  const lost = frames.read(image, {}, .04, 640, 480, world);
+  assert.equal(lost.midi_landmarks[13], null);
+  assert.equal(handSpanGain(lost.midi_landmarks), 0);
+  assert.equal(handSpanGain(frames.read(null, {}, .08, 640, 480, world).midi_landmarks), 0);
+  const fallback = frames.read(image, {}, .12, 640, 480);
+  assert.equal(fallback.midi_landmarks[11].length, 2);
 });

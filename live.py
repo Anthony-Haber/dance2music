@@ -6,14 +6,14 @@ Phone mode runs tracking and audio on the phone, with the laptop serving files.
 """
 
 import argparse
-import functools
 import http.server
 import sys
 import urllib.request
 import webbrowser
 from pathlib import Path
 
-from web.phone_server import WebHandler, phone_host, serve_phone
+from web.midi_bridge import MidiBridge, midi_handler
+from web.phone_server import phone_host, serve_phone
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -83,13 +83,18 @@ def main(argv: list[str] | None = None) -> int:
             host = phone_host(args.phone_host)
             serve_phone(WEB, ROOT / "output" / "phone", host, args.port, args.setup_port)
         else:
-            handler = functools.partial(WebHandler, directory=str(WEB))
-            with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
-                url = f"http://127.0.0.1:{args.port}/live/"
-                print(url, flush=True)
-                if not args.no_browser:
-                    webbrowser.open(url)
-                server.serve_forever()
+            bridge = MidiBridge()
+            try:
+                handler = midi_handler(bridge, str(WEB))
+                with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
+                    bridge.start()
+                    url = f"http://127.0.0.1:{args.port}/live/"
+                    print(url, flush=True)
+                    if not args.no_browser:
+                        webbrowser.open(url)
+                    server.serve_forever()
+            finally:
+                bridge.close()
     except KeyboardInterrupt:
         print("\nServer stopped.")
     except (OSError, RuntimeError, ValueError) as error:

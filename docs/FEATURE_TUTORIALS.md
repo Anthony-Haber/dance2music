@@ -14,6 +14,7 @@ Start here for the current native Python instrument:
 - [Choose chord qualities](#2--choose-roots-and-chord-qualities)
 - [Play sustained chords in Ableton](#play-sustained-chords-in-ableton)
 - [Play one note in Ableton](#play-one-root-note-in-ableton)
+- [Safari website MIDI through your Mac's IAC ports](#safari-on-macos-iac-midi)
 - [Run on macOS](#native-instrument-on-macos)
 
 ## Repository layout and moved commands
@@ -565,10 +566,11 @@ Open the **setup URL on the iPhone** first. Follow its one-time steps:
 
 ## Desktop browser MIDI to Ableton
 
-Run `.venv/Scripts/python.exe live.py` and open the printed localhost URL in
-desktop Chrome, Edge or Firefox. Select **Anthony instrument**. A public hosted
-version can use the same MIDI feature over HTTPS: it connects to each visitor's
-own computer, without a MIDI server. Deployment is separate from this local work.
+Run `.venv/bin/python live.py` on macOS (Windows: `.venv/Scripts/python.exe live.py`)
+and open the printed localhost URL. Select **Anthony instrument**.
+Safari on this Mac uses the [local IAC bridge](#safari-on-macos-iac-midi).
+Chrome, Edge and Firefox use native Web MIDI; that direct route also works from
+an HTTPS hosted page. Safari's local route needs the running server on your Mac.
 
 1. Create a virtual MIDI port on your computer. On Windows, use loopMIDI and
    create a port such as **dance2music**; keep loopMIDI running. On macOS, enable
@@ -580,9 +582,10 @@ own computer, without a MIDI server. Deployment is separate from this local work
    Use a dedicated channel/port for this website. Do not route Ableton's output
    back into the same bus. See [Ableton routing](https://www.ableton.com/en/manual/routing-and-i-o/).
 3. Under the website's **Ableton / MIDI** section, click **Connect / refresh MIDI**
-   and approve MIDI access. Select your output port and channel (default 1).
+   and approve MIDI access when prompted. Select your output port and channel (default 1).
    Firefox may request a site permission add-on; follow its permission prompt.
-   Safari is not supported for this direct route. No SysEx access is requested.
+   Safari lists the Mac's current destinations through the local server. No SysEx
+   access is requested.
 4. Choose **All chord notes** to send the voiced three-to-six-note chord into
    an ordinary Ableton instrument. Choose **One root note** for a chord device
    such as Expressive Chords: load/configure the chord device before the instrument
@@ -593,13 +596,35 @@ own computer, without a MIDI server. Deployment is separate from this local work
    click **Start** and allow the camera. **Browser only** is the default on every
    new page load; the site never automatically selects a port or starts MIDI.
 
-Notes sustain while the ball has positive gain. Shared chord tones stay held;
-removed tones release before added tones sound. MIDI notes change discretely,
-unlike the browser synth's pitch smoothing. Ball loudness, pad level/mute and
-master level produce expression **CC11** (0–127), with note-on velocity 100.
+**Linear hand-span velocity (2026-10-19):** hold both hands next to each other
+for **0** (notes release), then spread your arms. Half of the usable span gives
+**64**; fully extended opposite arms give **127**. This replaces the old curved
+ball-loudness mapping, which reached maximum too early. No reach recording or
+calibration step is needed.
+
+The model estimates full wrist reach from shoulder width plus both upper arms
+and forearms. It uses the existing 3D pose when available, with image pose as a
+fallback; keep shoulders, elbows and wrists visible. A small hands-together zone
+(quarter of shoulder width) accounts for the distance between wrists when palms
+touch. Beyond that zone, the MIDI scale is linear. This is a model estimate,
+so tracking quality and body orientation can affect the endpoint.
+
+Velocity and **CC11** follow this span from 0–127. Positive pad/master levels
+control browser audio without boosting or compressing the MIDI span. Muting the
+pad or setting pad/master to zero still silences MIDI. Split balls use the same
+span; transferring to one hand captures the current level, which stays held
+when the other wrist leaves. Merge restores live span control.
+
+When rounded velocity changes, the website releases and restarts all wanted
+notes, including shared chord tones and unchanged roots. A steady value sustains;
+resizing can retrigger synth envelopes or leave release tails. At zero, the app
+sends Note Off and CC11=0; a velocity-zero Note On would also mean Note Off in MIDI.
+This applies to both MIDI note modes and Safari's IAC bridge. The separate native
+CLI retains its explicit `--midi-velocity` setting.
+
 If the Ableton instrument doesn't respond to CC11, enable **Remote** for the
 port input and MIDI-map CC11 to a volume/Utility gain control with a suitable
-range. Until it is mapped, continuous ball loudness may not affect Ableton sound;
+range. Until it is mapped, CC11 expression may not affect Ableton sound;
 zero gain still releases notes. No percussion or other mixer layers are exported.
 
 Stop, tracking loss, reset, hidden tab, route/channel/port changes and page exit
@@ -612,14 +637,59 @@ can prevent note-offs reaching Ableton; use Ableton's stop/panic if needed.
 
 Browser recordings capture browser audio, **not Ableton audio**. Record MIDI and
 Ableton sound in Ableton when using MIDI only. Lower Ableton's audio buffer to
-reduce audible latency; browser routing adds no network or scheduling buffer.
+reduce audible latency. Native Web MIDI sends directly; Safari's bridge sends
+ordered batches immediately over localhost without a musical scheduling buffer.
 Actual camera-to-sound latency remains dependent on inference and audio setup.
+
+After a code update, reload the page, then select the MIDI port and route again.
+The localhost server requires module revalidation; the linear-span build
+also uses versioned entry/MIDI/frame URLs to replace older Safari-cached code. A fixed
+velocity of 100 while CC11 changes is a sign that an old page is still running.
 
 If no ports appear, start your virtual MIDI driver and click refresh. If access
 fails, check browser site permissions and use localhost or trusted HTTPS.
 Hosted pages must allow the `midi` Permissions Policy; embedded pages also need
 permission delegated by the embedding site.
 [Web MIDI requirements](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/requestMIDIAccess).
+
+## Safari on macOS: IAC MIDI
+
+From the repository root, install the optional MIDI dependency once and start the
+local Anthony instrument server:
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python live.py --port 5094
+```
+
+Open **http://127.0.0.1:5094/live/** in Safari, then:
+
+1. Under **Harmony**, choose **Anthony instrument · 300 chords**.
+2. Under **Ableton / MIDI**, click **Connect / refresh MIDI**. Choose an existing
+   IAC destination by its current name, for example **IAC Driver dance2music**,
+   **IAC Driver ARIA_IN** or **IAC Driver ARIA_OUT**. Select the bus you configured
+   as input in Ableton. Refresh again after adding/removing a bus.
+3. Select channel **1** (or your track's channel), **All chord notes** and
+   **MIDI only** or **Browser + MIDI**. In Ableton, enable **Track** for that bus,
+   choose it under the track's **MIDI From**, and monitor a polyphonic instrument.
+4. Press **Start**. An active ball plays the current voicing. **Panic / release
+   MIDI notes** releases it and returns to browser sound. Existing tracking-loss,
+   stop, root/quality and expression CC11 behavior remains the same.
+
+Opening the page and listing ports do not open a MIDI connection or play notes.
+The bridge uses your selected existing port; it does not create or rename IAC
+buses. Keep the Python server running while testing. A Safari crash/stall releases
+the server's owned notes after 750ms of lost contact (checked every 100ms).
+After a disconnect, long background pause or server restart, refresh/reselect the
+port. This bridge is for Safari on the same Mac; phone MIDI remains deferred.
+
+If the status says the local MIDI server is unavailable, use `live.py`, restart it
+after updates and reload Safari. If the dependency is missing, the status shows
+the `requirements/midi.txt` installation command. A selected bus cannot be owned
+by two local bridge tabs at once; stop/deselect it in the other tab first.
+See the [Safari bridge contract](../specs/001-anthony-instrument/safari-midi.md).
+Safari lacks the direct API in
+[MDN's browser compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/Navigator.json).
 
 This trust step is required for Safari camera access; bypassing a certificate
 warning is not a substitute. See [Apple's certificate trust instructions](https://support.apple.com/en-us/102390)

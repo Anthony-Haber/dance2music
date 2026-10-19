@@ -3,7 +3,7 @@
 export class InstrumentFrames {
   constructor() { this.reset(); }
   reset() { this.previous = null; }
-  read(landmarks, hands, time_s, width, height) {
+  read(landmarks, hands, time_s, width, height, worldLandmarks = null) {
     const valid = p => p && [p.x, p.y].every(Number.isFinite) &&
       [p.visibility ?? 0, p.presence ?? p.visibility ?? 0].every(score =>
         Number.isFinite(score) && score >= 0.3 && score <= 1);
@@ -23,6 +23,14 @@ export class InstrumentFrames {
       const old = this.previous?.pose_landmarks[i];
       return point && old && dt > 0 && dt <= 0.2 ? point.map((p, j) => old[j] + alpha * (p - old[j])) : point;
     });
+    // Use the model's metric 3D skeleton for MIDI reach, gated by fresh image
+    // confidence. No calibration samples, images or measurements are recorded.
+    const midi_landmarks = worldLandmarks?.length === 33 ? worldLandmarks.map((point, i) => {
+      if (!raw[i] || !point || ![point.x, point.y, point.z].every(Number.isFinite)) return null;
+      const values = [point.x, point.y, point.z], old = this.previous?.midi_landmarks?.[i];
+      return old?.length === 3 && dt > 0 && dt <= 0.2 ?
+        values.map((value, j) => old[j] + alpha * (value - old[j])) : values;
+    }) : pose_landmarks;
     const observations = [];
     for (const [side, joint] of [['L', 16], ['R', 15]]) {
       const wrist = pose_landmarks[joint]; if (!wrist) continue;
@@ -39,7 +47,7 @@ export class InstrumentFrames {
       });
       energy = Math.min(1, speeds.reduce((a, b) => a + b, 0) / Math.max(1, speeds.length) / 3);
     }
-    const frame = { time_s, hands: observations, torso_center, torso_px, energy, pose_landmarks };
+    const frame = { time_s, hands: observations, torso_center, torso_px, energy, pose_landmarks, midi_landmarks };
     this.previous = frame; return frame;
   }
 }

@@ -58,6 +58,16 @@ dwell, register limits and MIDI demo notes. Then update the already requested
 website mapping; verify displayed L/R aliases, chart transpose, native replay
 parity and the existing <5ms controller budget. No new files or dependencies.
 
+### Safari local MIDI, 2026-10-14
+
+Follow [safari-midi.md](safari-midi.md). Validate the Python MIDI/HTTP session
+boundary before JavaScript integration, reuse the optional native port adapter,
+and preserve the browser lifecycle. Normal live.py serves the loopback API;
+phone serving stays static. Connect/refresh lists current IAC destinations, and
+only an explicit selection opens a device. Test ordered delivery, liveness,
+failures, same-origin boundaries, browser controls and real native loopback.
+Website hand labels swap at rendering sites only, as Anthony requested.
+
 ### Direct sustained chord MIDI, 2026-10-12
 
 Observe the controller's existing voiced notes through a polyphonic extension of

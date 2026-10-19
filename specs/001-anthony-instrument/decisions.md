@@ -1,5 +1,35 @@
 # Decisions made during ideas 0–2 implementation
 
+## Linear MIDI hand span, 2026-10-19
+
+Anthony stopped the proposed full-reach capture and requested implementation:
+hands next to each other = 0, maximum span = 127, linear in between. Use existing
+pose-derived shoulder/arm lengths rather than the old nonlinear ball gain.
+Reuse 3D model points when available, without recording calibration data.
+Keep continuous velocity refresh, held-note cleanup and captured one-hand energy.
+Audio mixer boosts cannot make MIDI peak early; zero/mute still gates output.
+See [desktop-midi.md](desktop-midi.md#linear-span-and-continuous-velocity-2026-10-19).
+This supersedes the earlier curve and mixer scaling below.
+
+## Ball-size MIDI velocity, 2026-10-15
+
+Anthony subsequently clarified that attack-only updates did not work for his
+use: resizing must refresh velocity on the same held note and shared chord tones.
+This supersedes the initial implementation below: on each quantized velocity
+change, release then restart the wanted notes at current velocity. Equal levels
+continue sustaining; CC11 still updates. MIDI 1.0 requires a new attack, so
+repeated attacks/release tails are an explicit consequence of velocity refresh.
+The earlier hold-while-active gating and P/loss/exit cleanup remain in effect.
+
+Anthony requested ball size to control MIDI velocity in the current website.
+New notes use the current effective ball gain on a 1–127 attack scale rather
+than fixed velocity 100. Preserve the earlier hold-while-active decision:
+size changes send CC11 without retriggering held/common notes. Added chord
+tones, changed roots and recovery use current size. Existing pad/master scaling,
+split/transfer energy and Safari IAC transport remain intact. See the
+[desktop contract](desktop-midi.md#ball-size-attack-velocity-2026-10-15).
+Native CLI velocity remains its explicit configured value.
+
 ## Opposite relative-root mappings, 2026-10-15
 
 Anthony requested both left/right = fourth down/up and left-right/right-left =
@@ -11,6 +41,17 @@ notes remain reachable. The [revised map](relative-root.md) documents native IDs
 and the website's transposed display labels. This supersedes the original
 2026-10-12 interval assignments without changing quality/hand tracking or MIDI.
 
+## Safari IAC MIDI and displayed hand labels, 2026-10-14
+
+Anthony requested Safari support in the website's Ableton section using the Mac's
+current IAC ports. The running same-Mac Python server now provides explicit port
+listing/selection and MIDI delivery when native Web MIDI is unavailable; the
+existing note/CC, route and cleanup behavior is preserved. This extends the
+earlier desktop scope and leaves phone MIDI deferred. No IAC buses are configured
+or renamed. See [safari-midi.md](safari-midi.md).
+He then requested changing **only the writing** for left/right hands in the normal
+mirrored view. Website hand/owner/transfer/guide/chart labels swap L/R; internal
+IDs, pose/hand tracking, ordered gestures, interval values and MIDI stay unchanged.
 
 ## Direct chord MIDI, 2026-10-12
 

@@ -149,8 +149,11 @@
   <button id="midiPanic">Panic / release MIDI notes</button>
   <div id="midiStatus" class="status" role="status">MIDI off. Connect and choose an output port.</div>
   <p class="note">Use Anthony instrument mode. Route a virtual MIDI port into an Ableton MIDI track.
+    Safari on this Mac lists IAC ports through the running local server; click Connect / refresh MIDI.
     One root note uses Ableton's chord mapping; hand quality gestures currently affect browser chords only.
-    Ball gain sends expression CC11 (map it in Ableton if needed).
+    Hand span sets velocity linearly: hands together = 0, fully extended arms = 127.
+    Held notes restart when velocity changes. No reach calibration is needed.
+    Size changes also send expression CC11 (map it for smoother sustained dynamics).
     Browser recording does not capture Ableton audio.</p>
 
   <h2>Sound</h2>
@@ -210,6 +213,6 @@
   <p class="note">Keys: r record/stop · space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>
 </aside>
-<script type="module" src="live.js"></script>
+<script type="module" src="live.js?v=linear-span-1"></script>
 </body>
 </html>

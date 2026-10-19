@@ -124,4 +124,4 @@ all signed pair/root combinations and catalogue chords, audible octave frequenci
 dwell/rearming, diagonal flicker, missing/gapped tracking, quality/register, MIDI
 bounds, mode keys, old/new replay and wider split/merge. Live gesture, camera and
 listening acceptance remain pending. The website/MIDI extensions are recorded in
-web-port.md and desktop-midi.md; publication remains unauthorized.
+web-port.md, desktop-midi.md and safari-midi.md; publication remains unauthorized.

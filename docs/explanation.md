@@ -346,6 +346,11 @@ messages; it does not change the tracking or musical controller. The pure
 Python lifecycle in `instrument/midi_lifecycle.py` is mirrored in `web/live/midi.js` and
 checked byte-for-byte with a native fixture. Web MIDI sends directly to a
 selected local port, including when the site is served over public HTTPS.
+Safari on the Mac uses the optional loopback MIDI bridge in `web/midi_bridge.py`
+and `web/live/midi-local.js`; it enumerates existing IAC destinations and forwards
+ordered note/CC batches to the selected native port. It does not change vision or
+harmonic decisions. Same-origin checks and a server-side liveness watchdog protect
+the selected connection; the phone server does not expose this desktop route.
 All-note mode holds common pitches; root-only mode holds the register's root
 and leaves quality-gesture effects in Ableton for a future design task. Gain
 uses CC11 expression; note releases and a stale-frame watchdog limit stuck

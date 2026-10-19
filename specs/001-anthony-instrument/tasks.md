@@ -224,6 +224,25 @@ synth input, held while the ball is active; P pauses/resumes.
   quality gestures affect only visual/browser chords in root-only MIDI mode.
 - [ ] T076 Deferred: iPhone MIDI transport/bridge; desktop routing is the current scope.
 
+## Safari IAC MIDI and displayed hand names: 2026-10-14
+
+- [X] T077 Record Anthony's same-Mac Safari/IAC request and display-only label
+  correction in safari-midi.md, superseding the original direct-Web-MIDI-only scope.
+- [X] T078 Implement/test the Python port/session/HTTP boundary first: exact current
+  destinations, ordered bounded batches, partial-send cleanup and server watchdog.
+- [X] T079 Add Safari fallback transport to the existing Ableton selectors, native
+  Web MIDI preference, refresh, heartbeat, async failures and explicit re-selection.
+- [X] T080 Verify device-free HTTP/driver contracts, JavaScript lifecycle, browser
+  integration, real CoreMIDI bytes and localhost latency; preserve native MIDI behavior.
+- [X] T081 Swap displayed hand names, owner/transfer text, guide letters and chart
+  headings only; preserve tracking IDs, ordered pairs, directions, harmony and MIDI.
+- [X] T082 Run final tests/checks, inspect browser preview, update tutorials,
+  accepted decisions, evidence and feature status.
+- [X] T083 Refresh the local AST graph once after this bridge capability.
+- [ ] T084 In actual Safari, choose the intended IAC bus and listen in Ableton;
+  verify expression mapping, camera gestures, mirrored labels, panic/stop/recovery.
+
+
 ## Opposite relative-root mappings: 2026-10-15
 
 - [X] T085 Record Anthony's corrected mixed-pair rule; revise and validate Python
@@ -232,3 +251,38 @@ synth input, held while the ball is active; P pauses/resumes.
   native parity fixture and tests; verify final checks and save evidence/status.
 - [ ] T087 Try all revised pairs with actual camera gestures and listen; verify
   displayed identities and repeated reverse steps return to the original note.
+
+
+## Ball-size MIDI velocity: 2026-10-15
+
+- [X] T088 Validate ball gain → attack velocity in the Python browser reference,
+  preserving hold/common tones, CC11, positive/zero/invalid gain and geometry scaling.
+- [X] T089 Translate to website root/chord output and Safari transport; update
+  native MIDI fixture, UI/tutorial/contract, run checks and save status/evidence.
+- [ ] T090 Listen in Ableton with a velocity-sensitive instrument: change ball
+  size before new attacks, and verify held-note CC11 expression without retrigger.
+
+
+## Continuous held-note velocity correction: 2026-10-15
+
+- [X] T091 Reproduce same-note CC11-only limitation; validate Python velocity
+  refresh, shared tones, quantization, ordering, zero/loss/recovery and cleanup.
+- [X] T092 Translate to website, regenerate parity fixture, verify Safari-style
+  real HTTP delivery, tests/checks and document repeated-attack behavior; restart backend.
+- [X] T093 Listen in actual Safari/Ableton while resizing a held root/chord;
+  evaluate repeated attacks and confirm desired dynamics. Optional new CoreMIDI
+  loopback probe could not see its temporary test endpoint; synthetic delivery passes.
+
+- [X] T094 Diagnose live IAC bytes with Anthony: identify cached fixed-100 module,
+  version entry/MIDI URLs, require localhost revalidation, and confirm real
+  same-note velocities 13–127 plus audible Ableton response with the user.
+
+
+## Linear MIDI hand span: 2026-10-19
+
+- [X] T095 Validate linear Python span normalization and continuous notes: closed
+  zero, 127 only at full estimated reach, scale/3D/missing points and transferred energy.
+- [X] T096 Translate into existing browser pose/MIDI path, remove audio-boost
+  saturation, invalidate cached modules, verify synthetic Safari HTTP bytes and docs.
+- [ ] T097 Listen in Ableton with actual hands using the revised linear scale;
+  confirm the estimated full-span endpoint feels right. No reach capture requested.

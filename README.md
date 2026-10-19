@@ -91,6 +91,11 @@ The [validation record](specs/001-anthony-instrument/evidence.md) includes repla
 model/device checks, measured latency and the remaining performer/listening review.
 For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).
 
+For the Anthony website in Safari on this Mac, run `.venv/bin/python live.py`.
+The Ableton section lists existing IAC destinations through the optional local MIDI
+bridge; install `requirements/midi.txt`, click Connect/refresh MIDI, then choose
+your bus and sound route. [Safari setup](docs/FEATURE_TUTORIALS.md#safari-on-macos-iac-midi).
+
 For one held root note in Ableton on macOS:
 
 ```bash
