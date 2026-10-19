@@ -4,7 +4,7 @@ The browser translation is now available locally:
 
 - [Play the instrument in JavaScript](#play-anthonys-instrument-in-the-browser)
 - [Use the iPhone camera and sound with --phone](#iphone-camera-and-sound)
-- [Movement Dictionary: count body half turns](#movement-dictionary-body-half-turns)
+- [Movement Dictionary: count body quarter and half turns](#movement-dictionary-body-quarter-and-half-turns)
 
 Start here for the current native Python instrument:
 
@@ -18,7 +18,7 @@ Start here for the current native Python instrument:
 - [Safari website MIDI through your Mac's IAC ports](#safari-on-macos-iac-midi)
 - [Run on macOS](#native-instrument-on-macos)
 
-## Movement Dictionary body half turns
+## Movement Dictionary body quarter and half turns
 
 Anthony's experiment lives on `codex/anthony-movement-dictionary`, separate from
 `main` and `ableton`. Serve this checkout with `.venv/bin/python live.py --port 5094`
@@ -27,18 +27,21 @@ Safari. Refresh an already-open page to load the new **Body turns** study.
 
 1. Press **Start**, allow the camera, and face it upright. Step back so both
    shoulders, hips, and your separated hands or knees/ankles are visible.
-2. Choose **Body turns**. Turn left or right through **180°**: that counts one
-   half turn. A complete 360° turn counts two. The large counter, progress bar
-   and left/right counts follow your own body, including in mirrored view.
+2. Choose **Body turns**. Turn left or right through **90°**: that counts one
+   quarter turn. **180°** gives two quarters plus one half; a complete 360° turn
+   gives four quarters plus two halves. The large counter and progress bar show
+   quarters; half-turn totals remain below. Direction follows your own body,
+   including in mirrored view.
 3. Read **torso**, **limb confirmation** and **pose face cues** if a turn does
-   not count. Shoulders and hips must agree; a hand or leg swap must confirm
-   the turn. Crossing arms/legs without turning, or just hiding the face, is
+   not count. Shoulders and hips must agree. Quarter turns need a hand or leg
+   rotating with the torso; half turns also require a position swap. A side-on
+   90° turn can count before the limbs swap sides. Crossing arms/legs without turning, or just hiding the face, is
    insufficient. Face cues are estimated pose visibility, not a face detector.
 4. **Reset turns** clears counts without stopping the camera. **Stop/Start**
    begins a new performance. A long tracking gap clears partial progress but
    retains the count. Calibration is for the other posture studies; body-turn
    counting does not require it.
-5. Try a half turn in each direction, a full turn, crossed arms, and turning
+5. Try a quarter and half turn in each direction, a full turn, crossed arms, and turning
    partway then returning. These camera trials are still needed to assess the
    model's accuracy. **Circles** and **Together** also show the diagnostics.
 

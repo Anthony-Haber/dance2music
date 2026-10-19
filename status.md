@@ -1,5 +1,35 @@
 # Project Status
 
+## 2026-10-19 - Add 90-degree Movement Dictionary quarter turns
+
+- State: Implemented on codex/anthony-movement-dictionary; remains local.
+  Main/ableton and separate Anthony browser settings preserved.
+- Request: Detect 90-degree turns as well as the existing 180-degree turns.
+- Changes: Python reference first, then JavaScript parity. Add quarter counters,
+  directional totals, 90-degree progress and spin_quarter events/CSV columns.
+  At 90 degrees, projected limbs can overlap before an image-order swap, so
+  require an initially aligned, fresh wrist or knee/ankle axis to rotate with
+  the torso instead. Torso must still reach the full 90 degrees. Preserve the
+  stricter image-order swap rule for half turns. Do not count crossed limbs,
+  missing landmarks, implausible jumps, boundary jitter or unseen quarters.
+  Reversal/gap handling and Reset turns cover both counters. UI uses quarters
+  as the large counter, retains half totals, and versions module URLs for Safari.
+- Verification: 11 new Python cases fail before implementation; all 44 detector
+  cases pass afterward. JavaScript full suite 123 passed, including 1,089
+  Python/browser parity observations, exact profile 90-degree event and CSV
+  counts, plus retained half-turn/stereo/other experiment contracts. Detector
+  p95 about 0.009 ms against the 5 ms budget, excluding pose inference. Ruff
+  lint/format, mypy all 14 instrument files and whitespace checks pass.
+- Browser: Fresh Chromium with synthetic camera/pose data confirms 1 quarter
+  and 0 halves at 90 degrees, 2 quarters and 1 half at 180 degrees, 4 quarters
+  and 2 halves at 360 degrees. Mirror, separate saved settings, reset, pose/face
+  loss, cleanup and mobile-width checks pass with zero page errors. Screenshot
+  output/movement-dictionary/body-turns-browser.png inspected. No performer
+  camera/model download or MIDI messages used by the automated checks.
+- Remaining: Real Safari performer accuracy/listening trials remain pending;
+  estimated 3D depth and occlusion can still cause misses. Updated tutorial,
+  experiment README and research contract explain the distinct confirmations.
+
 ## 2026-10-19 - Movement Dictionary body half-turn experiment
 
 - State: Implemented and verified with synthetic inputs; real Safari camera

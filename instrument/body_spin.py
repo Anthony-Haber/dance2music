@@ -1,4 +1,4 @@
-"""Causal half-turn counting from fresh MediaPipe pose observations.
+"""Causal quarter/half-turn counting from fresh MediaPipe pose observations.
 
 Device-free Python reference for the Movement Dictionary browser experiment.
 Inputs are 33 image landmarks (normalized x/y) and 33 world landmarks (metres,
@@ -32,6 +32,7 @@ class SpinConfig:
     reversal_degrees: float = 20  # tolerate small tracking jitter
     evidence_degrees: float = 45  # require meaningful torso rotation before confirming a swap
     half_turn_degrees: float = 180
+    quarter_turn_degrees: float = 90
 
 
 class SpinResult(TypedDict):
@@ -50,6 +51,13 @@ class SpinResult(TypedDict):
     hands_swapped: bool
     legs_swapped: bool
     face_visible: bool
+    quarter_turns: int
+    left_quarter_turns: int
+    right_quarter_turns: int
+    quarter_progress_degrees: float
+    quarter_event: bool
+    hands_rotated: bool
+    legs_rotated: bool
 
 
 def _wrap(angle: float) -> float:
@@ -57,10 +65,11 @@ def _wrap(angle: float) -> float:
 
 
 class BodySpin:
-    """Count 180-degree body turns only with a corroborating limb-order swap.
+    """Count 90-degree rotations and 180-degree turns with limb evidence.
 
     Shoulders and hips must agree. Wrist or knee/ankle ordering can confirm a
-    half turn; neither limb crossing nor disappearing face establishes a turn.
+    half turn; aligned limb rotation confirms a quarter turn even side-on.
+    Neither limb crossing nor disappearing face establishes a body turn.
     Positive direction means the dancer turning to their own left. CSS display
     mirroring must not change the input coordinates or this anatomical direction.
     """
@@ -75,6 +84,7 @@ class BodySpin:
         """Clear counts at the start of a new performance."""
         self._time: float | None = None
         self.left = self.right = 0
+        self.quarter_left = self.quarter_right = 0
         self._break_path()
         self.out = self._result("ready")
 
@@ -88,6 +98,8 @@ class BodySpin:
         self._candidates: dict[str, tuple[int, float]] = {}
         self._pending_swaps: dict[str, tuple[int, float]] = {}
         self._swaps = {"hands": False, "legs": False}
+        self._limb_start: dict[str, float] = {}
+        self._quarter_passed = 0
 
     def _point(
         self, points: Landmarks | None, index: int, *, world: bool = False
@@ -137,6 +149,8 @@ class BodySpin:
         face: bool = False,
         active: bool = False,
         event: bool = False,
+        quarter_event: bool = False,
+        rotated: dict[str, bool] | None = None,
     ) -> SpinResult:
         self.out = {
             "rate": self._rate if tracked else 0,
@@ -154,6 +168,20 @@ class BodySpin:
             "hands_swapped": self._swaps["hands"],
             "legs_swapped": self._swaps["legs"],
             "face_visible": face,
+            "quarter_turns": self.quarter_left + self.quarter_right,
+            "left_quarter_turns": self.quarter_left,
+            "right_quarter_turns": self.quarter_right,
+            "quarter_progress_degrees": self.config.quarter_turn_degrees
+            if quarter_event
+            else min(
+                self.config.quarter_turn_degrees,
+                max(
+                    0, abs(self._progress) - self._quarter_passed * self.config.quarter_turn_degrees
+                ),
+            ),
+            "quarter_event": quarter_event,
+            "hands_rotated": bool(rotated and rotated["hands"]),
+            "legs_rotated": bool(rotated and rotated["legs"]),
         }
         return self.out
 
@@ -208,6 +236,8 @@ class BodySpin:
                 self._peak = retreat
                 self._swaps = {"hands": False, "legs": False}
                 self._pending_swaps.clear()
+                self._limb_start.clear()
+                self._quarter_passed = 0
 
         # Use fresh image ordering independently of estimated world depth. At a
         # profile view a nearly overlapping pair has no reliable ordering.
@@ -221,6 +251,7 @@ class BodySpin:
         hip_order = self._order(image, 23, 24, span)
         body_order = shoulder_order if shoulder_order == hip_order else 0
         support = False
+        rotated = {"hands": False, "legs": False}
         for name, options in (("hands", ((15, 16),)), ("legs", ((25, 26), (27, 28)))):
             pair = next((p for p in options if self._axis(image, world, *p)), None)
             if pair is None:
@@ -233,7 +264,14 @@ class BodySpin:
             if name in self._seen and t - self._seen[name] > cfg.gap_seconds:
                 self._orders.pop(name, None)
                 self._pending_swaps.pop(name, None)
+                self._limb_start.pop(name, None)
             self._seen[name] = t
+            if aligned:
+                self._limb_start.setdefault(name, axis[0])
+                rotated[name] = (
+                    abs(degrees(_wrap(axis[0] - self._limb_start[name])))
+                    >= cfg.evidence_degrees - 1e-7
+                )
             order = self._order(image, *pair, span)
             if not order:
                 self._candidates.pop(name, None)
@@ -261,6 +299,17 @@ class BodySpin:
                     self._swaps[name] = True
 
         status = "turning" if abs(self._progress) >= 5 - 1e-7 else "ready"
+        quarter_index = int((abs(self._progress) + 1e-7) // cfg.quarter_turn_degrees)
+        quarter_event = quarter_index > self._quarter_passed and any(rotated.values())
+        if quarter_event:
+            if self._progress > 0:
+                self.quarter_left += 1
+            else:
+                self.quarter_right += 1
+            self._quarter_passed = quarter_index
+            status = "quarter turn"
+        elif quarter_index > self._quarter_passed:
+            status = "quarter unconfirmed"
         event = False
         completed = abs(self._progress) >= cfg.half_turn_degrees - 1e-7
         if completed:
@@ -278,10 +327,14 @@ class BodySpin:
             face=face,
             active=support and abs(self._rate) > cfg.active_rate,
             event=event,
+            quarter_event=quarter_event,
+            rotated=rotated,
         )
         if completed:
             self._progress -= (1 if self._progress > 0 else -1) * cfg.half_turn_degrees
             self._peak = abs(self._progress)
             self._swaps = {"hands": False, "legs": False}
             self._pending_swaps.clear()
+            self._quarter_passed = 0
+            self._limb_start.clear()
         return out

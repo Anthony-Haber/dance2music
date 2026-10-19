@@ -54,7 +54,7 @@
   <div id="hint">Five notes from a dancer, each turned into a measurement and a sound.<br>Press <b>Start</b>, step back so your whole body is in view, then press <b>Calibrate</b> and stand upright looking ahead.</div>
   <div id="count" hidden></div>
   <div id="recDot" hidden>● REC</div>
-  <div id="turnReadout" hidden><strong id="turnCount">0 half turns</strong><span id="turnDetail">Ready for a 180° turn</span></div>
+  <div id="turnReadout" hidden><strong id="turnCount">0 quarter turns</strong><span id="turnDetail">Ready for a 90° turn</span></div>
 </div>
 <aside>
   <h1>Movement Dictionary</h1>
@@ -73,9 +73,9 @@
   <section id="turnPanel" hidden>
     <h2>Body turns · experimental</h2>
     <div class="read" id="turnValues"></div>
-    <progress id="turnProgress" max="180" value="0" aria-label="Progress to next 180 degree half turn"></progress>
-    <div class="status" id="turnLast">No half turns counted yet</div>
-    <p class="note">One half turn = 180°. Keep your torso and hands or knees visible. A missing face alone never counts.</p>
+    <progress id="turnProgress" max="90" value="0" aria-label="Progress to next 90 degree quarter turn"></progress>
+    <div class="status" id="turnLast">No turns counted yet</div>
+    <p class="note">90° = 1 quarter turn. 180° = 2 quarters + 1 half. Keep your torso and hands or knees visible. A missing face alone never counts.</p>
     <button id="resetTurns">Reset turns</button>
   </section>
   <label style="margin-top:10px">Sound plays <select id="trigger"><option value="0">all the time</option><option value="1">only on quick movement</option></select></label>
@@ -103,6 +103,6 @@
   <p class="note">A recording downloads the video with the sound, and a .csv of everything measured (no images), to share back.</p>
   <p class="note"><a href="https://github.com/Music-Intelligence-Lab/dance2music/blob/main/web/experiments/movement-dictionary/README.md" target="_blank" style="color:var(--accent)">How it works</a> · part of <a href="../../live/" style="color:var(--accent)">Dance2Music</a>, Music Intelligence Lab</p>
 </aside>
-<script type="module" src="app.js?v=body-turns-1"></script>
+<script type="module" src="app.js?v=body-turns-90"></script>
 </body>
 </html>

@@ -5,19 +5,20 @@ export const SPIN = Object.freeze({
   visibility_min: 0.5, torso_agreement_degrees: 45, limb_agreement_degrees: 60,
   gap_seconds: 0.3, max_rate: 720, max_step: 75, rate_seconds: 0.12,
   active_rate: 90, order_fraction: 0.12, order_hold_seconds: 0.05,
-  reversal_degrees: 20, evidence_degrees: 45, half_turn_degrees: 180,
+  reversal_degrees: 20, evidence_degrees: 45, half_turn_degrees: 180, quarter_turn_degrees: 90,
 });
 const degrees = a => a * 180 / Math.PI;
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
 export class BodySpin {
   constructor() { this.config = SPIN; this.reset(); }
-  reset() { this.time = null; this.left = this.right = 0; this.breakPath(); this.result('ready'); }
+  reset() { this.time = null; this.left = this.right = this.quarterLeft = this.quarterRight = 0; this.breakPath(); this.result('ready'); }
   breakPath() {
     this.angle = this.goodTime = null;
     this.progress = this.peak = this.rate = this.direction = 0;
     this.orders = {}; this.seen = {}; this.candidates = {}; this.pendingSwaps = {};
     this.swaps = { hands: false, legs: false };
+    this.limbStart = {}; this.quarterPassed = 0;
   }
   point(points, i, world = false) {
     if (!points || points.length !== 33 || !points[i]) return null;
@@ -39,13 +40,19 @@ export class BodySpin {
     if (!a || !b || Math.abs(a[0] - b[0]) < span * SPIN.order_fraction) return 0;
     return a[0] > b[0] ? 1 : -1;
   }
-  result(status, { tracked = false, confidence = 0, face = false, active = false, event = false } = {}) {
+  result(status, { tracked = false, confidence = 0, face = false, active = false, event = false,
+    quarterEvent = false, rotated = null } = {}) {
     return (this.out = {
       rate: tracked ? this.rate : 0, active, tracked, confidence, status,
       progress_degrees: Math.abs(this.progress), phase_degrees: this.angle === null ? 0 : degrees(this.angle),
       half_turns: this.left + this.right, left_half_turns: this.left, right_half_turns: this.right,
       direction: this.direction, event, hands_swapped: this.swaps.hands, legs_swapped: this.swaps.legs,
       face_visible: face,
+      quarter_turns: this.quarterLeft + this.quarterRight,
+      left_quarter_turns: this.quarterLeft, right_quarter_turns: this.quarterRight,
+      quarter_progress_degrees: quarterEvent ? SPIN.quarter_turn_degrees : Math.min(SPIN.quarter_turn_degrees,
+        Math.max(0, Math.abs(this.progress) - this.quarterPassed * SPIN.quarter_turn_degrees)),
+      quarter_event: quarterEvent, hands_rotated: !!rotated?.hands, legs_rotated: !!rotated?.legs,
     });
   }
   update(image, world, t) {
@@ -81,6 +88,7 @@ export class BodySpin {
       if (retreat >= cfg.reversal_degrees - 1e-7) {
         this.direction *= -1; this.progress = this.direction * retreat; this.peak = retreat;
         this.swaps = { hands: false, legs: false }; this.pendingSwaps = {};
+        this.limbStart = {}; this.quarterPassed = 0;
       }
     }
     // Near a profile view a projected pair's ordering is unknown, not a swap.
@@ -90,6 +98,7 @@ export class BodySpin {
     const shoulderOrder = this.order(image, 11, 12, span), hipOrder = this.order(image, 23, 24, span);
     const bodyOrder = shoulderOrder === hipOrder ? shoulderOrder : 0;
     let support = false;
+    const rotated = { hands: false, legs: false };
     for (const [name, options] of [['hands', [[15, 16]]], ['legs', [[25, 26], [27, 28]]]]) {
       const pair = options.find(p => this.axis(image, world, ...p));
       if (!pair) { delete this.candidates[name]; continue; }
@@ -98,8 +107,13 @@ export class BodySpin {
       support ||= aligned;
       if (name in this.seen && t - this.seen[name] > cfg.gap_seconds) {
         delete this.orders[name]; delete this.pendingSwaps[name];
+        delete this.limbStart[name];
       }
       this.seen[name] = t;
+      if (aligned) {
+        this.limbStart[name] ??= axis[0];
+        rotated[name] = Math.abs(degrees(wrap(axis[0] - this.limbStart[name]))) >= cfg.evidence_degrees - 1e-7;
+      }
       const order = this.order(image, ...pair, span);
       if (!order) { delete this.candidates[name]; continue; }
       const previous = this.orders[name];
@@ -116,6 +130,12 @@ export class BodySpin {
           Math.abs(this.progress) >= cfg.evidence_degrees - 1e-7) this.swaps[name] = true;
     }
     let status = Math.abs(this.progress) >= 5 - 1e-7 ? 'turning' : 'ready', event = false;
+    const quarterIndex = Math.floor((Math.abs(this.progress) + 1e-7) / cfg.quarter_turn_degrees);
+    const quarterEvent = quarterIndex > this.quarterPassed && (rotated.hands || rotated.legs);
+    if (quarterEvent) {
+      if (this.progress > 0) this.quarterLeft++; else this.quarterRight++;
+      this.quarterPassed = quarterIndex; status = 'quarter turn';
+    } else if (quarterIndex > this.quarterPassed) status = 'quarter unconfirmed';
     const completed = Math.abs(this.progress) >= cfg.half_turn_degrees - 1e-7;
     if (completed) {
       event = this.swaps.hands || this.swaps.legs;
@@ -123,10 +143,11 @@ export class BodySpin {
       status = event ? 'half turn' : 'unconfirmed';
     }
     const out = this.result(status, { tracked: true, confidence: quality, face,
-      active: support && Math.abs(this.rate) > cfg.active_rate, event });
+      active: support && Math.abs(this.rate) > cfg.active_rate, event, quarterEvent, rotated });
     if (completed) {
       this.progress -= Math.sign(this.progress) * cfg.half_turn_degrees; this.peak = Math.abs(this.progress);
       this.swaps = { hands: false, legs: false }; this.pendingSwaps = {};
+      this.quarterPassed = 0; this.limbStart = {};
     }
     return out;
   }

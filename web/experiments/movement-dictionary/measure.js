@@ -16,7 +16,7 @@
 // it reads forward/back lean too; motion (lead, circles) uses the image,
 // scaled by the torso, because the world frame moves with the hips.
 // Every constant is in MD and explained in README.md.
-import { BodySpin } from './spin.js?v=body-turns-1';
+import { BodySpin } from './spin.js?v=body-turns-90';
 
 export const MD = {
   smoothS: 0.08,               // landmark smoothing time constant (s)
@@ -104,6 +104,7 @@ export class Dictionary {
     if (![PTS.LSH, PTS.RSH, PTS.LHIP, PTS.RHIP, PTS.NOSE].every(i => I[i] && Wd[i])) return (this.out = null);
     const events = [];
     if (spin.event) events.push({ type: 'spin', dir: spin.direction, half_turns: spin.half_turns });
+    if (spin.quarter_event) events.push({ type: 'spin_quarter', dir: spin.direction, quarter_turns: spin.quarter_turns });
     const { L, F } = frame(Wd);
     const hip = mid(Wd[PTS.LHIP], Wd[PTS.RHIP]), sh = mid(Wd[PTS.LSH], Wd[PTS.RSH]);
     const head = Wd[PTS.LEAR] && Wd[PTS.REAR] ? mid(Wd[PTS.LEAR], Wd[PTS.REAR]) : Wd[PTS.NOSE];
@@ -239,7 +240,8 @@ export class Dictionary {
            'head_yaw,head_pitch,head_rate,elbow_knee_LL,elbow_knee_RR,elbow_knee_LR,elbow_knee_RL,reach_L,reach_R,speed_max,' +
            'circle_lhand,circle_rhand,circle_head,circle_hips,spin_rate,events,' +
            'spin_half_turns,spin_progress_deg,spin_tracked,spin_hands_swap,spin_legs_swap,spin_face_visible,' +
-           'spin_status,spin_left_halves,spin_right_halves';
+           'spin_status,spin_left_halves,spin_right_halves,' +
+           'spin_quarter_turns,spin_quarter_progress_deg,spin_left_quarters,spin_right_quarters';
   }
   static csvRow(o) {
     if (!o) return '';
@@ -254,6 +256,7 @@ export class Dictionary {
             o.events.map(e => e.type + (e.point ? ':' + e.point : e.pair ? ':' + e.pair : '')).join(' '),
             f(o.spin.half_turns), f(o.spin.progress_degrees), +o.spin.tracked, +o.spin.hands_swapped,
             +o.spin.legs_swapped, +o.spin.face_visible, o.spin.status,
-            f(o.spin.left_half_turns), f(o.spin.right_half_turns)].join(',');
+            f(o.spin.left_half_turns), f(o.spin.right_half_turns), f(o.spin.quarter_turns),
+            f(o.spin.quarter_progress_degrees), f(o.spin.left_quarter_turns), f(o.spin.right_quarter_turns)].join(',');
   }
 }

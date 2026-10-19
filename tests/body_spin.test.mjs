@@ -37,15 +37,25 @@ test('body spin p95 stays under the 5ms processing budget', () => {
 });
 
 test('Dictionary counts half turns and emits exactly one event per confirmed half', () => {
-  const dict = new Dictionary(); let out, events = 0;
+  const dict = new Dictionary(); let out, events = 0, quarters = 0;
   for (const frame of reference.cases[0].frames) {
     out = dict.update(frame.image, frame.world, frame.t, 1280, 720);
     if (out) events += out.events.filter(e => e.type === 'spin').length;
+    if (out) quarters += out.events.filter(e => e.type === 'spin_quarter').length;
   }
   assert.equal(out.spin.half_turns, 2); assert.equal(events, 2);
+  assert.equal(out.spin.quarter_turns, 4); assert.equal(quarters, 4);
   const header = Dictionary.csvHeader().split(','), row = Dictionary.csvRow(out).split(',');
   assert.equal(header.length, row.length);
   assert.equal(row[header.indexOf('spin_half_turns')], '2.000');
+  assert.equal(row[header.indexOf('spin_quarter_turns')], '4.000');
+});
+test('Dictionary reports the first 90-degree turn in profile without an image swap', () => {
+  const dict = new Dictionary(); let out;
+  for (const frame of reference.cases[0].frames.slice(0, 31)) out = dict.update(frame.image, frame.world, frame.t);
+  assert.equal(out.spin.quarter_turns, 1); assert.equal(out.spin.half_turns, 0);
+  assert.equal(out.spin.hands_swapped, false); assert.equal(out.spin.legs_swapped, false);
+  assert.equal(out.events.filter(e => e.type === 'spin_quarter').length, 1);
 });
 test('Dictionary cannot reuse stale torso points as fresh spin evidence', () => {
   const dict = new Dictionary(), frame = reference.cases[0].frames[0];

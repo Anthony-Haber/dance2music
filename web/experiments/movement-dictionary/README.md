@@ -14,13 +14,17 @@ downloads the view with its sound and a CSV of the measurements (no images).
 
 On `codex/anthony-movement-dictionary`, choose **Body turns**, or open
 `/experiments/movement-dictionary/#body-turns`. Start upright facing the camera,
-step back to show your torso and hands or knees, then turn. Each **180° half turn**
-counts once; a full 360° turn counts twice. **Reset turns** clears the counter.
+step back to show your torso and hands or knees, then turn. Each **90° quarter turn**
+counts once in the large counter. The separate **180° half-turn** count remains:
+180° gives two quarters and one half; 360° gives four quarters and two halves.
+**Reset turns** clears both counters.
 Calibration still sets the other posture studies' neutral; turn counting itself
 does not need calibration.
 
-Shoulders and hips must rotate together, with a confirmed hand or leg ordering
-swap. Crossed arms or a disappearing face alone cannot count. The display shows
+Shoulders and hips must rotate together. A quarter turn needs a fresh hand or
+leg axis rotating with the torso; a half turn also needs an image-order swap.
+At 90° the limbs may overlap in profile before swapping. Crossed arms or a
+disappearing face alone cannot count. The display shows
 progress, direction relative to your own body, speed, limb confirmation and weak
 tracking. Face cues come from pose landmarks, not a separate face detector.
 Mirroring does not reverse anatomical turn labels. Circles and Together also
@@ -152,4 +156,5 @@ The Node test uses the active `PYTHON` executable or `.venv/bin/python` (fallbac
 first. The optional real-page smoke test needs Playwright/Chromium and a running
 local server: `node tests/web/body-spin-smoke.cjs` (default port 5094; override
 `SPIN_URL` and `CHROME_EXECUTABLE` as needed). It supplies synthetic video/pose
-data, without using the camera, downloading a model or touching a MIDI port.
+data, including the 90° and 180° milestones, without using the camera,
+downloading a model or touching a MIDI port.

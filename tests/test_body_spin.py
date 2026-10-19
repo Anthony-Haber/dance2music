@@ -79,6 +79,45 @@ def test_counts_half_turns_in_both_directions(angle: float, count: int) -> None:
     assert frames[-1]["right_half_turns"] == (count if angle < 0 else 0)
 
 
+@pytest.mark.parametrize(
+    "angle,count", [(89, 0), (90, 1), (179, 1), (180, 2), (270, 3), (360, 4), (-90, 1), (-360, 4)]
+)
+def test_also_counts_quarter_turns_at_90_degrees(angle: float, count: int) -> None:
+    frames = turn(BodySpin(), angle)
+    assert frames[-1]["quarter_turns"] == count
+    assert sum(f["quarter_event"] for f in frames) == count
+    assert frames[-1]["left_quarter_turns"] == (count if angle > 0 else 0)
+    assert frames[-1]["right_quarter_turns"] == (count if angle < 0 else 0)
+
+
+def test_side_on_quarter_turn_does_not_require_hands_to_swap_in_the_image() -> None:
+    out = turn(BodySpin(), 90)[-1]
+    assert out["quarter_turns"] == 1 and out["half_turns"] == 0
+    assert out["hands_rotated"] and out["legs_rotated"]
+    assert not out["hands_swapped"] and not out["legs_swapped"]
+
+
+def test_quarter_turn_reversal_and_boundary_jitter_cannot_double_count() -> None:
+    tracker = BodySpin()
+    assert turn(tracker, 90)[-1]["quarter_turns"] == 1
+    for i in range(40):
+        out = tracker.update(*pose(90 + math.sin(i)), 1 + i / 30)
+    assert out["quarter_turns"] == 1
+    out = turn(tracker, 0, start=90, t0=2.4)[-1]
+    assert out["quarter_turns"] == 2
+    assert out["left_quarter_turns"] == out["right_quarter_turns"] == 1
+    assert out["half_turns"] == 0
+
+
+def test_quarter_turn_needs_limb_rotation_not_just_torso_heading() -> None:
+    def stationary_limbs(image: Landmarks, world: Landmarks, angle: float) -> None:
+        front_image, front_world = pose(0)
+        for i in (15, 16, 25, 26, 27, 28):
+            image[i], world[i] = front_image[i], front_world[i]
+
+    assert turn(BodySpin(), 90, alter=stationary_limbs)[-1]["quarter_turns"] == 0
+
+
 def test_back_view_does_not_require_face_visibility() -> None:
     frames = turn(BodySpin(), 360)
     back = frames[len(frames) // 2]
@@ -96,7 +135,7 @@ def test_crossing_hands_or_legs_and_face_loss_alone_are_not_body_turns() -> None
                 image[a], image[b] = image[b], image[a]
                 world[a], world[b] = world[b], world[a]
         out = tracker.update(image, world, i / 30)
-        assert out["half_turns"] == 0 and not out["active"]
+        assert out["half_turns"] == out["quarter_turns"] == 0 and not out["active"]
 
 
 def test_one_usable_limb_group_can_confirm_a_turn() -> None:
@@ -115,6 +154,7 @@ def test_torso_rotation_without_limb_confirmation_stays_uncounted() -> None:
 
     frames = turn(BodySpin(), 360, alter=hide_limbs)
     assert all(f["half_turns"] == 0 for f in frames)
+    assert all(f["quarter_turns"] == 0 for f in frames)
     assert any(f["status"] == "unconfirmed" for f in frames)
 
 
@@ -131,7 +171,7 @@ def test_a_180_degree_label_flip_is_rejected() -> None:
         tracker.update(*pose(0), i / 30)
     for i, angle in enumerate((180, 0, 180, 180, 180), 30):
         out = tracker.update(*pose(angle), i / 30)
-        assert out["half_turns"] == 0 and not out["event"]
+        assert out["half_turns"] == out["quarter_turns"] == 0 and not out["event"]
 
 
 def test_shoulders_rotating_without_hips_is_uncertain() -> None:
@@ -191,6 +231,7 @@ def test_reset_starts_a_new_performance() -> None:
     tracker.reset()
     out = tracker.update(*pose(0), 0)
     assert out["half_turns"] == 0 and out["progress_degrees"] == 0
+    assert out["quarter_turns"] == out["quarter_progress_degrees"] == 0
 
 
 def test_short_occlusion_does_not_invent_motion_or_discard_a_valid_turn() -> None:

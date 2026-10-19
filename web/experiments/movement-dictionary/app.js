@@ -1,6 +1,6 @@
 // Movement Dictionary: camera (or a video) → MediaPipe Pose (image + world
 // landmarks) → measure.js → sound.js, drawn by view.js.
-import { Dictionary } from './measure.js?v=body-turns-1';
+import { Dictionary } from './measure.js?v=body-turns-90';
 import { Sound } from './sound.js?v=body-turns-1';
 import { View } from './view.js?v=body-turns-1';
 import { Choir } from './harmony.js';
@@ -27,7 +27,7 @@ const STUDIES = {
           { arms: true }],
   circles: ['<b>Circles.</b> A hand, the head or the hips travelling in a circle plays the choir\'s chord one note per quarter turn, and the sound travels round with it. The faster the circle, the faster the notes; small circles are high, big circles low; reversing reverses the notes, with an accent. Spinning the whole body turns the whole sound round.',
             { circles: true }],
-  spin: ['<b>Body turns.</b> Each 180° turn counts once. Shoulders and hips must rotate together, with a hand or leg position swap confirming the turn. Turning faster moves the sound in stereo. Crossed arms or a disappearing face alone do not count. The direction labels follow your own body, including in mirrored view.',
+  spin: ['<b>Body turns.</b> Each 90° turn counts as a quarter turn; 180° also counts as a half turn. Shoulders and hips must rotate together, confirmed by a hand or leg rotating with them. A half turn also needs a position swap. Turning faster moves the sound in stereo. The direction labels follow your own body, including in mirrored view.',
          { spin: true }],
   together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. The arms set how fully it sings. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
              { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true, spin: true }],
@@ -96,7 +96,7 @@ async function start() {
       v.srcObject = stream;
     }
     await v.play();
-    dict.reset(); choir.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No half turns counted yet';
+    dict.reset(); choir.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No turns counted yet';
     running = true; $('hint').hidden = true;
     $('go').textContent = 'Stop'; $('cal').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
@@ -111,30 +111,36 @@ async function stop() {
 }
 $('go').onclick = () => (running ? stop() : start());
 $('resetTurns').onclick = () => {
-  dict.bodySpin.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No half turns counted yet'; showSpin();
+  dict.bodySpin.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No turns counted yet'; showSpin();
 };
 
 function showSpin() {
   const s = dict.bodySpin.out;
   const dir = s.direction > 0 ? 'your left' : s.direction < 0 ? 'your right' : 'either direction';
-  const messages = { ready: 'Ready for a 180° turn', turning: `Turning to ${dir}`,
+  const messages = { ready: 'Ready for a 90° turn', turning: `Turning to ${dir}`,
+    'quarter turn': `90° quarter turn to ${dir} counted`, 'quarter unconfirmed': '90° turn unconfirmed: keep hands or knees visible',
     'half turn': `180° turn to ${dir} counted`, unconfirmed: 'Turn unconfirmed: keep hands or knees visible',
     'need torso': 'Show both shoulders and hips', 'torso disagreement': 'Torso tracking uncertain',
     'orientation jump': 'Tracking jumped: turn not counted', 'invalid timing': 'Tracking restarted' };
-  $('turnCount').textContent = `${s.half_turns} half turn${s.half_turns === 1 ? '' : 's'}`;
+  $('turnCount').textContent = `${s.quarter_turns} quarter turn${s.quarter_turns === 1 ? '' : 's'}`;
   $('turnDetail').textContent = messages[s.status] || s.status;
-  $('turnProgress').value = Math.min(180, s.progress_degrees);
+  $('turnProgress').value = Math.min(90, s.quarter_progress_degrees);
   const evidence = [s.hands_swapped && 'hands', s.legs_swapped && 'legs'].filter(Boolean).join(' + ');
-  const rows = [['progress', `${Math.min(180, s.progress_degrees).toFixed(0)}° / 180°`],
-    ['turn speed', `${Math.abs(s.rate).toFixed(0)}°/s`], ['half turns', `${s.left_half_turns} left · ${s.right_half_turns} right`],
+  const rotation = [s.hands_rotated && 'hands', s.legs_rotated && 'legs'].filter(Boolean).join(' + ');
+  const rows = [['next quarter turn', `${Math.min(90, s.quarter_progress_degrees).toFixed(0)}° / 90°`],
+    ['turn speed', `${Math.abs(s.rate).toFixed(0)}°/s`], ['quarter turns', `${s.left_quarter_turns} left · ${s.right_quarter_turns} right`],
+    ['half turns', `${s.half_turns} (${s.left_half_turns} left · ${s.right_half_turns} right)`],
     ['torso', s.tracked ? 'shoulders + hips agree' : messages[s.status] || s.status],
-    ['limb confirmation', evidence || 'waiting for a swap'],
+    ['limb rotation', rotation || 'waiting for limb rotation'], ['half-turn swap', evidence || 'waiting for a swap'],
     ['pose face cues', s.face_visible ? 'visible' : 'weak or missing']];
   $('turnValues').innerHTML = rows.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('');
   if (s.event) {
     spinFlashUntil = performance.now() + 900;
     $('turnLast').textContent = `Last: 180° to ${dir} · ${evidence} confirmed`;
-  } else if (s.status === 'unconfirmed') {
+  } else if (s.quarter_event) {
+    spinFlashUntil = performance.now() + 900;
+    $('turnLast').textContent = `Last: 90° to ${dir} · ${rotation} rotation confirmed`;
+  } else if (s.status === 'unconfirmed' || s.status === 'quarter unconfirmed') {
     $('turnLast').textContent = 'Last attempt: turn unconfirmed; keep hands or knees visible';
   }
   $('turnReadout').classList.toggle('detected', performance.now() < spinFlashUntil);

@@ -50,6 +50,12 @@ be occluded. A 360-degree turn therefore counts as two half turns. No new model
 or face detector is installed; face cues are only the existing pose model's
 nose/eye landmark visibility, never a front/back classification.
 
+Anthony subsequently requested **90-degree quarter turns as well**. The primary
+display counts quarters, retains separate half-turn totals, and shows progress
+to the next 90 degrees. Turning continuously through 360 degrees gives four
+quarters and two halves. Quarter turns in opposite directions are independent
+events; they cannot be combined to manufacture a half turn.
+
 ## Implemented contract
 
 `instrument/body_spin.py` is the Python reference; `spin.js` is its browser
@@ -58,13 +64,29 @@ agree within 45 degrees. Their confidence-weighted circular mean gives yaw.
 Wrapped consecutive differences accumulate rotation without a discontinuity at
 ±180 degrees. Heading is not derived from limb crossings.
 
-For counting, at least one hand or leg pair must change image horizontal order,
+For half-turn counting, at least one hand or leg pair must change image horizontal order,
 hold that order for 50 ms, align with the world torso within 60 degrees, and
 agree with the torso's image order. A 12%-of-image-torso separation dead zone
 treats profile overlap as unknown. Knees are preferred, ankles are a fallback;
 these are pose wrists/leg joints, not finger tracking. A pending limb swap may
 wait up to 300 ms for the torso to emerge from profile. At least 45 degrees of
 body rotation must already have occurred when accepting that evidence.
+
+For a quarter turn, an image-order swap cannot be mandatory: at 90 degrees,
+limbs can overlap in profile. Instead at least one fresh wrist or knee/ankle
+axis must stay aligned with the torso and rotate at least 45 degrees from its
+initial aligned heading in that half-turn segment. The torso must reach the
+full 90-degree milestone. The same group must have a valid initial observation;
+reappearing after more than 300 ms resets its baseline and cannot retroactively
+confirm an unseen turn. Baselines also reset on direction reversal and at each
+half-turn boundary. This is an experimental depth-based corroboration, subject
+to the existing monocular pose limitations.
+
+Each 90-degree milestone counts at most once despite jitter around the boundary.
+If evidence arrives late, at most one currently corroborated quarter counts;
+unobserved quarters are never filled in. The original half-turn swap rule stays
+independent. Both counters reset with Reset turns/Start and persist across pose
+loss; partial progress resets under the existing gap/reversal rules.
 
 Every net 180 degrees produces one count/event when supported; otherwise it is
 reported as unconfirmed and the next half-turn segment begins. Small backward
@@ -91,8 +113,10 @@ changes the drawing. Body turns, Circles and Together show the new diagnostics.
 Recording retains the previous CSV columns and appends spin_half_turns,
 spin_progress_deg, spin_tracked, spin_hands_swap, spin_legs_swap,
 spin_face_visible, spin_status, spin_left_halves and spin_right_halves. A `spin`
-event appears once per counted half turn. Existing CSV consumers should select
-fields by header name and tolerate appended fields.
+event appears once per counted half turn. Quarter turns append spin_quarter_turns,
+spin_quarter_progress_deg, spin_left_quarters and spin_right_quarters; a
+`spin_quarter` event appears once per counted quarter. Existing CSV consumers
+should select fields by header name and tolerate appended fields.
 
 ## Validation and platform boundary
 
