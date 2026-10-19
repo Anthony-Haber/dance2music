@@ -73,3 +73,12 @@ test('voiceTo keeps common tones and does not cross voices', () => {
   assert.ok(v.tenor < v.alto && v.alto < v.soprano);
   assert.ok(isChord(v, 'vi'));
 });
+
+test('a body quarter turn transposes all held voices exactly once', () => {
+  const c = new Choir(), before = c.sounding();
+  const f = { ...frame(), spin: { tracked: true, quarter_event: true, left_quarter_turns: 1, right_quarter_turns: 0 } };
+  c.update(f, { spin: true }, 0);
+  for (const name of VOICES) assert.equal(c.sounding()[name], before[name] + 2);
+  c.update(f, { spin: true }, 1 / 30);
+  for (const name of VOICES) assert.equal(c.sounding()[name], before[name] + 2);
+});

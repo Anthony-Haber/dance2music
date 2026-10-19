@@ -1,5 +1,44 @@
 # Project Status
 
+## 2026-10-19 - Change sustained choir pitch on body turns
+
+- State: Implemented and verified locally on codex/anthony-movement-dictionary;
+  main/ableton and separate browser settings preserved. No push/publication.
+- Decisions: Anthony chose left up/right down one D-major scale step per
+  confirmed 90° turn, transpose the sustained choir together, and continue
+  through octaves. Chosen tonic range D3–D6 is shown with boundary messages.
+- Changes: Device-free Python turn_pitch reference first; browser translation
+  and integration afterward. Directional counter snapshots prevent duplicate,
+  stale, invalid, skipped or unconfirmed events from stepping pitch. Half turns
+  cannot double-trigger. Shift all four effective voices equally, retaining
+  chord intervals and base voice leading. D4→E4→F♯4→G4→A4 on four left quarter
+  turns; right reverses. Update real oscillator/bass frequencies with existing
+  glides, a move swell, absolute chord labels and a prominent Turn tonic readout.
+  Body turns/Circles/Together enable pitch stepping; other studies keep original
+  pitch, consume disabled events and resume the stored offset on return.
+  Tracking loss holds pitch. Reset turns/Start restores D4. Reaching the range
+  limit holds pitch, displays the limit and recovers immediately on an inward
+  turn without hidden accumulated steps. Added CSV pitch fields and tutorials.
+- Verification: New Python tests initially fail without the reference; an actual
+  choir regression failed before integration. All 56 focused Python pitch/spin
+  cases pass (12 new pitch cases). JavaScript complete suite 134 passed,
+  including live Python parity, actual detector→choir integration, uniform
+  transposition, deduplication, recovery, study switching and oscillator targets.
+  Pitch p95 about 0.001 ms against a 1 ms budget, excluding pose inference.
+  Ruff lint/format, mypy all 15 instrument files and whitespace checks pass.
+  Local AST graph refreshed: 2,215 nodes, 4,071 edges, 184 communities; no API cost.
+- Browser: Fresh muted Chromium, synthetic video/model, real page/audio graph:
+  E4 tonic and E3/B3/E4/G♯4 voices at 90°, F♯4 tonic at 180° (two changes), A4
+  tonic at 360°, right turn returns G4. Actual soprano and bass oscillator
+  frequencies converge to the expected values. Study disable/resume, reset to
+  D4, face/pose loss, mirror, old-setting isolation and stream cleanup pass;
+  zero page errors. Screenshot output/movement-dictionary/body-turns-browser.png
+  inspected. No user camera, MIDI port or audible browser output used in tests.
+- Remaining: Actual Safari performer detection accuracy and listening remain
+  manual. A tonic walking D-major degrees transposes the whole chord; individual
+  chord tones need not all belong to the original D-major scale. Refresh Safari
+  to load versioned app/harmony/sound/view/pitch modules. Server remains on 5094.
+
 ## 2026-10-19 - Add 90-degree Movement Dictionary quarter turns
 
 - State: Implemented on codex/anthony-movement-dictionary; remains local.

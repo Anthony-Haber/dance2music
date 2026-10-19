@@ -32,12 +32,16 @@ Safari. Refresh an already-open page to load the new **Body turns** study.
    gives four quarters plus two halves. The large counter and progress bar show
    quarters; half-turn totals remain below. Direction follows your own body,
    including in mirrored view.
+   Each confirmed quarter also changes the sustained choir's pitch: **left up
+   one D-major step, right down one**. The turn tonic starts at D4, then left
+   turns give E4, F♯4, G4, A4, B4, C♯5, D5 and continue through octaves.
 3. Read **torso**, **limb confirmation** and **pose face cues** if a turn does
    not count. Shoulders and hips must agree. Quarter turns need a hand or leg
    rotating with the torso; half turns also require a position swap. A side-on
    90° turn can count before the limbs swap sides. Crossing arms/legs without turning, or just hiding the face, is
    insufficient. Face cues are estimated pose visibility, not a face detector.
-4. **Reset turns** clears counts without stopping the camera. **Stop/Start**
+4. **Reset turns** clears counts and returns the turn tonic to D4 without
+   stopping the camera. **Stop/Start**
    begins a new performance. A long tracking gap clears partial progress but
    retains the count. Calibration is for the other posture studies; body-turn
    counting does not require it.
@@ -45,8 +49,20 @@ Safari. Refresh an already-open page to load the new **Body turns** study.
    partway then returning. These camera trials are still needed to assess the
    model's accuracy. **Circles** and **Together** also show the diagnostics.
 
-Turning quickly moves the existing sound in stereo; the counter does not change
-notes or chords. Recordings append turn diagnostics to the CSV. The
+All choir voices, including the bass, shift by the same interval and hold the new
+pitch. The tonic follows D-major degrees while the current chord quality stays
+intact: the default D-major choir becomes E major after the first left turn.
+A 180° turn changes pitch twice, a full turn four times; the half-turn event
+does not add another change. Unconfirmed turns and repeated frames do not step.
+Pitch continues through octaves within **D3–D6**; a visible limit message tells
+you to turn the other way at an endpoint. **Turn tonic** and actual choir notes
+show what is playing. The **Sound plays** switch still controls when it is heard.
+
+Body turns, Circles and Together use this mapping. Other studies use their
+original pitch; returning resumes the stored turn pitch without counting turns
+made in those other studies. Tracking loss alone holds the last pitch. Turning
+quickly also moves sound in stereo. Recordings append the turn tonic, offset,
+scale steps and range limit to the CSV. The
 [research and detection contract](../web/experiments/movement-dictionary/spin-research.md)
 explains thresholds, supporting papers and limitations.
 

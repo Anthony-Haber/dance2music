@@ -106,7 +106,44 @@ against the Python reference in automated tests.
 
 Speed is smoothed causally over 120 ms. Above 90 degrees/s, an aligned visible
 limb enables the existing stereo movement. The stereo phase now uses measured
-yaw rather than assuming 30 fps. Counting does not add a note/chord mapping.
+yaw rather than assuming 30 fps. The accepted turn-to-pitch mapping below now
+changes the sustained choir as well.
+
+## Turn-to-pitch decision and contract, 2026-10-19
+
+Anthony requested a note change each turn and chose left up/right down one
+**D-major scale step**, **transpose the whole sustained choir**, and **continue
+through octaves** rather than loop within one octave. Each confirmed 90-degree
+body turn steps the transposition tonic, initially D4. The root sequence is
+D–E–F♯–G–A–B–C♯ through octaves. The resulting semitone offset is applied equally
+to all four voices, after the existing head/spine bends. Chord intervals and
+base voice-leading behavior are preserved; this is not a separate diatonic
+quantization of each voice. For example, D major transposes to E major, with
+E–G♯–B tones, after the first left turn.
+
+The Python reference is `instrument/turn_pitch.py`; `turn-pitch.js` translates it
+for the browser. A monotonic pair of left/right quarter counters deduplicates
+snapshots. Exactly one fresh, tracked quarter event advancing one counter by one
+steps pitch. Half-turn events are ignored for pitch. Missing, repeated, invalid,
+older or skipped snapshots cannot replay unheard turns. A reset to zero clears
+the step; tracking loss holds pitch. Both implementations share parity tests.
+
+The chosen playable tonic range is D3–D6 (-7 through +14 scale degrees relative
+to D4, or -12 through +24 semitones). At a boundary, further outward turns still
+count as movement but hold pitch and display the limit; an inward turn changes
+pitch immediately. No hidden excess steps accumulate at a boundary. Reset turns
+and Start return to D4. Turning in Body turns, Circles or Together enables the
+mapping. Other studies use zero effective offset while preserving stored pitch
+and consuming their counter snapshots, so returning does not replay those turns.
+
+The audio renderer glides all existing choir oscillators and bass partials to
+the new pitches with its existing 90 ms time constant. A transpose event gives
+the voices the existing move swell. Existing movement gating, timbres and stereo
+turn effect remain active. Choir note/chord labels account for transposition.
+Pitch updates can consume raw turn diagnostics even if the general dictionary
+frame is unavailable. CSV appends turn_tonic_midi, turn_transpose_st,
+turn_scale_steps and turn_pitch_limit. No MIDI output or native CLI behavior is
+changed by this Movement Dictionary experiment.
 Left/right turn labels refer to the dancer's own body; CSS mirroring only
 changes the drawing. Body turns, Circles and Together show the new diagnostics.
 

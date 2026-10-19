@@ -28,8 +28,25 @@ disappearing face alone cannot count. The display shows
 progress, direction relative to your own body, speed, limb confirmation and weak
 tracking. Face cues come from pose landmarks, not a separate face detector.
 Mirroring does not reverse anatomical turn labels. Circles and Together also
-show the turn diagnostics. Counting adds no chord change; the existing spin
-effect moves the sound in stereo while turning quickly.
+show the diagnostics and use the turn-to-pitch mapping below. The existing
+spin effect moves the sound in stereo while turning quickly.
+
+Each confirmed **90° body turn** now transposes the sustained choir: left moves
+up one D-major scale degree, right moves down. The turn tonic begins at D4 and
+continues D4–E4–F♯4–G4–A4–B4–C♯5–D5 across octaves, within D3–D6. Every voice
+moves by the same semitone offset, so chord intervals stay intact (D major → E
+major after the first left turn). The tonic follows the D-major scale; individual
+chord tones are not independently forced into D major. **Turn tonic**, choir
+notes and the absolute chord label show the resulting pitch. At a range limit,
+turn the other way; the detector still counts turns but pitch holds at the limit.
+
+A 180° turn changes pitch twice, 360° four times; only quarter-turn events step
+pitch, so a half-turn event cannot duplicate the change. Repeated frames,
+unconfirmed turns and tracking loss do not invent steps. Reset turns or Start
+returns to D4. The other studies keep their original pitch; returning to a turn
+study resumes its stored pitch, with no replay of turns made while disabled.
+The Sound plays switch still gates audio. CSV recordings append turn_tonic_midi,
+turn_transpose_st, turn_scale_steps and turn_pitch_limit.
 
 This remains an experiment: real Safari camera trials are required to judge
 MediaPipe's turn tracking. See [research, algorithm and limits](spin-research.md).
@@ -149,6 +166,8 @@ Anthony's additional checks:
 ```bash
 .venv/bin/python -m pytest -q tests/test_body_spin.py
 node --test tests/body_spin.test.mjs
+.venv/bin/python -m pytest -q tests/test_turn_pitch.py
+node --test tests/turn_pitch.test.mjs
 ```
 
 The Node test uses the active `PYTHON` executable or `.venv/bin/python` (fallback
@@ -156,5 +175,5 @@ The Node test uses the active `PYTHON` executable or `.venv/bin/python` (fallbac
 first. The optional real-page smoke test needs Playwright/Chromium and a running
 local server: `node tests/web/body-spin-smoke.cjs` (default port 5094; override
 `SPIN_URL` and `CHROME_EXECUTABLE` as needed). It supplies synthetic video/pose
-data, including the 90° and 180° milestones, without using the camera,
-downloading a model or touching a MIDI port.
+data, including the 90° and 180° milestones and actual sustained oscillator
+frequencies, without using the camera, downloading a model or touching a MIDI port.
