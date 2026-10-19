@@ -1,8 +1,8 @@
 // Movement Dictionary: camera (or a video) → MediaPipe Pose (image + world
 // landmarks) → measure.js → sound.js, drawn by view.js.
-import { Dictionary } from './measure.js';
-import { Sound } from './sound.js';
-import { View } from './view.js';
+import { Dictionary } from './measure.js?v=body-turns-1';
+import { Sound } from './sound.js?v=body-turns-1';
+import { View } from './view.js?v=body-turns-1';
 import { Choir } from './harmony.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
@@ -24,15 +24,19 @@ const STUDIES = {
           { arms: true }],
   circles: ['<b>Circles.</b> A hand, the head or the hips travelling in a circle plays the choir\'s chord one note per quarter turn, and the sound travels round with it. The faster the circle, the faster the notes; small circles are high, big circles low; reversing reverses the notes, with an accent. Spinning the whole body turns the whole sound round.',
             { circles: true }],
+  spin: ['<b>Body turns.</b> Each 180° turn counts once. Shoulders and hips must rotate together, with a hand or leg position swap confirming the turn. Turning faster moves the sound in stereo. Crossed arms or a disappearing face alone do not count. The direction labels follow your own body, including in mirrored view.',
+         { spin: true }],
   together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. The arms set how fully it sings. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
-             { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true }],
+             { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true, spin: true }],
 };
 
 const v = $('v'), cv = $('c');
 const dict = new Dictionary(), sound = new Sound(), view = new View(cv), choir = new Choir();
 let moves = [];
 let vision = null, landmarker = null, modelKey = '', stream = null, running = false, moving = 0, last = null;
-let study = store.get('study', 'vertical');
+let study = location.hash === '#body-turns' ? 'spin' : store.get('study', 'vertical');
+if (!(study in STUDIES)) study = 'vertical';
+let spinFlashUntil = 0;
 const rows = []; let recorder = null, chunks = [], recT0 = 0;
 
 function settings() {
@@ -47,6 +51,9 @@ function showStudy(s) {
   study = s; store.set('study', s);
   document.querySelectorAll('#studies button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
   $('what').innerHTML = STUDIES[s][0];
+  const turns = !!(STUDIES[s][1].spin || STUDIES[s][1].circles);
+  $('turnReadout').hidden = $('turnPanel').hidden = !turns;
+  showSpin();
 }
 document.querySelectorAll('#studies button').forEach(b => (b.onclick = () => showStudy(b.dataset.s)));
 for (const id of ['fadeStill', 'spineMode', 'pairMode', 'windDown', 'trigger', 'triggerAt', 'mirror', 'model', 'source']) {
@@ -86,7 +93,8 @@ async function start() {
       v.srcObject = stream;
     }
     await v.play();
-    dict.reset(); choir.reset(); running = true; $('hint').hidden = true;
+    dict.reset(); choir.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No half turns counted yet';
+    running = true; $('hint').hidden = true;
     $('go').textContent = 'Stop'; $('cal').disabled = false; $('rec').disabled = !window.MediaRecorder;
     loop();
   } catch (e) { status('could not start: ' + e.message); }
@@ -99,6 +107,35 @@ async function stop() {
   $('go').textContent = 'Start'; $('cal').disabled = true; $('rec').disabled = true; $('hint').hidden = false; status('stopped');
 }
 $('go').onclick = () => (running ? stop() : start());
+$('resetTurns').onclick = () => {
+  dict.bodySpin.reset(); spinFlashUntil = 0; $('turnLast').textContent = 'No half turns counted yet'; showSpin();
+};
+
+function showSpin() {
+  const s = dict.bodySpin.out;
+  const dir = s.direction > 0 ? 'your left' : s.direction < 0 ? 'your right' : 'either direction';
+  const messages = { ready: 'Ready for a 180° turn', turning: `Turning to ${dir}`,
+    'half turn': `180° turn to ${dir} counted`, unconfirmed: 'Turn unconfirmed: keep hands or knees visible',
+    'need torso': 'Show both shoulders and hips', 'torso disagreement': 'Torso tracking uncertain',
+    'orientation jump': 'Tracking jumped: turn not counted', 'invalid timing': 'Tracking restarted' };
+  $('turnCount').textContent = `${s.half_turns} half turn${s.half_turns === 1 ? '' : 's'}`;
+  $('turnDetail').textContent = messages[s.status] || s.status;
+  $('turnProgress').value = Math.min(180, s.progress_degrees);
+  const evidence = [s.hands_swapped && 'hands', s.legs_swapped && 'legs'].filter(Boolean).join(' + ');
+  const rows = [['progress', `${Math.min(180, s.progress_degrees).toFixed(0)}° / 180°`],
+    ['turn speed', `${Math.abs(s.rate).toFixed(0)}°/s`], ['half turns', `${s.left_half_turns} left · ${s.right_half_turns} right`],
+    ['torso', s.tracked ? 'shoulders + hips agree' : messages[s.status] || s.status],
+    ['limb confirmation', evidence || 'waiting for a swap'],
+    ['pose face cues', s.face_visible ? 'visible' : 'weak or missing']];
+  $('turnValues').innerHTML = rows.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('');
+  if (s.event) {
+    spinFlashUntil = performance.now() + 900;
+    $('turnLast').textContent = `Last: 180° to ${dir} · ${evidence} confirmed`;
+  } else if (s.status === 'unconfirmed') {
+    $('turnLast').textContent = 'Last attempt: turn unconfirmed; keep hands or knees visible';
+  }
+  $('turnReadout').classList.toggle('detected', performance.now() < spinFlashUntil);
+}
 
 function loop() {
   if (!running) return;
@@ -121,11 +158,13 @@ function loop() {
         moves = moves.filter(m => performance.now() - m.at < 900);
         if (recorder) { const c = choir.describe();
           rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }) + `,${c.chord},${Object.values(c.names).join(' ')},${cev.filter(e => e.type === 'move').map(e => e.voice).join(' ')},${(sound.breath ?? 0).toFixed(3)},${(sound.drive ?? 1).toFixed(3)}`); }
-      }
+      } else sound.updateSpin(dict.bodySpin.out, S);
       layout(W, H); view.draw(f, S, cv.width / W, $('mirror').value === '1', { desc: choir.describe(), moves });
       readout(f);
+      showSpin();
       fps.push(now); while (fps.length && fps[0] < now - 1000) fps.shift();
-      status(f ? `${fps.length} fps` : `${fps.length} fps · no body in view: step back so your whole body is seen`);
+      status(f ? `${fps.length} fps` : dict.bodySpin.out.tracked ? `${fps.length} fps · torso tracked; show your face for the other studies` :
+        `${fps.length} fps · no body in view: step back so your whole body is seen`);
     }
     next();
   }

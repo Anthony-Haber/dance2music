@@ -10,6 +10,28 @@ Locally: `python live.py`, then <http://127.0.0.1:5092/experiments/movement-dict
 Everything runs in the browser; no video or data leaves it. A recording
 downloads the view with its sound and a CSV of the measurements (no images).
 
+## Anthony's body-turn experiment
+
+On `codex/anthony-movement-dictionary`, choose **Body turns**, or open
+`/experiments/movement-dictionary/#body-turns`. Start upright facing the camera,
+step back to show your torso and hands or knees, then turn. Each **180° half turn**
+counts once; a full 360° turn counts twice. **Reset turns** clears the counter.
+Calibration still sets the other posture studies' neutral; turn counting itself
+does not need calibration.
+
+Shoulders and hips must rotate together, with a confirmed hand or leg ordering
+swap. Crossed arms or a disappearing face alone cannot count. The display shows
+progress, direction relative to your own body, speed, limb confirmation and weak
+tracking. Face cues come from pose landmarks, not a separate face detector.
+Mirroring does not reverse anatomical turn labels. Circles and Together also
+show the turn diagnostics. Counting adds no chord change; the existing spin
+effect moves the sound in stereo while turning quickly.
+
+This remains an experiment: real Safari camera trials are required to judge
+MediaPipe's turn tracking. See [research, algorithm and limits](spin-research.md).
+The original studies below retain their musical mappings. Spin diagnostics are
+appended to recorded CSV columns; select fields by name when reading recordings.
+
 ## The five notes
 
 | | Her note | What is measured | What you hear |
@@ -87,7 +109,8 @@ its `MD` object, and the sound's in `SD` (`sound.js`).
   the point is circling. Rate = turning per second, size = speed / turning rate.
   A quarter turn is each π/2 of accumulated turning; a reversal is the turning
   changing sign while circling, or restarting the other way within 1.5 s.
-  A spin is the shoulder line's yaw changing faster than 90°/s.
+  On Anthony's branch, [body turns](spin-research.md) replace the shoulder-only
+  spin detector with fresh torso/limb evidence and half-turn counts.
 
 ## How it sounds (`sound.js`)
 
@@ -116,3 +139,17 @@ the measurements on synthetic bodies: upright and leaning, forward, a curled spi
 elbow–knee contact, the arms' reach (by the sides, out, forward), a quick
 movement against a single landmark jumping, a circling hand with its rate, quarter turns and a
 reversal, and a head-led movement with its travel time.
+
+Anthony's additional checks:
+
+```bash
+.venv/bin/python -m pytest -q tests/test_body_spin.py
+node --test tests/body_spin.test.mjs
+```
+
+The Node test uses the active `PYTHON` executable or `.venv/bin/python` (fallback
+`python3`) to compare against the Python reference; install requirements/dev.txt
+first. The optional real-page smoke test needs Playwright/Chromium and a running
+local server: `node tests/web/body-spin-smoke.cjs` (default port 5094; override
+`SPIN_URL` and `CHROME_EXECUTABLE` as needed). It supplies synthetic video/pose
+data, without using the camera, downloading a model or touching a MIDI port.

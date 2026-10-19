@@ -24,6 +24,12 @@ export class View {
     // a faint body for orientation
     for (const [a, b] of [[J.LSH, J.RSH], [J.LSH, J.LEL], [J.LEL, J.LWR], [J.RSH, J.REL], [J.REL, J.RWR], [J.LSH, J.LHIP], [J.RSH, J.RHIP], [J.LHIP, J.RHIP], [J.LHIP, J.LKN], [J.RHIP, J.RKN]])
       line(P(a), P(b), COL.dim, 1.5);
+    if (S.spin) {
+      const body = f.spin.tracked ? COL.axis : COL.warn;
+      line(P(J.LSH), P(J.RSH), body, 4); line(P(J.LHIP), P(J.RHIP), body, 4);
+      line(P(J.LWR), P(J.RWR), f.spin.hands_swapped ? COL.axis : COL.circle, 2);
+      line(P(J.LKN), P(J.RKN), f.spin.legs_swapped ? COL.axis : COL.circle, 2);
+    }
     // 4 verticality: the axis, and a plumb line from the hips
     if (S.vertical) {
       const u = Math.min(1, f.vertical.tilt / 45), L = f.geo.torsoI * 1.6;

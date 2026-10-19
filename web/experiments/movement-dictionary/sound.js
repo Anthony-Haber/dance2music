@@ -132,8 +132,9 @@ export class Sound {
     } else this.set(this.choirPan.pan, 0);
     for (const V of Object.values(this.voices)) V.forms.forEach((F, i) => { this.set(F.b.frequency, vowel[i][0], 0.08); this.set(F.g.gain, vowel[i][1] * 3, 0.08); });
     // ── a whole-body spin turns the whole sound round ──
-    this.spinPhase = (this.spinPhase || 0) + (f.spin.rate || 0) * Math.PI / 180 / 30;
-    this.set(this.spinPan.pan, S.circles && f.spin.active ? 0.7 * Math.sin(this.spinPhase) : 0, 0.05);
+    // The measured phase is independent of video frame rate. Half-turn
+    // counting adds diagnostics; it does not select a new chord or note.
+    this.updateSpin(f.spin, S);
     // ── circles that stopped can wind down like a top ──
     if (S.circles && S.windDown) for (const [name, cc] of Object.entries(f.circles)) {
       const w = this.wind[name];
@@ -142,6 +143,11 @@ export class Sound {
         w.next = w.next ?? t; if (t >= w.next) { this.note(name, w.dir, w.size, 0.6, choir); w.rate *= 0.82; w.next = t + 0.25 / w.rate; }
       }
     }
+  }
+
+  updateSpin(spin, S) {
+    const phase = (spin.phase_degrees || 0) * Math.PI / 180;
+    this.set(this.spinPan.pan, (S.spin || S.circles) && spin.active ? 0.7 * Math.sin(phase) : 0, 0.05);
   }
 
   // events: from measure.js (the body) and from harmony.js (the choir)

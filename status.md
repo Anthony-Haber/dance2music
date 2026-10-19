@@ -1,5 +1,54 @@
 # Project Status
 
+## 2026-10-19 - Movement Dictionary body half-turn experiment
+
+- State: Implemented and verified with synthetic inputs; real Safari camera
+  accuracy/listening trials pending. Changes kept locally on the new branch
+  `codex/anthony-movement-dictionary`, based on merge a318bd0 in Anthony's fork.
+  No changes made to the main or ableton branch tips; no push/publication.
+- Decisions: Anthony chose combined torso plus hand/leg evidence, and counting
+  each 180-degree half turn rather than only full 360-degree turns. Use existing
+  pose face visibility as a supporting diagnostic, never proof of a body spin.
+  No replacement models, face/hand inference pipeline or camera captures added.
+- Changes: Device-free Python reference in instrument/body_spin.py first, then
+  DOM-free browser translation. Fresh shoulders and hips must agree; a stable
+  wrist or knee/ankle ordering swap corroborates each half turn. Profile overlap
+  is unknown rather than a swap. Reject implausible jumps, reset partial progress
+  across long gaps/reversals, retain counts through loss, and never extrapolate
+  from the dictionary's retained coordinates. Face absence does not prevent the
+  separate turn diagnostics. Body turns study shows large count, progress,
+  direction, speed, tracking and limb evidence, plus Reset turns. Circles and
+  Together share diagnostics. Measured phase replaces fixed-30fps stereo phase;
+  loss/other studies center the spin pan. No new note/chord/MIDI mapping.
+- Data/documentation: Keep old CSV fields and append turn count/progress,
+  tracking, limb/face cues, status and direction counts. One spin event per
+  counted half turn when a dictionary measurement frame is available. Tutorial,
+  experiment README and spin-research.md record accepted choices, thresholds,
+  primary research sources, commands, field migration and remaining limitations.
+  Added files remain grouped under instrument/, tests/ and this experiment.
+- Verification: New Python tests initially failed without implementation; three
+  integration regressions failed before replacing shoulder-only detection.
+  33 new Python cases; complete suite 314 passed, 2 skipped, 434 subtests passed
+  (16.02s). JavaScript complete suite 122 passed: includes 1,089 observations
+  compared with the Python oracle and a separate stereo/loss test. Spin p95
+  about 0.007 ms against a 5 ms budget, excluding pose inference. Ruff lint and
+  format pass; mypy passes all 14 instrument source files; whitespace check passes.
+  Environment: macOS arm64, Python 3.11.17, Node 24.19.0.
+  Local AST graph refreshed: 2,167 nodes, 3,968 edges, 183 communities; no API cost.
+- Browser verification: Fresh headless Chromium with synthetic video/pose data
+  exercised the real page loop: one count at 180 degrees, two at 360, face loss,
+  calibration enablement, mirror invariance, reset, total pose loss, study switch,
+  stream cleanup and mobile width. Zero page errors; screenshot inspected at
+  output/movement-dictionary/body-turns-browser.png. No user camera, video,
+  IAC bus or Safari session used by this test. Local server remains on port 5094;
+  refresh Safari and choose Body turns or use the #body-turns link.
+- Limits/next: Synthetic geometry validates the rules, not MediaPipe accuracy.
+  Uncertain depth, coordinated gradual label errors, self-occlusion, torso twist,
+  camera movement and cropping can still miss/miscount turns. Begin facing the
+  camera with torso and hands or knees visible. Test slow/quick half turns each
+  way, full turns, crossing limbs alone and partial-return movements. Compare
+  diagnostics before tuning or trying a dedicated orientation/temporal model.
+
 ## 2026-10-19 - Linear anatomical span MIDI velocity
 
 - State: Implemented and verified locally on ableton; updated server running.

@@ -4,6 +4,7 @@ The browser translation is now available locally:
 
 - [Play the instrument in JavaScript](#play-anthonys-instrument-in-the-browser)
 - [Use the iPhone camera and sound with --phone](#iphone-camera-and-sound)
+- [Movement Dictionary: count body half turns](#movement-dictionary-body-half-turns)
 
 Start here for the current native Python instrument:
 
@@ -16,6 +17,35 @@ Start here for the current native Python instrument:
 - [Play one note in Ableton](#play-one-root-note-in-ableton)
 - [Safari website MIDI through your Mac's IAC ports](#safari-on-macos-iac-midi)
 - [Run on macOS](#native-instrument-on-macos)
+
+## Movement Dictionary body half turns
+
+Anthony's experiment lives on `codex/anthony-movement-dictionary`, separate from
+`main` and `ableton`. Serve this checkout with `.venv/bin/python live.py --port 5094`
+and open <http://127.0.0.1:5094/experiments/movement-dictionary/#body-turns> in
+Safari. Refresh an already-open page to load the new **Body turns** study.
+
+1. Press **Start**, allow the camera, and face it upright. Step back so both
+   shoulders, hips, and your separated hands or knees/ankles are visible.
+2. Choose **Body turns**. Turn left or right through **180°**: that counts one
+   half turn. A complete 360° turn counts two. The large counter, progress bar
+   and left/right counts follow your own body, including in mirrored view.
+3. Read **torso**, **limb confirmation** and **pose face cues** if a turn does
+   not count. Shoulders and hips must agree; a hand or leg swap must confirm
+   the turn. Crossing arms/legs without turning, or just hiding the face, is
+   insufficient. Face cues are estimated pose visibility, not a face detector.
+4. **Reset turns** clears counts without stopping the camera. **Stop/Start**
+   begins a new performance. A long tracking gap clears partial progress but
+   retains the count. Calibration is for the other posture studies; body-turn
+   counting does not require it.
+5. Try a half turn in each direction, a full turn, crossed arms, and turning
+   partway then returning. These camera trials are still needed to assess the
+   model's accuracy. **Circles** and **Together** also show the diagnostics.
+
+Turning quickly moves the existing sound in stereo; the counter does not change
+notes or chords. Recordings append turn diagnostics to the CSV. The
+[research and detection contract](../web/experiments/movement-dictionary/spin-research.md)
+explains thresholds, supporting papers and limitations.
 
 ## Repository layout and moved commands
 
