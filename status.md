@@ -6,6 +6,9 @@
   accuracy/listening trials pending. Changes kept locally on the new branch
   `codex/anthony-movement-dictionary`, based on merge a318bd0 in Anthony's fork.
   No changes made to the main or ableton branch tips; no push/publication.
+  Anthony's browser preferences use separate md:anthony: keys, preserving
+  Joseph's md: settings on the same Safari origin. Isolation regression reproduced
+  before the fix and passed in the real-page browser smoke test afterward.
 - Decisions: Anthony chose combined torso plus hand/leg evidence, and counting
   each 180-degree half turn rather than only full 360-degree turns. Use existing
   pose face visibility as a supporting diagnostic, never proof of a body spin.

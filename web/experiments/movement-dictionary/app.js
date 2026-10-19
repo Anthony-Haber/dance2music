@@ -8,8 +8,11 @@ import { Choir } from './harmony.js';
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
 const $ = id => document.getElementById(id);
-const store = { get(k, d) { try { const x = localStorage.getItem('md:' + k); return x === null ? d : JSON.parse(x); } catch { return d; } },
-                set(k, v) { try { localStorage.setItem('md:' + k, JSON.stringify(v)); } catch {} } };
+// Anthony's study/options must not overwrite Joseph's settings on the same
+// localhost origin. Existing preferences can seed this experiment once read.
+const store = { get(k, d) { try { const x = localStorage.getItem('md:anthony:' + k) ?? localStorage.getItem('md:' + k);
+                  return x === null ? d : JSON.parse(x); } catch { return d; } },
+                set(k, v) { try { localStorage.setItem('md:anthony:' + k, JSON.stringify(v)); } catch {} } };
 
 const STUDIES = {
   vertical: ['<b>Verticality: the bass.</b> Upright is home: the choir sings the tonic (D major) over a steady hum. Tilt and the hum shifts: it detunes, bends and opens; a side lean pans it. Hold a lean to your left for half a second and the choir moves to IV (G), to your right to V (A), one voice at a time; come back upright and it walks home.',

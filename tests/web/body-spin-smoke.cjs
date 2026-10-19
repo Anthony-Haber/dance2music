@@ -18,6 +18,7 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(frames => {
+      localStorage.setItem('md:study', JSON.stringify('vertical'));
       globalThis.spinFrames = frames; globalThis.spinIndex = 0; globalThis.spinStopAt = 60;
       Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { value: async () => {
         const canvas = document.createElement('canvas'); canvas.width = 1280; canvas.height = 720;
@@ -42,6 +43,8 @@ async function main() {
         }; } }` }));
     await page.goto((process.env.SPIN_URL || 'http://127.0.0.1:5094/experiments/movement-dictionary/') + '#body-turns');
     assert.equal(await page.locator('[data-s=spin]').getAttribute('class'), 'on');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('md:study'))), 'vertical');
+    assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('md:anthony:study'))), 'spin');
     assert.equal(await page.locator('#cal').isDisabled(), true);
     await page.locator('#go').click();
     await page.waitForFunction(() => document.querySelector('#turnCount').textContent === '1 half turn');
@@ -68,7 +71,7 @@ async function main() {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ tests: ['actual video/pose/UI loop', 'half-turn counter', 'face absence',
-      'calibrate enables', 'mirror invariance', 'reset', 'complete pose loss', 'study switch', 'camera cleanup', 'mobile width'],
+      'separate Anthony settings', 'calibrate enables', 'mirror invariance', 'reset', 'complete pose loss', 'study switch', 'camera cleanup', 'mobile width'],
       synthetic: true, pageErrors: errors, screenshot: path.join(output, 'body-turns-browser.png') }, null, 2));
   } finally { await browser.close(); }
 }

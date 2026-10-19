@@ -3,6 +3,10 @@
 Work belongs to `codex/anthony-movement-dictionary` in Anthony's fork. The branch
 starts at the locally merged Joseph experiments; it does not change `main` or
 `ableton`. Development and verification are local until publication is authorized.
+Browser preferences use `md:anthony:` storage keys and can read Joseph's existing
+`md:` values as initial defaults. Anthony's controls never write to Joseph's keys;
+in particular, the added Body turns selection cannot break the original page's
+study menu when the same Safari origin later serves a different branch.
 
 ## What exists
 
