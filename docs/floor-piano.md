@@ -5,6 +5,11 @@ camera and depth pipeline as 3D Models. Prepare once with
 `python live.py --offline --without-magenta` (or `python piano_assets.py` if the
 pose and scene assets are already prepared). No native helper is involved.
 
+The GitHub Pages build downloads and verifies the five pinned piano samples
+and their upstream notice into `live/vendor/piano/` in the published site.
+Visitors do not need to run the preparation command; the browser loads the
+samples from the site. A failed download or checksum mismatch stops deployment.
+
 Keep people and obstacles out of the floor area during scanning. The complete
 C4–C5 keyboard must fit a detected floor interior; tables, holes, and excluded
 person pixels cannot support it. The layout has long white-key fronts, with
