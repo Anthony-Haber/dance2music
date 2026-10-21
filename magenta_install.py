@@ -53,6 +53,7 @@ def prepare(root=DEFAULT_ROOT, asset_root=None, cmake=None, jobs=8, rebuild=Fals
     # for audit/rebuild; the helper and models have no runtime network path.
     installed = {'schema': 1, 'asset_root': str(asset_root), 'manifest_sha256': sha256(LOCK),
                  'helper_sha256': sha256(helper), 'upstream': lock['upstream'],
+                 'metallib_sha256': sha256(build / 'mlx.metallib'),
                  'models': {k: v for k, v in lock['models'].items() if k != 'assets'},
                  'bridge_sha256': sha256(ROOT / 'native/magenta/embedding.patch'),
                  'native_sources': {name: sha256(ROOT / 'native/magenta' / name)

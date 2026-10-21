@@ -63,5 +63,46 @@ export async function runMagentaTests(){
   fallback.fallback('slow pose');await Promise.resolve();await Promise.resolve();
   fallback.fallback('Small also slow');
   assert(modelChanges.join()==='small'&&failures.length===1&&failures[0].includes('original'),'Auto switches once to Small, then keeps original music available');
+  await runConnectionTests();
   return ['distance floor, monotonicity, normalization, smoothing, hip/foreground distance, stale depth, rescan/empty placements, confirmed capture and hold/release, drag suppression, placement preservation, settings, equal-power mix and overlapping MIDI ownership'];
+}
+
+async function runConnectionTests(){
+  const NativeSocket=globalThis.WebSocket,sockets=[];
+  class Socket extends EventTarget {
+    static OPEN=1;static CLOSED=3;
+    constructor(){super();this.readyState=0;this.messages=[];sockets.push(this);}
+    send(message){assert(this.readyState===Socket.OPEN,'notes only send to an open socket');this.messages.push(JSON.parse(message));}
+    open(){this.readyState=Socket.OPEN;this.onopen();}
+    close(){this.readyState=Socket.CLOSED;this.dispatchEvent(new Event('close'));}
+  }
+  globalThis.WebSocket=Socket;
+  try{
+    const activeNotes=new Map(),m=Object.assign(Object.create(MagentaScene.prototype),{
+      active:true,session:1,generation:0,settings:settings(),owners:new Map(),revisions:[0,0,0],
+      engine:{activeNotes},record:()=>{},mix:()=>{},status:()=>{},refresh:()=>{},onChange:()=>{}
+    });
+    const on=(owner,note)=>{activeNotes.set(owner,note);m.note({owner,note,on:true});};
+    const off=(owner,note)=>{activeNotes.delete(owner);m.note({owner,note,on:false});};
+    const messages=socket=>socket.messages.filter(e=>e.type==='note');
+    await m.connect('small');const first=sockets.at(-1);
+    on('pad',60);on('pad',62);on('pluck',62);on('bass',48);on('transient',72);off('transient',72);
+    assert(first.messages.length===0,'connecting socket drops messages');
+    first.open();
+    assert(JSON.stringify(messages(first).map(e=>[e.note,e.on]))===JSON.stringify([[62,true],[48,true]]),
+      'opening sends current held pitches once, including changed pitches, and omits released notes');
+    m.syncNotes();assert(messages(first).length===2,'ready synchronization does not duplicate held notes');
+    off('pad',62);assert(messages(first).length===2,'resynchronized shared owners keep pitch held');
+    off('pluck',62);assert(messages(first).at(-1).note===62&&!messages(first).at(-1).on,'last resynchronized owner releases pitch');
+    await m.connect('base');const second=sockets.at(-1);
+    on('bass',50);on('pad',65);
+    second.open();
+    assert(JSON.stringify(messages(second).map(e=>[e.note,e.on]))===JSON.stringify([[50,true],[65,true]]),'model reconnect resynchronizes changed and sustained notes');
+    for(const state of [{lost:true,input:'audio-notes'},{lost:false,input:'audio'},{lost:false,input:'continue'}]){
+      await m.connect('small');const socket=sockets.at(-1);
+      m.lost=state.lost;m.settings.input=state.input;socket.open();
+      assert(messages(socket).length===0,'connection honors tracking loss and input mode');
+    }
+    await m.closeSocket();
+  }finally{globalThis.WebSocket=NativeSocket;}
 }

@@ -69,9 +69,13 @@ target_link_libraries(mrt2_probe PRIVATE magentart::core)
 add_executable(mrt2_helper helper.cpp)
 target_link_libraries(mrt2_helper PRIVATE magentart::core nlohmann_json::nlohmann_json)
 # Both developer and packaged launches use the same colocated shader lookup.
+# Refresh it even when the executables are up to date, so preparation repairs
+# a missing or corrupt runtime copy without needing to relink the helper.
+add_custom_target(mrt2_metallib
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${mlx_BINARY_DIR}/mlx/backend/metal/kernels/mlx.metallib"
+    "$<TARGET_FILE_DIR:mrt2_helper>/mlx.metallib")
+add_dependencies(mrt2_metallib mlx-metallib)
 foreach(target mrt2_helper mrt2_probe)
-  add_custom_command(TARGET ${target} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      "${mlx_BINARY_DIR}/mlx/backend/metal/kernels/mlx.metallib"
-      "$<TARGET_FILE_DIR:${target}>/mlx.metallib")
+  add_dependencies(${target} mrt2_metallib)
 endforeach()

@@ -23,12 +23,15 @@ class InstallerTests(unittest.TestCase):
         self.helper = self.root / 'build-native/mrt2_helper'
         self.helper.parent.mkdir()
         self.helper.write_bytes(b'helper')
+        self.metallib = self.helper.with_name('mlx.metallib')
+        self.metallib.write_bytes(b'shaders')
         descriptor = {'path': 'model', 'bytes': 4,
                       'sha256': magenta_assets.sha256(self.assets / 'model')}
         self.installed = {
             'asset_root': str(self.assets),
             'manifest_sha256': magenta_assets.sha256(magenta_assets.LOCK),
             'helper_sha256': magenta_assets.sha256(self.helper),
+            'metallib_sha256': magenta_assets.sha256(self.metallib),
             'native_sources': {name: magenta_assets.sha256(magenta_assets.ROOT / 'native/magenta' / name)
                                for name in ('helper.cpp', 'CMakeLists.txt', 'embedding.patch')},
         }
@@ -56,9 +59,11 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.receipt.stat().st_mtime_ns, before)
 
     def test_invalid_installations_are_not_reused(self):
-        for damaged in ('manifest', 'source', 'helper', 'asset', 'missing receipt', 'invalid json'):
+        for damaged in ('manifest', 'source', 'helper', 'asset', 'missing receipt', 'invalid json',
+                        'missing metallib', 'corrupt metallib', 'unrecorded metallib'):
             with self.subTest(damaged=damaged):
                 self.helper.write_bytes(b'helper')
+                self.metallib.write_bytes(b'shaders')
                 (self.assets / 'model').write_bytes(b'good')
                 self.write_receipt()
                 broken = json.loads(self.receipt.read_text())
@@ -66,6 +71,8 @@ class InstallerTests(unittest.TestCase):
                     broken['manifest_sha256'] = 'stale'
                 elif damaged == 'source':
                     broken['native_sources']['helper.cpp'] = 'stale'
+                elif damaged == 'unrecorded metallib':
+                    del broken['metallib_sha256']
                 self.receipt.write_text(json.dumps(broken))
                 if damaged == 'helper':
                     self.helper.write_bytes(b'corrupt')
@@ -75,11 +82,44 @@ class InstallerTests(unittest.TestCase):
                     self.receipt.unlink()
                 elif damaged == 'invalid json':
                     self.receipt.write_text('{')
+                elif damaged == 'missing metallib':
+                    self.metallib.unlink()
+                elif damaged == 'corrupt metallib':
+                    self.metallib.write_bytes(b'corrupt')
                 with patch.object(magenta_install.subprocess, 'run', side_effect=RuntimeError('Build reached')), \
                         patch.object(magenta_install, 'prepare_assets') as download:
                     with self.assertRaisesRegex(RuntimeError, 'Build reached'):
                         magenta_install.prepare(self.root, self.assets, cmake='/test/cmake')
                     self.assertEqual(download.call_count, int(damaged == 'asset'))
+
+    def test_shader_damage_is_rejected_and_normal_preparation_repairs_it(self):
+        for damaged in ('missing', 'corrupt', 'unrecorded'):
+            with self.subTest(damaged=damaged):
+                self.metallib.write_bytes(b'shaders')
+                self.write_receipt()
+                if damaged == 'missing':
+                    self.metallib.unlink()
+                elif damaged == 'corrupt':
+                    self.metallib.write_bytes(b'corrupt')
+                else:
+                    legacy = dict(self.installed)
+                    del legacy['metallib_sha256']
+                    self.receipt.write_text(json.dumps(legacy))
+                with self.assertRaisesRegex(RuntimeError, 'Metal shader library'):
+                    MagentaRuntime(self.root).installation()
+
+                def build(command, **_):
+                    if '--build' in command:
+                        self.metallib.write_bytes(b'rebuilt shaders')
+
+                with patch.object(magenta_install.subprocess, 'run', side_effect=build) as run, \
+                        patch.object(magenta_install, 'prepare_assets', side_effect=AssertionError('No downloads needed')):
+                    installed = magenta_install.prepare(self.root, self.assets, cmake='/test/cmake')
+                self.assertEqual(run.call_count, 2)
+                self.assertEqual(installed['metallib_sha256'], magenta_assets.sha256(self.metallib))
+                self.assertEqual(MagentaRuntime(self.root).installation()[2], installed)
+                with patch.object(magenta_install.subprocess, 'run', side_effect=AssertionError('Already repaired')):
+                    self.assertEqual(magenta_install.prepare(self.root), installed)
 
     def test_rebuild_reuses_local_tools_without_pip(self):
         executable = self.root / 'tools/bin/cmake'

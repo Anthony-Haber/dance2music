@@ -153,7 +153,13 @@ export class MagentaScene {
     this.status('Loading MRT2 '+model+'…');
     const query=new URLSearchParams({token:this.token,session:this.session,generation,model});
     const ws=this.ws=new WebSocket('ws://'+location.host+'/magenta/ws?'+query);ws.binaryType='arraybuffer';
-    ws.onopen=()=>{if(ws!==this.ws)return;this.settings.prompts.forEach((text,index)=>this.send({type:'prompt',index,text,revision:++this.revisions[index]}));this.send({type:'input',mode:this.settings.input,influence:this.settings.influence/100});this.syncNotes();};
+    ws.onopen=()=>{
+      if(ws!==this.ws)return;
+      this.settings.prompts.forEach((text,index)=>this.send({type:'prompt',index,text,revision:++this.revisions[index]}));
+      this.send({type:'input',mode:this.settings.input,influence:this.settings.influence/100});
+      // This socket has not received notes observed while it was connecting.
+      this.owners.clear();this.syncNotes();
+    };
     ws.onmessage=({data})=>{
       if(ws!==this.ws||generation!==this.generation||!this.active)return;
       if(data instanceof ArrayBuffer){

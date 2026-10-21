@@ -118,8 +118,8 @@ async function listDevices() {
   }
 }
 
-async function openCamera() {
-  const generation = ++sourceGeneration, session = sessionGeneration;
+async function openCamera(generation = ++sourceGeneration) {
+  const session = sessionGeneration;
   const [w, h] = $('res').value.split('x').map(Number);
   const id = $('cam').value;
   if (stream) stream.getTracks().forEach(t => t.stop());
@@ -136,8 +136,8 @@ async function openCamera() {
   await listDevices();               // labels appear only after permission
 }
 
-async function openFile() {
-  const generation = ++sourceGeneration, session = sessionGeneration;
+async function openFile(generation = ++sourceGeneration) {
+  const session = sessionGeneration;
   const f = $('file').files[0];
   if (!f) throw new Error('choose a video file first');
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
@@ -727,11 +727,12 @@ $('mode').onchange = () => { store.set('mode', $('mode').value); follower = new 
 showRules();
 async function changeSource() {
   if (!running) return;
-  const session = sessionGeneration, change = sourceGeneration + 1;
+  const session = sessionGeneration, change = ++sourceGeneration;
   scene.stop();await magenta.stop();
+  if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
   piano.setListening($('pianoListening').value,sceneWanted()&&$('sceneMode').value==='floor-piano');
   try {
-    if ($('source').value === 'camera') await openCamera(); else await openFile();
+    if ($('source').value === 'camera') await openCamera(change); else await openFile(change);
     if (!running || session !== sessionGeneration || change !== sourceGeneration) return;
     await loadLandmarker();
     if(sceneWanted()&&$('sceneMode').value==='floor-piano'&&!piano.buffers){

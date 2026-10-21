@@ -91,6 +91,9 @@ class MagentaRuntime:
         binary = self.root / 'build-native/mrt2_helper'
         if not binary.is_file() or sha256(binary) != installed.get('helper_sha256'):
             raise RuntimeError('MRT2 helper is missing or corrupt; prepare offline assets again.')
+        metallib = binary.with_name('mlx.metallib')
+        if not metallib.is_file() or sha256(metallib) != installed.get('metallib_sha256'):
+            raise RuntimeError('MRT2 Metal shader library is missing or corrupt; prepare offline assets again.')
         assets = Path(installed['asset_root'])
         missing = verify(assets)
         if missing:
