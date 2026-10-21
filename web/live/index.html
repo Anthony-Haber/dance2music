@@ -17,7 +17,8 @@
   #stage { position: relative; background: #000; display: flex; align-items: center;
            justify-content: center; overflow: hidden; min-height: 60vh; }
   #stage video, #stage canvas { position: absolute; max-width: 100%; max-height: 100%; }
-  #stage video.mirror { transform: scaleX(-1); }
+  #stage .mirror { transform: scaleX(-1); }
+  #c { touch-action: none; user-select: none; }
   #badge { position: absolute; top: 18px; right: 22px; text-align: right; pointer-events: none; }
   #badge b { display: block; font-size: 44px; font-weight: 600; line-height: 1; }
   #badge span { color: var(--dim); font-size: 18px; }
@@ -74,6 +75,13 @@
   .dgrid input[type=number] { width: 100%; background: var(--panel); color: var(--ink); border: 1px solid var(--line);
                               border-radius: 5px; padding: 3px 6px; font: inherit; }
   a { color: var(--accent); }
+  .magenta-prompt { border-left: 3px solid; padding: 7px; margin: 10px 0; background: var(--panel); }
+  .magenta-prompt label { display: block; }
+  .magenta-prompt textarea, #magentaEditorText { width: 100%; resize: vertical; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 6px; font: inherit; }
+  .magenta-prompt meter { display: block; width: 100%; margin-top: 5px; }
+  .magenta-prompt .status { margin-left: 8px; }
+  #magentaEditor { color: var(--ink); background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; width: min(450px,90vw); }
+  #magentaEditor::backdrop { background: #0009; }
   @media (max-width: 800px) {
     body { grid-template-columns: 1fr; }
     aside { height: auto; border-left: 0; border-top: 1px solid var(--line); }
@@ -83,6 +91,7 @@
 <body>
 <div id="stage">
   <video id="v" playsinline muted></video>
+  <canvas id="sceneLayer" aria-hidden="true"></canvas>
   <canvas id="c"></canvas>
   <button id="tap" hidden>Tap for sound</button>
   <div id="recDot" hidden>● REC 0:00</div>
@@ -107,7 +116,58 @@
   <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
     <option value="0">as the camera sees</option></select></label>
   <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
-  <button class="go" id="go">Start</button>
+  <label>Scene <select id="sceneMode" disabled>
+    <option value="none">None</option><option value="models">3D Models</option>
+    <option value="percussion-kit">Percussions — Drum kit</option>
+    <option value="percussion-hand">Percussions — Hand drums</option>
+    <option value="percussion-metal">Percussions — Metallic</option>
+    <option value="magenta">Google Magenta</option>
+    <option value="floor-piano">Floor Piano</option>
+  </select></label>
+  <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
+  <div id="sceneControls" hidden>
+    <p class="note" id="sceneDragHelp">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <div id="pianoControls" hidden>
+      <label>Listening <select id="pianoListening"><option value="piano-only">Piano only</option><option value="piano-body">Piano + body music</option></select></label>
+      <label class="mic-option"><input id="pianoNearCamera" type="checkbox" checked>Black keys toward camera</label>
+      <div class="note">Turn off to put the black keys on the far edge. You can change this while playing.</div>
+      <div class="status" id="pianoStatus" role="status" aria-live="polite"></div>
+      <p class="note">Acoustic piano: <a href="https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander">Salamander by Alexander Holm</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Samples transposed for intervening notes.</p>
+    </div>
+    <div class="status" id="sceneDragStatus" role="status" aria-live="polite" hidden></div>
+    <label class="mic-option" id="sceneTouchRow"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
+    <div class="note" id="sceneInteractionHelp">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
+    <label class="mic-option"><input type="checkbox" id="sceneDebug">Show surfaces</label>
+    <div class="note" id="sceneTouchHelp" hidden>Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.</div>
+    <button id="sceneRescan" disabled>Rescan</button>
+    <details><summary>3D diagnostics</summary><div class="status" id="sceneMetrics"></div></details>
+  </div>
+  <div class="status" id="sceneStatus" role="status" aria-live="polite" hidden></div>
+  <div id="magentaInstall" class="note" hidden>
+    <p>Google Magenta requires the Dance2Music Mac app: <strong>Apple Silicon Mac, macOS 14+, Chrome required</strong>.</p>
+    <p>The app downloads and verifies its assets on first use. After setup, camera, scenes, piano, music, and recording work offline. Other website modes remain available here.</p>
+    <p id="magentaInstallStatus">The Mac installer has not been published yet.</p>
+    <a id="magentaDownload" hidden>Download Dance2Music for Mac</a>
+  </div>
+  <div id="magentaControls" hidden>
+    <div id="magentaPrompts"></div>
+    <button id="magentaRandomize" type="button">Randomize prompts</button>
+    <p class="note">Move any visible body part closer to a prompt to increase its influence. Click a label to edit; drag an object to move it.</p>
+    <label>Body music input <select id="magenta-input"><option value="audio-notes">Audio + notes</option><option value="audio">Audio reference only</option><option value="continue">Continue recent phrase</option></select></label>
+    <label>Listening <select id="magenta-listening"><option value="blend">Magenta with blend control</option><option value="both">Both together</option></select></label>
+    <label id="magentaBlendRow">Original blend <span><input id="magenta-blend" type="range" min="0" max="100" value="0"><output id="magenta-blend-value">0%</output></span></label>
+    <div id="magentaBoth" hidden>
+      <label>Original <span><input id="magenta-original" type="range" min="-60" max="6" value="-6"><output id="magenta-original-value">−6 dB</output></span></label>
+      <label>Magenta <span><input id="magenta-generated" type="range" min="-60" max="6" value="-6"><output id="magenta-generated-value">−6 dB</output></span></label>
+    </div>
+    <label>Tracking lost <select id="magenta-tracking"><option value="keep">Keep music flowing</option><option value="fade">Fade to silence</option></select></label>
+    <label>Model <select id="magenta-model"><option value="auto">Auto: Base, then Small if needed</option><option value="base">Base</option><option value="small">Small</option></select></label>
+    <label id="magentaInfluenceRow">Body-audio influence <span><input id="magenta-influence" type="range" min="0" max="100" value="35"><output id="magenta-influence-value">35%</output></span></label>
+    <div id="magentaCaptureRow" hidden><button type="button" id="magentaCapture" disabled>Use recent phrase</button><div id="magentaCaptureStatus" class="status" role="status"></div><div id="magentaPlacementStatus" class="note"></div></div>
+    <div id="magentaStatus" class="status" role="status" aria-live="polite">Local MRT2 starts with the session.</div>
+    <div id="magentaReferenceStatus" class="status"></div><div id="magentaSpatialStatus" class="status"></div>
+  </div>
+  <button class="go" id="go" disabled>Start</button>
   <div class="recrow"><button id="rec" disabled>● Record</button>
     <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>
   <label class="mic-option"><input id="recMic" type="checkbox" autocomplete="off">Record microphone separately</label>
@@ -115,7 +175,7 @@
   <div class="status" id="recMsg"></div>
   <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
     Keep this tab open until the download is ready.</p>
-  <div class="status" id="status">idle</div>
+  <div class="status" id="status">Loading Dance2Music…</div>
 
   <h2>Harmony</h2>
   <label>Mode <select id="mode"><option value="six">six chords from the hands</option>
@@ -180,6 +240,7 @@
   <p class="note">Keys: r record/stop · space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>
 </aside>
+<dialog id="magentaEditor"><p>Edit musical prompt</p><textarea id="magentaEditorText" rows="4" maxlength="250" aria-label="Musical prompt"></textarea><p><button id="magentaEditorApply" type="button">Apply</button> <button id="magentaEditorCancel" type="button">Cancel</button></p></dialog>
 <script type="module" src="live.js"></script>
 </body>
 </html>

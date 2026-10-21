@@ -1,0 +1,65 @@
+--- a/core/include/magentart/mlx_engine.h
++++ b/core/include/magentart/mlx_engine.h
+@@ -280,6 +280,9 @@
+                                 int pca_count = 0);
+   int get_active_prompt_count() const;
+   std::string get_cached_text(int index);
++  // Host bridge: publish completed embeddings to a separate live runner.
++  bool get_prompt_embedding(int index, float* out) const;
++  bool is_prompt_encoding() const;
+   /// @}
+ 
+   /// @name Prompts — PCA corpus
+--- a/core/src/mlx_engine.cpp
++++ b/core/src/mlx_engine.cpp
+@@ -2479,6 +2479,19 @@
+ MLXEngine &MLXEngine::operator=(MLXEngine &&) noexcept = default;
+ 
+ // Lifecycle
++bool MLXEngine::is_prompt_encoding() const {
++  return impl_->is_musiccoca_fetching_.load(std::memory_order_acquire);
++}
++bool MLXEngine::get_prompt_embedding(int index, float* out) const {
++  if (index < 0 || index >= static_cast<int>(kMaxPrompts) || !out) return false;
++  std::lock_guard<std::mutex> lock(impl_->musiccoca_mutex_);
++  if (impl_->is_musiccoca_fetching_.load(std::memory_order_acquire) ||
++      !impl_->embedding_valid_[index]) return false;
++  std::memcpy(out, impl_->cached_embeddings_[index],
++              kMusicCoCaEmbeddingDim * sizeof(float));
++  return true;
++}
++
+ bool MLXEngine::init_assets(const char *d, const char *s) {
+   return impl_->init_assets(d, s);
+ }
+--- a/core/include/magentart/realtime_runner.h
++++ b/core/include/magentart/realtime_runner.h
+@@ -229,6 +229,8 @@
+             position_generation_.fetch_add(1, std::memory_order_relaxed);
+         }
+     }
++    std::uint32_t blend_generation() const { return position_generation_.load(); }
++    std::uint32_t applied_blend_generation() const { return last_blended_generation_.load(); }
+     float get_blend_weight(int i) const {
+         return (i >= 0 && i < (int)kMaxPrompts) ? blend_weights_[i].load(std::memory_order_relaxed) : 0.0f;
+     }
+@@ -379,7 +381,7 @@
+     std::atomic<float> blend_weights_[kMaxPrompts] = {};
+     std::atomic<float> pca_coeff_[kMaxPCAComponents] = {};
+     mutable std::atomic<std::uint32_t> position_generation_{0};
+-    std::uint32_t last_blended_generation_ = 0;
++    std::atomic<std::uint32_t> last_blended_generation_{0};
+ 
+     std::atomic<bool> bypass_{false};
+     std::atomic<bool> host_bypass_{false};
+--- a/core/src/realtime_runner.cpp
++++ b/core/src/realtime_runner.cpp
+@@ -105,7 +105,7 @@
+                                          std::move(log_callback),
+                                          /*out_audio_L=*/nullptr,
+                                          /*out_audio_R=*/nullptr,
+-                                         /*mask_musiccoca_during_prefill=*/false);
++                                         /*mask_musiccoca_during_prefill=*/true);
+     if (success) {
+         skip_next_transport_reset_.store(true, std::memory_order_relaxed);
+         start_locked(/*skip_reset=*/true);

@@ -17,3 +17,10 @@ __pycache__/
 
 # live: optional offline MediaPipe copy (python live.py --offline)
 web/live/vendor/
+
+# Native MRT2 downloads and build products (hashes live in native/magenta).
+.magenta/
+
+# Self-contained Mac launcher builds and signing artifacts.
+.packaging/
+*.dmg

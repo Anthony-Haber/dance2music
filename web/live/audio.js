@@ -5,12 +5,14 @@
 // so, as offline, every semitone step sounds equal.
 import { CHORDS } from './harmony.js';
 import { prepareAudioPlayback } from './audio-session.js';
+import { percussionVoice } from './percussion.js';
+import { INSTRUMENTS } from './scene/instruments.js';
 const ATTACK = 0.06, RELEASE = 0.4;     // pad and bass: swell fast, ring out slowly
 
 const cents = m => 100 * (m - 69);
 
 export class Engine {
-  constructor() { this.ctx = null; this.layers = {}; this.chord = null; }
+  constructor() { this.ctx = null; this.layers = {}; this.chord = null;this.activeNotes=new Map();this.noteListeners=new Set();this.noteId=0; }
 
   // Must run synchronously inside the user's tap: iOS only lets an
   // AudioContext make sound if it was created or resumed during a gesture,
@@ -42,14 +44,19 @@ export class Engine {
     const wet = this.wet = ctx.createGain(); wet.gain.value = 0.2;
     const verb = ctx.createConvolver(); verb.buffer = this.impulse(); verb.normalize = false;
     this.master = ctx.createGain(); this.master.gain.value = 1;
+    this.originalMix=ctx.createGain();this.originalMonitor=ctx.createGain();
+    this.originalMix.connect(this.originalMonitor).connect(this.master);
+    this.magentaMonitor=ctx.createGain();this.magentaMonitor.gain.value=0;
+    this.magentaTracking=ctx.createGain();this.magentaTracking.connect(this.magentaMonitor).connect(this.master);
     const lim = ctx.createDynamicsCompressor();
     lim.threshold.value = -6; lim.knee.value = 0; lim.ratio.value = 20;
     lim.attack.value = 0.003; lim.release.value = 0.1;
     // instrument volume (a mapping destination: e.g. the sphere) sits before the reverb split
     this.inst = ctx.createGain(); this.inst.gain.value = 1;
-    this.bus.connect(this.inst);
-    this.inst.connect(dry).connect(this.master);
-    this.inst.connect(verb).connect(wet).connect(this.master);
+    this.movement=ctx.createGain();this.movement.gain.value=1;
+    this.bus.connect(this.movement).connect(this.inst);
+    this.inst.connect(dry).connect(this.originalMix);
+    this.inst.connect(verb).connect(wet).connect(this.originalMix);
     this.master.connect(lim).connect(ctx.destination);
     this.meter = ctx.createAnalyser(); this.meter.fftSize = 512; lim.connect(this.meter);
     this.limiter = lim; this.recDest = null;
@@ -57,6 +64,11 @@ export class Engine {
     const layer = name => { const g = ctx.createGain(); g.connect(this.bus);
                             this.layers[name] = g; return g; };
     for (const k of ['pad', 'bass', 'plucks', 'wind', 'wind tuned']) layer(k);
+    // Contact notes have their own fader and share the master/reverb/recorder.
+    // They stay audible even when movement maps the other instruments to zero.
+    this.layers.objects=ctx.createGain();this.layers.objects.gain.value=.8;
+    this.layers.objects.connect(dry);this.layers.objects.connect(verb);
+    this.objectVoices=new Set();this.objectNotes=new Map();
     // drums: hits → dlevel (the mapping) → the drums fader
     this.layers['drums'] = ctx.createGain(); this.dlevel = ctx.createGain(); this.dlevel.gain.value = 0;
     this.drumFader = ctx.createGain();
@@ -198,6 +210,7 @@ export class Engine {
     this.res.forEach(r => set(r.f.detune, cents(this.chord.voices[r.v] + r.o), 0.25));
     set(this.bc.detune, cents(this.chord.bass), 0.12);
     set(this.bm.detune, cents(this.chord.bass), 0.12);
+    this.syncNotes();
   }
 
   // f: live features, mirror: whether the picture (and so pan) is mirrored
@@ -223,6 +236,7 @@ export class Engine {
     set(this.wet.gain, 'reverb'); this.ar(this.dry.gain, 1 - v['reverb'], t, 0.3, 0.3);
     set(this.dlevel.gain, 'drums.level');
     this.pluckLevel = v['plucks.level'];
+    this.noteLevels={pad:v['pad.level']*v['inst.level'],bass:v['bass.level']*v['inst.level'],tuned:v['tuned.level']*v['inst.level']};this.syncNotes();
     for (const ev of f.events) {
       this.pluck(ev, sx(ev.x));
       if (drums.hits) this.hit({ lfoot: 'kick', rfoot: 'kick', lhand: 'snare', rhand: 'hat' }[ev.part],
@@ -258,25 +272,7 @@ export class Engine {
   // ── percussion ─────────────────────────────────────────────────────
   // Three synthesised voices; each hit is a handful of nodes that stop themselves.
   hit(kind, t, vel, pan = 0) {
-    const ctx = this.ctx, out = ctx.createStereoPanner(); out.pan.value = Math.max(-1, Math.min(1, pan));
-    out.connect(this.layers['drums']);
-    const env = (g, peak, decay) => { g.gain.setValueAtTime(peak, t); g.gain.exponentialRampToValueAtTime(1e-4, t + decay); };
-    const noise = (hp, bp) => { const n = ctx.createBufferSource(); n.buffer = this.noiseBuf;
-      n.loopStart = Math.random() * 3; const f = ctx.createBiquadFilter();
-      f.type = hp ? 'highpass' : 'bandpass'; f.frequency.value = hp || bp; f.Q.value = hp ? 0.7 : 0.8;
-      n.connect(f); n.start(t, Math.random() * 3); n.stop(t + 0.4); return f; };
-    vel = 0.35 + 0.65 * Math.min(1, vel);
-    if (kind === 'kick') {                 // sine, pitch falling 150 → 45 Hz
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-      env(g, 0.9 * vel, 0.4); o.connect(g).connect(out); o.start(t); o.stop(t + 0.45);
-    } else if (kind === 'snare') {         // band-passed noise + a short 185 Hz body
-      const g = ctx.createGain(); env(g, 0.5 * vel, 0.18); noise(0, 1800).connect(g).connect(out);
-      const o = ctx.createOscillator(), go = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 185;
-      env(go, 0.35 * vel, 0.1); o.connect(go).connect(out); o.start(t); o.stop(t + 0.15);
-    } else {                               // hat: high-passed noise, 50 ms
-      const g = ctx.createGain(); env(g, 0.25 * vel, 0.05); noise(7000).connect(g).connect(out);
-    }
+    percussionVoice(this.ctx,this.noiseBuf,this.layers.drums,kind,t,vel,pan);
   }
 
   // A beat at the detected tempo, phase-locked to her onsets: kick on 1 and 3,
@@ -320,6 +316,7 @@ export class Engine {
     const t = this.ctx.currentTime;
     for (const g of [this.wamp, this.tamp]) g.gain.setTargetAtTime(0, t, 0.3);
     for (const g of [this.pamp, this.bamp]) { g.gain.setTargetAtTime(0, t, 0.6); g.gain._target = 0; }
+    this.noteLevels={};this.syncNotes();
   }
 
   pluck(ev, pan) {
@@ -339,6 +336,44 @@ export class Engine {
     const g = ctx.createGain(); g.gain.value = (this.pluckLevel ?? 1) * 0.55 * (0.25 + 0.75 * ev.strength);
     const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
     s.connect(g).connect(p).connect(this.layers['plucks']); s.start();
+    if(g.gain.value*this.layers.plucks.gain.value*this.inst.gain.value>.001){
+      const owner='pluck-'+(++this.noteId);this.note(owner,midi,true,ctx.currentTime,true);
+      s.onended=()=>this.note(owner,midi,false,ctx.currentTime);
+    }
+  }
+
+  // A bright chord accent, independent of the movement-driven instrument gate.
+  touchObject(event, mirror=false) {
+    const ctx=this.ctx,c=this.chord;
+    if(!ctx||ctx.state!=='running'||(!event.instrument&&!c)||!this.layers.objects||performance.now()-event.effect_timestamp_ms>200)return null;
+    if(event.instrument&&!Object.hasOwn(INSTRUMENTS,event.instrument))return null;
+    const key=`${event.generation}:${event.object_id}:${event.timestamp_ms}`;
+    if(this.objectNotes.get(event.object_id)===key)return null;
+    this.objectNotes.set(event.object_id,key);
+    if(this.objectVoices.size>=6)this.objectVoices.values().next().value();
+    if(event.instrument){
+      const t=ctx.currentTime+.005,pan=Math.max(-1,Math.min(1,((mirror?1-(event.x??.5):(event.x??.5))*2-1)));
+      const voice=percussionVoice(ctx,this.noiseBuf,this.layers.objects,event.instrument,t,1,pan,finish=>this.objectVoices.delete(finish));
+      this.objectVoices.add(voice);
+      return {instrument:event.instrument,timbre:'synthesized-percussion',pan,audio_time_s:t};
+    }
+    const shape=event.shape||['cube','sphere','cylinder'][event.object_id%3];
+    const midi=shape==='cube'?c.bass+36:shape==='sphere'?c.voices[1]+12:c.voices[2]+12;
+    const hz=440*2**((midi-69)/12),duration=shape==='sphere'?1.1:shape==='cube'?.85:.65,t=ctx.currentTime+.005;
+    const pan=Math.max(-1,Math.min(1,((mirror?1-(event.x??.5):(event.x??.5))*2-1)));
+    const out=ctx.createStereoPanner();out.pan.value=pan;out.connect(this.layers.objects);
+    const env=ctx.createGain();env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(.3,t+.006);
+    env.gain.exponentialRampToValueAtTime(.0001,t+duration);env.connect(out);
+    const nodes=[out,env],oscillators=[];
+    const owner='object-'+(++this.noteId);this.note(owner,midi,true,t,true);
+    const finish=()=>{this.note(owner,midi,false,ctx.currentTime);for(const o of oscillators){o.onended=null;try{o.stop();}catch{}}for(const n of nodes)n.disconnect();this.objectVoices.delete(finish);};
+    this.objectVoices.add(finish);
+    for(const [ratio,gain] of [[1,1],[shape==='sphere'?3:2,.35]]) {
+      const o=ctx.createOscillator(),g=ctx.createGain();o.type=shape==='cylinder'?'triangle':'sine';o.frequency.value=hz*ratio;g.gain.value=gain;
+      o.connect(g).connect(env);nodes.push(o,g);oscillators.push(o);o.start(t);o.stop(t+duration+.02);
+    }
+    oscillators[0].onended=finish;
+    return {chord:c.key,midi,frequency_hz:hz,timbre:shape==='sphere'?'bell':shape==='cube'?'mallet':'wood',pan,audio_time_s:t};
   }
 
   // a MediaStream of exactly what goes to the speakers, for the recorder
@@ -350,14 +385,54 @@ export class Engine {
   level(name, v) {
     const g = name === 'drums' ? this.drumFader : this.layers[name];
     if (g) g.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+    this.noteFaders??={};this.noteFaders[name]=v;this.syncNotes();
+  }
+  note(owner,midi,on,time=this.ctx?.currentTime||0,attack=false){
+    const old=this.activeNotes.get(owner);
+    if(old!==undefined&&(!on||old!==midi)){this.activeNotes.delete(owner);for(const fn of this.noteListeners)fn({owner,note:old,on:false,time});}
+    if(on&&(old!==midi||attack)){this.activeNotes.set(owner,midi);for(const fn of this.noteListeners)fn({owner,note:midi,on:true,time,attack});}
+  }
+  syncNotes(){
+    if(!this.chord)return;
+    const levels=this.noteLevels||{},faders=this.noteFaders||{};
+    this.chord.voices.forEach((n,i)=>this.note('pad-'+i,n,(levels.pad||0)*(faders.pad??1)>.005));
+    this.note('bass',this.chord.bass,(levels.bass||0)*(faders.bass??1)>.005);
+    this.chord.voices.forEach((n,i)=>{for(const oct of [12,24])this.note('tuned-'+i+'-'+oct,n+oct,(levels.tuned||0)*(faders['wind tuned']??1)>.005);});
+  }
+  magentaMix(original,generated,seconds=.3){
+    if(!this.ctx||!this.originalMonitor)return;
+    const now=this.ctx.currentTime;
+    for(const [node,value] of [[this.originalMonitor,original],[this.magentaMonitor,generated]]){
+      const g=node.gain;
+      if(g.cancelAndHoldAtTime)g.cancelAndHoldAtTime(now);else g.cancelScheduledValues(now);
+      const from=g.value;g.setValueAtTime(from,now);
+      // Ramp segments can be interrupted repeatedly at the same audio quantum.
+      // Truncated setValueCurveAtTime curves can overlap in Chrome after hold.
+      for(let i=1;i<=63;i++)g.linearRampToValueAtTime(Math.sqrt((1-i/63)*from*from+i/63*value*value),now+seconds*i/63);
+    }
+  }
+  magentaTrackingLost(lost){
+    if(!this.ctx||!this.magentaTracking)return;
+    const now=this.ctx.currentTime,g=this.magentaTracking.gain;
+    g.cancelAndHoldAtTime?.(now);g.setValueAtTime(g.value,now);g.linearRampToValueAtTime(lost?0:1,now+(lost?1:.3));
   }
   masterLevel(v) { if (this.master) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); }
+  movementLevel(value){
+    if(!this.ctx||!this.movement)return;
+    const t=this.ctx.currentTime,g=this.movement.gain;
+    if(g.cancelAndHoldAtTime)g.cancelAndHoldAtTime(t);else {g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);}
+    g.linearRampToValueAtTime(value,t+.1);
+  }
   peak() {
     if (!this.meter) return 0;
     const a = new Float32Array(this.meter.fftSize); this.meter.getFloatTimeDomainData(a);
     let m = 0; for (const x of a) m = Math.max(m, Math.abs(x)); return m;
   }
   async stop() {
+    for(const [owner,note] of [...this.activeNotes])this.note(owner,note,false);
+    this.noteLevels={};this.noteFaders={};
+    for(const finish of this.objectVoices||[])finish();
+    this.objectNotes?.clear();
     if (this.ctx) await this.ctx.close();
     this.ctx = null; this.chordKey = null; this.layers = {}; this.recDest = null;
     if (this.keepAlive) this.keepAlive.pause();

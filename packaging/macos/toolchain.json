@@ -1,0 +1,12 @@
+{
+  "python": "3.11.17",
+  "python_archive": "https://releases.astral.sh/github/python-build-standalone/releases/download/20261013/cpython-3.11.17%2B20261013-aarch64-apple-darwin-install_only_stripped.tar.gz",
+  "python_sha256": "5e656e09fc73c7ae10e4df66e6aa253f1f5980509b3be8a242e883d67a5fdf26",
+  "python_full_archive": "https://releases.astral.sh/github/python-build-standalone/releases/download/20261013/cpython-3.11.17%2B20261013-aarch64-apple-darwin-pgo%2Blto-full.tar.zst",
+  "python_full_sha256": "4e2b20716a080e9141ea80029dabbdc9457e20760f3fd3b16a17abd48ea6bf4a",
+  "xcode": "26.6",
+  "metal_build": "17F109",
+  "metal_version": "32023.883",
+  "deployment_target": "14.0",
+  "architecture": "arm64"
+}

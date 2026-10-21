@@ -11,7 +11,7 @@ import { J } from './features.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotHandInference } from './observations.js';
 
-const MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/latest/gesture_recognizer.task';
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
 export const GESTURES = ['Closed_Fist', 'Open_Palm', 'Pointing_Up', 'Thumb_Up', 'Thumb_Down', 'Victory', 'ILoveYou'];
 export const HS = { crop: 256, cropTorso: 1.1, cropMinPx: 64, reach: 0.35,
                     gestureMin: 0.5, gestureHoldS: 0.35, fingersHoldS: 0.3, openTau: 0.1 };
@@ -65,7 +65,10 @@ export class Hands {
     this.requestedMode = mode; this.loading = mode !== 'off'; this.loadError = null;
     if (mode === 'off') { this.mode = mode; this.L.reset(); this.R.reset(); return; }
     try {
-      const asset = await modelAsset(MODEL);
+      const local = new URL('vendor/mediapipe/gesture_recognizer.task', import.meta.url).href;
+      let path = MODEL;
+      try { if ((await fetch(local, {method: 'HEAD'})).ok) path = local; } catch {}
+      const asset = await modelAsset(path);
       const opts = (numHands, delegate) => ({ baseOptions: { modelAssetBuffer: asset.bytes, delegate }, runningMode: 'VIDEO',
         numHands, minHandDetectionConfidence: 0.3, minHandPresenceConfidence: 0.3, minTrackingConfidence: 0.3 });
       const make = async (key, n) => {
@@ -75,7 +78,7 @@ export class Hands {
           try { recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
           catch (e) { delegate = 'CPU'; recognizer = await vision.mod.GestureRecognizer.createFromOptions(vision.fileset, opts(n, delegate)); }
           this.rec[key] = recognizer;
-          this.models[key] = { family: 'GestureRecognizer', asset: MODEL, asset_sha256: asset.sha256,
+          this.models[key] = { family: 'GestureRecognizer', asset: path, asset_sha256: asset.sha256,
             runtime: runtimeIdentity(vision), delegate: delegate.toLowerCase(), running_mode: 'video',
             num_hands: n, detection_threshold: 0.3, presence_threshold: 0.3, tracking_threshold: 0.3 };
         })().finally(() => { delete this.pending[key]; });

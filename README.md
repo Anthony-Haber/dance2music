@@ -9,13 +9,21 @@ collaboration in the lab.
 Code only in git: clips go in `videos/`, everything generated lands in
 `output/` (both ignored).
 
+The self-contained **Dance2Music Mac launcher** targets **Apple Silicon Mac,
+macOS 14+, Chrome required**. It prepares approximately 4.9 GB of verified
+assets and opens the local tool in Chrome; later use works offline without
+Python or build tools. The website enables its installer link only after a
+signed, notarized release exists. See [installation and troubleshooting](docs/google-magenta.md)
+and [release packaging](packaging/macos/README.md). The commands below remain
+available for development and the video-analysis workflow.
+
     python dance_pose.py track videos/<clip>.mp4   # pose → output/<clip>/landmarks.npz
     python motion.py                                 # kinematics + Efforts for every tracked clip
     python harmony.py                                # how often each chord rule fires
     python synths.py                                 # render every demo for every clip
     python synths.py --serve                         # the page, http://127.0.0.1:5091/
     python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
-    python live.py --offline                         # same, with MediaPipe downloaded for a venue without internet
+    python live.py --offline                         # prepare pose, hands, 3D, and native Magenta for offline use
 
 | file | what |
 |---|---|
@@ -37,6 +45,54 @@ Browser **Record** now downloads one ZIP with the video (or sound only), raw
 metadata. It preserves data for later embedding and other offline analysis.
 The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
 describe the files and tests. Direct import into Zones requires a future importer.
+
+Choose **3D Models** in **Scene** before Start to scan visible floor and tabletop regions and
+place up to three shapes. This optional feature targets Chrome on Apple Silicon
+and live cameras. It uses local WebGPU depth and segmentation models; no inference
+server, camera movement, or calibration is needed. Music starts after the scan.
+**Show surfaces** and **Rescan** help inspect placement. Stop to change the option.
+Drag a visible shape with the mouse to reposition it on a detected floor or
+tabletop; Esc cancels the drag. Rescan and a new session reset the layout.
+Objects use estimated depth occlusion. Stale depth hides objects; motion suppresses
+uncertain pixels. Placement and room scale are approximate.
+With **Touch effects** on, reach toward a shape with a hand or foot to make it
+glow, emit sparks and a ripple, and play a note from the current chord. Adjust
+the **objects** fader in Mix. Contact is estimated from pose and scene depth;
+visuals and sounds are included in recordings.
+The Scene dropdown also offers three **Percussions** sets: Drum kit
+(kick/snare/hi-hat), Hand drums (conga/bongo/djembe), and Metallic
+(cowbell/triangle/cymbal). These place recognizable draggable instruments that
+respond to any visible body part with their own synthesized sound and effects.
+Pull your hand or foot back and tap again for repeated hits, even while your
+body still overlaps the instrument. Resting contact plays once. Use **None** for
+no scene objects. All instrument visuals and sounds work offline.
+See [3D objects, offline setup, and validation](docs/3d-objects.md).
+
+Choose **Floor Piano** for a floor-mounted C4–C5 acoustic piano (eight white
+keys and five black keys). **Black keys toward camera** is on by default so you
+can step forward onto them while facing the camera. Toggle it off to put them
+on the far edge; your choice is saved and can change while playing.
+Clear the floor during scanning, then step onto keys
+with visible feet. Holding a key lets its sample decay; stepping off damps it.
+Lift your foot or jump and land on the same key to replay it. Two feet can play
+two notes, including repeated two-foot jumps. Drag the whole
+keyboard to move it; Rescan rebuilds its placement. **Listening** defaults to
+**Piano only**, with **Piano + body music** available while running. The
+**objects** fader controls piano volume without changing other mixer settings.
+Prepare samples with `python live.py --offline --without-magenta`; Floor Piano
+runs entirely in the browser and needs no native helper or C++ compiler.
+Samples are [Salamander Grand Piano by Alexander Holm](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander),
+licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), transposed
+from five pinned roots. See [Floor Piano details and validation](docs/floor-piano.md).
+
+Choose **Google Magenta** for local MRT2 music guided by three editable spatial
+prompts and the original movement-generated audio. **Audio + notes** also sends
+the synth's pitched note activity; **Continue recent phrase** captures a recent
+phrase for native continuation. Use the blend control or independent Original
+and Magenta levels. The Mac app bundles the native helper and prepares both
+model sizes; the developer CLI builds the helper during preparation. Venue
+sessions use local assets only. See
+[Google Magenta setup, controls, and verification](docs/google-magenta.md).
 
 ---
 
