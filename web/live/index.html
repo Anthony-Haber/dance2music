@@ -116,7 +116,7 @@
   <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
     <option value="0">as the camera sees</option></select></label>
   <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
-  <label>Scene <select id="sceneMode">
+  <label>Scene <select id="sceneMode" disabled>
     <option value="none">None</option><option value="models">3D Models</option>
     <option value="percussion-kit">Percussions — Drum kit</option>
     <option value="percussion-hand">Percussions — Hand drums</option>
@@ -143,6 +143,12 @@
     <details><summary>3D diagnostics</summary><div class="status" id="sceneMetrics"></div></details>
   </div>
   <div class="status" id="sceneStatus" role="status" aria-live="polite" hidden></div>
+  <div id="magentaInstall" class="note" hidden>
+    <p>Google Magenta requires the Dance2Music Mac app: <strong>Apple Silicon Mac, macOS 14+, Chrome required</strong>.</p>
+    <p>The app downloads and verifies its assets on first use. After setup, camera, scenes, piano, music, and recording work offline. Other website modes remain available here.</p>
+    <p id="magentaInstallStatus">The Mac installer has not been published yet.</p>
+    <a id="magentaDownload" hidden>Download Dance2Music for Mac</a>
+  </div>
   <div id="magentaControls" hidden>
     <div id="magentaPrompts"></div>
     <button id="magentaRandomize" type="button">Randomize prompts</button>
@@ -161,7 +167,7 @@
     <div id="magentaStatus" class="status" role="status" aria-live="polite">Local MRT2 starts with the session.</div>
     <div id="magentaReferenceStatus" class="status"></div><div id="magentaSpatialStatus" class="status"></div>
   </div>
-  <button class="go" id="go">Start</button>
+  <button class="go" id="go" disabled>Start</button>
   <div class="recrow"><button id="rec" disabled>● Record</button>
     <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>
   <label class="mic-option"><input id="recMic" type="checkbox" autocomplete="off">Record microphone separately</label>
@@ -169,7 +175,7 @@
   <div class="status" id="recMsg"></div>
   <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
     Keep this tab open until the download is ready.</p>
-  <div class="status" id="status">idle</div>
+  <div class="status" id="status">Loading Dance2Music…</div>
 
   <h2>Harmony</h2>
   <label>Mode <select id="mode"><option value="six">six chords from the hands</option>

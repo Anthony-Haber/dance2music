@@ -18,6 +18,9 @@ import subprocess
 import sys
 import urllib.request
 import webbrowser
+from pathlib import Path
+from urllib.parse import urlsplit
+from browser_assets import prepare as prepare_browser_assets
 from scene_assets import prepare as prepare_scene_assets
 from piano_assets import prepare as prepare_piano_assets
 from magenta_runtime import MagentaRuntime
@@ -27,7 +30,7 @@ WEB = os.path.join(ROOT, 'web')
 VENDOR = os.path.join(WEB, 'live', 'vendor', 'mediapipe')
 MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/'
 MODEL = ('https://storage.googleapis.com/mediapipe-models/pose_landmarker/'
-         'pose_landmarker_{m}/float16/latest/pose_landmarker_{m}.task')
+         'pose_landmarker_{m}/float16/1/pose_landmarker_{m}.task')
 FILES = ['vision_bundle.mjs'] + [f'wasm/vision_wasm{v}_internal.{e}'
                                  for v in ('', '_module', '_nosimd') for e in ('js', 'wasm')]
 
@@ -57,23 +60,70 @@ def open_browser(url):
 
 
 def offline(magenta=True):
-    os.makedirs(os.path.join(VENDOR, 'wasm'), exist_ok=True)
-    jobs = [(MP + f, os.path.join(VENDOR, f)) for f in FILES]
-    jobs += [(MODEL.format(m=m), os.path.join(VENDOR, f'pose_landmarker_{m}.task'))
-             for m in ('lite', 'full', 'heavy')]
-    jobs += [('https://storage.googleapis.com/mediapipe-models/gesture_recognizer/'
-              'gesture_recognizer/float16/1/gesture_recognizer.task',
-              os.path.join(VENDOR, 'gesture_recognizer.task'))]
-    for url, dst in jobs:
-        if not os.path.exists(dst):
-            print('get', os.path.relpath(dst, ROOT))
-            urllib.request.urlretrieve(url, dst)
-    print('offline copy ready:', os.path.relpath(VENDOR, ROOT))
+    prepare_browser_assets()
     prepare_scene_assets()
     prepare_piano_assets()
     if magenta:
         from magenta_install import prepare as prepare_magenta
         prepare_magenta()
+
+
+def create_server(website=WEB, runtime=None, *, browser_root=None, port=5092, packaged=False):
+    """Serve explicit read-only resources; mutable browser assets may be external."""
+    runtime = runtime or MagentaRuntime()
+    website = Path(website).resolve()
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
+                          '.mjs': 'text/javascript', '.js': 'text/javascript',
+                          '.wasm': 'application/wasm'}
+        def do_GET(self):
+            if not self.allowed_host():
+                return
+            if urlsplit(self.path).path == '/app/config':
+                import json
+                data = json.dumps({'packaged': packaged}).encode()
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('Content-Length', str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            if not runtime.handle(self):
+                super().do_GET()
+
+        def allowed_host(self):
+            if packaged and self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
+                self.send_error(403, 'Application host required')
+                return False
+            return True
+
+        def do_HEAD(self):
+            if self.allowed_host():
+                super().do_HEAD()
+
+        def translate_path(self, path):
+            translated = Path(super().translate_path(path))
+            relative = translated.relative_to(website)
+            if browser_root is not None and relative.parts[:2] == ('live', 'vendor'):
+                return str(Path(browser_root).joinpath(*relative.parts[2:]))
+            return str(translated)
+
+        def end_headers(self):
+            if packaged:
+                # Session startup cannot fall back to an external CDN. Workers
+                # inherit this policy, including ONNX and MediaPipe fetches.
+                self.send_header('Content-Security-Policy', "default-src 'self' blob: data:; script-src 'self' blob: 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: data:")
+            super().end_headers()
+
+        def log_message(self, format, *args):
+            # WebSocket URL contains a short-lived local launch token.
+            if self.path.startswith('/magenta/'):
+                return
+            super().log_message(format, *args)
+
+    return http.server.ThreadingHTTPServer(('127.0.0.1', port),
+                                          functools.partial(Handler, directory=str(website)))
 
 
 def main():
@@ -85,25 +135,8 @@ def main():
     a = ap.parse_args()
     if a.offline:
         offline(magenta=not a.without_magenta)
-
     runtime = MagentaRuntime()
-
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
-                          '.mjs': 'text/javascript', '.js': 'text/javascript',
-                          '.wasm': 'application/wasm'}
-        def do_GET(self):
-            if not runtime.handle(self):
-                super().do_GET()
-
-        def log_message(self, format, *args):
-            # WebSocket URL contains a short-lived local launch token.
-            if self.path.startswith('/magenta/'):
-                return
-            super().log_message(format, *args)
-
-    srv = http.server.ThreadingHTTPServer(('127.0.0.1', a.port),
-                                          functools.partial(Handler, directory=WEB))
+    srv = create_server(runtime=runtime, port=a.port)
     url = f'http://127.0.0.1:{a.port}/live/'
     print(url)
     if not a.no_browser:
@@ -114,7 +147,7 @@ def main():
     try:
         srv.serve_forever()
     finally:
-        runtime.stop()
+        runtime.stop(shutdown=True)
         srv.server_close()
 
 

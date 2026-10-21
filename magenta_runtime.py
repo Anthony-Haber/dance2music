@@ -66,13 +66,19 @@ def websocket_frame(opcode, payload):
 
 
 class MagentaRuntime:
-    def __init__(self, root=DEFAULT_ROOT):
+    def __init__(self, root=DEFAULT_ROOT, *, installation_check=None, log_root=None):
         self.root = Path(root)
+        self.installation_check = installation_check
+        self.log_root = Path(log_root) if log_root is not None else self.root / 'logs'
         self.token = secrets.token_urlsafe(32)
         self.lock = threading.Lock()
+        self.process_lock = threading.Lock()
+        self.closing = False
         self.process = None
 
     def installation(self):
+        if self.installation_check is not None:
+            return self.installation_check()
         receipt = self.root / 'installation.json'
         if not receipt.is_file():
             raise RuntimeError('MRT2 is not installed. Run python live.py --offline with internet before the session.')
@@ -91,15 +97,17 @@ class MagentaRuntime:
             raise RuntimeError('MRT2 assets missing or corrupt: ' + ', '.join(missing))
         return binary, assets, installed
 
-    def stop(self):
-        process = self.process
-        if process and process.poll() is None:
-            process.terminate()
-            try:
-                process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
+    def stop(self, shutdown=False):
+        with self.process_lock:
+            self.closing |= shutdown
+            process = self.process
+            if process and process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
 
     def handle(self, handler):
         path = urlsplit(handler.path)
@@ -170,12 +178,14 @@ class MagentaRuntime:
             handler.end_headers()
             handler.close_connection = True
             handler.connection.settimeout(5)
-            logdir = self.root / 'logs'
+            logdir = self.log_root
             logdir.mkdir(parents=True, exist_ok=True)
-            with (logdir / 'latest.log').open('wb') as log:
+            with self.process_lock, (logdir / 'latest.log').open('wb') as log:
+                if self.closing:
+                    raise RuntimeError('Local service is shutting down')
                 process = subprocess.Popen([str(binary), str(assets), model, str(session), str(generation)],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log, bufsize=0)
-            self.process = process
+                self.process = process
 
             def output():
                 try:
@@ -254,7 +264,7 @@ class MagentaRuntime:
                         raise ValueError('Invalid PCM dimensions')
                     message = b'P' + payload
                 write_exact(process.stdin, struct.pack('<I', len(message)) + message)
-        except (OSError, EOFError, ValueError, queue.Full):
+        except (OSError, EOFError, ValueError, RuntimeError, queue.Full):
             pass
         finally:
             closed.set()

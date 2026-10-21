@@ -34,6 +34,7 @@ def controls(context, origin):
     page.locator('#pianoListening').select_option('piano-body')
     page.locator('#pianoNearCamera').uncheck()
     page.reload()
+    page.wait_for_function("document.body.dataset.ready==='true'", timeout=45000)
     assert page.locator('#sceneMode').input_value() == 'floor-piano'
     assert page.locator('#pianoListening').input_value() == 'piano-body'
     assert not page.locator('#pianoNearCamera').is_checked(), 'orientation persists after reload'

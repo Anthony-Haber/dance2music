@@ -13,9 +13,78 @@ text and musical choices persist; rescanning keeps prompt identities/text and
 rebuilds placements. Text encoding is asynchronous and retains the previous
 valid embedding until its replacement is ready.
 
-## First installation
+## Install the Mac app
 
-Requires Apple Silicon macOS 14+, Chrome with WebGPU, Python 3, Xcode command
+The launcher targets **Apple Silicon Mac, macOS 14+, Chrome required**. Intel
+Macs, Windows, Linux, phones, and tablets cannot run this native engine. iPads
+using a desktop user agent are treated as tablets. Other website modes remain
+available, and an unavailable saved Magenta selection resets to **None**.
+
+The public website shows a download link only after a signed, notarized Mac
+release is published. Until then, the installer is not available to download.
+The release process is described in [Mac packaging](../packaging/macos/README.md).
+
+The existing scene segmentation model, SegFormer, has NVIDIA terms limiting
+its use to non-commercial research or evaluation. The app preserves those
+[original terms](https://github.com/NVlabs/SegFormer/blob/65fa8cfa9b52b6ee7e8897a98705abf8570f9e32/LICENSE)
+with the downloaded assets; packaging does not broaden that license.
+
+1. Install Google Chrome if it is not already installed.
+2. Download the versioned Dance2Music DMG from the website's Mac download link.
+3. Open the DMG and drag **Dance2Music** to **Applications**. Eject the disk image.
+4. Open Dance2Music. First setup needs internet and downloads approximately
+   **4.9 GB** directly from the pinned model/browser upstream hosts. Keep at
+   least **5.2 GB free**, in addition to the installer and application.
+5. The launcher shows byte progress and verification status, then opens Chrome
+   at `http://127.0.0.1:5092/live/`. Allow Chrome to use the camera when asked.
+6. Choose **Google Magenta**, then Start. Base, Small, and Auto remain available.
+
+No Python, Xcode, Homebrew, compilation, or Terminal commands are needed to use
+the installed app. The browser is not bundled. The public website never
+connects to the local service; use the Chrome tab opened by Dance2Music.
+
+After setup, disconnect networking and use camera tracking, hands, scenes,
+Floor Piano, Magenta, and recording offline. Starting a session never downloads
+assets in the installed app. Closing the launcher window leaves the service
+running; use **Quit** to stop downloads, the server, and native music workers.
+Click its Dock icon to reopen the window; **Open in Chrome** reopens the tool.
+The fixed local address preserves Chrome permissions and browser settings.
+
+Downloads and the installation record live in
+`~/Library/Application Support/Dance2Music/`. Diagnostic logs live in
+`~/Library/Logs/Dance2Music/`. The signed application bundle is never modified
+by setup or a session. Completed downloads are reused only after their sizes
+and SHA-256 hashes verify. An interrupted file starts over on Retry; other
+verified files remain available.
+
+### Troubleshooting and updates
+
+| Launcher message or symptom | Action |
+| --- | --- |
+| Chrome is missing | Install Google Chrome, then choose Retry. |
+| Setup needs internet | Reconnect and choose Retry. Missing assets cannot be installed offline. |
+| Insufficient disk space | Free the amount shown on the disk containing Application Support, then Retry. |
+| Checksum failure or missing/corrupt assets | Quit any music session, reconnect, and choose Retry to repair. If a bundled executable is damaged, replace the app from its release installer. |
+| Port 5092 is occupied | Close the other app or developer server using that port, then Retry. Dance2Music never terminates another service. |
+| Another copy is running | Use the existing Dance2Music window, or Quit that copy before launching another. |
+| Local service stopped | Choose Retry. If it repeats, include the launcher and native `latest.log` files when reporting the problem. |
+| Magenta is disabled in a browser tab | Open Dance2Music, finish setup, and use Open in Chrome. Reload older local tabs after setup. |
+
+Updates are manual in v1: Quit Dance2Music, download a newer version, and
+replace the app in Applications. Compatible verified downloads are retained;
+changed assets are verified/downloaded during setup before the next session.
+There is no automatic updater. Moving the app to another folder works; keep
+the entire `.app` together.
+
+To uninstall, Quit Dance2Music, move it from Applications to Trash, and remove
+the Dance2Music folders in Application Support and Logs using Finder's
+**Go → Go to Folder**. Removing Application Support deletes downloaded assets.
+Chrome site data for `http://127.0.0.1:5092` can also be cleared to remove saved
+browser settings and permissions. Recordings you exported elsewhere remain.
+
+## Developer command-line installation
+
+The existing checkout workflow requires Apple Silicon macOS 14+, Chrome with WebGPU, Python 3, Xcode command
 line tools, and Apple's Metal compiler/toolchain. Prepare with internet access:
 
 ```sh

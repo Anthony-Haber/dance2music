@@ -101,6 +101,14 @@ struct Job{int slot;std::string text;int revision=0;std::vector<float> samples;C
 
 int main(int argc,char** argv){
   if(argc!=5)return 2;
+  // A dead server must release GPU/model resources even during blocking model
+  // loading or encoding, before the main loop can observe stdin EOF.
+  const auto parent=getppid();
+  if(parent==1)return 0;
+  std::thread([parent]{
+    while(getppid()==parent)std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::_Exit(0);
+  }).detach();
   outputFd=dup(STDOUT_FILENO);dup2(STDERR_FILENO,STDOUT_FILENO);
   sessionId=std::stoul(argv[3]);generationId=std::stoul(argv[4]);
   // Process lifetime owns cancellation of upstream's detached encoder thread.

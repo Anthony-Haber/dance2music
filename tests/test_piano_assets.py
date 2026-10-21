@@ -30,9 +30,9 @@ class PianoAssetsTest(unittest.TestCase):
             self.assertFalse(list(destination.glob('*.partial')))
 
     def test_browser_only_offline_includes_piano(self):
-        with patch('live.os.makedirs'), patch('live.os.path.exists', return_value=True), patch('live.prepare_scene_assets') as scene, patch('live.prepare_piano_assets') as piano, patch('magenta_install.prepare') as magenta:
+        with patch('live.prepare_browser_assets') as browser, patch('live.prepare_scene_assets') as scene, patch('live.prepare_piano_assets') as piano, patch('magenta_install.prepare') as magenta:
             live.offline(magenta=False)
-            scene.assert_called_once(); piano.assert_called_once(); magenta.assert_not_called()
+            browser.assert_called_once(); scene.assert_called_once(); piano.assert_called_once(); magenta.assert_not_called()
 
     def test_pinned_manifest(self):
         lock = json.loads(piano_assets.LOCK.read_text())

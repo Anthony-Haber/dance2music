@@ -1,4 +1,5 @@
 import {MagentaSpatial,capturePlacement,randomPrompts,PROMPT_COLORS} from './magenta-spatial.js';
+import {localDesktop} from './app-availability.js';
 const $=id=>document.getElementById(id);
 const defaults=()=>({prompts:randomPrompts(),input:'audio-notes',listening:'blend',tracking:'keep',model:'auto',influence:35,blend:0,original:-6,generated:-6});
 const options={input:['audio-notes','audio','continue'],listening:['blend','both'],tracking:['keep','fade'],model:['auto','base','small']};
@@ -99,6 +100,7 @@ export class MagentaScene {
     if(landmarks?.some(p=>(p.visibility??0)>=.5&&(p.presence??1)>=.5))this.lastSeen=now;
   }
   async start(){
+    if(!localDesktop()){this.status('Google Magenta requires the Dance2Music Mac app.');return;}
     await this.stop();this.active=true;this.ready=false;this.preparing=false;this.switched=false;this.fallbackNotice='';this.lastSeen=performance.now();this.lost=false;
     this.poses=[];this.baseline=0;this.started=performance.now();this.spatial=new MagentaSpatial();this.events=[];this.placementKey=null;
     this.session=crypto.getRandomValues(new Uint32Array(1))[0]||1;const run=this.session;
@@ -106,7 +108,7 @@ export class MagentaScene {
     this.timer=setInterval(()=>this.tick(),50);
     try{
       const response=await fetch('/magenta/status',{headers:{'X-D2M-Local':'1'},signal:this.abort.signal});
-      if(!response.ok)throw new Error('Start with python live.py to use the local MRT2 helper.');
+      if(!response.ok)throw new Error('Open Dance2Music and complete setup, then reload this page.');
       const status=await response.json();if(!status.ready)throw new Error(status.message);
       if(!this.active||run!==this.session)return;this.token=status.token;this.provenance=status.provenance;
       const ctx=this.engine.ctx;await ctx.audioWorklet.addModule(new URL('./magenta-worklet.js',import.meta.url));

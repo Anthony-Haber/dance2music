@@ -10,6 +10,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 include(FetchContent)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "Pinned commits need no remote update during rebuild")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/manifest.lock.json" lock)
 string(JSON commit GET "${lock}" upstream commit)
 string(JSON hash GET "${lock}" upstream archive_sha256)
@@ -42,6 +43,9 @@ set(ABSL_PROPAGATE_CXX_STD ON)
 set(TFLITE_ENABLE_XNNPACK OFF CACHE BOOL "" FORCE)
 set(TFLITE_ENABLE_GPU OFF CACHE BOOL "" FORCE)
 set(TFLITE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+# MLX first resolves its colocated shader library. Keep the fallback relocatable
+# too; never bake a developer's build tree into a distributed executable.
+set(MLX_METAL_PATH "." CACHE STRING "Relative Metal fallback" FORCE)
 FetchContent_MakeAvailable(mlx sentencepiece)
 FetchContent_Populate(tensorflow)
 set(FETCHCONTENT_SOURCE_DIR_TENSORFLOW "${tensorflow_SOURCE_DIR}" CACHE PATH "" FORCE)
@@ -64,3 +68,10 @@ add_executable(mrt2_probe probe.cpp)
 target_link_libraries(mrt2_probe PRIVATE magentart::core)
 add_executable(mrt2_helper helper.cpp)
 target_link_libraries(mrt2_helper PRIVATE magentart::core nlohmann_json::nlohmann_json)
+# Both developer and packaged launches use the same colocated shader lookup.
+foreach(target mrt2_helper mrt2_probe)
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${mlx_BINARY_DIR}/mlx/backend/metal/kernels/mlx.metallib"
+      "$<TARGET_FILE_DIR:${target}>/mlx.metallib")
+endforeach()

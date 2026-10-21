@@ -46,6 +46,7 @@ def integration(page, output):
     assert page.locator('#go').inner_text()=='Start','typing must not start session or recording'
     field.fill('soft warm piano');page.locator('.magenta-prompt button').nth(0).click()
     page.reload()
+    page.wait_for_function("document.body.dataset.ready==='true'",timeout=45000)
     assert page.locator('#magentaPrompt0').input_value()=='soft warm piano'
     install_hooks(page, True)
     page.locator('#go').click()
@@ -230,18 +231,27 @@ def live_run(page, seconds, output, camera=False):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--live-seconds',type=int,default=0);parser.add_argument('--camera',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--live-seconds',type=int,default=0);parser.add_argument('--camera',action='store_true')
+    parser.add_argument('--origin', help='Test an already-running packaged app, e.g. http://127.0.0.1:5092')
+    args=parser.parse_args()
     output=ROOT/'output/magenta-browser';output.mkdir(parents=True,exist_ok=True)
-    with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
-    with (output/'server.log').open('w') as log:server=subprocess.Popen([sys.executable,str(ROOT/'live.py'),'--no-browser','--port',str(port)],cwd=ROOT,stdout=log,stderr=log)
-    origin=f'http://127.0.0.1:{port}'
+    server=None
+    if args.origin:origin=args.origin.rstrip('/')
+    else:
+        with socket.socket() as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
+        with (output/'server.log').open('w') as log:server=subprocess.Popen([sys.executable,str(ROOT/'live.py'),'--no-browser','--port',str(port)],cwd=ROOT,stdout=log,stderr=log)
+        origin=f'http://127.0.0.1:{port}'
     try:
         with sync_playwright() as p:
             options=['--autoplay-policy=no-user-gesture-required','--enable-unsafe-webgpu']
             if not args.camera:options+=['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']
             browser=p.chromium.launch(channel='chrome',headless=True,args=options)
             context=browser.new_context(permissions=['camera'],accept_downloads=True,viewport={'width':1280,'height':900})
-            page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+            page=context.new_page();errors=[]
+            def page_error(error):
+                errors.append(str(error));print('BROWSER ERROR',str(error),flush=True)
+            page.on('pageerror',page_error)
+            page.on('console',lambda message: print('BROWSER CONSOLE',message.text,flush=True) if message.type=='error' else None)
             def route(r):
                 url=r.request.url
                 if not url.startswith(origin+'/'):return r.abort()
@@ -257,6 +267,8 @@ def main():
                     if attempt==99:raise
                     time.sleep(.1)
             passed=page.evaluate("async()=>{const m=await import('/test-fixtures/magenta.test.js');return m.runMagentaTests();}")
+            assert not errors,errors
+            page.wait_for_function("document.body.dataset.ready==='true'",timeout=45000)
             print('PASS',*passed,flush=True)
             print('PASS',page.evaluate("async()=>{const m=await import('/test-fixtures/magenta-worklet.test.js');return m.runWorkletTests();}"),flush=True)
             if args.live_seconds:live_run(page,args.live_seconds,output,args.camera)
@@ -264,9 +276,10 @@ def main():
             assert not errors,errors
             browser.close()
     finally:
-        server.terminate()
-        try:server.wait(timeout=5)
-        except subprocess.TimeoutExpired:server.kill();server.wait()
+        if server:
+            server.terminate()
+            try:server.wait(timeout=5)
+            except subprocess.TimeoutExpired:server.kill();server.wait()
 
 
 if __name__=='__main__':main()

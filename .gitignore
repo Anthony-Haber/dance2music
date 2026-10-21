@@ -20,3 +20,7 @@ web/live/vendor/
 
 # Native MRT2 downloads and build products (hashes live in native/magenta).
 .magenta/
+
+# Self-contained Mac launcher builds and signing artifacts.
+.packaging/
+*.dmg

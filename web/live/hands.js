@@ -11,7 +11,7 @@ import { J } from './features.js';
 import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotHandInference } from './observations.js';
 
-const MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/latest/gesture_recognizer.task';
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
 export const GESTURES = ['Closed_Fist', 'Open_Palm', 'Pointing_Up', 'Thumb_Up', 'Thumb_Down', 'Victory', 'ILoveYou'];
 export const HS = { crop: 256, cropTorso: 1.1, cropMinPx: 64, reach: 0.35,
                     gestureMin: 0.5, gestureHoldS: 0.35, fingersHoldS: 0.3, openTau: 0.1 };

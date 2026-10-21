@@ -9,6 +9,14 @@ collaboration in the lab.
 Code only in git: clips go in `videos/`, everything generated lands in
 `output/` (both ignored).
 
+The self-contained **Dance2Music Mac launcher** targets **Apple Silicon Mac,
+macOS 14+, Chrome required**. It prepares approximately 4.9 GB of verified
+assets and opens the local tool in Chrome; later use works offline without
+Python or build tools. The website enables its installer link only after a
+signed, notarized release exists. See [installation and troubleshooting](docs/google-magenta.md)
+and [release packaging](packaging/macos/README.md). The commands below remain
+available for development and the video-analysis workflow.
+
     python dance_pose.py track videos/<clip>.mp4   # pose → output/<clip>/landmarks.npz
     python motion.py                                 # kinematics + Efforts for every tracked clip
     python harmony.py                                # how often each chord rule fires
@@ -81,8 +89,9 @@ Choose **Google Magenta** for local MRT2 music guided by three editable spatial
 prompts and the original movement-generated audio. **Audio + notes** also sends
 the synth's pitched note activity; **Continue recent phrase** captures a recent
 phrase for native continuation. Use the blend control or independent Original
-and Magenta levels. Initial preparation builds a native helper and installs
-both model sizes; venue sessions use local assets only. See
+and Magenta levels. The Mac app bundles the native helper and prepares both
+model sizes; the developer CLI builds the helper during preparation. Venue
+sessions use local assets only. See
 [Google Magenta setup, controls, and verification](docs/google-magenta.md).
 
 ---

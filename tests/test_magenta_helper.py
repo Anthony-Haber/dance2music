@@ -18,6 +18,7 @@ from magenta_runtime import read_exact, write_exact
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--assets', type=Path, required=True)
+    parser.add_argument('--helper', type=Path, default=ROOT / '.magenta/build-native/mrt2_helper')
     parser.add_argument('--model', choices=('small', 'base'), default='small')
     parser.add_argument('--seconds', type=float, default=48)
     parser.add_argument('--input', type=Path, default=ROOT / 'output/magenta-native-gate/input-0.f32')
@@ -27,7 +28,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     messages = queue.Queue()
     with (output / f'helper-{args.model}.log').open('wb') as log:
-        process = subprocess.Popen([str(ROOT / '.magenta/build-native/mrt2_helper'), str(args.assets), args.model, '1', '1'],
+        process = subprocess.Popen([str(args.helper.resolve()), str(args.assets), args.model, '1', '1'],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log, bufsize=0)
     def read():
         try:

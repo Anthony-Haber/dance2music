@@ -24,12 +24,16 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r web/live web/vendor web/experiments web/about.html web/methods.html _site/
+          cp -r web/live web/vendor web/experiments web/about.html web/about.js web/methods.html _site/
           rm -rf _site/live/vendor
           printf '<!doctype html><meta charset="utf-8"><title>Dance2Music</title><meta http-equiv="refresh" content="0; url=live/"><a href="live/">Dance2Music Live</a>\n' > _site/index.html
           touch _site/.nojekyll
       - name: Prepare piano samples
         run: python3 -c "from piano_assets import prepare; prepare('_site/live/vendor/piano')"
+      - name: Enable Mac download only after a verified release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 packaging/macos/release_link.py _site/live/app-release.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -13,12 +13,23 @@ import { modelAsset, runtimeIdentity } from './model-assets.js';
 import { snapshotPose, handDisplayState } from './observations.js';
 import { MagentaScene } from './magenta.js';
 import { PianoPlayer } from './piano.js';
+import { availability, availableScene, downloadLink as appDownloadLink } from './app-availability.js';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
-const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
+const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/1/pose_landmarker_${m}.task`;
 const LOCAL = 'vendor/mediapipe/';       // `python live.py --offline` fills this
 
 const $ = id => document.getElementById(id);
+const magentaAvailability = await availability();
+const magentaOption = $('sceneMode').querySelector('[value="magenta"]');
+if (magentaAvailability.mobile) magentaOption.remove();
+else if (!magentaAvailability.available) {
+  magentaOption.disabled = true;
+  magentaOption.textContent = 'Google Magenta (Mac app required)';
+  $('magentaInstall').hidden = false;
+  if (magentaAvailability.local) $('magentaInstallStatus').textContent = magentaAvailability.message || 'Open Dance2Music and complete setup, then reload this page.';
+  else appDownloadLink($('magentaDownload'), $('magentaInstallStatus'));
+}
 const v = $('v'), cv = $('c'), g = cv.getContext('2d');
 const store = {
   get(k, d) { try { const x = localStorage.getItem('d2m:' + k); return x === null ? d : JSON.parse(x); } catch (e) { return d; } },
@@ -143,7 +154,7 @@ function lockSessionOptions() {
   $('sceneMode').disabled = running || starting || stopping || $('source').value !== 'camera';
   for (const id of ['source', 'cam', 'res', 'model', 'file']) $(id).disabled = starting || stopping;
   $('sceneControls').hidden = !sceneWanted();
-  $('magentaControls').hidden = $('sceneMode').value!=='magenta'||!sceneWanted();
+  $('magentaControls').hidden = !magentaAvailability.available||$('sceneMode').value!=='magenta'||!sceneWanted();
   const isPiano=$('sceneMode').value==='floor-piano';
   $('pianoControls').hidden=!isPiano;
   const percussion=isPercussion($('sceneMode').value);
@@ -165,6 +176,9 @@ function lockSessionOptions() {
 }
 async function start() {
   if (starting || running || stopping) return;
+  $('sceneMode').value = availableScene($('sceneMode').value, magentaAvailability.available);
+  store.set('sceneMode', $('sceneMode').value);
+  scene.setMode($('sceneMode').value);
   const generation = ++sessionGeneration;
   lastF = null;
   starting = true; $('go').textContent = 'Cancel'; lockSessionOptions();
@@ -674,7 +688,7 @@ for (const id of ['mode', 'model', 'res', 'mirror', 'source']) {
   const saved = store.get(id, null); if (saved !== null) $(id).value = saved;
 }
 $('camRow').hidden = $('source').value !== 'camera'; $('fileRow').hidden = $('source').value !== 'file';
-$('sceneMode').value = sceneMode(store.get('sceneMode', null), store.get('sceneObjects', false));
+$('sceneMode').value = availableScene(sceneMode(store.get('sceneMode', null), store.get('sceneObjects', false)), magentaAvailability.available);
 store.set('sceneMode', $('sceneMode').value);
 scene.setMode($('sceneMode').value);
 $('pianoListening').value=store.get('pianoListening','piano-only')==='piano-body'?'piano-body':'piano-only';
@@ -684,7 +698,7 @@ $('pianoNearCamera').checked=store.get('pianoNearCamera',true)!==false;
 scene.setPianoNearCamera($('pianoNearCamera').checked);
 $('pianoNearCamera').onchange=()=>{scenePointer.cancel();store.set('pianoNearCamera',$('pianoNearCamera').checked);scene.setPianoNearCamera($('pianoNearCamera').checked);};
 scene.mirror=$('mirror').value==='1';
-$('sceneMode').onchange = () => { store.set('sceneMode', $('sceneMode').value);scene.setMode($('sceneMode').value);lockSessionOptions(); };
+$('sceneMode').onchange = () => { $('sceneMode').value=availableScene($('sceneMode').value,magentaAvailability.available);store.set('sceneMode', $('sceneMode').value);scene.setMode($('sceneMode').value);lockSessionOptions(); };
 $('sceneDebug').onchange = () => { scene.debug = $('sceneDebug').checked; $('sceneTouchHelp').hidden=!scene.debug;recordConfiguration(); };
 $('sceneTouch').checked = store.get('sceneTouch',true); scene.setTouchEnabled($('sceneTouch').checked);
 $('sceneTouch').onchange = () => { store.set('sceneTouch',$('sceneTouch').checked);scene.setTouchEnabled($('sceneTouch').checked);recordConfiguration(); };
@@ -902,3 +916,9 @@ function recTick() {
   setTimeout(recTick, 250);
 }
 $('rec').onclick = () => toggleRecord();
+// Local integrity verification is asynchronous. Do not accept a scene or
+// Start click before saved settings and their event handlers are installed.
+$('sceneMode').disabled = false;
+$('go').disabled = false;
+document.body.dataset.ready = 'true';
+status('idle');
