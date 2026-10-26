@@ -3,6 +3,7 @@ import { Hands } from '../web/live/hands.js';
 import { Recorder, packageRecording } from '../web/live/recorder.js';
 import { modelAsset } from '../web/live/model-assets.js';
 import { Engine } from '../web/live/audio.js';
+import { watchTests } from './watches.test.js';
 
 function assert(ok, message) { if (!ok) throw new Error(message); }
 function equal(actual, expected, message) { assert(JSON.stringify(actual) === JSON.stringify(expected), message); }
@@ -62,7 +63,7 @@ async function microphoneTests(options, ctx, passed) {
     await recorder.start(options); await wait(120);
     const off = await unpack(await recorder.stop());
     assert(requests === 0 && off.manifest.microphone.outcome === 'disabled', 'default off never requests microphone');
-    assert(!off.manifest.artifacts.microphone && Object.keys(off.files).length === 3, 'default bundle files unchanged');
+    assert(!off.manifest.artifacts.microphone && Object.keys(off.files).length === 7, 'default bundle includes empty watch contract');
     for (const audioOnly of [false, true]) {
       await recorder.start({ ...options, audioOnly, recordMicrophone: true });
       assert(recorder.microphone.outcome === 'recording', 'microphone active');
@@ -201,7 +202,7 @@ async function microphoneTests(options, ctx, passed) {
     released(micStream);
     assert(failed && recorder.pending.microphone.size, 'microphone retained for retry');
     const recovery = recorder.recoveryFiles();
-    assert(recovery.length === 4 && recovery.some(f => f.name.startsWith('microphone.')), 'microphone recovery download');
+    assert(recovery.length === 8 && recovery.some(f => f.name.startsWith('microphone.')), 'microphone recovery download');
     const microphoneRecovery = await (await fetch(recovery.find(f => f.name.startsWith('microphone.')).url)).arrayBuffer();
     const { manifest, files } = await unpack(await recorder.retry());
     equal(Array.from(new Uint8Array(microphoneRecovery)), Array.from(files[manifest.artifacts.microphone.path]), 'retry retains identical microphone bytes');
@@ -343,7 +344,7 @@ export async function runTests() {
   try { await recorder.stop(); } catch { failed = true; }
   finally { window.Worker = OriginalWorker; }
   assert(failed && recorder.pending && !recorder.busy, 'failed packaging retained');
-  assert(recorder.recoveryFiles().length === 3, 'recovery downloads');
+  assert(recorder.recoveryFiles().length === 7, 'recovery downloads');
   const retried = await recorder.retry();
   const audioFiles = window.fflate.unzipSync(new Uint8Array(await (await fetch(retried.url)).arrayBuffer()));
   const audioManifest = JSON.parse(new TextDecoder().decode(audioFiles['manifest.json']));
@@ -352,6 +353,7 @@ export async function runTests() {
   recorder.releaseDownloads();
   passed.push('audio-only, repeat session reset, worker failure, recovery and retry');
   await microphoneTests(options, ctx, passed);
+  await watchTests(options, unpack, passed);
   clearInterval(painter); source.getTracks().forEach(t => t.stop()); video.pause(); await ctx.close();
   return { passed, fixtureSize: fixtureZip.size };
 }

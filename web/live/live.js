@@ -6,6 +6,8 @@ import { SOURCES, DESTS, PRESETS, defaults, applyPreset, evaluate } from './mapp
 import { Bounce } from './bounce.js';
 import { Hands, GESTURES, HAND_EDGES } from './hands.js';
 import { Recorder } from './recorder.js';
+import { Watches, LIMBS } from './watches.js';
+import { WatchPlots } from './watch-plots.js';
 import { SceneController } from './scene/controller.js';
 import { ScenePointerControls } from './scene/drag.js';
 import { sceneMode, isPercussion, SCENE_MODES, INSTRUMENTS } from './scene/instruments.js';
@@ -52,6 +54,77 @@ const feats = new Features(), engine = new Engine();
 const piano = new PianoPlayer(engine);
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
+const watchPlots = new WatchPlots($('watchPlots'));
+watchPlots.setEnabled(store.get('watchPlots', true));
+const watches = new Watches({ onSample: (sample, receipt) => {
+  recorder.watchSample(sample, receipt); watchPlots.append(sample, receipt);
+},
+  locked: () => recorder.starting || recorder.recording || recorder.busy, onChange: () => renderWatches() });
+for (let i = 0; i < 100; i++) {
+  const pair = String(i).padStart(2, '0');
+  $('watchArms').add(new Option(pair, pair)); $('watchLegs').add(new Option(pair, pair));
+}
+$('watchLegs').add(new Option('Disabled', ''), 0);
+try { const saved = JSON.parse(localStorage.getItem('watchPairs')); if (saved) watches.setAssignments(saved); } catch { /* defaults */ }
+function renderWatches() {
+  if (!$('watchArms').options.length) return;
+  watchPlots.sync(watches);
+  $('watchArms').value = watches.assignments.armsPairID;
+  $('watchLegs').value = watches.assignments.legsPairID ?? '';
+  for (const id of ['watchArms', 'watchLegs']) $(id).disabled = watches.assignmentsLocked;
+  const target = watches.assignments.legsPairID ? 4 : 2;
+  const connected = [...watches.devices.values()].filter(d => d.connected && !d.connecting).length;
+  const allAdded = watches.devices.size >= target;
+  $('watchProgress').textContent = connected === target ? `All ${target} watches connected.` : `${connected} of ${target} watches connected.`;
+  $('watchConnect').disabled = !!watches.supportMessage || watches.pending > 0 || allAdded || watches.activeCount >= target;
+  $('watchConnect').textContent = watches.pending ? 'Choose a watch…' : connected === target ? 'All watches connected'
+    : allAdded ? 'All watches added' : watches.devices.size ? 'Connect next watch' : 'Connect watch';
+  $('watchAutoStatus').textContent = watches.autoMessage;
+  $('watchAuto').disabled = !!watches.supportMessage;
+  $('watchStatus').textContent = watches.supportMessage || watches.error || watches.availabilityMessage || (watches.pending
+    ? 'Looking for watches… Select your watch, then click Pair.'
+    : allAdded ? 'Use the controls below to disconnect or reconnect a watch.'
+    : watches.devices.size ? 'Select Connect next watch to add another. Previously selected watches are hidden from the list.'
+    : 'Connect watch shows nearby M5StickC-IMU watches. Select your watch, then click Pair.');
+  const help = $('watchHelp'), needsHelp = watches.discoveryHelp || watches.availability === false;
+  if (needsHelp && !help.dataset.shownForError) { help.open = true; help.dataset.shownForError = '1'; }
+  if (!needsHelp) delete help.dataset.shownForError;
+  // Reuse controls during indicator refresh so keyboard focus is preserved.
+  LIMBS.forEach((limb, id) => {
+    let row = $(`watchSlot${id}`);
+    if (!row) {
+      row = document.createElement('div'); row.id = `watchSlot${id}`; row.className = 'status';
+      row.append(document.createElement('span'), document.createElement('button')); $('watchDevices').append(row);
+    }
+    const d = [...watches.devices.values()].find(x => x.device_id === id), button = row.lastChild;
+    row.firstChild.textContent = `${limb}: ${d ? `${d.name} · ${watches.status(d)} · ${d.battery ?? '—'}% · ${watches.rate(d).toFixed(0)} Hz${d.error ? ' · ' + d.error : ''}` : id >= 2 && !watches.assignments.legsPairID ? 'disabled' : 'not connected'} `;
+    button.hidden = !d; button.disabled = !!(d?.connecting && d?.paused);
+    button.textContent = d?.connecting ? (d.paused ? 'Canceling…' : 'Cancel connection') : d?.connected ? 'Disconnect' : 'Reconnect';
+    button.onclick = () => d.connected || d.connecting ? watches.disconnect(d.device.id) : watches.reconnect(d.device.id).catch(error => { watches.error = error.message; renderWatches(); });
+  });
+}
+for (const id of ['watchArms', 'watchLegs']) $(id).onchange = () => {
+  try {
+    watches.setAssignments({ armsPairID: $('watchArms').value, legsPairID: $('watchLegs').value || null });
+    localStorage.setItem('watchPairs', JSON.stringify(watches.assignments)); watches.error = '';
+  } catch (error) { watches.error = error.message; }
+  renderWatches();
+};
+$('watchConnect').onclick = () => watches.connect().catch(() => {});
+$('watchAuto').checked = store.get('watchAutoConnect', true);
+$('watchAuto').onchange = event => {
+  store.set('watchAutoConnect', event.target.checked);
+  void watches.setAutoConnect(event.target.checked);
+};
+$('watchShowPlots').checked = watchPlots.enabled;
+$('watchShowPlots').onchange = event => {
+  watchPlots.setEnabled(event.target.checked); store.set('watchPlots', event.target.checked);
+};
+renderWatches(); setInterval(renderWatches, 500);
+void watches.setAutoConnect($('watchAuto').checked);
+watches.refreshAvailability();
+navigator.bluetooth?.addEventListener?.('availabilitychanged', () => watches.refreshAvailability());
+window.addEventListener('focus', () => { watches.refreshAvailability(); void watches.restoreAuthorized(); });
 const magenta = new MagentaScene(engine,scene,{store,mirror:()=>$('mirror').value==='1',onChange:()=>recordConfiguration()});
 let lastBounce = null, lastCapMs = 0;
 let lastVals = null, lastF = null, flashes = [], fpsT = [], inferMs = 0, t0 = performance.now();
@@ -885,7 +958,7 @@ async function toggleRecord() {
     microphoneStatus({ selected: $('recMic').checked, outcome: 'pending' });
     try {
       const starting = recorder.start({ engine, video: v, overlay: cv, mirror, sceneLayer: now => scene.render(now),
-        audioOnly: $('recWhat').value === 'audio',
+        audioOnly: $('recWhat').value === 'audio', watches,
         recordMicrophone: $('recMic').checked, onMicrophoneStatus: recordingStatus,
         configuration: recordingConfiguration, onUnexpectedStop: () => finishRecording(),
         finalAnalysis: () => $('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0)}:$('sceneMode').value==='floor-piano'?{piano_events:piano.takeEvents(recorder.t0)}:null,

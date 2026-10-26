@@ -33,14 +33,36 @@ MODEL = ('https://storage.googleapis.com/mediapipe-models/pose_landmarker/'
          'pose_landmarker_{m}/float16/1/pose_landmarker_{m}.task')
 FILES = ['vision_bundle.mjs'] + [f'wasm/vision_wasm{v}_internal.{e}'
                                  for v in ('', '_module', '_nosimd') for e in ('js', 'wasm')]
+# Chrome still gates persisted Bluetooth permissions and getDevices() behind
+# this feature. It retains the initial device chooser and service permissions.
+# Scope the launch to Bluetooth instead of enabling all experimental web APIs.
+CHROME_WATCH_ARGS = ['--enable-features=WebBluetoothNewPermissionsBackend']
 
 
 def open_browser(url):
     """Prefer Chrome, falling back to the default browser if unavailable."""
     if sys.platform == 'darwin':
-        # Launch Services finds Chrome even when it is not the default browser.
+        # Launch the executable from the same context as this server. On macOS
+        # the Launch Services (`open -a`) path exhibited empty BLE discovery,
+        # while a direct launch with the same Chrome profile received watches.
+        # Keep Chrome outside the server's process group so Ctrl+C stops only
+        # the server. Chrome handles reuse of an already-running profile.
+        for application in (Path('/Applications/Google Chrome.app'),
+                            Path.home() / 'Applications/Google Chrome.app'):
+            executable = application / 'Contents/MacOS/Google Chrome'
+            if not executable.is_file():
+                continue
+            try:
+                subprocess.Popen([str(executable), *CHROME_WATCH_ARGS, url], stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+                return True
+            except OSError:
+                pass
+        # Launch Services can still find installations in nonstandard locations.
+        # Keep the URL an operand so an already-running Chrome receives it too.
         try:
-            if subprocess.run(['open', '-a', 'Google Chrome', url],
+            if subprocess.run(['open', '-a', 'Google Chrome', url, '--args', *CHROME_WATCH_ARGS],
                               stderr=subprocess.DEVNULL).returncode == 0:
                 return True
         except OSError:
@@ -54,7 +76,7 @@ def open_browser(url):
                            if os.environ.get(root)]
         for candidate in candidates:
             executable = shutil.which(candidate)
-            if executable and webbrowser.BackgroundBrowser(executable).open(url):
+            if executable and webbrowser.BackgroundBrowser([executable, *CHROME_WATCH_ARGS, '%s']).open(url):
                 return True
     return webbrowser.open(url)
 
@@ -138,8 +160,11 @@ def main():
     runtime = MagentaRuntime()
     srv = create_server(runtime=runtime, port=a.port)
     url = f'http://127.0.0.1:{a.port}/live/'
-    print(url)
+    print(url, flush=True)
+    print('Press Ctrl+C in this terminal to stop the server.', flush=True)
     if not a.no_browser:
+        print('Chrome watch permissions: pair each watch once; previously paired watches reconnect automatically.', flush=True)
+        print('If Chrome was already open, fully quit it and restart this command to enable remembered watches.', flush=True)
         open_browser(url)
     def terminate(signum, frame):
         raise SystemExit(0)

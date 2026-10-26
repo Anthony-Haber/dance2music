@@ -25,6 +25,17 @@ available for development and the video-analysis workflow.
     python live.py                                   # live from a camera, http://127.0.0.1:5092/live/
     python live.py --offline                         # prepare pose, hands, 3D, and native Magenta for offline use
 
+The live server stays in its terminal; press **Ctrl+C** to stop it and release
+port 5092. **Connect watch** automatically scans for devices whose names start
+with `M5StickC-IMU-`, hiding unrelated Bluetooth devices. Select
+the `M5StickC-IMU-<pair>-L/R` watch in Chrome's chooser once per watch. Leave
+**Automatically connect paired watches** enabled to restore them when opening
+the page and reconnect after a dropped connection. The launcher enables Chrome's
+experimental Bluetooth permission persistence feature. **Fully quit Chrome once
+before running the updated `python3 live.py`** so the launch option takes effect.
+Use the same Chrome profile and page address. On macOS, the launcher opens Chrome
+directly; fully quitting also helps recover stalled Bluetooth discovery.
+
 | file | what |
 |---|---|
 | `config.py` | paths; `ROPEFLOW_ROOT` points at the rope engine (only `dance_pose.py music` and `sonify.py` need it) |
@@ -42,9 +53,11 @@ available for development and the video-analysis workflow.
 
 Browser **Record** now downloads one ZIP with the video (or sound only), raw
 33-point body pose, detailed hands when enabled, timestamps, and model/session
-metadata. It preserves data for later embedding and other offline analysis.
+metadata, plus every notification from up to four connected T-Watches.
+Use Arms/Legs pair assignments in **Watches**, then connect each watch once.
 The [recording format and Zones v0.2 compatibility notes](docs/browser-recording.md)
-describe the files and tests. Direct import into Zones requires a future importer.
+describe setup and timing. In the updated Python Zones app, **Import ZIP…**
+validates and converts the bundle for synchronized review and four-limb MIDI routing.
 
 Choose **3D Models** in **Scene** before Start to scan visible floor and tabletop regions and
 place up to three shapes. This optional feature targets Chrome on Apple Silicon

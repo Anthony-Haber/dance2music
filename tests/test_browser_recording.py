@@ -95,7 +95,7 @@ def check_live_controls(page, origin):
         rows = [json.loads(line) for line in archive.read('observations.jsonl').splitlines()]
         assert manifest['microphone']['outcome'] == 'disabled'
         assert 'microphone' not in manifest['artifacts']
-        assert len(archive.namelist()) == 3
+        assert len(archive.namelist()) == 7
         for artifact in manifest['artifacts'].values():
             assert hashlib.sha256(archive.read(artifact['path'])).hexdigest() == artifact['sha256']
     assert rows and manifest['observation_count'] == len(rows)
@@ -216,9 +216,42 @@ def check_microphone_controls(page, origin):
     print('PASS microphone controls: default-off reload, native microphone capture, locked selection, repeated sound-only take, interruption/denial notices and pending cancellation')
 
 
+def check_watch_recovery_controls(browser, origin):
+    page = browser.new_page()
+    page.add_init_script('''{
+        const bluetooth = new EventTarget();
+        window.watchChooserRequests = [];
+        bluetooth.getAvailability = async () => false;
+        bluetooth.requestDevice = async options => {
+            watchChooserRequests.push(options);
+            throw new DOMException('No device selected', 'NotFoundError');
+        };
+        Object.defineProperty(navigator, 'bluetooth', { configurable: true, value: bluetooth });
+    }''')
+    try:
+        page.goto(origin + '/web/live/')
+        page.wait_for_function("document.querySelector('#watchStatus').textContent.includes('cannot currently access')")
+        assert page.locator('#watchHelp').get_attribute('open') is not None
+        page.locator('#watchConnect').click()
+        page.wait_for_function("document.querySelector('#watchStatus').textContent.includes('list was empty')")
+        assert page.locator('#watchScanAll').count() == 0, 'no separate scanning step'
+        requests = page.evaluate('window.watchChooserRequests')
+        assert len(requests) == 1, 'one click opens one scanner; cancellation does not reopen it'
+        assert requests[0]['filters'] == [{'namePrefix': 'M5StickC-IMU-'}]
+        assert 'acceptAllDevices' not in requests[0]
+        assert requests[0]['optionalServices'] == ['12345678-1234-5678-1234-56789abcdef0']
+        page.locator('#watchHelp summary').click()
+        page.wait_for_timeout(650)
+        assert page.locator('#watchHelp').get_attribute('open') is None
+        print('PASS watch connection UI: one-click watch prefix filtering, Bluetooth status, cancellation and dismissible guidance')
+    finally:
+        page.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--zones-root', type=Path)
+    parser.add_argument('--watch-fixtures-dir', type=Path)
     args = parser.parse_args()
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=ROOT))
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -253,10 +286,23 @@ def main():
                 reader.readAsDataURL(window.fixtureZip);
             })""")
             check_zip(base64.b64decode(data), args.zones_root)
-            check_live_controls(page, origin)
-            check_microphone_controls(page, origin)
+            if args.watch_fixtures_dir:
+                args.watch_fixtures_dir.mkdir(parents=True, exist_ok=True)
+                for index in range(page.evaluate('window.watchFixtureZips.length')):
+                    encoded = page.evaluate('''index => new Promise(resolve => {
+                        const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(window.watchFixtureZips[index]);
+                    })''', index)
+                    (args.watch_fixtures_dir / f'browser-{index}.zip').write_bytes(base64.b64decode(encoded))
+            try:
+                check_live_controls(page, origin)
+                check_microphone_controls(page, origin)
+            except Exception:
+                print('Live UI failure:', page.locator('#recMsg').inner_text(), 'module errors:', errors, flush=True)
+                raise
             assert not errors, errors
             print('PASS no browser module/runtime errors')
+            check_watch_recovery_controls(browser, origin)
             browser.close()
     finally:
         server.shutdown()

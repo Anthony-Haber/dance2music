@@ -6,6 +6,7 @@
 // Media and timestamped observations are packaged locally in one ZIP.
 import { Observations } from './observations.js';
 import { acquireMicrophoneAudioSession } from './audio-session.js';
+import { WatchCapture } from './watches.js';
 
 const TYPES = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
 const ATYPES = ['audio/mp4;codecs=mp4a.40.2', 'audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
@@ -62,7 +63,7 @@ export class Recorder {
   // engine: for its audio tap; video, overlay: the elements to composite;
   // label(): text to burn in (the chord); mirror(): whether to flip the video
   async start({ engine, video, overlay, label, mirror, audioOnly, configuration, onUnexpectedStop, sceneLayer,
-    recordMicrophone = false, onMicrophoneStatus, finalAnalysis }) {
+    recordMicrophone = false, onMicrophoneStatus, finalAnalysis, watches = null }) {
     if (this.starting || this.recording || this.busy || this.pending) throw new Error('Finish or recover the previous recording first');
     let cancel;
     const cancelled = new Promise(resolve => { cancel = () => resolve(null); });
@@ -134,6 +135,7 @@ export class Recorder {
         composited: !audioOnly, audio_source: 'instrument_output', overlays_burned_in: !audioOnly } });
       this.observations.configuration(typeof configuration === 'function' ? configuration() : configuration, this.t0);
       this.rec.start(1000);
+      this.watches = watches; this.watchCapture = new WatchCapture(this.t0);
       if (this.microphoneStream) {
         try {
           const track = this.microphoneStream.getAudioTracks()[0];
@@ -180,6 +182,9 @@ export class Recorder {
   }
 
   observe(observation) { if (this.active) this.observations.append(observation); }
+  watchSample(sample, receipt) {
+    if (this.active && this.endMs === null) this.watchCapture?.append(sample, receipt);
+  }
   configuration(value) { if (this.active) this.observations.configuration(value, performance.now()); }
 
   async stop(onProgress) {
@@ -200,14 +205,16 @@ export class Recorder {
         { type: this.microphone.mime_type.split(';')[0] }) : null;
       if (this.microphone.outcome === 'recording') this.microphone.outcome = microphone ? 'complete' : 'no_audio';
       manifest.microphone = { ...this.microphone };
+      const extras = this.watchCapture.finish(manifest, this.watches, this.endMs, `recording.${ext}`);
       const date = manifest.created_at.replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
       this.name = `dance2music-${date}-${manifest.session_id.slice(0, 8)}.zip`;
-      this.pending = { media, mediaName: `recording.${ext}`, observations, manifest, microphone,
+      this.pending = { media, mediaName: `recording.${ext}`, observations, manifest, microphone, extras,
         microphoneName: microphone ? `microphone.${this.microphone.mime_type.includes('mp4') ? 'm4a' : 'webm'}` : null };
     } finally {
       this.cleanupTracks(); this.rec = null; this.loopStart = null;
       this.releaseMicrophone(); this.microphoneRec = null; this.microphoneChunks = []; this.microphoneDone = null;
       this.chunks = []; this.observations = null; this.busy = false;
+      this.watchCapture = null;
     }
     return this.retry(onProgress);
   }
@@ -231,6 +238,7 @@ export class Recorder {
     this.releaseDownloads();
     return [[this.pending.mediaName, this.pending.media],
       ...(this.pending.microphone ? [[this.pending.microphoneName, this.pending.microphone]] : []),
+      ...(this.pending.extras || []).map(file => [file.name, file.blob]),
       ['observations.jsonl', this.pending.observations],
       ['manifest.json', new Blob([JSON.stringify({ ...this.pending.manifest, packaging_incomplete: true }, null, 2)],
         { type: 'application/json' })]].map(([name, blob]) => ({ name, url: this.url(blob) }));

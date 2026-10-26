@@ -9,6 +9,9 @@ is one `dance2music-<UTC-time>-<session-id>.zip` containing:
 - `manifest.json`: session identity, timing, effective configuration history,
   model provenance, artifact sizes, and SHA-256 checksums.
 - `observations.jsonl`: one JSON object per processed video frame.
+- `imu_data.csv`: every valid watch notification received during capture.
+- `metadata.json`, `recording_meta.json`, `sensor-assignments.json`: Python and
+  Soniqflow assignment metadata, included even in takes without watches.
 
 Recording always includes the body pose. Detailed hands are included when
 enabled; off/near/far changes are preserved within the recording. Sound-only
@@ -59,9 +62,9 @@ snapshots. Moved objects have `placement: "manual"` with updated support, centre
 orientation, and surface; earlier snapshots keep their original transforms.
 Mouse dragging itself emits no musical touch event.
 
-This format preserves evidence for a future Zones importer. **It is not yet
-directly loadable in `soniqflow-m5stack-python`'s `scripts/zones_app.py`.** This
-change adds no importer and modifies no Zones source files.
+The updated `soniqflow-m5stack-python/scripts/zones_app.py` imports these bundles
+with **Import ZIP…** (Import browser recording ZIP). Browser pose JSON remains
+original evidence; it is not relabelled as a native Python pose/hand cache.
 
 Check **Record microphone separately** before pressing **Record** to include
 microphone audio in either video or sound-only mode. The checkbox starts off on
@@ -106,6 +109,10 @@ JSON files are deflated. ZIP32 bundles exceeding the supported 4 GB size bound
 fail with recovery downloads instead of producing an invalid archive. Recording
 and final ZIP blobs still require browser storage/memory proportional to their
 size; there is no persistent recording or recovery after closing the tab.
+
+Watch artifacts also have `path`, `size_bytes`, and `sha256` entries under
+`artifacts.imu`, `artifacts.metadata`, `artifacts.recording_meta`, and
+`artifacts.sensor_assignments`. They count toward size limits and recovery files.
 
 `media` records the actual MediaRecorder MIME type, audio-only selection,
 encoded dimensions, nominal canvas rate (30 Hz), compositing and burned-in
@@ -245,7 +252,190 @@ timestamp when its effect starts during recording. Contacts are application
 estimates rather than measured physical collisions. Held contact does not emit
 repeated events. Depth maps and masks remain excluded.
 
-## Mapping to Zones v0.2
+## Four-watch setup and Zones review
+
+Use a browser exposing Web Bluetooth, such as desktop Chrome, over HTTPS or
+localhost. Unsupported browsers show a watch explanation and keep normal
+recording available. Each **Connect watch** click opens one device chooser, as
+required by [Web Bluetooth's user-gesture rule](https://developer.chrome.com/docs/capabilities/bluetooth).
+
+Firmware advertises `M5StickC-IMU-<pair>-L/R`, including on T-Watch hardware.
+Arms default to pair `00`, legs to `01`; legs can be disabled. These preferences
+persist locally. Assignments are locked during connection/startup/capture and
+cannot share a pair. Device IDs are left/right arm `0/1`, left/right leg `2/3`;
+the firmware role stays `0` for L and `1` for R, independently of limb ID.
+Indicators show name, connection/streaming state, battery, and recent Hz.
+Two seconds without valid notifications produces “connected · no stream”.
+Battery bytes `0` and `255` mean unknown. Errors remain visible on the slot.
+
+**Show live graphs** displays a scrolling plot for each limb below the camera
+view as soon as a watch is selected. No camera or recording needs to be running.
+Choose acceleration XYZ, acceleration magnitude, or gyroscope XYZ, with a 5, 8,
+or 20 second window. Axes use a common automatic scale across limbs; acceleration
+includes gravity (roughly 1 g magnitude at rest). T-Watch gyro fields remain zero.
+The graphs refresh at up to 20 frames per second, preserve gaps over 200 ms,
+and keep a bounded display history. Hiding them does not stop capture; recording
+still saves every received valid sample. Graphs are a live monitor and are not
+burned into the recorded camera video.
+
+**Connect watch** starts scanning immediately and filters Chrome's chooser by
+the shared `M5StickC-IMU-` name prefix. Unrelated devices such as keyboards and
+mice are hidden. This standard Web Bluetooth name filter needs no experimental
+flags, local launcher, or user configuration in supported Chrome browsers.
+Wait a few seconds for your watch and select it; there is no separate scanning
+action. The app also validates the complete watch name and assigned pair before
+making a GATT connection. Service UUIDs are requested through `optionalServices`,
+not used as discovery filters, because the firmware does not advertise them.
+Each new watch still needs selection in the browser's permission chooser.
+Chrome closes its chooser after one selection; the page cannot keep it open,
+enable multiple selection, or read the full detected-device list. After each
+selection, **Connect next watch** opens the chooser with already selected watch
+names excluded. Progress shows connected watches out of the configured two or
+four slots. When all slots connect, the button changes to **All watches connected**
+and is disabled. Selected but disconnected watches use their individual
+**Reconnect** buttons. Partial sessions remain supported; this progress is not
+a count of devices detected nearby. Every new chooser is opened by a page click,
+preserving the browser's required user interaction.
+
+**Automatically connect paired watches** defaults on and is remembered locally.
+Once approved, watches for the selected arms/legs pairs connect when the page
+opens, without another chooser. The app uses `getDevices()` to retrieve approved
+devices and `watchAdvertisements()` when available to discover them before
+connecting. A dropped or out-of-range watch retries automatically, with pauses
+of 2, 4, 8, 16, then at most 30 seconds between attempts. Each discovery attempt
+waits up to 12 seconds for an advertisement. Each connection repeats service
+discovery, time synchronization, and notification subscription. Gaps stay in
+recordings and graphs. Duplicate authorized devices for one limb require an
+explicit chooser selection; unrelated devices are never connected.
+
+**Disconnect** or **Cancel connection** pauses that watch until **Reconnect** or
+the next page load. Turning automatic connection off cancels pending automatic
+attempts and retries, while healthy connections remain active. Permission or
+missing-service errors remain visible and require an explicit retry after fixing
+the problem. Turning automatic connection back on resumes eligible watches.
+
+Chrome currently keeps remembered devices behind its experimental Bluetooth
+permissions feature. `live.py` passes
+`--enable-features=WebBluetoothNewPermissionsBackend` to Chrome; this enables the
+required APIs and persisted permissions while retaining the initial chooser.
+**Fully quit Chrome once before launching the updated `python3 live.py`**: an
+already-running Chrome process ignores new launch options. Pair each watch once
+after this change, and use the same Chrome profile and origin (including port;
+`localhost` and `127.0.0.1` have separate permissions). Clearing site permissions
+requires pairing again. The launcher does not enable all experimental web
+features or modify Chrome's saved flags. When opening the page without this
+launcher, the corresponding `chrome://flags/#enable-web-bluetooth-new-permissions-backend`
+setting can be enabled manually; see [Chrome's getDevices sample](https://googlechrome.github.io/samples/web-bluetooth/get-devices.html).
+Browsers without `getDevices()` explain the limitation and still reconnect watches
+approved in the current tab after an unexpected disconnect.
+
+If the chooser stays empty, **fully quit Chrome with ⌘Q**
+and run `python3 live.py` again, even if Bluetooth permission is already enabled. Closing
+a tab or window does not fully quit Chrome. On macOS, check **System Settings → Privacy & Security →
+Bluetooth → Google Chrome**, then fully quit/reopen Chrome. Disconnect watches
+from other apps, phones, and tabs before retrying. The app reports when Chrome
+says Bluetooth is unavailable; a cancelled/empty chooser now exposes these
+recovery steps. The current watch firmware advertises names without its service
+UUID, so discovery does not require advertised services.
+
+On macOS, `live.py` launches the Chrome executable directly in its normal
+profile, using the launch method that restored watch discovery on the test Mac.
+It falls back to Launch Services for nonstandard Chrome installations. If
+Chrome is already running, its existing process/profile is reused; fully quit
+an existing session with stalled discovery before retrying. The Python server
+stays in your terminal: **Ctrl+C** stops it and releases port 5092. Closing
+Chrome alone does not stop the server.
+
+The receiver accepts exactly 36-byte little-endian v2 packets (`<6fQBBBB>`),
+using service/notify/time-sync UUIDs `12345678-1234-5678-1234-56789abcdef0/1/2`.
+Each connection discovers the service again, writes an eight-byte epoch-ms
+timestamp, then subscribes. Failed time sync is recorded and shown; reception
+can continue using receipt time. Invalid length/version/role, nonfinite values,
+and identity conflicts are rejected. The canonical transform is
+`(ax, -ay, az, -gx, gy, -gz)`; T-Watch's zero gyro fields remain zero.
+
+The CSV header is exactly:
+
+```csv
+sync_time,timestamp_ms,device_id,ax,ay,az,gx,gy,gz,role,button_flags
+```
+
+`sync_time` is notification arrival time on the recorder's monotonic clock,
+relative to actual capture start. `timestamp_ms` is the unmodified device
+uint64 timestamp. Every valid notification becomes one row, with no browser
+resampling. Pending microphone permission, stopped takes, and packaging do not
+capture IMU. Watches stay connected across takes; unexpected disconnects retry
+when automatic connection is enabled. Manual Disconnect pauses retries.
+`manifest.watches` includes assignments, orientation, protocol, per-device
+counts, recording-relative connection intervals and time-sync outcomes. Negative
+time-sync timestamps describe synchronization before recording began.
+
+Install local `ffmpeg` and `ffprobe` on PATH for Python import (for example,
+`brew install ffmpeg` on macOS). Import runs in a cancelable worker and validates
+the manifest, checksums, CSV, assignments, and archive paths. Only a fully
+converted take is published as a new folder in built-in Sources. Existing takes
+and the original ZIP are preserved. Source files live in `browser_originals/`,
+with `source_manifest.json` at the recording root. Converted output is
+`video.mp4` when present, PCM `audio.wav` for instruments, and optional
+`microphone.wav`. `sync_info.json` uses decoded media timestamps and recorded
+microphone offsets, never pose-observation frame counts.
+
+Choose the imported take in **IMU Recording**, then Play. The same transport
+controls all four sensor channels, companion video, and selectable instrument
+or microphone audio. Instrument audio is the default; **Send MIDI** mutes
+recorded audio while generating new music. Audio-only takes also work.
+The **Arms/Legs** selector chooses the pair for existing classification/music;
+limb-labelled CC inputs and note mappings remain independent. Missing channels
+produce no controls, and processing never fills gaps longer than 200 ms.
+
+Limb notes start disabled. Defaults: notes `60/62/64/65`, MIDI channel 1,
+velocity 100, duration 120 ms, activity `abs(norm(acceleration) - 1 g)`, onset
+0.35 g, release 0.15 g, and minimum interval 200 ms. All values are editable.
+Release is required before another onset; overlapping owners of the same note
+share its release. Seek, stop, source/pair changes, and unavailable input reset
+the appropriate state. Note settings and existing CC cards persist in presets.
+
+Receipt-time alignment includes BLE delivery and scheduling delays. Browser
+media capture and separate microphone recording are independent clocks; this
+format supports approximate synchronized review, not sample-accurate sensor,
+video, or audio synchronization. No browser watch-driven music, recognition,
+native pose-cache import, classifier retraining, or Python live BLE
+expansion is included.
+
+### Hardware acceptance (manual)
+
+Connect `00-L`, `00-R`, `01-L`, and `01-R`; confirm their limb slots and moving
+Hz indicators independently. Check approximately 1 g stationary acceleration
+in the CSV and zero T-Watch gyro fields. Record with all four, disconnect one
+for at least a second, explicitly reconnect, and record a second take. Confirm
+the gap, repeated time sync, per-take sample counts, and retained connections.
+Import both ZIPs in Zones, play video/instrument/microphone tracks, switch the
+processing pair, and test each enabled limb note/CC independently. Seek and
+stop during held notes and verify silence. This check requires physical watches
+and a MIDI/audio output; mocked automated tests do not certify the hardware.
+
+For an opt-in hardware test through the actual app's Chrome chooser:
+
+```sh
+python tests/test_browser_watches_hardware.py --output /tmp/watch-hardware
+```
+
+This selects only the four `00-L/R` and `01-L/R` watches, tests time sync and a
+disconnect/reconnect, saves a ZIP with real IMU and synthetic media, and releases
+all connections. It needs Chrome Bluetooth permission and physical watches;
+it is not part of the ordinary mocked test suite. `report.json` records measured
+rates, packet counts, gravity magnitude, battery, and gyro values.
+
+Also verify discovery in the user's ordinary Chrome profile. During hardware
+testing on 2026-10-26, both ordinary and fresh test profiles could show an empty
+chooser with Bluetooth permission enabled: macOS logged zero advertisements
+delivered to Chrome while a native scan saw all four watches. Fully quitting
+the app's Chrome process and relaunching restored discovery in the ordinary
+profile. All four watches then connected through the visible chooser. This is
+a recovery observed on that Mac, not a diagnosis of the underlying OS/browser
+fault; a passing isolated browser test alone does not verify the user's session.
+
+## Pose evidence mapping to Zones v0.2
 
 Inspected on 2026-10-12: branch `v0.2`, HEAD
 `ee3ef0fd6edcc0d3be8a81938b9d405267e0d46f`, **with uncommitted camera/hand work**.
@@ -284,6 +474,8 @@ Install `playwright` in a test environment with Google Chrome available, then:
 
 ```sh
 python tests/test_browser_recording.py --zones-root /path/to/soniqflow-m5stack-python
+python tests/test_browser_watch_plots.py
+python tests/test_browser_watch_autoconnect.py
 ```
 
 Omit `--zones-root` to run just the browser and ZIP tests. The Zones check uses
@@ -293,6 +485,22 @@ They cover missing values, raw hand freshness, async mode loading, crop/depth
 transforms, configuration changes, timing/loops, audio-only capture, retry, and
 Python ZIP/checksum/array validation. Real camera/model inference and Safari/
 Firefox still require platform smoke checks.
+
+Four-watch tests use reference-layout packets and four mocked GATT devices with
+real browser media/ZIP creation. Export import fixtures with
+`--watch-fixtures-dir /tmp/watch-fixtures`. In the Python repository, run
+`BROWSER_WATCH_FIXTURES=/tmp/watch-fixtures .venv/bin/python -m pytest -q
+tests/test_browser_import.py tests/test_limb_routing.py`. The import tests also
+generate MP4/WebM, microphone, and audio-only media using local FFmpeg.
+The plot test drives all four channels through notification decoding while the
+camera is off, checks signal selection, display gaps, bounded history and
+continued recorder delivery when hidden, and checks Retina/mobile layout.
+The automatic connection test checks the installed Chrome's real API availability
+with the launcher option, then uses simulated watches for restoration of four
+channels, discovery/retry/cancellation, duplicate identities, permission failures,
+page reload, persistent opt-out, and live graphs. It does not connect to physical
+watches or change the user's Chrome profile. Test servers and browsers close on
+completion.
 Microphone tests also cover default-off permission behavior, separate playable
 audio in both modes, denied/missing devices, initialization failures,
 disconnects/errors, pending permission cancellation and late-stream cleanup,
