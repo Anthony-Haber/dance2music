@@ -1,0 +1,1357 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1793191108.8847883,
+    "ast_hash": "e51077b6a7f1f67afc748f1a32a1557d",
+    "semantic_hash": ""
+  },
+  ".codex/hooks.json": {
+    "mtime": 1793191108.8858106,
+    "ast_hash": "bd8b41f49aae091ec2550b4d1fe36f21",
+    "semantic_hash": ""
+  },
+  ".specify/init-options.json": {
+    "mtime": 1793191108.8861122,
+    "ast_hash": "d39f7a5e7dbc9a4f9b378dde587aa909",
+    "semantic_hash": ""
+  },
+  ".specify/integration.json": {
+    "mtime": 1793191108.8862228,
+    "ast_hash": "562778eadf20b538f5ad8815254b9b00",
+    "semantic_hash": ""
+  },
+  ".specify/integrations/codex.manifest.json": {
+    "mtime": 1793191108.886331,
+    "ast_hash": "c25a246938e36a4e40616660e7704f2c",
+    "semantic_hash": ""
+  },
+  ".specify/integrations/speckit.manifest.json": {
+    "mtime": 1793191108.886427,
+    "ast_hash": "438ed5ff8485556bb6217c03ebffb26f",
+    "semantic_hash": ""
+  },
+  ".specify/memory/.constitution-template.json": {
+    "mtime": 1793191081.5945506,
+    "ast_hash": "7e3332a78cec1722b4351c6bf52dfc51",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/check-prerequisites.ps1": {
+    "mtime": 1793191108.8874352,
+    "ast_hash": "ea757a8951f649e1fb88e7106c040954",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/common.ps1": {
+    "mtime": 1793191108.8876007,
+    "ast_hash": "712f742b334e58724521d95232f2b890",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/create-new-feature.ps1": {
+    "mtime": 1793191108.8877747,
+    "ast_hash": "91871af950a45044d971fda64ece5f85",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/resolve-template.ps1": {
+    "mtime": 1793191108.8878489,
+    "ast_hash": "645ad018c6297df6e23949ac3e915749",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/setup-plan.ps1": {
+    "mtime": 1793191108.88791,
+    "ast_hash": "d1fb3697610c8aa9ce97e00bcd073ae4",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/powershell/setup-tasks.ps1": {
+    "mtime": 1793191108.8880134,
+    "ast_hash": "44c5ecb1cb4f92390a42cf1dea4e725f",
+    "semantic_hash": ""
+  },
+  ".specify/workflows/workflow-registry.json": {
+    "mtime": 1793191108.888116,
+    "ast_hash": "058f77bff1d5fb359027ee46cea42351",
+    "semantic_hash": ""
+  },
+  "config.py": {
+    "mtime": 1793191081.596855,
+    "ast_hash": "4210e7e77a2d17661ddbadbeb7ffd465",
+    "semantic_hash": ""
+  },
+  "dance_pose.py": {
+    "mtime": 1793191081.5969386,
+    "ast_hash": "cae04cae35709b7bed4f9d02d467e0cb",
+    "semantic_hash": ""
+  },
+  "harmony.py": {
+    "mtime": 1793191081.5976648,
+    "ast_hash": "39b57e122d1bf72450e29417b4f58ba5",
+    "semantic_hash": ""
+  },
+  "live.py": {
+    "mtime": 1793192410.4176466,
+    "ast_hash": "12ab839b9f826a4dd9dd1fb3e7b84fe9",
+    "semantic_hash": ""
+  },
+  "motion.py": {
+    "mtime": 1793191081.598352,
+    "ast_hash": "524b7cb1b8397b5c525f62dae1e6887c",
+    "semantic_hash": ""
+  },
+  "sonify.py": {
+    "mtime": 1793191081.600494,
+    "ast_hash": "fa6b1bdba5232dd9d752bd321d22b711",
+    "semantic_hash": ""
+  },
+  "synths.py": {
+    "mtime": 1793191081.6005971,
+    "ast_hash": "126b06bff958a888d10a5bc21e6df6a6",
+    "semantic_hash": ""
+  },
+  "vocabulary.py": {
+    "mtime": 1793191081.604782,
+    "ast_hash": "8158b1cbf01f5399704fbb38bfe36ab2",
+    "semantic_hash": ""
+  },
+  "web/live/audio.js": {
+    "mtime": 1793191779.631182,
+    "ast_hash": "665b70bc519c7ef9d94a0d848f808e9f",
+    "semantic_hash": ""
+  },
+  "web/live/bounce.js": {
+    "mtime": 1793191081.6076689,
+    "ast_hash": "bc1606ddcdf5bc76c005feeef1adc09b",
+    "semantic_hash": ""
+  },
+  "web/live/features.js": {
+    "mtime": 1793191081.607822,
+    "ast_hash": "f22d4f99a0676ef716227fa65497bf22",
+    "semantic_hash": ""
+  },
+  "web/live/hands.js": {
+    "mtime": 1793191414.247514,
+    "ast_hash": "ddfa2d721a489fbac55f2bea6985363a",
+    "semantic_hash": ""
+  },
+  "web/live/harmony.js": {
+    "mtime": 1793191081.6079972,
+    "ast_hash": "d82eec076c48bee66c84630c1b3647bf",
+    "semantic_hash": ""
+  },
+  "web/live/live.js": {
+    "mtime": 1793192792.5747728,
+    "ast_hash": "33259389527c39cb2e51c2b6cb820ee3",
+    "semantic_hash": ""
+  },
+  "web/live/mapping.js": {
+    "mtime": 1793191081.6086729,
+    "ast_hash": "391aa558da51825f411bf785b8b26571",
+    "semantic_hash": ""
+  },
+  "web/vendor/katex/contrib/auto-render.min.js": {
+    "mtime": 1793191081.612165,
+    "ast_hash": "71052e38485a2b06c4de2928b885aab9",
+    "semantic_hash": "71052e38485a2b06c4de2928b885aab9"
+  },
+  "web/vendor/katex/katex.min.js": {
+    "mtime": 1793191081.6146867,
+    "ast_hash": "f4e1ebdc2d32cfb3d40663302c96c4ff",
+    "semantic_hash": "f4e1ebdc2d32cfb3d40663302c96c4ff"
+  },
+  ".agents/skills/speckit-analyze/SKILL.md": {
+    "mtime": 1793191108.882963,
+    "ast_hash": "160f6e9d4784400dc0c259d59b94147f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-checklist/SKILL.md": {
+    "mtime": 1793191108.8831534,
+    "ast_hash": "a0618adee51133563f55d8941d950621",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-clarify/SKILL.md": {
+    "mtime": 1793191108.8833175,
+    "ast_hash": "b8c4584c687fe4629694d3a948344b6f",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-constitution/SKILL.md": {
+    "mtime": 1793191108.8834713,
+    "ast_hash": "acede4c45be0197a3e271b2eddecbe08",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-converge/SKILL.md": {
+    "mtime": 1793191108.8836238,
+    "ast_hash": "2e49b8dbd640a011c1ea44884cf034de",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-implement/SKILL.md": {
+    "mtime": 1793191108.883773,
+    "ast_hash": "eb649a0c0b244866c9ca25abad9629d4",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-plan/SKILL.md": {
+    "mtime": 1793191108.8841014,
+    "ast_hash": "f6c88970105a0057bcb8868013c5cafd",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-specify/SKILL.md": {
+    "mtime": 1793191108.8842218,
+    "ast_hash": "a94d26e789db8faf7f1bf57a823cae50",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-tasks/SKILL.md": {
+    "mtime": 1793191108.884374,
+    "ast_hash": "5eb1a7a8d62b72694fda83e97df5d61a",
+    "semantic_hash": ""
+  },
+  ".agents/skills/speckit-taskstoissues/SKILL.md": {
+    "mtime": 1793191108.8846698,
+    "ast_hash": "1e827900a91c8ac678d49aec91644c7f",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/SKILL.md": {
+    "mtime": 1793191108.8850398,
+    "ast_hash": "bb2bef44114226a8aec2c47c3b3c170e",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/add-watch.md": {
+    "mtime": 1793191108.885171,
+    "ast_hash": "d59d027fe449f06aa03905a01184e779",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/exports.md": {
+    "mtime": 1793191108.8852415,
+    "ast_hash": "9da2a2152e60a22f07f05fed5158f287",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/extraction-spec.md": {
+    "mtime": 1793191108.8853345,
+    "ast_hash": "42fef56a01698118f7fd722acdadea34",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/github-and-merge.md": {
+    "mtime": 1793191108.8854017,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/hooks.md": {
+    "mtime": 1793191108.8854616,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/query.md": {
+    "mtime": 1793191108.885572,
+    "ast_hash": "9e5aadc2c57ab561bc56600fcfa70735",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/transcribe.md": {
+    "mtime": 1793191108.8856316,
+    "ast_hash": "67b6a5fa6c0974e18f60db9f8932fbd8",
+    "semantic_hash": ""
+  },
+  ".claude/skills/graphify/references/update.md": {
+    "mtime": 1793191108.8857114,
+    "ast_hash": "c698309979460d0f02ba616417844399",
+    "semantic_hash": ""
+  },
+  ".github/workflows/pages.yml": {
+    "mtime": 1793191081.5940063,
+    "ast_hash": "4052924aa92a50aed8be665e0e2206b9",
+    "semantic_hash": ""
+  },
+  ".specify/memory/constitution.md": {
+    "mtime": 1793191108.8867223,
+    "ast_hash": "c3fd395813af91008d3a2625e0e24506",
+    "semantic_hash": ""
+  },
+  ".specify/templates/checklist-template.md": {
+    "mtime": 1793191081.595896,
+    "ast_hash": "8db5de52d1a7ff0b14ad9058082f5bd1",
+    "semantic_hash": ""
+  },
+  ".specify/templates/constitution-template.md": {
+    "mtime": 1793191081.59596,
+    "ast_hash": "dcefb6b60e7cb3db2e966977b6f02f18",
+    "semantic_hash": ""
+  },
+  ".specify/templates/plan-template.md": {
+    "mtime": 1793191081.5960236,
+    "ast_hash": "e523538f050018022309e2884ac55fc8",
+    "semantic_hash": ""
+  },
+  ".specify/templates/spec-template.md": {
+    "mtime": 1793191081.5961099,
+    "ast_hash": "45ac8538bc1220324c9f0d610145b53f",
+    "semantic_hash": ""
+  },
+  ".specify/templates/tasks-template.md": {
+    "mtime": 1793191081.5961938,
+    "ast_hash": "4248112e7b9d05e79eda00cf8e5b9bb0",
+    "semantic_hash": ""
+  },
+  ".specify/workflows/speckit/workflow.yml": {
+    "mtime": 1793191081.5963337,
+    "ast_hash": "e85bd795c8a1bad1168a223eec732604",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1793191108.888181,
+    "ast_hash": "ddbcca54b0b3e6c61f89aeb4dad6052d",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1793191108.8882778,
+    "ast_hash": "8f3f36f1a6d20c3e9269840f09618355",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1793193571.2409708,
+    "ast_hash": "672b309f86736749d130f2748fc48595",
+    "semantic_hash": ""
+  },
+  "requirements.txt": {
+    "mtime": 1793191081.6003492,
+    "ast_hash": "4338894f42f564724acbd72bae2f0000",
+    "semantic_hash": ""
+  },
+  "web/about.html": {
+    "mtime": 1793191081.6048808,
+    "ast_hash": "28427a5fbf3b5d26939d8424ce93a84e",
+    "semantic_hash": ""
+  },
+  "web/index.html": {
+    "mtime": 1793191081.6072268,
+    "ast_hash": "e3c91fd87a222d449e0999409bdaa8ca",
+    "semantic_hash": ""
+  },
+  "web/live/index.html": {
+    "mtime": 1793193571.2019565,
+    "ast_hash": "5c9702d79f50cddc9cde1a17cc9730e6",
+    "semantic_hash": ""
+  },
+  "web/methods.html": {
+    "mtime": 1793191081.6111999,
+    "ast_hash": "2a25c161d44fc4f7529749dc63a2f385",
+    "semantic_hash": ""
+  },
+  "web/live/recorder.js": {
+    "mtime": 1793191173.0970378,
+    "ast_hash": "ae2161371d9929799ad4c3080ae95038",
+    "semantic_hash": ""
+  },
+  "instrument/__init__.py": {
+    "mtime": 1793191108.9850845,
+    "ast_hash": "4b9b7cbc5c9b6314608f1e7fdea5fd51",
+    "semantic_hash": ""
+  },
+  "instrument/__main__.py": {
+    "mtime": 1793191108.9852083,
+    "ast_hash": "9d0672ae0844fedd5a76c7d5d006f3f6",
+    "semantic_hash": ""
+  },
+  "instrument/audio.py": {
+    "mtime": 1793191108.985304,
+    "ast_hash": "bbf77e27163447f934546e1ea33fc61d",
+    "semantic_hash": ""
+  },
+  "instrument/controller.py": {
+    "mtime": 1793191108.9856117,
+    "ast_hash": "9ce1ecb8cae0fb6c7bc3820383229089",
+    "semantic_hash": ""
+  },
+  "instrument/harmony.py": {
+    "mtime": 1793191108.9857388,
+    "ast_hash": "58896ea9d1ce72329d089124dcc9b5b2",
+    "semantic_hash": ""
+  },
+  "instrument/models.py": {
+    "mtime": 1793191108.9861183,
+    "ast_hash": "2dfd61a5e4cae185d5c6bb13bec3565f",
+    "semantic_hash": ""
+  },
+  "instrument/replay.py": {
+    "mtime": 1793191108.9862452,
+    "ast_hash": "0b4caf924e1595d41bd8b5ed18d21828",
+    "semantic_hash": ""
+  },
+  "instrument/tracking.py": {
+    "mtime": 1793191108.9865768,
+    "ast_hash": "0b6dcbe59f4705ef61c6216976d1e76c",
+    "semantic_hash": ""
+  },
+  "instrument/visuals.py": {
+    "mtime": 1793191108.9868267,
+    "ast_hash": "e1b051804dbf82e2899a858af89894f7",
+    "semantic_hash": ""
+  },
+  "pyproject.toml": {
+    "mtime": 1793191108.9871402,
+    "ast_hash": "bde8f1f42356908cbf9103aa2e99eb34",
+    "semantic_hash": ""
+  },
+  "tests/__init__.py": {
+    "mtime": 1793191108.9896562,
+    "ast_hash": "0a084077dda0f4cc10734f7285c97319",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_audio.py": {
+    "mtime": 1793191108.9904344,
+    "ast_hash": "591f180365f0c6a81bb8c1fdafdadaf4",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_cli.py": {
+    "mtime": 1793191108.9905694,
+    "ast_hash": "2aa91814e7c4f47e0600acb4d6e8d39d",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_controller.py": {
+    "mtime": 1793191108.9906886,
+    "ast_hash": "ed093e4c0f81946d56182485d5163c18",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_harmony.py": {
+    "mtime": 1793191108.9909282,
+    "ast_hash": "b0f6b0fe2bbe8eba8456edb5f902d552",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_visuals.py": {
+    "mtime": 1793191108.991633,
+    "ast_hash": "aa8ffc9e29fa2d77e7ce9da9e0df042c",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/decisions.md": {
+    "mtime": 1793191108.9877818,
+    "ast_hash": "f3db52ddab0f21964ec90731678a84ef",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/plan.md": {
+    "mtime": 1793191108.988422,
+    "ast_hash": "a6c62f51b562f3714028966952e1d897",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/quickstart.md": {
+    "mtime": 1793191108.988573,
+    "ast_hash": "66ba606a81e989d16a56da72fb7f24d7",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/spec.md": {
+    "mtime": 1793191108.988908,
+    "ast_hash": "a31fdc2c8b6c45393617cd1f3aace11e",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/tasks.md": {
+    "mtime": 1793191108.9890354,
+    "ast_hash": "bda35026fd6daf7c7ed396d2d94bf7e0",
+    "semantic_hash": ""
+  },
+  "status.md": {
+    "mtime": 1793194032.6091907,
+    "ast_hash": "190325e0c72e337f6c8edeaa695b6cdf",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261005_044808_continue_working_where_you_last_stopped_yesterday.md": {
+    "mtime": 1793191108.984701,
+    "ast_hash": "915c51e874fef9247616eb2b8050a10f",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/evidence.md": {
+    "mtime": 1793191108.9881346,
+    "ast_hash": "816260205e9990087c80bed7d6d6ed26",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/check-prerequisites.sh": {
+    "mtime": 1793191108.8868623,
+    "ast_hash": "a096c564153befd9316b47696603a79a",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/common.sh": {
+    "mtime": 1793191108.8870118,
+    "ast_hash": "da4d4e4c1b6c52769be18f528c22f362",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/create-new-feature.sh": {
+    "mtime": 1793191108.8871534,
+    "ast_hash": "10712c1574d33ad2172e1cfa5011a4aa",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/resolve-template.sh": {
+    "mtime": 1793191081.5954616,
+    "ast_hash": "8e3dfe574895c76bb9cd555fea0ce54d",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/setup-plan.sh": {
+    "mtime": 1793191081.5957046,
+    "ast_hash": "be48ee5a34eca6b5065a8f1fcfae4ff6",
+    "semantic_hash": ""
+  },
+  ".specify/scripts/bash/setup-tasks.sh": {
+    "mtime": 1793191108.8872635,
+    "ast_hash": "4f48c41b707ec085e12e069c8a82f13e",
+    "semantic_hash": ""
+  },
+  "tests/test_speckit_scripts.py": {
+    "mtime": 1793191108.9919827,
+    "ast_hash": "89906fa45a0ad06511ff966469fb8476",
+    "semantic_hash": ""
+  },
+  "instrument/setup_models.py": {
+    "mtime": 1793191108.9864345,
+    "ast_hash": "3dd128854dbb56e3934ad103c9175e05",
+    "semantic_hash": ""
+  },
+  "docs/ANTHONY_IDEAS.md": {
+    "mtime": 1793191108.8885598,
+    "ast_hash": "d8ae952cd7611a487b7b46b1125fe03d",
+    "semantic_hash": ""
+  },
+  "docs/FEATURE_TUTORIALS.md": {
+    "mtime": 1793193571.2218254,
+    "ast_hash": "1c5d17e0768c345a4196906cdbac5bf8",
+    "semantic_hash": ""
+  },
+  "docs/explanation.md": {
+    "mtime": 1793191108.8890262,
+    "ast_hash": "7316846863da30672cc316f84fe097bb",
+    "semantic_hash": ""
+  },
+  "requirements/dev.txt": {
+    "mtime": 1793191108.9872365,
+    "ast_hash": "93e2456c4decf07e1977dbe675f7d46e",
+    "semantic_hash": ""
+  },
+  "requirements/instrument-lock.txt": {
+    "mtime": 1793191108.9872959,
+    "ast_hash": "38562211c4c83bde42572377ef8fc5e1",
+    "semantic_hash": ""
+  },
+  "requirements/instrument.txt": {
+    "mtime": 1793191108.9873943,
+    "ast_hash": "fd9f70f993ce97057e44e488eee894ba",
+    "semantic_hash": ""
+  },
+  "IDEAS.md": {
+    "mtime": 1793191081.596466,
+    "ast_hash": "731d4840b3131764bf1064f2851f6fe6",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_tracking.py": {
+    "mtime": 1793191108.9913702,
+    "ast_hash": "3b8768f9d4fd0d8dde5ab280b0f99592",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_fists.py": {
+    "mtime": 1793191108.9908054,
+    "ast_hash": "891c918382c126eb8dc9465b697b76e5",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261011_172928_the_fist_detection_is_very_bad_what_should_a_fist.md": {
+    "mtime": 1793191108.9847674,
+    "ast_hash": "6e4d13242dac0dc07a757136c3998a6a",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261011_175634_what_other_hand_symbols_can_we_do__can_i_do_differ.md": {
+    "mtime": 1793191108.9848287,
+    "ast_hash": "7357f40597b49a75880ceb135b46a043",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20261011_181808_what_is_left_on_the_todo_that_we_did_not_do_yet.md": {
+    "mtime": 1793191108.9848917,
+    "ast_hash": "f6718edb33f333299a4ee93e45892538",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/chord-map.md": {
+    "mtime": 1793191108.987651,
+    "ast_hash": "bde4bcb4ac4ad3e2c51767dbee27b9cc",
+    "semantic_hash": ""
+  },
+  "instrument/root_control.py": {
+    "mtime": 1793191108.9863708,
+    "ast_hash": "196ffd8ebc7129e128648bb3e75d9e68",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_root_control.py": {
+    "mtime": 1793191108.9912195,
+    "ast_hash": "b5e11e62c56fa088c8f40d73192294e6",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/relative-root.md": {
+    "mtime": 1793191108.9887033,
+    "ast_hash": "ca0d1bf53771258a3286e5b56a5db795",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_transfer.py": {
+    "mtime": 1793191108.9915059,
+    "ast_hash": "722e38d7beed1b587f4c003110f72061",
+    "semantic_hash": ""
+  },
+  "tests/test_phone_server.py": {
+    "mtime": 1793191108.9918492,
+    "ast_hash": "af8f2f7e0ab36e76aec18507a5ecc356",
+    "semantic_hash": ""
+  },
+  "tests/web/audio.test.mjs": {
+    "mtime": 1793191766.5480657,
+    "ast_hash": "67cd266971c82b73d4aa3a0fbe09d03a",
+    "semantic_hash": ""
+  },
+  "tests/web/generate_reference.py": {
+    "mtime": 1793191108.9926255,
+    "ast_hash": "dbbb5d38b23277c414418756aae0b40f",
+    "semantic_hash": ""
+  },
+  "tests/web/instrument.test.mjs": {
+    "mtime": 1793191108.9927552,
+    "ast_hash": "cf4618b97b68fda705bdabdabc825c82",
+    "semantic_hash": ""
+  },
+  "web/live/instrument-controller.js": {
+    "mtime": 1793191108.9968994,
+    "ast_hash": "857f9455a76e85e5d383b0da7d2444b8",
+    "semantic_hash": ""
+  },
+  "web/live/instrument-frame.js": {
+    "mtime": 1793191108.997008,
+    "ast_hash": "c6a230f7a8bdcb997ee484ef977a517f",
+    "semantic_hash": ""
+  },
+  "web/live/instrument-harmony.js": {
+    "mtime": 1793191108.997094,
+    "ast_hash": "b0cc70e2a8f983c2553d1a26453bb25e",
+    "semantic_hash": ""
+  },
+  "web/live/instrument-root.js": {
+    "mtime": 1793191108.997197,
+    "ast_hash": "f3829707cb02f9bf2a63bd6e86711d63",
+    "semantic_hash": ""
+  },
+  "web/phone_server.py": {
+    "mtime": 1793191108.998246,
+    "ast_hash": "fe837efab9efeeddb2c7a846fa6b07cb",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/web-port.md": {
+    "mtime": 1793193426.179139,
+    "ast_hash": "09ad78d994ed40a84b6236887407c774",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/upstream-isolation.md": {
+    "mtime": 1793193426.1984594,
+    "ast_hash": "37d11dea20a8b151de7321e8fa154ca7",
+    "semantic_hash": ""
+  },
+  "browser_assets.py": {
+    "mtime": 1793191081.5967915,
+    "ast_hash": "3e5d51a9c799cb2ea69e8c78d93837e8",
+    "semantic_hash": ""
+  },
+  "instrument/body_spin.py": {
+    "mtime": 1793191108.9854624,
+    "ast_hash": "daec831960b900901f9aec7b7f933498",
+    "semantic_hash": ""
+  },
+  "instrument/midi.py": {
+    "mtime": 1793191108.9858744,
+    "ast_hash": "60fc022fcb244e9a9f63d3ded9338cf9",
+    "semantic_hash": ""
+  },
+  "instrument/midi_lifecycle.py": {
+    "mtime": 1793191108.9859972,
+    "ast_hash": "d5d7616f1a77c4397fbf306563125798",
+    "semantic_hash": ""
+  },
+  "instrument/turn_pitch.py": {
+    "mtime": 1793191108.9866796,
+    "ast_hash": "389bbc03fe625c0b736cd0b802b098ef",
+    "semantic_hash": ""
+  },
+  "launcher_assets.py": {
+    "mtime": 1793191081.5978005,
+    "ast_hash": "2136ea75a1a1a184ec7b0a51cccb2ad7",
+    "semantic_hash": ""
+  },
+  "magenta_assets.py": {
+    "mtime": 1793191081.598008,
+    "ast_hash": "411218098fc02af745cae99cf31dd9c4",
+    "semantic_hash": ""
+  },
+  "magenta_install.py": {
+    "mtime": 1793191081.5981166,
+    "ast_hash": "fcd25c956811ed95f7de57886ad7eb73",
+    "semantic_hash": ""
+  },
+  "magenta_runtime.py": {
+    "mtime": 1793191081.598235,
+    "ast_hash": "a43b1a218b6cbaf81114e64a7b508ea0",
+    "semantic_hash": ""
+  },
+  "native/magenta/helper.cpp": {
+    "mtime": 1793191081.5988913,
+    "ast_hash": "9e52cf0ecf1c495271af0184abcfae79",
+    "semantic_hash": ""
+  },
+  "native/magenta/manifest.lock.json": {
+    "mtime": 1793191081.5989792,
+    "ast_hash": "25c436584721122898b8c5725e64fcf9",
+    "semantic_hash": ""
+  },
+  "native/magenta/probe.cpp": {
+    "mtime": 1793191081.5990617,
+    "ast_hash": "7789c7c217a4094bceb64fb9c2b7b90f",
+    "semantic_hash": ""
+  },
+  "packaged_backend.py": {
+    "mtime": 1793191081.5991328,
+    "ast_hash": "f21276439298c119e89bf19712230384",
+    "semantic_hash": ""
+  },
+  "packaging/macos/Dance2Music.swift": {
+    "mtime": 1793191081.5993137,
+    "ast_hash": "6ada7d26827ab2b21ddb1e6466445018",
+    "semantic_hash": ""
+  },
+  "packaging/macos/bootstrap.py": {
+    "mtime": 1793191081.5995903,
+    "ast_hash": "ba137e46075c18995fda77e6217585d5",
+    "semantic_hash": ""
+  },
+  "packaging/macos/build.py": {
+    "mtime": 1793191081.5996807,
+    "ast_hash": "8b89f8b375a03b0cd8d4ff16a2a01377",
+    "semantic_hash": ""
+  },
+  "packaging/macos/notarize.py": {
+    "mtime": 1793191081.599827,
+    "ast_hash": "fe22f66461fe972095a279e4e942a6df",
+    "semantic_hash": ""
+  },
+  "packaging/macos/pin_browser_assets.py": {
+    "mtime": 1793191081.5998864,
+    "ast_hash": "b0e0c19e5816ed2ebe821ed242a462ea",
+    "semantic_hash": ""
+  },
+  "packaging/macos/release_link.py": {
+    "mtime": 1793191081.600021,
+    "ast_hash": "7f61d43ac52dfde9aa314ef6c97d9934",
+    "semantic_hash": ""
+  },
+  "packaging/macos/toolchain.json": {
+    "mtime": 1793191081.600215,
+    "ast_hash": "5e565fd7179c30bcdd0aa7de0422540f",
+    "semantic_hash": ""
+  },
+  "piano_assets.py": {
+    "mtime": 1793191081.6002793,
+    "ast_hash": "ecd59ba09fbc98d37c6285162275e34a",
+    "semantic_hash": ""
+  },
+  "scene_assets.py": {
+    "mtime": 1793191081.600407,
+    "ast_hash": "d55878314d3953be5c4341d8b65e8e89",
+    "semantic_hash": ""
+  },
+  "tests/body_spin.test.mjs": {
+    "mtime": 1793191108.9897816,
+    "ast_hash": "b7c0eaa00fba99b55c1d133423c1a093",
+    "semantic_hash": ""
+  },
+  "tests/fixtures/piano-bounces.json": {
+    "mtime": 1793191081.600938,
+    "ast_hash": "bda366f15d64f9e9424a24621c104f98",
+    "semantic_hash": ""
+  },
+  "tests/fixtures/piano-jump-return.json": {
+    "mtime": 1793191081.601065,
+    "ast_hash": "aac9ff0398210d5a737465019a711447",
+    "semantic_hash": ""
+  },
+  "tests/live_ui_helpers.py": {
+    "mtime": 1793191081.6011403,
+    "ast_hash": "fead36ecedad1d9d536b5e84024cdf16",
+    "semantic_hash": ""
+  },
+  "tests/magenta-input.js": {
+    "mtime": 1793191081.6011982,
+    "ast_hash": "8755253cc502395925c5af2b37149a12",
+    "semantic_hash": ""
+  },
+  "tests/magenta-worklet.test.js": {
+    "mtime": 1793191081.60126,
+    "ast_hash": "0073de93961af1c600f9b92472e4a18c",
+    "semantic_hash": ""
+  },
+  "tests/magenta.test.js": {
+    "mtime": 1793191081.601357,
+    "ast_hash": "d7e1da11ff66cba8107c1311017e9a13",
+    "semantic_hash": ""
+  },
+  "tests/movement_dictionary.test.mjs": {
+    "mtime": 1793191081.6015174,
+    "ast_hash": "b5bf7917f9fb8f374fbc24800a235dd2",
+    "semantic_hash": ""
+  },
+  "tests/movement_dictionary_choir.test.mjs": {
+    "mtime": 1793191108.9900875,
+    "ast_hash": "64fcfb0e828633f73fda3d786478f664",
+    "semantic_hash": ""
+  },
+  "tests/piano.test.js": {
+    "mtime": 1793191081.6017692,
+    "ast_hash": "38796679a834f4ec8c41b193213a6988",
+    "semantic_hash": ""
+  },
+  "tests/recording.test.js": {
+    "mtime": 1793191172.8114276,
+    "ast_hash": "e66327778f3539a12e33873901085c85",
+    "semantic_hash": ""
+  },
+  "tests/scene-drag.test.js": {
+    "mtime": 1793191081.601986,
+    "ast_hash": "8242e1317f68f12ae86f130054570ea3",
+    "semantic_hash": ""
+  },
+  "tests/scene-percussion.test.js": {
+    "mtime": 1793191081.60208,
+    "ast_hash": "813d43ba90a32e2ef5d4dcaa19c5a505",
+    "semantic_hash": ""
+  },
+  "tests/scene.test.js": {
+    "mtime": 1793191081.602209,
+    "ast_hash": "f9873e1c7fa9484bca055ca3c813cf23",
+    "semantic_hash": ""
+  },
+  "tests/spectral_bass.test.mjs": {
+    "mtime": 1793191081.602367,
+    "ast_hash": "e743a82101057ba90b3a653f857771b1",
+    "semantic_hash": ""
+  },
+  "tests/test_body_spin.py": {
+    "mtime": 1793191108.990232,
+    "ast_hash": "cb0a2a65fbf7e67f3aaa5234b91bd43a",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_launcher.py": {
+    "mtime": 1793191081.6024542,
+    "ast_hash": "b1e5d0597b768342571d86c4b5061893",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_live_layout.py": {
+    "mtime": 1793193600.805925,
+    "ast_hash": "9caf3c666270714ed7ef0caa20cc87b4",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_magenta.py": {
+    "mtime": 1793191081.6026435,
+    "ast_hash": "6997b7ca7453959da5d7e1388bfd54ea",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_magenta_lifecycle.py": {
+    "mtime": 1793191081.6027372,
+    "ast_hash": "30c4e2cf2703af4fd715137a6610782d",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_midi.py": {
+    "mtime": 1793191108.9903677,
+    "ast_hash": "9667b7fffafe52c8d9ad31e1384f9b97",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_piano.py": {
+    "mtime": 1793191081.6028502,
+    "ast_hash": "2cd82047f4888f0f0508d34d5344dff8",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_recording.py": {
+    "mtime": 1793193600.8059103,
+    "ast_hash": "08361a902c8f21fc93a6597addb34532",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_scene.py": {
+    "mtime": 1793191081.6030545,
+    "ast_hash": "72adb6f17265f4c02273246c42103a8c",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_watch_autoconnect.py": {
+    "mtime": 1793191081.6031535,
+    "ast_hash": "b2e66fb1db90a29931fae5921f3bb35d",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_watch_plots.py": {
+    "mtime": 1793191081.6032982,
+    "ast_hash": "542c4842c1731943eb9a0ff8fa16a1cd",
+    "semantic_hash": ""
+  },
+  "tests/test_browser_watches_hardware.py": {
+    "mtime": 1793191081.6033845,
+    "ast_hash": "b35f2d9ce904a6ddd703aae5b9c90dde",
+    "semantic_hash": ""
+  },
+  "tests/test_instrument_midi.py": {
+    "mtime": 1793191108.991063,
+    "ast_hash": "183ea1319af56284829f20595718d834",
+    "semantic_hash": ""
+  },
+  "tests/test_launcher_assets.py": {
+    "mtime": 1793191081.6034672,
+    "ast_hash": "2da8233101f4fe9a2a95163fe4cdfeb1",
+    "semantic_hash": ""
+  },
+  "tests/test_live_browser.py": {
+    "mtime": 1793191081.6035292,
+    "ast_hash": "56510d919e80240b66da756bbb80d0a2",
+    "semantic_hash": ""
+  },
+  "tests/test_magenta_assets.py": {
+    "mtime": 1793191081.6035917,
+    "ast_hash": "f65dd0ea430b1049e964b58ffe6b9e02",
+    "semantic_hash": ""
+  },
+  "tests/test_magenta_helper.py": {
+    "mtime": 1793191081.6036758,
+    "ast_hash": "2d1bbf728ca9aa0329a3332275f34eb9",
+    "semantic_hash": ""
+  },
+  "tests/test_magenta_install.py": {
+    "mtime": 1793191081.6037595,
+    "ast_hash": "cc3a71d5e1be4503ff2209afd924d1c1",
+    "semantic_hash": ""
+  },
+  "tests/test_magenta_native.py": {
+    "mtime": 1793191081.603822,
+    "ast_hash": "b99d5ee05a17d8cc229e347cc8e537f0",
+    "semantic_hash": ""
+  },
+  "tests/test_magenta_runtime.py": {
+    "mtime": 1793191081.6039307,
+    "ast_hash": "adb5f9779b61f5b98fafadcf357ff949",
+    "semantic_hash": ""
+  },
+  "tests/test_midi_bridge.py": {
+    "mtime": 1793192634.2102,
+    "ast_hash": "1936dddda2f6c1e74fa2ef2ac517c109",
+    "semantic_hash": ""
+  },
+  "tests/test_native_shutdown.py": {
+    "mtime": 1793191081.6039958,
+    "ast_hash": "b1ac9866e08f2f11a671226c9493b1ff",
+    "semantic_hash": ""
+  },
+  "tests/test_packaged_app.py": {
+    "mtime": 1793191081.6040735,
+    "ast_hash": "80cddcbe1ccde4013d050bcfa9153e67",
+    "semantic_hash": ""
+  },
+  "tests/test_packaged_backend.py": {
+    "mtime": 1793191081.6041522,
+    "ast_hash": "27c000dcfaa2f39d2ca2231b249677f8",
+    "semantic_hash": ""
+  },
+  "tests/test_packaged_browser.py": {
+    "mtime": 1793191081.6042345,
+    "ast_hash": "7b9d016e1cac3e8a6018e8f115f8aa18",
+    "semantic_hash": ""
+  },
+  "tests/test_piano_assets.py": {
+    "mtime": 1793191081.6042924,
+    "ast_hash": "f9ddd5824defdf94e77348f93aa81771",
+    "semantic_hash": ""
+  },
+  "tests/test_release_link.py": {
+    "mtime": 1793191081.60435,
+    "ast_hash": "5d1ffc95bc47f1b6da4fbe8b5dda6ca3",
+    "semantic_hash": ""
+  },
+  "tests/test_scene_assets.py": {
+    "mtime": 1793191081.604408,
+    "ast_hash": "52fb9821e8fbc032a1b13d8557ed6785",
+    "semantic_hash": ""
+  },
+  "tests/test_turn_pitch.py": {
+    "mtime": 1793191108.9921052,
+    "ast_hash": "30b46ef543fda9e7809a228e40e7e7cc",
+    "semantic_hash": ""
+  },
+  "tests/turn_pitch.test.mjs": {
+    "mtime": 1793191108.9922278,
+    "ast_hash": "1a1b773833b6d4ab1df7884079695a16",
+    "semantic_hash": ""
+  },
+  "tests/validate_zones_pose.py": {
+    "mtime": 1793191172.8578649,
+    "ast_hash": "e7cf5ceadd7d1379849bb643866d7c75",
+    "semantic_hash": ""
+  },
+  "tests/vision-fixture.js": {
+    "mtime": 1793191172.8834865,
+    "ast_hash": "ae15c8f3e4d63e409779cd9d5a29151d",
+    "semantic_hash": ""
+  },
+  "tests/watch-autoconnect.test.js": {
+    "mtime": 1793191081.6046033,
+    "ast_hash": "3f76d33156ca3e3d41dab93e798aee0a",
+    "semantic_hash": ""
+  },
+  "tests/watches.test.js": {
+    "mtime": 1793191081.6046865,
+    "ast_hash": "a748fe9a60c371376c30f4b7a0ccace3",
+    "semantic_hash": ""
+  },
+  "tests/web/midi-local.test.mjs": {
+    "mtime": 1793191108.993024,
+    "ast_hash": "0faa5f5507b9f267ecc97c8a3e4feaac",
+    "semantic_hash": ""
+  },
+  "tests/web/midi-reference.json": {
+    "mtime": 1793191108.9931278,
+    "ast_hash": "b2355234fa7e87e1d211a4bb16444e9b",
+    "semantic_hash": ""
+  },
+  "tests/web/midi.test.mjs": {
+    "mtime": 1793191108.9932566,
+    "ast_hash": "6ac46f3b4f7d92997c95fd0c1f153e05",
+    "semantic_hash": ""
+  },
+  "tests/web/midi_bridge_server.py": {
+    "mtime": 1793191108.993362,
+    "ast_hash": "e9909cbc4c6aa718efccea8d06d46328",
+    "semantic_hash": ""
+  },
+  "web/about.js": {
+    "mtime": 1793191081.6049464,
+    "ast_hash": "31b9c3912b7e98ff502f2f040801a010",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/app.js": {
+    "mtime": 1793191108.99439,
+    "ast_hash": "242faa39cbf6dc413d2903cbd3d0919d",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/harmony.js": {
+    "mtime": 1793191108.994717,
+    "ast_hash": "11f3f32c5eca776a612e13de45ceb172",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/measure.js": {
+    "mtime": 1793191108.9952466,
+    "ast_hash": "df9cfd368cc1ebc34642bfb9d5f4a39e",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/sound.js": {
+    "mtime": 1793191108.9954956,
+    "ast_hash": "edfb6005ac12cb29ad1d94bc41457846",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/spin.js": {
+    "mtime": 1793191108.9958057,
+    "ast_hash": "0a4905611b4a59c62898b32c1257a6b6",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/turn-pitch.js": {
+    "mtime": 1793191108.9959123,
+    "ast_hash": "2b7fe3ff4eb3c8cc7cd00cea3775c27e",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/view.js": {
+    "mtime": 1793191108.9961176,
+    "ast_hash": "a9439836eb53becd83e4dcfd89f3c94d",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/app.js": {
+    "mtime": 1793191081.606481,
+    "ast_hash": "3a8e95d1eb78908ac5ed97606cd99267",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/hands.js": {
+    "mtime": 1793191081.6066155,
+    "ast_hash": "a76103fc0e317c753758d800a500347e",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/sound.js": {
+    "mtime": 1793191081.6068783,
+    "ast_hash": "da27e98f07e42fff97e2bbe65b892dda",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/spectral.js": {
+    "mtime": 1793191081.6070123,
+    "ast_hash": "0ebf06a039865cd119aca7271e6d9614",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/view.js": {
+    "mtime": 1793191081.6071353,
+    "ast_hash": "1de62a2ea6ce79db57186124eba6d1f7",
+    "semantic_hash": ""
+  },
+  "web/live/app-availability.js": {
+    "mtime": 1793191081.6073365,
+    "ast_hash": "23639f36cf9d7f05175d9caf6149dcb4",
+    "semantic_hash": ""
+  },
+  "web/live/app-release.json": {
+    "mtime": 1793191081.607392,
+    "ast_hash": "578c3a1a9957c1aac364ae03cbb71e7b",
+    "semantic_hash": ""
+  },
+  "web/live/audio-session.js": {
+    "mtime": 1793191172.9040954,
+    "ast_hash": "420b98b381e3b4fd4aa8aacb5fe0cdaa",
+    "semantic_hash": ""
+  },
+  "web/live/bundle-worker.js": {
+    "mtime": 1793191172.9267702,
+    "ast_hash": "6c560ab9135d8d1c2bc095014471c587",
+    "semantic_hash": ""
+  },
+  "web/live/magenta-spatial.js": {
+    "mtime": 1793191081.6084287,
+    "ast_hash": "ffcc8de33e489652c452b2c6f61a1cda",
+    "semantic_hash": ""
+  },
+  "web/live/magenta-worklet.js": {
+    "mtime": 1793191081.6084888,
+    "ast_hash": "a7909132ae5b4e1ae99d303411800a4f",
+    "semantic_hash": ""
+  },
+  "web/live/magenta.js": {
+    "mtime": 1793191081.6085722,
+    "ast_hash": "f5a298a15be3f33072a6ea72822a1268",
+    "semantic_hash": ""
+  },
+  "web/live/mediapipe-assets.lock.json": {
+    "mtime": 1793191081.6087291,
+    "ast_hash": "d2f46ff2f99458c48ac6dd204b4bf5b1",
+    "semantic_hash": ""
+  },
+  "web/live/midi-local.js": {
+    "mtime": 1793191108.997639,
+    "ast_hash": "78bd44c6e8c3930f62630e0cb71d3273",
+    "semantic_hash": ""
+  },
+  "web/live/midi.js": {
+    "mtime": 1793191108.9977636,
+    "ast_hash": "bef3bae5c3fa210e52f8bd5263922fc5",
+    "semantic_hash": ""
+  },
+  "web/live/model-assets.js": {
+    "mtime": 1793191172.9458745,
+    "ast_hash": "b94ce435b1e361004d4538cd3fd5af06",
+    "semantic_hash": ""
+  },
+  "web/live/observations.js": {
+    "mtime": 1793191172.9660509,
+    "ast_hash": "bcc4e74e6acaed3bfaf6633cde64ed57",
+    "semantic_hash": ""
+  },
+  "web/live/percussion.js": {
+    "mtime": 1793191081.6089246,
+    "ast_hash": "1f5d7ab4667648b6653b8c803b9f0513",
+    "semantic_hash": ""
+  },
+  "web/live/piano-assets.lock.json": {
+    "mtime": 1793191081.6089854,
+    "ast_hash": "94e0823954b843681febfb5ec104e18b",
+    "semantic_hash": ""
+  },
+  "web/live/piano.js": {
+    "mtime": 1793191081.6090772,
+    "ast_hash": "4ea063bbad334a05494e8b3d5955570d",
+    "semantic_hash": ""
+  },
+  "web/live/presentation.js": {
+    "mtime": 1793191081.6092436,
+    "ast_hash": "e613df9ab4b0dc7cec1fa4a1a4e0d1e6",
+    "semantic_hash": ""
+  },
+  "web/live/scene-assets.lock.json": {
+    "mtime": 1793191081.6094382,
+    "ast_hash": "3b5d8c7f44154265b1f612f492f72928",
+    "semantic_hash": ""
+  },
+  "web/live/scene/assets.js": {
+    "mtime": 1793191081.6095285,
+    "ast_hash": "c85885c3572c607a6ea9d73e40abd207",
+    "semantic_hash": ""
+  },
+  "web/live/scene/controller.js": {
+    "mtime": 1793191081.6096077,
+    "ast_hash": "262bc1d944c6db68c5796f13af38b0a4",
+    "semantic_hash": ""
+  },
+  "web/live/scene/drag.js": {
+    "mtime": 1793191081.60974,
+    "ast_hash": "669660f013e4fb4ca43b5dc9a134e0e2",
+    "semantic_hash": ""
+  },
+  "web/live/scene/geometry.js": {
+    "mtime": 1793191081.6098492,
+    "ast_hash": "332cd22269bec983160e1e07723bd623",
+    "semantic_hash": ""
+  },
+  "web/live/scene/instruments.js": {
+    "mtime": 1793191081.6099324,
+    "ast_hash": "e066c1e10fa18ea644482df0560da51b",
+    "semantic_hash": ""
+  },
+  "web/live/scene/occlusion.js": {
+    "mtime": 1793191081.6099901,
+    "ast_hash": "289cf9705d3394c13ca9995a007162e0",
+    "semantic_hash": ""
+  },
+  "web/live/scene/person-mask.js": {
+    "mtime": 1793191081.6101,
+    "ast_hash": "e62ac3bdb77fcf367cf8052dea3ec4ad",
+    "semantic_hash": ""
+  },
+  "web/live/scene/piano-layout.js": {
+    "mtime": 1793191081.610235,
+    "ast_hash": "7cbd12610c2b75c0cc97e7baecf326b0",
+    "semantic_hash": ""
+  },
+  "web/live/scene/piano-touch.js": {
+    "mtime": 1793191081.6103618,
+    "ast_hash": "0cafca499164644c857b603e317d88cb",
+    "semantic_hash": ""
+  },
+  "web/live/scene/renderer.js": {
+    "mtime": 1793191081.6104846,
+    "ast_hash": "e11ffd4a7ec30e0fcf3de1961bc1fed5",
+    "semantic_hash": ""
+  },
+  "web/live/scene/touch-effects.js": {
+    "mtime": 1793191081.6105998,
+    "ast_hash": "ed710aa0a8e21ccb00cf7bb36ce8df2d",
+    "semantic_hash": ""
+  },
+  "web/live/scene/touch.js": {
+    "mtime": 1793191081.6106994,
+    "ast_hash": "8a761b056adb45d45362f1b15606e038",
+    "semantic_hash": ""
+  },
+  "web/live/scene/worker.js": {
+    "mtime": 1793191081.6108356,
+    "ast_hash": "dac4e27ef79c6d727856055aea81911a",
+    "semantic_hash": ""
+  },
+  "web/live/watch-plots.js": {
+    "mtime": 1793191081.6109402,
+    "ast_hash": "57ddebbce49bd852a829464666488029",
+    "semantic_hash": ""
+  },
+  "web/live/watches.js": {
+    "mtime": 1793191081.6110406,
+    "ast_hash": "b8a33530c51d76249c8ac5e944840478",
+    "semantic_hash": ""
+  },
+  "web/midi_bridge.py": {
+    "mtime": 1793192213.9464967,
+    "ast_hash": "8b7e6807c1df7d304656799ac825927c",
+    "semantic_hash": ""
+  },
+  "web/vendor/assets.lock.json": {
+    "mtime": 1793191081.6113765,
+    "ast_hash": "577aa74144588ccd2c43d6bd3106316a",
+    "semantic_hash": ""
+  },
+  "web/vendor/fflate/fflate-0.8.3.js": {
+    "mtime": 1793191173.0082197,
+    "ast_hash": "d85498a48ec7fe5bb95d8e61b1dc44af",
+    "semantic_hash": ""
+  },
+  "web/vendor/js-sha256/sha256-0.11.1.js": {
+    "mtime": 1793191173.0577443,
+    "ast_hash": "21f5c3da72d474f09e7dfcff20de3595",
+    "semantic_hash": ""
+  },
+  ".github/workflows/macos-release.yml": {
+    "mtime": 1793191081.5939307,
+    "ast_hash": "aa0febefb572e810ddb165b410d6f4c0",
+    "semantic_hash": ""
+  },
+  "docs/3d-objects.md": {
+    "mtime": 1793191081.597106,
+    "ast_hash": "6aaa3e5f42eaa3fe95a0fe4ad5d88aab",
+    "semantic_hash": ""
+  },
+  "docs/browser-recording.md": {
+    "mtime": 1793191172.7571278,
+    "ast_hash": "ce971022de0938e18a7bf111c484d1ce",
+    "semantic_hash": ""
+  },
+  "docs/floor-piano.md": {
+    "mtime": 1793191081.5974205,
+    "ast_hash": "5085aabcad7ec308bdf2aaec70a9ff76",
+    "semantic_hash": ""
+  },
+  "docs/google-magenta.md": {
+    "mtime": 1793191081.5975256,
+    "ast_hash": "28430218f4bf52ec59f86e4a4b64fe0d",
+    "semantic_hash": ""
+  },
+  "native/magenta/CMakeLists.txt": {
+    "mtime": 1793191081.598537,
+    "ast_hash": "dd7de724815d2c5b165e4bfd3c4e436e",
+    "semantic_hash": ""
+  },
+  "packaging/macos/README.md": {
+    "mtime": 1793191081.5994534,
+    "ast_hash": "cbe4a2f52c67f4f8196a6d19b01450a6",
+    "semantic_hash": ""
+  },
+  "packaging/macos/THIRD_PARTY.md": {
+    "mtime": 1793191081.5995264,
+    "ast_hash": "90339f4a0f647bc64e08c101db3b9715",
+    "semantic_hash": ""
+  },
+  "packaging/macos/release-notes.md": {
+    "mtime": 1793191081.599955,
+    "ast_hash": "f274cf0b9efe35b69e15ff2614d061ad",
+    "semantic_hash": ""
+  },
+  "requirements/midi.txt": {
+    "mtime": 1793191108.9874907,
+    "ast_hash": "78eec6afb5e9a47725d67bbf71292eaf",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/desktop-midi.md": {
+    "mtime": 1793191108.9879394,
+    "ast_hash": "b3d7886f06667b335ea1f630d517bf43",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/midi-output.md": {
+    "mtime": 1793191108.9882824,
+    "ast_hash": "0ca2dae214ad33b491a989aaf5f86022",
+    "semantic_hash": ""
+  },
+  "specs/001-anthony-instrument/safari-midi.md": {
+    "mtime": 1793191108.9888113,
+    "ast_hash": "40df1ca040fb87cc4b264cd02a1877f8",
+    "semantic_hash": ""
+  },
+  "tests/browser.html": {
+    "mtime": 1793191172.7837832,
+    "ast_hash": "a9076d24f11d65659a8deff9148ffb31",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/README.md": {
+    "mtime": 1793191108.9939773,
+    "ast_hash": "a866f3cb1413b3e3525c2bc142be5d6e",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/index.html": {
+    "mtime": 1793191108.9950364,
+    "ast_hash": "780b918a2cfe438c33d114cdb9584768",
+    "semantic_hash": ""
+  },
+  "web/experiments/movement-dictionary/spin-research.md": {
+    "mtime": 1793191108.9956574,
+    "ast_hash": "2f8beb5e2c08422d14a1df0c03ea8058",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/README.md": {
+    "mtime": 1793191081.6063495,
+    "ast_hash": "42e846b92007ca8c703665ed98c3facc",
+    "semantic_hash": ""
+  },
+  "web/experiments/spectral-bass/index.html": {
+    "mtime": 1793191081.6067436,
+    "ast_hash": "53d395b9506ae267114910b8fa774be6",
+    "semantic_hash": ""
+  },
+  "web/vendor/recording-libraries.md": {
+    "mtime": 1793191173.0769122,
+    "ast_hash": "e94b175ee3b248efd285aa09a98b0701",
+    "semantic_hash": ""
+  }
+}
