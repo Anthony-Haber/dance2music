@@ -18,11 +18,11 @@ button .icon { margin-right: 7px; pointer-events: none; }
 #recMsg[data-elapsed]::before { content: attr(data-elapsed) ' · '; color: var(--ink); font-variant-numeric: tabular-nums; }
 .status:empty, #sectionAlerts:empty { display: none; }
 .control-section { border-bottom: 1px solid var(--line); }
-.control-section > summary { display: flex; align-items: center; gap: 10px; padding: 13px 0; cursor: pointer; list-style: none; font-weight: 600; }
-.control-section > summary::-webkit-details-marker { display: none; }
-.control-section > summary::after { content: ''; width: 7px; height: 7px; border-right: 1.5px solid; border-bottom: 1.5px solid; transform: rotate(45deg); margin-left: auto; margin-right: 4px; }
-.control-section[open] > summary::after { transform: rotate(225deg); }
-.control-section > summary .icon { color: var(--accent); }
+.control-section > summary, #watchPlots > summary { display: flex; align-items: center; gap: 10px; padding: 13px 0; cursor: pointer; list-style: none; font-weight: 600; }
+.control-section > summary::-webkit-details-marker, #watchPlots > summary::-webkit-details-marker { display: none; }
+.control-section > summary::after, #watchPlots > summary::after { content: ''; width: 7px; height: 7px; border-right: 1.5px solid; border-bottom: 1.5px solid; transform: rotate(45deg); margin-left: auto; margin-right: 4px; }
+.control-section[open] > summary::after, #watchPlots[open] > summary::after { transform: rotate(225deg); }
+.control-section > summary .icon, #watchPlots > summary .icon { color: var(--accent); }
 .section-body { padding: 0 0 14px; }
 .section-body > :first-child { margin-top: 0; }
 .section-warning { color: #ffc89f; font-size: 10px; font-weight: 500; }

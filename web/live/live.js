@@ -60,7 +60,10 @@ const piano = new PianoPlayer(engine);
 let follower = new ChordFollower(store.get('mode', 'six'));
 const bounce = new Bounce(), hands = new Hands(), recorder = new Recorder();
 const watchPlots = new WatchPlots($('watchPlots'));
-watchPlots.setEnabled(store.get('watchPlots', true));
+// The former show/hide preference now controls the disclosure, keeping its
+// header reachable whenever a watch is connected.
+$('watchPlots').open = store.get('watchPlots', true);
+$('watchPlots').addEventListener('toggle', () => store.set('watchPlots', $('watchPlots').open));
 const watches = new Watches({ onSample: (sample, receipt) => {
   recorder.watchSample(sample, receipt); watchPlots.append(sample, receipt);
 },
@@ -135,10 +138,6 @@ $('watchAuto').checked = store.get('watchAutoConnect', true);
 $('watchAuto').onchange = event => {
   store.set('watchAutoConnect', event.target.checked);
   void watches.setAutoConnect(event.target.checked);
-};
-$('watchShowPlots').checked = watchPlots.enabled;
-$('watchShowPlots').onchange = event => {
-  watchPlots.setEnabled(event.target.checked); store.set('watchPlots', event.target.checked);
 };
 renderWatches(); setInterval(renderWatches, 500);
 void watches.setAutoConnect($('watchAuto').checked);

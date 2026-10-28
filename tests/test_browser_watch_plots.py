@@ -30,8 +30,11 @@ def check_watch_plots(browser, origin, screenshot=None):
             characteristic.startNotifications = async () => {};
             device.gatt = {connected:false, connect:async () => {
                 device.gatt.connected = true;
-                return {getPrimaryService:async () => ({getCharacteristic:async uuid => uuid.endsWith('def2')
-                    ? {writeValueWithResponse:async()=>{}} : characteristic})};
+                return {getPrimaryService:async () => {
+                    if (window.holdPlotSetup) await new Promise(resolve => {window.releasePlotSetup=resolve;});
+                    return {getCharacteristic:async uuid => uuid.endsWith('def2')
+                        ? {writeValueWithResponse:async()=>{}} : characteristic};
+                }};
             }, disconnect:() => {device.gatt.connected=false;device.dispatchEvent(new Event('gattserverdisconnected'));}};
             device.emit = phase => {
                 if (!device.gatt.connected) return;
@@ -53,6 +56,10 @@ def check_watch_plots(browser, origin, screenshot=None):
         page.goto(origin + '/web/live/')
         page.wait_for_function("document.querySelector('#watchConnect').onclick !== null")
         assert page.locator('#watchPlots').is_hidden()
+        assert page.locator('#watchShowPlots').count() == 0, 'the panel header is the only graph visibility control'
+        assert page.locator('.watch-plot:visible').count() == 0
+        camera_only_height = page.locator('#stage').bounding_box()['height']
+        assert camera_only_height == page.viewport_size['height'], 'no graph space without connected watches'
         assert page.locator('#watchProgress').inner_text() == '0 of 4 watches connected.'
         page.select_option('#watchLegs', '')
         assert page.locator('#watchProgress').inner_text() == '0 of 2 watches connected.'
@@ -68,9 +75,19 @@ def check_watch_plots(browser, origin, screenshot=None):
             Recorder.prototype.watchSample = function(...args) {recorderReceipts++;return receive.apply(this,args);};
         }''')
         for index in range(4):
+            if index == 0:
+                page.evaluate('window.holdPlotSetup = true')
             page.locator('#watchConnect').click()
+            if index == 0:
+                page.wait_for_function('!!window.releasePlotSetup')
+                page.wait_for_timeout(550)  # Include the periodic UI refresh while GATT setup is pending.
+                assert page.locator('#watchPlots').is_hidden(), 'a pending connection must not reserve graph space'
+                page.evaluate('holdPlotSetup = false; releasePlotSetup()')
             page.wait_for_function('''count => document.querySelector('#watchProgress').textContent ===
                 (count===4 ? 'All 4 watches connected.' : `${count} of 4 watches connected.`)''', arg=index + 1)
+            assert page.locator('.watch-plot:visible').count() == index + 1, 'only connected limbs have graphs'
+            if index == 0:
+                assert page.locator('.watch-plot').first.bounding_box()['width'] == page.locator('.watch-plot-grid').bounding_box()['width']
             request = page.evaluate('plotChooserRequests.at(-1)')
             assert request['filters'] == [{'namePrefix': 'M5StickC-IMU-'}]
             assert request.get('exclusionFilters', []) == [
@@ -107,21 +124,58 @@ def check_watch_plots(browser, origin, screenshot=None):
         assert 'X 0.00' in page.locator('.watch-plot-values').first.inner_text()
         page.select_option('#watchWindow', '20')
         assert page.evaluate('plots.windowMs') == 20000
-        page.locator('#watchShowPlots').uncheck()
+
+        # Native disclosure frees camera space without touching connections or samples.
+        expanded_height = page.locator('#stage').bounding_box()['height']
+        summary = page.locator('#watchPlots > summary')
+        expanded_chevron = summary.evaluate("e => getComputedStyle(e, '::after').transform")
+        assert expanded_chevron == page.locator('#watchesSection > summary').evaluate("e => getComputedStyle(e, '::after').transform")
+        summary.focus(); page.keyboard.press('Space')
+        assert not page.locator('#watchPlots').evaluate('e => e.open')
+        assert summary.evaluate("e => getComputedStyle(e, '::after').transform") != expanded_chevron
+        assert page.locator('#watchPlots').is_visible() and page.locator('#watchSignal').is_hidden()
+        assert page.locator('.watch-plot:visible').count() == 0
+        assert page.locator('#stage').bounding_box()['height'] > expanded_height + 150
         count = page.evaluate('recorderReceipts')
-        page.wait_for_timeout(150)
-        assert page.locator('#watchPlots').is_hidden()
-        assert page.evaluate('recorderReceipts') > count, 'hiding plots must not stop samples'
-        page.locator('#watchShowPlots').check()
+        frame = page.evaluate('plots.lastFrame')
+        page.wait_for_timeout(200)
+        assert page.evaluate('recorderReceipts') > count, 'collapsing graphs must not stop samples'
+        assert page.evaluate('plots.lastFrame') == frame, 'collapsed graphs do not redraw'
+        assert page.evaluate('plotDevices.every(d => d.gatt.connected)')
+        assert page.locator('#go').inner_text() == 'Start', 'Space on the disclosure must not start the camera'
+        page.keyboard.press('Enter')
+        page.wait_for_function('last => plots.lastFrame > last', arg=frame)
+        assert page.locator('.watch-plot:visible').count() == 4
+        assert page.locator('#watchSignal').input_value() == 'gyro'
+        assert page.locator('#watchWindow').input_value() == '20'
+
         page.locator('#watchSlot2 button').click()
         page.wait_for_function("document.querySelectorAll('.watch-plot')[2].dataset.state==='disconnected'")
         assert page.locator('#watchProgress').inner_text() == '3 of 4 watches connected.'
         assert page.locator('#watchConnect').is_disabled(), 'selected watches use their Reconnect control'
         assert page.locator('#watchSlot2 button').inner_text() == 'Reconnect'
-        page.wait_for_function("document.querySelectorAll('.watch-plot-values')[2].textContent.includes('Waiting')")
+        assert page.locator('.watch-plot').nth(2).is_hidden()
+        assert page.locator('.watch-plot:visible').count() == 3
+        summary.click()
+        for index in [0, 1, 3]:
+            page.locator(f'#watchSlot{index} button').click()
+        assert page.locator('#watchPlots').is_hidden(), 'remembered watches must not keep the graph panel visible'
+        assert page.evaluate('plots.watches.devices.size') == 4
+        assert page.locator('#stage').bounding_box()['height'] == camera_only_height
+        page.locator('#watchSlot0 button').click()
+        page.wait_for_selector('#watchPlots', state='visible')
+        assert not page.locator('#watchPlots').evaluate('e => e.open'), 'reconnecting preserves the collapsed view'
+        summary.click()
+        assert page.locator('.watch-plot:visible').count() == 1
+        page.wait_for_function("document.querySelector('.watch-plot').dataset.state === 'streaming'")
         page.set_viewport_size({'width': 390, 'height': 844})
         page.wait_for_timeout(100)
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'mobile layout must not overflow'
+        mobile_height = page.locator('#workspace').bounding_box()['height']
+        summary.click()
+        assert page.locator('#workspace').bounding_box()['height'] < mobile_height - 100
+        assert page.locator('.watch-plot:visible').count() == 0
+        summary.click()
         # Deterministic history/gap checks use the production view's canvas path.
         page.evaluate('''async () => {
             clearInterval(plotTimer); plots.destroy();
@@ -143,9 +197,24 @@ def check_watch_plots(browser, origin, screenshot=None):
             plots.draw(23000);
             if(plots.histories[0].length)throw Error('Stale data did not expire');
         }''')
+
+        # Migrate a saved unchecked checkbox to a collapsed, reachable panel.
+        page.evaluate("localStorage.setItem('d2m:watchPlots', 'false')")
+        page.reload()
+        page.wait_for_function("document.body.dataset.ready === 'true'")
+        page.locator('#watchConnect').click()
+        page.wait_for_selector('#watchPlots', state='visible')
+        assert not page.locator('#watchPlots').evaluate('e => e.open')
+        summary.click()
+        page.wait_for_function("localStorage.getItem('d2m:watchPlots') === 'true'")
+        summary.click()
+        page.wait_for_function("localStorage.getItem('d2m:watchPlots') === 'false'")
+        page.reload()
+        page.wait_for_function("document.body.dataset.ready === 'true'")
+        assert not page.locator('#watchPlots').evaluate('e => e.open'), 'collapsed preference survives reload'
         assert not errors, errors
         print('PASS watch setup: four selections, exclusions, progress, completion, reconnect controls and two-watch configuration')
-        print('PASS four live plots: notification routing, camera independence, signals, gaps, bounded history, hide/show, Retina and mobile layout')
+        print('PASS connected-only graphs, zero-watch camera space, keyboard collapse/reopen, uninterrupted samples, retained settings, disconnect/reconnect, signals, gaps, bounded history, Retina and mobile layout')
     finally:
         page.close()
 

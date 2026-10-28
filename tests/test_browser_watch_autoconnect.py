@@ -57,13 +57,16 @@ def check_app(browser, origin):
     try:
         page.goto(origin + '/web/live/')
         page.wait_for_function(streaming)
+        assert page.locator('.watch-plot:visible').count() == 4
         assert page.locator('#watchAuto').is_checked()
         assert page.locator('#watchConnect').is_disabled()
         assert page.evaluate('chooserCalls') == 0
         assert page.locator('#go').inner_text() == 'Start'
         page.evaluate('autoDevices[2].gatt.disconnect()')
         page.wait_for_function("document.querySelector('#watchSlot2').textContent.includes('retrying automatically')")
+        assert page.locator('.watch-plot').nth(2).is_hidden()
         page.wait_for_function(streaming)
+        assert page.locator('.watch-plot:visible').count() == 4
         assert page.evaluate('autoDevices[2].attempts') == 2
         page.locator('#watchSlot0 button').click()
         page.evaluate("window.dispatchEvent(new Event('focus'))")

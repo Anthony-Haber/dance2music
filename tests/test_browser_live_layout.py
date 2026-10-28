@@ -37,7 +37,9 @@ def check(page, origin):
     assert page.locator('aside > details[open]').evaluate_all('(els) => els.map(e => e.id)') == ['watchesSection']
     for selector in ['#source', '#cam', '#sceneMode', '#go', '#rec', '#watchConnect']:
         in_view(page, selector)
-    assert page.locator('#watchAuto').is_checked() and page.locator('#watchShowPlots').is_checked()
+    assert page.locator('#watchAuto').is_checked()
+    assert page.locator('#watchShowPlots').count() == 0
+    assert page.locator('#watchPlots').evaluate('e => e.open')
     page.screenshot(path='/private/tmp/d2m-live-desktop.png')
 
     # Space must operate the native disclosure, without starting the session.
@@ -145,6 +147,7 @@ def check(page, origin):
         # A 1366 x 768 browser at 200% zoom has a 683 x 384 CSS viewport.
         page.set_viewport_size({'width':width, 'height':height})
         page.reload(); page.wait_for_function("document.body.dataset.ready === 'true'")
+        page.evaluate('window.scrollTo(0, 0)')  # Check the initial viewport, independent of reload scroll restoration.
         assert page.locator('aside > details[open]').evaluate_all('(els) => els.map(e => e.id)') == ['watchesSection']
         assert page.locator('#model').input_value() == 'lite'
         assert page.locator('#timbre').input_value() == 'glass'

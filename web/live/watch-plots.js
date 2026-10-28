@@ -34,7 +34,7 @@ export function plotValues(sample, signal) {
 
 export class WatchPlots {
   constructor(root, { now = () => performance.now() } = {}) {
-    this.root = root; this.now = now; this.enabled = true; this.watches = null;
+    this.root = root; this.now = now; this.watches = null;
     this.signal = 'acceleration'; this.windowMs = 8000; this.lastFrame = -Infinity;
     this.histories = LIMBS.map(() => new WatchHistory());
     this.identities = LIMBS.map(() => null);
@@ -55,7 +55,7 @@ export class WatchPlots {
     this.legend();
     this.animate = () => {
       const now = this.now();
-      if (now - this.lastFrame >= 50 && !document.hidden && !root.hidden && root.getClientRects().length) {
+      if (now - this.lastFrame >= 50 && !document.hidden && !root.hidden && root.open && root.getClientRects().length) {
         this.lastFrame = now; this.draw(now);
       }
       this.frame = requestAnimationFrame(this.animate);
@@ -75,24 +75,29 @@ export class WatchPlots {
       : 'Live samples · acceleration includes gravity (about 1 g at rest) · gaps stay empty.';
   }
   append(sample, receipt) { this.histories[sample.device_id]?.append(sample, receipt); }
-  setEnabled(enabled) { this.enabled = enabled; this.sync(this.watches); }
   sync(watches) {
     this.watches = watches;
-    this.root.hidden = !this.enabled || !watches?.devices.size;
+    const devices = watches ? [...watches.devices.values()] : [];
     for (const item of this.cards) {
-      const device = watches && [...watches.devices.values()].find(d => d.device_id === item.id);
+      const device = devices.find(d => d.device_id === item.id);
       const identity = device?.device.id ?? null;
       if (identity !== this.identities[item.id]) {
         this.histories[item.id].clear(); this.identities[item.id] = identity;
       }
-      item.card.hidden = item.id >= 2 && watches?.assignments.legsPairID === null;
+      item.card.hidden = !device?.connected || device.connecting || (item.id >= 2 && watches.assignments.legsPairID === null);
       const state = device ? watches.status(device) : 'not connected';
       item.status.textContent = device ? `${state} · ${watches.rate(device).toFixed(0)} Hz` : state;
       item.card.dataset.state = state;
     }
+    const connected = this.cards.filter(item => !item.card.hidden).length;
+    this.root.dataset.count = connected;
+    this.root.hidden = connected === 0;
   }
   draw(now = this.now()) {
-    const series = this.histories.map(history => { history.prune(now - HISTORY_MS); return history.values(now - this.windowMs); });
+    const series = this.histories.map((history, id) => {
+      history.prune(now - HISTORY_MS);
+      return this.cards[id].card.hidden ? [] : history.values(now - this.windowMs);
+    });
     const magnitude = this.signal === 'magnitude', unit = this.signal === 'gyro' ? '°/s' : 'g';
     // A common range lets the limbs be compared; a minimum range prevents
     // stationary sensor noise from being magnified to fill the chart.
