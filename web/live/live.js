@@ -854,7 +854,12 @@ $('model').onchange = async () => { store.set('model', $('model').value);
   if (running) {
     const restartMagenta=magenta.active,session=sessionGeneration;
     if(restartMagenta)await magenta.stop();
-    try { await loadLandmarker(); } catch (error) { status('could not load pose model: ' + error.message); }
+    try {
+      const loading = loadLandmarker(), generation = modelGeneration;
+      await loading;
+      if (running && session === sessionGeneration && generation === modelGeneration)
+        status(recorder.recording ? 'Running · recording' : 'Running · move to make music');
+    } catch (error) { status('could not load pose model: ' + error.message); }
     finally {if(restartMagenta&&running&&session===sessionGeneration)magenta.start();}
   } };
 $('out').onchange = async () => { store.set('out', $('out').value);
