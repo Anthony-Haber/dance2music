@@ -94,15 +94,12 @@ export class Sound {
   // f: the frame (measure.js); S: studies and switches; moving: 0..1 recent movement; choir: harmony.js
   update(f, S, moving, choir) {
     if (!this.ctx || !f) return;
-    const t = this.now(), sing = choir.sounding(), fade = S.fadeStill ? clip(0.15 + moving) : 1;
+    const t = this.now(), fade = S.fadeStill ? clip(0.15 + moving) : 1;
     // ── the hum on the bass note ──
     const v = f.vertical, u = S.vertical ? clip(v.tilt / SD.tiltFull) : 0;
     const c = S.spine && S.spineCurve ? clip(f.spine.curve / SD.curveFull) : 0, B = SD.inharm * c * c;
-    const f0 = mtof(sing.bass - 12) * 2 ** (SD.maxBendCents * u / 1200), det = SD.maxDetuneCents * u;
-    for (const p of this.parts) {
-      const fn = f0 * p.n * Math.sqrt(1 + B * p.n * p.n);
-      this.set(p.o1.frequency, fn, SD.glide); this.set(p.o2.frequency, fn * 2 ** (det / 1200), SD.glide);
-    }
+    this.bassTuning = { bend: 2 ** (SD.maxBendCents * u / 1200), det: SD.maxDetuneCents * u, B };
+    this.updateChoirPitch(choir);
     this.set(this.hGain.gain, SD.humLevel * fade, 0.15);
     const fwd = S.vertical ? clip(v.forward * 1.5, -1, 1) : 0;
     this.set(this.hFilter.frequency, 320 * 2 ** (3 * u) * 2 ** (1.2 * fwd));
@@ -119,10 +116,6 @@ export class Sound {
       this.drive = d; this.set(this.gate.gain, Math.sqrt(d), d > (this.lastDrive ?? 0) ? SD.trigAttack : SD.trigRelease);
       this.lastDrive = d;
     } else { this.drive = 1; this.set(this.gate.gain, 1, 0.1); }
-    for (const [name, V] of Object.entries(this.voices)) {
-      const fq = mtof(sing[name]);
-      if (V.note !== sing[name]) { V.oscs.forEach(o => this.set(o.frequency, fq, SD.glide)); V.note = sing[name]; }
-    }
     // the head: the vowel from its pitch, the choir's place from its turn
     let vowel = VOWEL.ah;
     if (S.head) {
@@ -132,8 +125,9 @@ export class Sound {
     } else this.set(this.choirPan.pan, 0);
     for (const V of Object.values(this.voices)) V.forms.forEach((F, i) => { this.set(F.b.frequency, vowel[i][0], 0.08); this.set(F.g.gain, vowel[i][1] * 3, 0.08); });
     // ── a whole-body spin turns the whole sound round ──
-    this.spinPhase = (this.spinPhase || 0) + (f.spin.rate || 0) * Math.PI / 180 / 30;
-    this.set(this.spinPan.pan, S.circles && f.spin.active ? 0.7 * Math.sin(this.spinPhase) : 0, 0.05);
+    // Body turns uses measured phase; Circles keeps its original stereo signal.
+    // Only the Body turns choir controller steps pitch on confirmed turns.
+    this.updateSpin(f.spin, S, f.circleSpin);
     // ── circles that stopped can wind down like a top ──
     if (S.circles && S.windDown) for (const [name, cc] of Object.entries(f.circles)) {
       const w = this.wind[name];
@@ -144,10 +138,40 @@ export class Sound {
     }
   }
 
+  updateSpin(spin, S, circleSpin = null) {
+    // Preserve Bakarji's original 30fps rate-integrated pan for Circles and
+    // Together. Anthony's measured phase is used only by the Body turns study.
+    if (circleSpin) this.circleSpinPhase = (this.circleSpinPhase || 0) + (circleSpin.rate || 0) * Math.PI / 180 / 30;
+    const phase = (spin.phase_degrees || 0) * Math.PI / 180;
+    const pan = S.spin ? (spin.active ? 0.7 * Math.sin(phase) : 0) :
+      S.circles && circleSpin?.active ? 0.7 * Math.sin(this.circleSpinPhase) : 0;
+    this.set(this.spinPan.pan, pan, 0.05);
+  }
+
+  updateChoirPitch(choir) {
+    if (!this.ctx) return;
+    const sing = choir.sounding(), { bend, det, B } = this.bassTuning || { bend: 1, det: 0, B: 0 };
+    const f0 = mtof(sing.bass - 12) * bend;
+    for (const p of this.parts) {
+      const fn = f0 * p.n * Math.sqrt(1 + B * p.n * p.n);
+      this.set(p.o1.frequency, fn, SD.glide); this.set(p.o2.frequency, fn * 2 ** (det / 1200), SD.glide);
+    }
+    for (const [name, V] of Object.entries(this.voices)) {
+      if (V.note !== sing[name]) {
+        V.oscs.forEach(o => this.set(o.frequency, mtof(sing[name]), SD.glide)); V.note = sing[name];
+      }
+    }
+  }
+
   // events: from measure.js (the body) and from harmony.js (the choir)
   event(e, S, choir) {
     if (!this.ctx) return;
     const t = this.now(), sing = choir.sounding();
+    if (e.type === 'transpose') for (const V of Object.values(this.voices)) {
+      const gain = V.lvl.gain; gain.cancelScheduledValues(t); gain.setValueAtTime(gain.value, t);
+      gain.linearRampToValueAtTime(SD.voiceLevel * SD.swell, t + 0.08);
+      gain.setTargetAtTime(SD.voiceLevel, t + 0.12, 0.35);
+    }
     if (e.type === 'move' && this.voices[e.voice]) {               // the voice that moves swells a little
       const L = this.voices[e.voice].lvl.gain; L.cancelScheduledValues(t); L.setValueAtTime(L.value, t);
       L.linearRampToValueAtTime(SD.voiceLevel * SD.swell, t + 0.08); L.setTargetAtTime(SD.voiceLevel, t + 0.12, 0.35);

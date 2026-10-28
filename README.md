@@ -294,3 +294,65 @@ Thresholds are constants at the top of `harmony.py`.
 
 Every demo now ships its layers as stems; the page mixes them live
 (volume / mute / solo per layer, remembered by layer name).
+
+
+## Anthony instrument and MIDI
+
+Anthony's ideas 0–2 now have a native Python prototype, separate from `live.py`:
+
+```powershell
+.venv/Scripts/python.exe -m instrument --demo
+.venv/Scripts/python.exe -m instrument --camera 0
+```
+
+Camera mode shows the body skeleton and uses body wrists for the ball even when
+palms face sideways. Detailed hand gestures select persistent chord qualities;
+both open palms held 1.5 seconds deliberately return to major. Confirmed fist
+locking shows ROOT LOCKED. Add `--volume 0.5` to halve the louder default audio.
+Restart after updates; resize/maximize the window for the complete camera view.
+Native Python root control now starts in interval mode; **T** switches to the
+original midpoint ring. Center both wrists to arm, then hold a directional pair
+to transpose once. Both up/down moves an octave; fist root lock freezes pitch.
+See the [approved interval map](specs/001-anthony-instrument/relative-root.md).
+Controls sit above the image. Hand detection follows web/main's far mode: alternating
+wrist crops and canned gesture labels confirmed for 0.35 seconds. The display shows
+the confirmed gesture and raw model result separately; joint shape never overrides None.
+
+See [the Python quickstart](specs/001-anthony-instrument/quickstart.md) for setup,
+gestures, headless replay, local exports and checks; [decisions](specs/001-anthony-instrument/decisions.md)
+records provisional choices for Anthony's review. The implemented instrument has
+now been translated into JavaScript on explicit request; true 3D remains deferred.
+Choose **Anthony instrument · 300 chords** in the browser. For iPhone camera and
+sound, run `python live.py --phone` and follow the printed certificate setup URL.
+See [browser and iPhone instructions](docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
+Desktop Chrome/Edge/Firefox can also send all chord notes or one root note to
+Ableton through the **Ableton / MIDI** section and a local virtual MIDI port.
+See the [desktop MIDI setup](docs/FEATURE_TUTORIALS.md#desktop-browser-midi-to-ableton).
+The [validation record](specs/001-anthony-instrument/evidence.md) includes replay,
+model/device checks, measured latency and the remaining performer/listening review.
+For short feature instructions, see [Feature Tutorials](docs/FEATURE_TUTORIALS.md).
+
+For the Anthony website in Safari on this Mac, run `.venv/bin/python live.py`.
+The Ableton section lists existing IAC destinations through the optional local MIDI
+bridge; install `requirements/midi.txt`, click Connect/refresh MIDI, then choose
+your bus and sound route. [Safari setup](docs/FEATURE_TUTORIALS.md#safari-on-macos-iac-midi).
+
+For one held root note in Ableton on macOS:
+
+```bash
+.venv/bin/python -m pip install -r requirements/midi.txt
+.venv/bin/python -m instrument --camera 0 --midi --mute
+```
+
+Select **dance2music - Notes to Ableton** as Ableton's MIDI input, channel 1.
+P pauses/resumes MIDI; exit releases the note. For full sustained chords use:
+
+```bash
+.venv/bin/python -m instrument --camera 0 --midi-chords --mute
+```
+
+Select **dance2music - Chords to Ableton** and a polyphonic synth. Chord notes hold
+while the ball is active; P pauses/resumes, tracking loss and exit release them.
+See the [chord tutorial](docs/FEATURE_TUTORIALS.md#play-sustained-chords-in-ableton).
+See the [Ableton setup tutorial](docs/FEATURE_TUTORIALS.md#play-one-root-note-in-ableton)
+for monitoring, the camera-free demo and existing IAC/loopMIDI cables.

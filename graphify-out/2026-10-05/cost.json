@@ -1,0 +1,15 @@
+{
+  "runs": [
+    {
+      "date": "2026-09-30T12:20:43.668703+00:00",
+      "input_tokens": null,
+      "output_tokens": null,
+      "files": 68,
+      "token_usage_available": false,
+      "note": "AST uses no API tokens; semantic extraction usage is not exposed by the Codex agent tool."
+    }
+  ],
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "totals_complete": false
+}

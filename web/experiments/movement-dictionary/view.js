@@ -24,6 +24,12 @@ export class View {
     // a faint body for orientation
     for (const [a, b] of [[J.LSH, J.RSH], [J.LSH, J.LEL], [J.LEL, J.LWR], [J.RSH, J.REL], [J.REL, J.RWR], [J.LSH, J.LHIP], [J.RSH, J.RHIP], [J.LHIP, J.RHIP], [J.LHIP, J.LKN], [J.RHIP, J.RKN]])
       line(P(a), P(b), COL.dim, 1.5);
+    if (S.spin) {
+      const body = f.spin.tracked ? COL.axis : COL.warn;
+      line(P(J.LSH), P(J.RSH), body, 4); line(P(J.LHIP), P(J.RHIP), body, 4);
+      line(P(J.LWR), P(J.RWR), f.spin.hands_swapped ? COL.axis : COL.circle, 2);
+      line(P(J.LKN), P(J.RKN), f.spin.legs_swapped ? COL.axis : COL.circle, 2);
+    }
     // 4 verticality: the axis, and a plumb line from the hips
     if (S.vertical) {
       const u = Math.min(1, f.vertical.tilt / 45), L = f.geo.torsoI * 1.6;
@@ -81,7 +87,7 @@ export class View {
           g.beginPath(); g.moveTo(...tr[i - 1][1]); g.lineTo(...tr[i][1]); g.stroke(); }
         if (c.active && pos[name]) label(pos[name], `${c.dir > 0 ? '↺' : '↻'} ${Math.abs(c.rate).toFixed(1)}/s`, COL.circle);
       }
-      if (f.spin.active && head) label([head[0], head[1] - f.geo.torsoI * 0.5], `spin ${Math.abs(f.spin.rate).toFixed(0)}°/s`, COL.circle);
+      if (f.circleSpin?.active && head) label([head[0], head[1] - f.geo.torsoI * 0.5], `spin ${Math.abs(f.circleSpin.rate).toFixed(0)}°/s`, COL.circle);
     }
     // contacts and turns flash
     for (const e of f.events) if (e.type === 'contact' || e.type === 'turn' || e.type === 'reverse') this.flash.push({ e, at: now });
@@ -111,8 +117,8 @@ export class View {
     const y0 = this.cv.height - 18 * d - (rows.length * 22 + 54) * d;
     g.save(); g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x0 - 10 * d, y0 - 8 * d, w, (rows.length * 22 + 62) * d);
     g.textBaseline = 'top'; g.fillStyle = '#efe9df'; g.font = `600 ${26 * d}px -apple-system, sans-serif`;
-    g.fillText(`${desc.chord}  ${CHORD_NAME[desc.chord] || ''}`, x0, y0);
-    if (desc.target !== desc.chord) { g.font = `${13 * d}px -apple-system, sans-serif`; g.fillStyle = '#9a9086'; g.fillText(`→ ${desc.target} ${CHORD_NAME[desc.target] || ''}`, x0 + 120 * d, y0 + 10 * d); }
+    g.fillText(`${desc.chord}  ${desc.chord_name || CHORD_NAME[desc.chord] || ''}`, x0, y0);
+    if (desc.target !== desc.chord) { g.font = `${13 * d}px -apple-system, sans-serif`; g.fillStyle = '#9a9086'; g.fillText(`→ ${desc.target} ${desc.target_name || CHORD_NAME[desc.target] || ''}`, x0 + 120 * d, y0 + 10 * d); }
     rows.forEach((v, i) => {
       const y = y0 + (40 + i * 22) * d, m = moves.filter(x => x.voice === v).pop(), a = m ? 1 - (now - m.at) / 900 : 0;
       if (a > 0) { g.fillStyle = VCOL[v].replace('1)', `${0.3 * a})`); g.fillRect(x0 - 6 * d, y - 2 * d, w - 8 * d, 20 * d); }

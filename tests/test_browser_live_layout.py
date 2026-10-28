@@ -9,6 +9,7 @@ from live_ui_helpers import open_control
 from test_browser_watch_autoconnect import MOCK
 
 ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / 'output' / 'live-layout'
 SECTIONS = ['watchesSection', 'sceneSettings', 'soundSettings', 'handsSection', 'movementSettings', 'settingsHelp']
 
 
@@ -40,7 +41,7 @@ def check(page, origin):
     assert page.locator('#watchAuto').is_checked()
     assert page.locator('#watchShowPlots').count() == 0
     assert page.locator('#watchPlots').evaluate('e => e.open')
-    page.screenshot(path='/private/tmp/d2m-live-desktop.png')
+    page.screenshot(path=OUTPUT / 'desktop.png')
 
     # Space must operate the native disclosure, without starting the session.
     summary = page.locator('#soundSettings > summary')
@@ -155,11 +156,11 @@ def check(page, origin):
         assert page.locator('#watchConnect').bounding_box()['y'] < page.locator('#workspace').bounding_box()['y']
         if name == 'mobile':
             in_view(page, '#go'); in_view(page, '#watchConnect')
-        page.screenshot(path=f'/private/tmp/d2m-live-{name}-initial.png')
+        page.screenshot(path=OUTPUT / f'{name}-initial.png')
         for section in SECTIONS[1:]:
             page.locator('#' + section + ' > summary').click()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), section
-        page.screenshot(path=f'/private/tmp/d2m-live-{name}.png', full_page=True)
+        page.screenshot(path=OUTPUT / f'{name}.png', full_page=True)
         page.locator('#performanceView').click()
         assert page.locator('#performanceView').inner_text() == 'Exit performance view'
         assert not page.locator('#go').is_visible()
@@ -174,6 +175,7 @@ def check(page, origin):
 
 
 def main():
+    OUTPUT.mkdir(parents=True, exist_ok=True)
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=ROOT))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
@@ -184,7 +186,7 @@ def main():
                 check(page, f'http://127.0.0.1:{server.server_port}')
             except Exception:
                 print('UI failure:', page.locator('#status').text_content(), page.locator('#recMsg').text_content(), flush=True)
-                page.screenshot(path='/private/tmp/d2m-live-failure.png')
+                page.screenshot(path=OUTPUT / 'failure.png')
                 raise
             finally:
                 browser.close()

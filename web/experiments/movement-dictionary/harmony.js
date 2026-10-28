@@ -14,6 +14,7 @@
 //     bass = the axis (verticality), tenor = the spine, alto = elbows and knees,
 //     soprano = the head
 // DOM-free, audio-free: tested in Node.
+import { TurnPitch } from './turn-pitch.js?v=turn-notes-1';
 
 export const HM = {
   tonic: 62,                      // D (MIDI); the key is D major
@@ -75,11 +76,18 @@ export class Choir {
     this.voices = voiceTo({ bass: 50, tenor: 57, alto: 62, soprano: 66 }, 'I');   // D3, A3, D4, F♯4
     this.lastMove = -1e9; this.leanSince = null; this.leanSide = null; this.bend = { tenor: 0, soprano: 0 };
     this.fold = { same: false, cross: false }; this.chord = 'I';
+    this.turnPitch = new TurnPitch();
+  }
+
+  updateTurn(spin, S) {
+    const from = this.turnPitch.state.semitones;
+    const state = this.turnPitch.update(spin, { enabled: !!S.spin });
+    return state.changed ? [{ type: 'transpose', from, to: state.semitones, steps: state.steps }] : [];
   }
 
   // f: a frame from measure.js; S: which studies are on; t in seconds. Returns the events of this frame.
   update(f, S, t) {
-    const ev = [];
+    const ev = this.updateTurn(f.spin, S);
     // the function, from the lean (verticality)
     const v = f.vertical;
     if (S.vertical && v.tilt > HM.leanAt && Math.abs(v.left) > Math.abs(v.forward) * HM.sideOverFwd) {
@@ -120,9 +128,16 @@ export class Choir {
   sounding() {
     const s = { ...this.voices };
     for (const n of ['tenor', 'soprano']) if (this.bend[n]) s[n] = scaleStep(s[n], this.bend[n]);
-    return s;
+    const shifted = this.turnPitch.apply(VOICES.map(n => s[n]));
+    return Object.fromEntries(VOICES.map((name, i) => [name, shifted[i]]));
   }
   // the chord being sung (its symbol while all four voices are on it, else the one it is leaving) and its notes
-  describe() { return { chord: this.chord, target: this.target, func: this.func, variant: this.variant,
-                        voices: this.sounding(), names: Object.fromEntries(VOICES.map(n => [n, noteName(this.sounding()[n])])) }; }
+  describe() {
+    const voices = this.sounding(), turn = this.turnPitch.state;
+    const chordName = sym => noteName(HM.tonic + SCALE[DEG[sym]] + turn.semitones).replace(/-?\d+$/, '') +
+      (sym === 'vii°' ? '°' : sym === sym.toLowerCase() ? 'm' : '');
+    return { chord: this.chord, target: this.target, func: this.func, variant: this.variant, voices,
+      names: Object.fromEntries(VOICES.map(n => [n, noteName(voices[n])])), turn,
+      turn_name: noteName(turn.tonic_midi), chord_name: chordName(this.chord), target_name: chordName(this.target) };
+  }
 }

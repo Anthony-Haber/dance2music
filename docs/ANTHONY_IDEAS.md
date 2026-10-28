@@ -1,0 +1,464 @@
+# Anthony's Vision for dance2music
+
+Last updated: 2026-10-13. This is a living vision and planning document for Anthony to revise.
+It records desired behavior, existing capabilities, accepted decisions, and possible design flaws.
+Suggestions and open questions are not approved implementation choices.
+
+## Project purpose and starting point
+
+**Authorized web translation, 2026-10-13:** Anthony requested the implemented
+native instrument in JavaScript, excluding Ableton/MIDI. The scope covers ideas
+0–2, split/merge, one-hand transfers and relative interval roots, preserving the
+approved gesture maps. He selected tracking and sound on the iPhone, served by
+the laptop with `live.py --phone`. Work remains local on `anthony-explorations`;
+upstream main's recording/iOS updates were merged first. See the
+[port contract](../specs/001-anthony-instrument/web-port.md) and
+[browser/iPhone tutorials](FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
+Earlier entries describing JavaScript as deferred record the Stage 1 history.
+
+dance2music turns movement into music: pose tracking and cleaned motion provide meaningful control
+over harmony, sound, and musical expression. The original work explores dance videos through
+MediaPipe, kinematics, Laban Efforts, voice-led harmony, and synthesized comparisons.
+
+Anthony's direction is to make this an instrument a musician can deliberately play with the body
+and hands. A visible ball makes the relationship between movement and sound tangible. Chords are
+chosen and transformed intentionally, with spell-like gestures and a beginner mode to teach them.
+The same musical decisions can control Ableton instead of relying on the built-in synthesizer.
+
+The existing Python analysis/rendering pipeline and JavaScript live app are distinct. In particular,
+running `python live.py` starts a local web server; it does not run the live gesture logic in Python.
+New live features therefore need a genuine local Python implementation before any web translation.
+
+**Stage 1 implementation, 2026-10-04:** Ideas 0–2 now have a native Python prototype
+in `instrument/`: persistent root locking, Joseph-inspired temporary 2D glow with
+nearby-fist split/merge, and all 12 roots with 25 ordered hand-pair quality selections.
+Anthony approved the complete pair map and fuller five/six-note voicings on 2026-10-11.
+On 2026-10-12, he added relative interval root control with T switching modes,
+and persistent fist+palm transfer to one hand. Nearby closed fists merge an owned
+ball back to midpoint, using the same gesture as split-ball merge; proximity is
+now 1.0 torso length. Transfer retains captured size/gain and preserves root lock.
+See [quickstart](../specs/001-anthony-instrument/quickstart.md),
+[spec/tasks](../specs/001-anthony-instrument/tasks.md),
+[decisions for review](../specs/001-anthony-instrument/decisions.md), and
+[validation evidence](../specs/001-anthony-instrument/evidence.md).
+The original vision and design risks below remain relevant. Human gesture/listening
+acceptance is still pending; 3D, extra finger-pattern modes, spells and game
+remain future work. Root and full-chord MIDI are implemented for a normal synth;
+see [Ableton setup](FEATURE_TUTORIALS.md#play-sustained-chords-in-ableton).
+The website has not been translated or changed by this feature.
+
+## Completion checklist: ideas 0–2
+
+Checked means the agreed **local Python prototype scope is implemented and tested**.
+It does not mean the full future vision or performer acceptance is complete.
+
+- [x] **0 — Persistent fist root lock:** fist + non-palm or distant two fists toggles root-only lock;
+  reopening rearms, quality remains editable, and nearby split takes priority.
+- [x] **1 — Agreed temporary 2D ball and basic two-ball mode:** Joseph-inspired
+  fire/light glow, wrist geometry, sparks, nearby-fist split/merge, persistent
+  one-hand transfer and M return to midpoint.
+  True 3D remains deferred as agreed.
+- [x] **2 — Musical catalogue:** all 12 roots × 25 absolute qualities
+  (300 chords), bounded voice leading, visible chord feedback and local synthesis.
+
+### What still needs fixing or review
+
+There are no known failing automated feature checks in the recorded validation.
+The following concrete limitations and acceptance work remain:
+
+- [ ] **Visual cleanup:** root and hand labels can overlap the glow or each other.
+- [ ] **Live gesture validation:** test all quality signs, fist lock/unlock, nearby
+  split and recovery with a performer. The camera smoke detected no hands/body;
+  it verified capture/inference, not gesture usability.
+- [ ] **Timing and proximity tuning after that trial:** review the approximately
+  0.60-second fist response, 0.35-second dwell, 0.20-second rearm/gap limits and
+  1.0-torso split distance. Their current values need performer validation.
+- [ ] **Distant/occluded hands:** assess recognition when hands are small, close
+  together or crossing. Wrist-centered crops now follow the browser approach;
+  gesture accuracy with a performer still needs review.
+- [ ] **Musical feel and listening:** review local synth sound/volume, the dense
+  12-sector root ring and right-hand priority for conflicting non-palm gestures.
+  Volume was raised after feedback. Quality now persists through brief reopening;
+  both open palms held 1.5s deliberately return to major, as Anthony selected.
+
+**Deferred additions, rather than fixes to implemented scope:** true 3D/depth,
+animator assets, rotation/hold-time effects, extra finger-pattern modes,
+broader chord vocabulary, and separate musical roles for the two balls.
+Ableton root/full-chord MIDI is implemented; spells and the game
+remain ideas 3 and 4. JavaScript translation
+still requires an explicit request.
+
+### Fixes already completed during validation
+
+- [x] Corrected WAV chord/gain timing across irregular frame gaps.
+- [x] Made the visible dead-zone guide match configured root selection.
+- [x] Added line-specific errors for malformed replay observations.
+- [x] Rejected nonfinite tracking confidence and invalid synth sample rates.
+- [x] Added whole-body overlay and body-wrist ball/audio control, including sideways palms.
+- [x] Adapted the website's wrist-centered crops for detailed hand gestures in Python.
+- [x] Preserved quality through neutral hands; both palms 1.5s explicitly select major.
+- [x] Raised ordinary-spacing volume and added --volume; clarified ROOT LOCKED feedback.
+- [x] Matched web/main far-mode canned gesture detection and stabilization; removed the joint fallback.
+- [x] Preserved the full camera frame below a separate controls panel in a resizable window.
+
+**Performer note, 2026-10-11:** Anthony observed that original main detected his whole
+body and hands perpendicular to the camera, while the first Python prototype showed
+only hand details and needed front-facing palms for the ball. He also reported poor
+hand tracking and very low volume. The corrections above address those testing
+barriers; his original comparison remains recorded without claiming measured accuracy.
+During retesting he confirmed visible finger lines on None-labeled fists and requested
+the camera's entire view. The separate controls panel preserves the camera view.
+His next retest found alternating fist labels and explicitly requested web/main's
+method; canned classification and 0.35s stabilization now replace the joint fallback.
+Detailed finger accuracy still needs performer acceptance.
+
+Evidence: [28 passing tests and device/replay checks](../specs/001-anthony-instrument/evidence.md).
+Implementation commit: `6acfa55` (local).
+
+| Area | Original pipeline/browser capability | Anthony's direction |
+| --- | --- | --- |
+| Python | Recorded-video pose/motion analysis, harmony, sound rendering, MIDI-file workflows | Local live prototype for the new interactions and MIDI output |
+| Live web app | Camera/video tracking, hand recognition, six chord regions, finger-count selection, synthesis and recording | Later translation of validated Python behavior, on explicit request |
+| Ball | One visual ball from the 2D wrist midpoint and spacing; sphere-size sound mappings | Reuse Joseph's visual design in Python first; two-ball interactions and later 3D |
+| Harmony | A predefined harmonic palette, dwell filtering, and voice leading | Independent root selection and gesture-driven chord-quality changes |
+| Fist | Default chord hold while the fist is recognized | Persistent root-lock toggle, with quality gestures still active |
+| Ableton | Existing offline MIDI described for the SWAM/rope workflow | Held root or full chord notes sent directly to a synth |
+
+Source context: [README.md](../README.md), [IDEAS.md](../IDEAS.md), [live.py](../live.py),
+[web/live/live.js](../web/live/live.js), [web/live/hands.js](../web/live/hands.js),
+[web/live/harmony.js](../web/live/harmony.js), and [web/live/features.js](../web/live/features.js).
+These are references to current behavior, not instructions to modify the website now.
+
+## Working stages
+
+1. **Stage 1: local Python.** Implement and run the selected feature locally, establish observable
+   behavior, test it, and review the interaction with Anthony. Camera input, gestures, musical state,
+   MIDI output, and visual feedback belong here when required by the selected feature.
+2. **Stage 2: JavaScript website translation.** Begin only when Anthony explicitly requests the port
+   of a named feature or scope. Preserve the validated behavior and check browser-specific differences.
+
+Completing Stage 1 does not start Stage 2 automatically. A local web port does not authorize a push,
+deployment, or upload. Existing web behavior is useful reference material while Python is developed.
+
+## Priorities and accepted decisions
+
+| Item | Direction |
+| --- | --- |
+| First implementation priority | Persistent fist root-lock toggle |
+| High-priority integration | Ableton synth input with held root/full-chord MIDI; Expressive Chords dropped on 2026-10-12 |
+| Remaining ideas | Preserve all ideas below; their relative implementation order is not yet agreed |
+| Lock lifecycle | A fist closure locks; a later fist closure unlocks. Reopening alone does not unlock. |
+| Locked harmony | Root selection stays fixed; chord-quality gestures remain active. |
+| Two-fist conflict | Nearby closed fists toggle split/merge and suppress the chord-lock toggle. |
+| Initial ball scope | Reuse Joseph's glowing 2D ball design in the local Python prototype; defer depth/3D work. |
+| Spell structure | Three moves recognized in a specific order. |
+| Split lifecycle | Mode persists after opening; repeat nearby closed fists to merge, reopening between gestures (2026-10-11 revision). |
+
+These interaction decisions were explicitly confirmed by Anthony on 2026-10-04.
+The initial ball scope was revised after reviewing Joseph's implementation: the temporary 2D
+design supersedes the earlier decision to start with estimated-depth 3D. The future 3D vision remains.
+
+## 0. First task: persistent fist root lock
+
+**Status: DONE for the local Python prototype.** Implemented in
+[controller.py](../instrument/controller.py), with timing, dropout and split-conflict
+tests. Live timing/recognition review remains on the checklist above.
+
+**Vision.** Turn the existing fist hold into a toggle. The performer can select a root using a
+region or another root-selection method, close a fist to keep that root, then move freely without
+quadrant/region changes changing it. Closing a fist again unlocks root selection.
+
+The lock affects the root, not every aspect of the chord. For example, a locked G root can still
+become G minor or G dominant through the corresponding quality gestures. A closed fist held over
+many frames is one deliberate action, not a stream of toggles. Nearby closed fists intended to split
+the ball must not also change the root-lock state.
+
+**Possible design flaws.**
+
+- Recognition flicker can create repeated close events and accidentally undo a lock. The event
+  needs a stable closure and a deliberate rearm condition; exact timing requires validation.
+- Two hands closing in the same gesture can toggle twice and cancel the result. Hand assignment
+  and treatment of simultaneous events need an explicit policy.
+- A single-fist event may arrive before the second nearby fist is recognized. Detecting a split
+  later must not leave an unintended lock change; gesture arbitration timing is a design decision.
+- If region candidates keep changing while locked, unlocking can immediately jump to a region
+  the performer did not intend. The unlock/dwell policy needs a deliberate choice.
+- A persistent lock can be hard to remember. Visual feedback must distinguish the selected root,
+  current chord quality, and lock state.
+- Tracking loss, restart, and a missed unlock can leave an unexpected state. Recovery and a clear
+  reset action must be specified before live use.
+
+**Current answers.** Either hand toggles after stable closure and arbitration;
+a recognized non-fist held for 0.20 seconds rearms. Unlock starts fresh root dwell.
+Tracking loss cancels pending actions while retaining chord/lock/split and muting
+sound; a reacquired fist must reopen before toggling. R resets to C major,
+unlocked and merged. The timings remain provisional pending performer review.
+
+**Python validation direction.** Replay timestamped hand and root-selection events: lock, reopen,
+move across regions, change quality, close again, and unlock. Include flicker, both-hand events,
+tracking loss, and split gestures. The accepted behavior must be deterministic before a web port.
+
+## 1. A 3D ball between the hands, with two-ball modes
+
+**Status: DONE for the agreed temporary 2D Python scope; full 3D vision deferred.**
+Implemented glow, fire/light styles, energy flicker, bounded sparks, persistent
+hand-anchored split, the same nearby-fist gesture to merge, and keyboard M merge.
+Both balls share one chord and gain;
+splitting conserves their combined area and does not double loudness. Label
+placement needs cleanup; tracking usability still needs a performer trial.
+
+**Vision.** Evolve the central ball into a 3D object the performer manipulates. In some modes,
+finger patterns split it into two balls, one associated with each hand. The exact nearby-fist
+split gesture is described in idea 5; other finger patterns and mode mappings are still open.
+
+**Accepted starting point, revised 2026-10-04.** Reuse Joseph Bakarji's glowing 2D ball design
+as the temporary visual in the local Python prototype. Defer depth control and true 3D rendering
+until later. This replaces the earlier 3D-first starting point, while preserving the long-term
+3D and animator-supplied asset goals. Root locking, musical gestures, and MIDI can be developed
+without making the initial prototype depend on 3D.
+
+**What Joseph implemented.** Commit `0c019b6` on 2026-10-01 added the ball in the JavaScript
+live app: a 2D radial glow at the wrists' midpoint, radius equal to half their image-plane
+distance, a fire or chord-colored light style, and flicker/sparks driven partly by motion energy.
+The normalized sphere-size source can drive whole-instrument gain. The `Sphere` preset uses a
+cubic size curve; `Sphere, gentle` uses exponent 1.5; `Sphere + vowel` also maps hands' height to
+the choir vowel and sphere size to pad brightness. The same commit added five pad timbres.
+
+**Reuse boundary.** The visual concept, wrist geometry and spacing-to-gain mapping
+have been adapted in [visuals.py](../instrument/visuals.py) and
+[controller.py](../instrument/controller.py). Joseph's original renderer is browser
+JavaScript using Canvas 2D; running `live.py` is not the Python adaptation. His
+original browser ball has no split/merge state. The Python version adds that state
+but still has no true depth control, rotation-driven effect, hold-duration color
+behavior or animator-asset interface.
+
+For later planning, keep musical/gesture state independent of the drawing method so a future
+3D renderer can display the same instrument behavior. Depth-dependent interactions will still need
+their own validation when introduced; a 2D prototype cannot validate those by itself.
+
+**Future animated asset.** Anthony may obtain a finished 3D animation from an animator. The
+instrument should eventually drive that asset's expressive qualities, for example getting bigger
+when the hands open, spinning when the hands spin, and changing color after being held for a
+certain time. Finger/palm openness and distance between the hands are distinct controls; they
+must not be silently treated as the same input. These examples do not yet define thresholds,
+axis conventions, the meaning of "held," or the animator's asset format.
+
+The ball should make musical control understandable: where it is, how it moves, and what the
+hands do to it correspond to audible changes. The existing size-to-volume mapping is a starting
+point, not a commitment that every new mode must use it.
+
+**Possible design flaws.**
+
+- A 3D-looking object and an object controlled with estimated depth are different designs.
+  The current ball uses image-plane wrists; adding a shader alone does not add depth interaction.
+- The temporary 2D ball is useful for validating gestures and musical control, but cannot prove
+  that reach, depth collisions, or hand motion toward the camera work in a future 3D design.
+- The existing glow is rotationally symmetric, so spinning it alone may be visually invisible.
+  A rotation effect needs directional particles, markings, or a future asset with visible orientation.
+- Camera-estimated depth can be noisy, especially when hands overlap or move toward the camera.
+  Calibration, confidence handling, smoothing, and coordinate conventions need validation.
+- Combining body and hand estimates without a shared frame can make balls drift or jump.
+- Changing from one ball to two can abruptly double loudness or alter timbre. Visual size and
+  musical energy need an explicit split/merge policy.
+- Finger patterns already participate in chord selection. Reusing them for ball modes can make
+  one gesture alter several unrelated musical controls.
+- Rendering and inference compete for responsiveness. A visually convincing effect must not
+  make musical control lag or hide the hands needed for tracking.
+- A finished animation may have no exposed scale, rotation, color, hand anchors, or split behavior.
+  An asset/control agreement with the animator is needed; arbitrary files cannot be assumed to
+  support these interactions. Two-hand mode may require two instances or a supplied split animation.
+- Hand rotation estimates can jump or reverse under occlusion, mirroring, or axis changes. Spinning
+  a visual object and using that rotation as a musical gesture need consistent conventions.
+- A hold-time color change can conflict with existing chord colors or reset unexpectedly on a
+  short tracking gap. Timing semantics and distinct feedback roles need an explicit design.
+
+**Questions for design.** What does each ball control musically? Which finger patterns select
+which modes? What counts as holding the ball? What controls can a future animator's asset expose,
+and which renderer/asset format supports those controls when the 3D stage is requested?
+
+## 2. Musician-oriented harmony: roots and qualities
+
+**Status: DONE for the approved 300-chord Python catalogue.** Implemented in
+[harmony.py](../instrument/harmony.py) and [audio.py](../instrument/audio.py). Automated
+tests cover all 90,000 starting-to-target chord combinations. Live gesture and
+subjective listening review remain; broader vocabulary is deferred. Direct Ableton
+root/full-chord MIDI is implemented as described in idea 6.
+
+**Vision.** Make harmonic actions musically understandable and avoid being trapped in the current
+fixed palette. From whichever chord is active, the performer should have a path to every chord
+in the chosen musical vocabulary. Select a root through regions or another agreed method;
+use gestures to change its quality independently.
+
+Anthony's examples include G becoming minor, minor-major or dominant. The approved
+catalogue includes triads, sevenths, sixths, ninths, thirteenths, suspended and altered
+chords; see the [complete map and tone sets](../specs/001-anthony-instrument/chord-map.md).
+"Minor-major" means m(maj7) in this scope, so
+G -> Gm -> Gm(maj7) -> G7 is reachable through absolute quality gestures while
+root locking prevents region-driven root changes. Further alterations, inversions
+and plugin voicings remain outside the agreed catalogue.
+
+**Possible design flaws.**
+
+- The existing six regions do not by themselves provide a route to every possible root and
+  quality. The reachable catalogue and root-navigation mechanism must be explicit.
+- A gesture that changes root and quality at once can make the instrument unpredictable. Keep
+  those concepts distinct in the musical state, even if some future shortcuts combine them.
+- Treating transformations only as relative steps can strand some chords or depend on the route
+  taken. Check reachability from every supported starting chord and provide clear state feedback.
+- Quality names can hide different intentions: a minor triad, minor seventh, and minor-major
+  seventh are distinct. Extensions, inversions, register, and voicing must not be silently chosen.
+- Voice leading is relevant for local synthesis; the plugin's configured chord voicings may differ.
+  A label alone does not guarantee that both outputs sound like the same intended harmony.
+- Broad harmonic access conflicts with a small, memorable gesture vocabulary. Expert freedom and
+  beginner restrictions may need distinct modes rather than a single crowded mapping.
+
+**Current answers.** Twelve chromatic root sectors and 25 approved ordered hand pairs
+provide 300 selectable chords. Both reliable signs select an exact cell; uncertain,
+missing, fist and love/heart signs hold quality. Both palms held 1.5s select major.
+Right thumb up + left thumb down selects m(maj7); the reverse selects dominant 7.
+Right Victory + left palm selects dim7; left Victory + right palm selects m7b5.
+Point means index up with other fingers curled and thumb tucked. The approved map
+changes left-hand shortcuts with right palm to m6, 6 and 6/9, and both V signs to aug.
+Extensions sound in fuller five/six-note voicings, with both ninth and thirteenth in
+13th chords. Root lock remains independent of quality. Relative interval root
+navigation and direct chord MIDI are implemented; broader catalogues need later decisions.
+
+## 3. Chords as three-move magic spells
+
+**Vision.** Offer an alternative to region-based chord selection: a combination of three moves
+acts as an incantation that activates a chord. Spells should be learnable, intentional, and
+usable from any current musical state, with enough feedback to know what was recognized.
+
+**Accepted rule.** The three moves are performed in order. Each partial sequence needs a visible
+progress state, and only a complete recognized spell activates its intended musical action.
+
+**Possible design flaws.**
+
+- Ordered moves need clear start/completion boundaries, time windows, and release/rearm rules.
+  A held pose must not be counted as multiple successive moves without an intentional rule.
+- Natural dancing can accidentally contain a spell. Recognition needs a clear distinction between
+  deliberate input and ordinary movement without making performance cumbersome.
+- Partially matching spells can overlap. Prefixes, timeouts, cancellation, and mistakes require
+  an explicit recognition policy.
+- A three-move command takes time. The performer needs predictable timing for when the chord
+  changes; musical anticipation or quantization must be a deliberate mode choice.
+- Generic confidence/timing thresholds may exclude different bodies, tempos, or mobility ranges.
+- Locking, splitting, and spell recognition share the same hands. A gesture must have a defined
+  role in the active mode rather than accidentally trigger several systems.
+
+**Questions for design.** What movement vocabulary forms a spell? Does a spell choose a full
+chord, a root, or a quality? How are partial spells shown, canceled, or timed out?
+
+## 4. A beginner game that teaches the magic chords
+
+**Vision.** Spawn objects or challenges around the performer that they touch or defeat using the
+movement vocabulary. The game teaches the same spell/chord relationships used by the instrument,
+so skills learned during play transfer to free musical performance.
+
+**Possible design flaws.**
+
+- Attractive visuals can turn the interaction into target chasing without teaching harmonic intent.
+  Each challenge needs a recognizable musical lesson and feedback about the chord produced.
+- Collision checks, gesture recognition, and camera calibration can disagree about a successful
+  action. The game must explain misses rather than appear arbitrary.
+- Tracking failure can punish the player unfairly. Distinguish uncertain sensing from incorrect
+  musical or movement choices.
+- Targets can be out of reach or force uncomfortable movements. Difficulty needs to account for
+  space, body size, mobility, and camera framing.
+- Game gestures that differ from the instrument vocabulary make learning fail to transfer.
+- Rendering and game timing can add delay or distract from listening. Musical feedback needs to
+  remain clear while the beginner learns the movements.
+
+**Questions for design.** What does the first lesson teach? Does a player touch, strike, cast a
+spell at, or otherwise defeat a target? Which harmonic freedoms are introduced at each level?
+
+## 5. Nearby closed fists split the central ball
+
+**Vision.** Closing both fists near each other splits the ball in the middle into two balls,
+one attached to each fist/hand. This is the concrete split gesture for the mode in idea 1.
+
+**Accepted rule.** The split gesture suppresses the chord-lock toggle. It must not silently
+change the locked root or chord quality. Mode remains active after the hands open.
+Anthony's 2026-10-11 revision uses the same nearby two-fist gesture to merge again.
+Reopen between gestures; held fists change mode once. Reopening alone does not merge.
+
+**Possible design flaws.**
+
+- Nearby hands occlude each other, which can make the split condition hardest to recognize
+  at the exact moment it is needed. The system needs useful feedback when confidence is low.
+- A fixed pixel-distance threshold behaves differently with body size and camera distance.
+  Proximity should be evaluated in an agreed calibrated or body-relative frame.
+- The first recognized fist may toggle the lock before the complete split gesture is recognized.
+  Single-fist and two-fist events require coordinated arbitration, as described in idea 0.
+- Without separate entry and exit rules, the ball can flicker between one and two modes.
+- Hand identities can swap during crossing or occlusion, causing the two balls and their controls
+  to exchange roles unless identity handling is stable.
+- Splitting changes how musical energy is distributed. Two visuals must not imply two unrelated
+  chord triggers unless that is explicitly designed.
+
+**Questions for design.** Do both balls share a chord or
+have distinct musical roles? What happens if one
+hand leaves the frame? Distance and dwell remain provisional for performer review;
+the merge gesture is confirmed above.
+
+## 6. Ableton synth input through a virtual MIDI cable
+
+**Vision.** Send musical decisions from the local Python prototype to Ableton through Anthony's
+virtual MIDI cable. Anthony already knows how to connect the cable; the work is the instrument's
+output and direct control of an ordinary polyphonic synth.
+
+**First stage, approved 2026-10-12.** Send the current root note and hold it while
+the ball is active. Anthony selected this instead of a fixed test note or pulses.
+`dance2music - Notes to Ableton` is the single-root process-owned cable. Roots/octaves replace the
+held pitch, body/required-wrist loss releases it, and P pauses/resumes MIDI.
+Quality changes stay local in this root-only mode. Implementation and lifecycle are recorded in
+the [MIDI contract](../specs/001-anthony-instrument/midi-output.md).
+
+**Direct chord stage, approved 2026-10-12.** Anthony explicitly dropped Expressive
+Chords and requested synth input. `--midi-chords` opens
+`dance2music - Chords to Ableton` and sends every note in the current local voicing.
+He confirmed holding while the ball is active with P as pause/resume, instead of
+latching a chord after tracking loss. All 300 catalogue chords use the existing
+three-to-six-note voicings and real octave shifts; no trigger table is needed.
+Changed voicings release all old notes before starting the new chord; identical
+pitch sets hold without retriggering. Loss, pause and exit release every note.
+This supersedes the earlier single-note-per-chord Expressive Chords proposal.
+
+**Possible design flaws.**
+
+- Sending a note on every camera frame retriggers a chord repeatedly. The adapter
+  holds identical pitch sets and replaces only changed voicings.
+- The synth needs enough polyphony and an appropriate sustain envelope. A held
+  MIDI note does not prevent a percussive patch's amplitude envelope from decaying.
+- A stuck note or an interrupted MIDI connection can leave unwanted sound. Stop, error recovery,
+  and a manual panic/reset need a defined cleanup contract.
+- Root-lock quality changes still represent different chords; the MIDI adapter
+  follows the controller's actual pitches rather than treating root lock as chord lock.
+- Output latency and jitter affect playability. Measure gesture recognition through chord decision
+  to MIDI emission, then evaluate the audible result in Ableton separately.
+
+**Remaining acceptance.** Route the Chords input into a polyphonic synth and listen
+to quality/root/octave changes, pause/recovery and exit. Channel 1 and velocity 96
+are configurable. Continuous volume CCs and new performance gestures are later work.
+
+## Implementation boundaries and next review
+
+The active feature is [001-anthony-instrument](../specs/001-anthony-instrument/spec.md).
+Its specification, plan, tasks, confirmed/provisional decisions and quickstart exist.
+Ideas 0–2 have a native Python implementation. On 2026-10-05 the resumed work passed
+28 automated tests, lint, formatting, types, offline model loading, native window
+and audio-stream smoke checks, and deterministic replay. Core replay p95 remained
+below the specified 5 ms budget. Details and limits are in
+[evidence.md](../specs/001-anthony-instrument/evidence.md).
+
+The short camera smoke exercised capture and inference with no hands or torso detected;
+it does not establish live gesture usability. Performer timing, all six gesture mappings
+and subjective listening still need Anthony's review. The thresholds and choices in
+decisions.md remain provisional. The original questions above describe risks and future
+choices; the current feature's confirmed answers are recorded in its spec and decisions.
+
+Ableton root and direct full-chord transports are implemented. Routing and listening
+acceptance remains pending. Expressive Chords trigger mapping was dropped.
+Spells, the game, extra finger-pattern modes
+and 3D need their own specifications and decisions. Website translation requires
+Anthony's explicit instruction; no browser feature code changed in this implementation.

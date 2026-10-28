@@ -10,6 +10,49 @@ Locally: `python live.py`, then <http://127.0.0.1:5092/experiments/movement-dict
 Everything runs in the browser; no video or data leaves it. A recording
 downloads the view with its sound and a CSV of the measurements (no images).
 
+## Anthony's body-turn experiment
+
+On `codex/anthony-movement-dictionary`, choose **Body turns**, or open
+`/experiments/movement-dictionary/#body-turns`. Start upright facing the camera,
+step back to show your torso and hands or knees, then turn. Each **90° quarter turn**
+counts once in the large counter. The separate **180° half-turn** count remains:
+180° gives two quarters and one half; 360° gives four quarters and two halves.
+**Reset turns** clears both counters.
+Calibration still sets the other posture studies' neutral; turn counting itself
+does not need calibration.
+
+Shoulders and hips must rotate together. A quarter turn needs a fresh hand or
+leg axis rotating with the torso; a half turn also needs an image-order swap.
+At 90° the limbs may overlap in profile before swapping. Crossed arms or a
+disappearing face alone cannot count. The display shows
+progress, direction relative to your own body, speed, limb confirmation and weak
+tracking. Face cues come from pose landmarks, not a separate face detector.
+Mirroring does not reverse anatomical turn labels. Only Body turns shows these
+diagnostics and uses the turn-to-pitch mapping below. Circles and Together retain
+Bakarji’s circular-motion notes and original shoulder-spin stereo effect.
+
+Each confirmed **90° body turn** now transposes the sustained choir: left moves
+up one D-major scale degree, right moves down. The turn tonic begins at D4 and
+continues D4–E4–F♯4–G4–A4–B4–C♯5–D5 across octaves, within D3–D6. Every voice
+moves by the same semitone offset, so chord intervals stay intact (D major → E
+major after the first left turn). The tonic follows the D-major scale; individual
+chord tones are not independently forced into D major. **Turn tonic**, choir
+notes and the absolute chord label show the resulting pitch. At a range limit,
+turn the other way; the detector still counts turns but pitch holds at the limit.
+
+A 180° turn changes pitch twice, 360° four times; only quarter-turn events step
+pitch, so a half-turn event cannot duplicate the change. Repeated frames,
+unconfirmed turns and tracking loss do not invent steps. Reset turns or Start
+returns to D4. The other studies keep their original pitch; returning to Body turns
+resumes its stored pitch, with no replay of turns made while disabled.
+The Sound plays switch still gates audio. CSV recordings append turn_tonic_midi,
+turn_transpose_st, turn_scale_steps and turn_pitch_limit.
+
+This remains an experiment: real Safari camera trials are required to judge
+MediaPipe's turn tracking. See [research, algorithm and limits](spin-research.md).
+The original studies below retain their musical mappings. Spin diagnostics are
+appended to recorded CSV columns; select fields by name when reading recordings.
+
 ## The five notes
 
 | | Her note | What is measured | What you hear |
@@ -87,7 +130,8 @@ its `MD` object, and the sound's in `SD` (`sound.js`).
   the point is circling. Rate = turning per second, size = speed / turning rate.
   A quarter turn is each π/2 of accumulated turning; a reversal is the turning
   changing sign while circling, or restarting the other way within 1.5 s.
-  A spin is the shoulder line's yaw changing faster than 90°/s.
+  On Anthony's branch, [body turns](spin-research.md) replace the shoulder-only
+  spin detector with fresh torso/limb evidence and half-turn counts.
 
 ## How it sounds (`sound.js`)
 
@@ -116,3 +160,20 @@ the measurements on synthetic bodies: upright and leaning, forward, a curled spi
 elbow–knee contact, the arms' reach (by the sides, out, forward), a quick
 movement against a single landmark jumping, a circling hand with its rate, quarter turns and a
 reversal, and a head-led movement with its travel time.
+
+Anthony's additional checks:
+
+```bash
+.venv/bin/python -m pytest -q tests/test_body_spin.py
+node --test tests/body_spin.test.mjs
+.venv/bin/python -m pytest -q tests/test_turn_pitch.py
+node --test tests/turn_pitch.test.mjs
+```
+
+The Node test uses the active `PYTHON` executable or `.venv/bin/python` (fallback
+`python3`) to compare against the Python reference; install requirements/dev.txt
+first. The optional real-page smoke test needs Playwright/Chromium and a running
+local server: `node tests/web/body-spin-smoke.cjs` (default port 5094; override
+`SPIN_URL` and `CHROME_EXECUTABLE` as needed). It supplies synthetic video/pose
+data, including the 90° and 180° milestones and actual sustained oscillator
+frequencies, without using the camera, downloading a model or touching a MIDI port.

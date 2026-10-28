@@ -16,6 +16,7 @@
 // it reads forward/back lean too; motion (lead, circles) uses the image,
 // scaled by the torso, because the world frame moves with the hips.
 // Every constant is in MD and explained in README.md.
+import { BodySpin } from './spin.js?v=body-turns-90';
 
 export const MD = {
   smoothS: 0.08,               // landmark smoothing time constant (s)
@@ -36,7 +37,7 @@ export const MD = {
   circleWindowS: 1.2,          // the turning must add up over this window
   circleTurns: 0.7,            // ... to at least this many turns
   reverseS: 1.5,               // a circle restarting the other way within this long is a reversal
-  spinRate: 90,                // deg/s of body yaw counted as a spin
+  spinRate: 90,                // Bakarji's original shoulder-yaw stereo effect (deg/s)
   // arms (added by the lab, not one of her notes)
   reachLow: 0.5, reachHigh: 1.3, // torsos from the trunk: arms by the sides → arms wide open
   reachOpen: 0.7,              // reach = 0.7 · the more open arm + 0.3 · the other
@@ -72,7 +73,8 @@ export class Dictionary {
     this.t = null; this.img = {}; this.wld = {}; this.neutral = { tiltL: 0, tiltF: 0, yaw: 0, pitch: -12, curl: 0, bend: 0 };
     this.speed = { head: 0, tail: 0 }; this.rest = 0; this.armed = true; this.onset = null; this.lastLead = null;
     this.yawPrev = null; this.yawRate = 0; this.lastTurn = -1e9;
-    this.contactPrev = {}; this.circ = {}; this.spinPrev = null; this.spinRate = 0; this.out = null;
+    this.contactPrev = {}; this.circ = {}; this.bodySpin = new BodySpin(); this.out = null;
+    this.spinPrev = null; this.spinRate = 0;
     this.mPrev = {}; this.mSpeed = 0;
   }
 
@@ -86,6 +88,9 @@ export class Dictionary {
 
   // image: 33 {x, y, visibility} normalised; world: 33 {x, y, z} metres; t seconds; W, H pixels
   update(image, world, t, W = 1, H = 1) {
+    // The turn detector sees raw, fresh observations, including loss. The
+    // general smoothed stores below may retain points for other studies.
+    const spin = this.bodySpin.update(image, world, t);
     const dt = this.t === null ? 1 / 30 : Math.max(1e-3, Math.min(0.2, t - this.t));
     this.t = t;
     if (!image || !world) return (this.out = null);
@@ -100,6 +105,8 @@ export class Dictionary {
     const I = this.img, Wd = this.wld;
     if (![PTS.LSH, PTS.RSH, PTS.LHIP, PTS.RHIP, PTS.NOSE].every(i => I[i] && Wd[i])) return (this.out = null);
     const events = [];
+    if (spin.event) events.push({ type: 'spin', dir: spin.direction, half_turns: spin.half_turns });
+    if (spin.quarter_event) events.push({ type: 'spin_quarter', dir: spin.direction, quarter_turns: spin.quarter_turns });
     const { L, F } = frame(Wd);
     const hip = mid(Wd[PTS.LHIP], Wd[PTS.RHIP]), sh = mid(Wd[PTS.LSH], Wd[PTS.RSH]);
     const head = Wd[PTS.LEAR] && Wd[PTS.REAR] ? mid(Wd[PTS.LEAR], Wd[PTS.REAR]) : Wd[PTS.NOSE];
@@ -225,13 +232,14 @@ export class Dictionary {
       }
       c.prev = p;
     }
-    // the whole body spinning: the shoulder line's yaw (world frame follows the camera)
+    // Bakarji's original shoulder-only spin signal remains independent of
+    // Anthony's confirmed quarter/half turns. Circles/Together use this signal.
     const sl = sub(Wd[PTS.LSH], Wd[PTS.RSH]), yawB = Math.atan2(sl[2], sl[0]);
     if (this.spinPrev !== null) this.spinRate += (1 - Math.exp(-dt / 0.2)) * (deg(wrap(yawB - this.spinPrev)) / dt - this.spinRate);
     this.spinPrev = yawB;
-    const spin = { rate: this.spinRate, active: Math.abs(this.spinRate) > MD.spinRate };
+    const circleSpin = { rate: this.spinRate, active: Math.abs(this.spinRate) > MD.spinRate };
 
-    return (this.out = { t, vertical, spine, head: headOut, pairs, arms, motion, circles, spin, events,
+    return (this.out = { t, vertical, spine, head: headOut, pairs, arms, motion, circles, spin, circleSpin, events,
                          geo: { img: I, wld: Wd, hip, torsoW, torsoI, bodyI, headI, tailI } });
   }
 
@@ -239,7 +247,10 @@ export class Dictionary {
   static csvHeader() {
     return 't,tilt,tilt_dir,tilt_left,tilt_forward,spine_curve,spine_curl,spine_bend,speed_head,speed_tail,lead,lead_lag,' +
            'head_yaw,head_pitch,head_rate,elbow_knee_LL,elbow_knee_RR,elbow_knee_LR,elbow_knee_RL,reach_L,reach_R,speed_max,' +
-           'circle_lhand,circle_rhand,circle_head,circle_hips,spin_rate,events';
+           'circle_lhand,circle_rhand,circle_head,circle_hips,spin_rate,events,' +
+           'spin_half_turns,spin_progress_deg,spin_tracked,spin_hands_swap,spin_legs_swap,spin_face_visible,' +
+           'spin_status,spin_left_halves,spin_right_halves,' +
+           'spin_quarter_turns,spin_quarter_progress_deg,spin_left_quarters,spin_right_quarters';
   }
   static csvRow(o) {
     if (!o) return '';
@@ -251,6 +262,10 @@ export class Dictionary {
             f(o.head.yaw), f(o.head.pitch), f(o.head.rate), f(o.pairs.LL), f(o.pairs.RR), f(o.pairs.LR), f(o.pairs.RL),
             f(o.arms.reachL), f(o.arms.reachR), f(o.motion.speed),
             c('lhand'), c('rhand'), c('head'), c('hips'), f(o.spin.rate),
-            o.events.map(e => e.type + (e.point ? ':' + e.point : e.pair ? ':' + e.pair : '')).join(' ')].join(',');
+            o.events.map(e => e.type + (e.point ? ':' + e.point : e.pair ? ':' + e.pair : '')).join(' '),
+            f(o.spin.half_turns), f(o.spin.progress_degrees), +o.spin.tracked, +o.spin.hands_swapped,
+            +o.spin.legs_swapped, +o.spin.face_visible, o.spin.status,
+            f(o.spin.left_half_turns), f(o.spin.right_half_turns), f(o.spin.quarter_turns),
+            f(o.spin.quarter_progress_degrees), f(o.spin.left_quarter_turns), f(o.spin.right_quarter_turns)].join(',');
   }
 }

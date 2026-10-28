@@ -8,6 +8,17 @@ metadata:
 ---
 
 
+## Platform execution
+
+Use the native shell for this checkout: Bash on macOS/Linux and PowerShell on Windows.
+Both use the same `.specify/memory/constitution.md`, `.specify/templates/`, and `specs/`.
+Keep one shared skill; do not create platform-specific copies of governance or feature files.
+The initialization metadata records the original script choice; it does not override this rule.
+
+When a workflow needs a helper, select its official sibling under `.specify/scripts/bash/`
+or `.specify/scripts/powershell/`. Keep feature-directory state repository-relative with
+forward slashes so the same feature documents can be located on either platform.
+
 ## User Input
 
 ```text

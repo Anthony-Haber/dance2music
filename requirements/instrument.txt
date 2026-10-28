@@ -1,0 +1,7 @@
+# Native Python prototype, tested with Python 3.14 on Windows.
+numpy==2.4.1
+opencv-contrib-python==5.0.0.93
+mediapipe==1.0.1; sys_platform != "darwin"
+# macOS/Python 3.11: 1.0.1 aborts during model initialization; 1.1.0 passes smoke check.
+mediapipe==1.1.0; sys_platform == "darwin"
+sounddevice==0.5.6
