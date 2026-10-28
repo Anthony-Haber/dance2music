@@ -79,6 +79,17 @@ async function main() {
     await page.evaluate(() => { spinFrames.reverse(); spinIndex = 0; spinStopAt = 30; });
     await page.waitForFunction(() => document.querySelector('#turnCount').textContent === '5 quarter turns');
     assert.equal(await page.locator('#turnPitch').innerText(), 'Turn tonic: G4');
+    for (const study of ['circles', 'together']) {
+      await page.locator(`[data-s=${study}]`).click();
+      await page.waitForFunction(() => turnTestChoir.turnPitch.state.semitones === 0);
+      assert.equal(await page.locator('#turnPanel').isHidden(), true);
+      assert.equal(await page.locator('#turnReadout').isHidden(), true);
+      assert.equal(await page.evaluate(() => turnTestChoir.turnPitch.state.enabled), false);
+    }
+    await page.locator('[data-s=circles]').click();
+    await page.evaluate(() => { spinStopAt = 60; });
+    await page.waitForFunction(() => spinIndex === 60);
+    assert.equal(await page.evaluate(() => turnTestChoir.turnPitch.state.semitones), 0);
     await page.locator('[data-s=spine]').click();
     await page.waitForFunction(() => turnTestChoir.turnPitch.state.semitones === 0);
     await page.locator('[data-s=spin]').click();
@@ -97,7 +108,7 @@ async function main() {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ tests: ['actual video/pose/UI loop', '90-degree quarter turn', '180-degree half turn', 'face absence',
-      'D-major turn pitch', 'actual oscillator frequencies', 'held notes', 'right-turn descent', 'other studies keep original pitch',
+      'D-major turn pitch', 'actual oscillator frequencies', 'held notes', 'right-turn descent', 'other studies keep original pitch', 'Circles/Together exclude body-turn controls and pitch',
       'separate Anthony settings', 'calibrate enables', 'mirror invariance', 'reset', 'complete pose loss', 'study switch', 'camera cleanup', 'mobile width'],
       synthetic: true, pageErrors: errors, screenshot: path.join(output, 'body-turns-browser.png') }, null, 2));
   } finally { await browser.close(); }

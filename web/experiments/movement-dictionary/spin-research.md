@@ -132,8 +132,8 @@ The chosen playable tonic range is D3–D6 (-7 through +14 scale degrees relativ
 to D4, or -12 through +24 semitones). At a boundary, further outward turns still
 count as movement but hold pitch and display the limit; an inward turn changes
 pitch immediately. No hidden excess steps accumulate at a boundary. Reset turns
-and Start return to D4. Turning in Body turns, Circles or Together enables the
-mapping. Other studies use zero effective offset while preserving stored pitch
+and Start return to D4. Only Body turns enables the mapping. Circles and Together retain
+Bakarji’s original circular-motion notes and shoulder-spin stereo effect. Other studies use zero effective offset while preserving stored pitch
 and consuming their counter snapshots, so returning does not replay those turns.
 
 The audio renderer glides all existing choir oscillators and bass partials to
@@ -145,7 +145,9 @@ frame is unavailable. CSV appends turn_tonic_midi, turn_transpose_st,
 turn_scale_steps and turn_pitch_limit. No MIDI output or native CLI behavior is
 changed by this Movement Dictionary experiment.
 Left/right turn labels refer to the dancer's own body; CSS mirroring only
-changes the drawing. Body turns, Circles and Together show the new diagnostics.
+changes the drawing. Only Body turns shows the new diagnostics. The original shoulder-only spin
+measurement is maintained independently as `circleSpin` for Circles/Together;
+it does not use Anthony’s torso-and-limb confirmation or transpose the choir.
 
 Recording retains the previous CSV columns and appends spin_half_turns,
 spin_progress_deg, spin_tracked, spin_hands_swap, spin_legs_swap,

@@ -77,5 +77,11 @@ test('spin stereo uses measured phase and centers on tracking loss or another st
   sound.updateSpin({ active: true, phase_degrees: 270 }, { circles: true });
   sound.updateSpin({ active: false, phase_degrees: 90 }, { spin: true });
   sound.updateSpin({ active: true, phase_degrees: 90 }, { head: true });
-  assert.deepEqual(values, [0.7, -0.7, 0, 0]);
+  assert.deepEqual(values, [0.7, 0, 0, 0]);
+});
+test('Bakarji Circles keeps its original rate-integrated stereo effect', () => {
+  const sound = Object.create(Sound.prototype), values = [];
+  sound.spinPan = { pan: {} }; sound.set = (param, value) => values.push(value);
+  sound.updateSpin({ active: false, phase_degrees: 0 }, { circles: true }, { active: true, rate: 180 });
+  assert.ok(Math.abs(values[0] - 0.7 * Math.sin(Math.PI / 30)) < 1e-10);
 });

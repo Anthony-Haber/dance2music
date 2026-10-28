@@ -1,9 +1,9 @@
 // Movement Dictionary: camera (or a video) → MediaPipe Pose (image + world
 // landmarks) → measure.js → sound.js, drawn by view.js.
-import { Dictionary } from './measure.js?v=body-turns-90';
-import { Sound } from './sound.js?v=turn-notes-1';
-import { View } from './view.js?v=turn-notes-1';
-import { Choir, VOICES } from './harmony.js?v=turn-notes-1';
+import { Dictionary } from './measure.js?v=separate-studies-1';
+import { Sound } from './sound.js?v=separate-studies-1';
+import { View } from './view.js?v=separate-studies-1';
+import { Choir, VOICES } from './harmony.js?v=separate-studies-1';
 
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/latest/pose_landmarker_${m}.task`;
@@ -30,7 +30,7 @@ const STUDIES = {
   spin: ['<b>Body turns.</b> Each confirmed 90° turn changes the choir\'s pitch: left steps up D–E–F♯–G–A–B–C♯ through octaves, right steps down. All voices move together and hold the new pitch. A 180° turn makes two changes. Shoulders, hips and a hand or leg confirm the turn. Direction follows your own body, including in mirrored view.',
          { spin: true }],
   together: ['<b>Together.</b> The whole choir: the lean chooses I, IV or V, elbows and knees turn it to a relative, the spine and the head bend their voices, circles play the chord. The arms set how fully it sings. Every change happens one voice at a time, so moving through positions sounds like a choir finding its way.',
-             { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true, spin: true }],
+             { vertical: true, spine: true, head: true, pairs: true, arms: true, circles: true }],
 };
 
 const v = $('v'), cv = $('c');
@@ -54,7 +54,7 @@ function showStudy(s) {
   study = s; store.set('study', s);
   document.querySelectorAll('#studies button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
   $('what').innerHTML = STUDIES[s][0];
-  const turns = !!(STUDIES[s][1].spin || STUDIES[s][1].circles);
+  const turns = !!STUDIES[s][1].spin;
   $('turnReadout').hidden = $('turnPanel').hidden = !turns;
   showSpin();
 }
@@ -177,7 +177,8 @@ function loop() {
           rows.push(Dictionary.csvRow({ ...f, t: f.t - recT0 }) + `,${c.chord},${Object.values(c.names).join(' ')},${cev.filter(e => e.type === 'move').map(e => e.voice).join(' ')},${(sound.breath ?? 0).toFixed(3)},${(sound.drive ?? 1).toFixed(3)},${c.turn.tonic_midi},${c.turn.semitones},${c.turn.steps},${c.turn.limit}`); }
       } else {
         const changed = choir.updateTurn(dict.bodySpin.out, S);
-        sound.updateChoirPitch(choir); sound.updateSpin(dict.bodySpin.out, S);
+        sound.updateChoirPitch(choir);
+        if (S.spin) sound.updateSpin(dict.bodySpin.out, S);
         for (const e of changed) sound.event(e, S, choir);
       }
       layout(W, H); view.draw(f, S, cv.width / W, $('mirror').value === '1', { desc: choir.describe(), moves });
@@ -214,7 +215,7 @@ function readout(f) {
   const T = settings();
   if (T.trigger) r.push(['movement', `${n(f.motion.speed, 1)} body lengths/s (sounds above ${T.triggerAt})`]);
   if (S.circles) for (const [k, c] of Object.entries(f.circles)) if (c.active) r.push([`circle: ${k}`, `${n(Math.abs(c.rate), 1)} turns/s ${c.dir > 0 ? 'anticlockwise' : 'clockwise'}`]);
-  if (S.circles && f.spin.active) r.push(['spin', `${n(Math.abs(f.spin.rate))}°/s`]);
+  if (S.circles && f.circleSpin.active) r.push(['spin', `${n(Math.abs(f.circleSpin.rate))}°/s`]);
   $('read').innerHTML = r.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join('') + '<span class="note">distances in torso lengths</span><span></span>';
 }
 

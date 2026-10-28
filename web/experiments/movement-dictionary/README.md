@@ -27,9 +27,9 @@ At 90° the limbs may overlap in profile before swapping. Crossed arms or a
 disappearing face alone cannot count. The display shows
 progress, direction relative to your own body, speed, limb confirmation and weak
 tracking. Face cues come from pose landmarks, not a separate face detector.
-Mirroring does not reverse anatomical turn labels. Circles and Together also
-show the diagnostics and use the turn-to-pitch mapping below. The existing
-spin effect moves the sound in stereo while turning quickly.
+Mirroring does not reverse anatomical turn labels. Only Body turns shows these
+diagnostics and uses the turn-to-pitch mapping below. Circles and Together retain
+Bakarji’s circular-motion notes and original shoulder-spin stereo effect.
 
 Each confirmed **90° body turn** now transposes the sustained choir: left moves
 up one D-major scale degree, right moves down. The turn tonic begins at D4 and
@@ -43,8 +43,8 @@ turn the other way; the detector still counts turns but pitch holds at the limit
 A 180° turn changes pitch twice, 360° four times; only quarter-turn events step
 pitch, so a half-turn event cannot duplicate the change. Repeated frames,
 unconfirmed turns and tracking loss do not invent steps. Reset turns or Start
-returns to D4. The other studies keep their original pitch; returning to a turn
-study resumes its stored pitch, with no replay of turns made while disabled.
+returns to D4. The other studies keep their original pitch; returning to Body turns
+resumes its stored pitch, with no replay of turns made while disabled.
 The Sound plays switch still gates audio. CSV recordings append turn_tonic_midi,
 turn_transpose_st, turn_scale_steps and turn_pitch_limit.
 

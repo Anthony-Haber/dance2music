@@ -46,6 +46,12 @@ test('other studies keep their original pitch; returning to turns resumes stored
   c.update(neutral({ ...spin(2), quarter_event: false }), { spin: true }, 2);
   assert.equal(c.sounding().bass, base.bass + 2);
 });
+test('Bakarji Circles cannot enable Anthony turn transposition', () => {
+  const c = new Choir(), base = c.sounding();
+  c.update(neutral(spin(1)), { circles: true }, 0);
+  assert.deepEqual(c.sounding(), base);
+  assert.equal(c.turnPitch.state.enabled, false);
+});
 test('actual detector -> choir produces four pitch changes for one full turn', () => {
   const fixtures = JSON.parse(execFileSync(python,
     ['-c', "import runpy; runpy.run_path('tests/test_body_spin.py', run_name='__main__')"],

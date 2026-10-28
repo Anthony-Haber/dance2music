@@ -125,9 +125,9 @@ export class Sound {
     } else this.set(this.choirPan.pan, 0);
     for (const V of Object.values(this.voices)) V.forms.forEach((F, i) => { this.set(F.b.frequency, vowel[i][0], 0.08); this.set(F.g.gain, vowel[i][1] * 3, 0.08); });
     // ── a whole-body spin turns the whole sound round ──
-    // The measured stereo phase is independent of video frame rate; pitch is
-    // changed once per confirmed quarter turn by the separate choir controller.
-    this.updateSpin(f.spin, S);
+    // Body turns uses measured phase; Circles keeps its original stereo signal.
+    // Only the Body turns choir controller steps pitch on confirmed turns.
+    this.updateSpin(f.spin, S, f.circleSpin);
     // ── circles that stopped can wind down like a top ──
     if (S.circles && S.windDown) for (const [name, cc] of Object.entries(f.circles)) {
       const w = this.wind[name];
@@ -138,9 +138,14 @@ export class Sound {
     }
   }
 
-  updateSpin(spin, S) {
+  updateSpin(spin, S, circleSpin = null) {
+    // Preserve Bakarji's original 30fps rate-integrated pan for Circles and
+    // Together. Anthony's measured phase is used only by the Body turns study.
+    if (circleSpin) this.circleSpinPhase = (this.circleSpinPhase || 0) + (circleSpin.rate || 0) * Math.PI / 180 / 30;
     const phase = (spin.phase_degrees || 0) * Math.PI / 180;
-    this.set(this.spinPan.pan, (S.spin || S.circles) && spin.active ? 0.7 * Math.sin(phase) : 0, 0.05);
+    const pan = S.spin ? (spin.active ? 0.7 * Math.sin(phase) : 0) :
+      S.circles && circleSpin?.active ? 0.7 * Math.sin(this.circleSpinPhase) : 0;
+    this.set(this.spinPan.pan, pan, 0.05);
   }
 
   updateChoirPitch(choir) {

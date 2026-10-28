@@ -81,7 +81,7 @@ export class Choir {
 
   updateTurn(spin, S) {
     const from = this.turnPitch.state.semitones;
-    const state = this.turnPitch.update(spin, { enabled: !!(S.spin || S.circles) });
+    const state = this.turnPitch.update(spin, { enabled: !!S.spin });
     return state.changed ? [{ type: 'transpose', from, to: state.semitones, steps: state.steps }] : [];
   }
 

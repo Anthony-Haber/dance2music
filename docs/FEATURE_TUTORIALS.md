@@ -47,7 +47,7 @@ Safari. Refresh an already-open page to load the new **Body turns** study.
    counting does not require it.
 5. Try a quarter and half turn in each direction, a full turn, crossed arms, and turning
    partway then returning. These camera trials are still needed to assess the
-   model's accuracy. **Circles** and **Together** also show the diagnostics.
+   model's accuracy. These diagnostics belong only to **Body turns**.
 
 All choir voices, including the bass, shift by the same interval and hold the new
 pitch. The tonic follows D-major degrees while the current chord quality stays
@@ -58,7 +58,8 @@ Pitch continues through octaves within **D3–D6**; a visible limit message tell
 you to turn the other way at an endpoint. **Turn tonic** and actual choir notes
 show what is playing. The **Sound plays** switch still controls when it is heard.
 
-Body turns, Circles and Together use this mapping. Other studies use their
+Only **Body turns** uses this mapping. **Circles** and **Together** retain Bakarji’s
+original circular-motion notes and shoulder-spin stereo effect. Other studies use their
 original pitch; returning resumes the stored turn pitch without counting turns
 made in those other studies. Tracking loss alone holds the last pitch. Turning
 quickly also moves sound in stereo. Recordings append the turn tonic, offset,

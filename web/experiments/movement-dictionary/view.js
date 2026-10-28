@@ -87,7 +87,7 @@ export class View {
           g.beginPath(); g.moveTo(...tr[i - 1][1]); g.lineTo(...tr[i][1]); g.stroke(); }
         if (c.active && pos[name]) label(pos[name], `${c.dir > 0 ? '↺' : '↻'} ${Math.abs(c.rate).toFixed(1)}/s`, COL.circle);
       }
-      if (f.spin.active && head) label([head[0], head[1] - f.geo.torsoI * 0.5], `spin ${Math.abs(f.spin.rate).toFixed(0)}°/s`, COL.circle);
+      if (f.circleSpin?.active && head) label([head[0], head[1] - f.geo.torsoI * 0.5], `spin ${Math.abs(f.circleSpin.rate).toFixed(0)}°/s`, COL.circle);
     }
     // contacts and turns flash
     for (const e of f.events) if (e.type === 'contact' || e.type === 'turn' || e.type === 'reverse') this.flash.push({ e, at: now });

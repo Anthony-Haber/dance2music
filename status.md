@@ -1,5 +1,24 @@
 # Project Status
 
+## 2026-10-22 - Separate Bakarji Circles from Anthony Body turns
+
+- Fixed: Anthony's turn transposition and diagnostics had also been enabled in
+  Circles and Together. They now belong exclusively to Body turns. Switching
+  studies restores original pitch and consumes disabled events without replay.
+- Restored Bakarji's original shoulder-yaw spin signal independently of Anthony's
+  torso-and-limb detector, including the original Circles/Together stereo pan.
+  Circular-motion note patterns, reversals and wind-down retain their mappings.
+  Updated feature instructions and browser cache versions.
+- Verification: All 136 JavaScript tests pass, including regressions observed
+  failing before the fix. Compared restored circle detection, shoulder-spin
+  values and original events against Bakarji's imported implementation across
+  1,070 synthetic frames in nine sequences: exact match. The real browser loop
+  with synthetic video confirms Circles/Together hide body-turn controls and
+  disable turn transposition, including turns made while Circles is selected;
+  Body turns resumes its stored pitch without replay. No page errors.
+- Local branch: codex/anthony-movement-dictionary. No push. Real Safari camera
+  quality remains a manual check; browser validation used muted Chromium.
+
 ## 2026-10-19 - Change sustained choir pitch on body turns
 
 - State: Implemented and verified locally on codex/anthony-movement-dictionary;
