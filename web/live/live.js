@@ -845,7 +845,7 @@ $('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!
   try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
         mapChanged(); } catch (e) { status('could not read that mapping'); } };
 $('drumMode').value = drumMode;
-$('timbre').value = store.get('timbre', 'saw'); engine.timbre = $('timbre').value;
+$('timbre').value = store.get('timbre', initialMode === 'instrument' ? 'native' : 'saw'); engine.timbre = $('timbre').value;
 $('timbre').onchange = () => { store.set('timbre', $('timbre').value); engine.setTimbre($('timbre').value); };
 $('sphereShow').value = store.get('sphereShow', 'fire');
 $('sphereShow').onchange = () => store.set('sphereShow', $('sphereShow').value);
@@ -926,6 +926,9 @@ $('mode').onchange = () => {
   instrument.reset(); instrumentFrames.reset(); midiSpan.reset(); lastInstrument = null; sparks = []; sparkGroups = {};
   hands.instrument = isInstrument(); hands.L.reset(); hands.R.reset();
   if (isInstrument() && $('handMode').value === 'off') { $('handMode').value = 'far'; $('handMode').onchange(); }
+  if (store.get('timbre', null) === null) {
+    $('timbre').value = isInstrument() ? 'native' : 'saw'; engine.setTimbre($('timbre').value);
+  }
   showRules(); instrumentReadout(); configureMidi(); if (engine.ctx) { applyMix(); engine.setChord(currentChord(), true); }
 };
 hands.instrument = isInstrument();
@@ -939,10 +942,10 @@ $('resetInstrument').onclick = () => {
   if (engine.ctx) { engine.idle(); engine.setChord(currentChord(), true); }
 };
 const signNames = ['Palm', 'Point', 'V', 'Thumb up', 'Thumb down'];
-const chart = (headers, rows) => '<table style="font-size:12px;border-collapse:collapse"><thead><tr><th>L ↓ / R →</th>' +
-  headers.map(s => `<th style="padding:6px">${s}</th>`).join('') + '</tr></thead><tbody>' +
-  rows.map((row, i) => `<tr><th style="padding:6px">${headers[i]}</th>` + row.map(cell =>
-    `<td style="border:1px solid #444;padding:6px;text-align:center">${cell}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+const chart = (headers, rows) => '<table><thead><tr><th scope="col">L ↓ / R →</th>' +
+  headers.map(s => `<th scope="col">${s}</th>`).join('') + '</tr></thead><tbody>' +
+  rows.map((row, i) => `<tr><th scope="row">${headers[i]}</th>` + row.map(cell =>
+    `<td>${cell}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
 $('chordChart').innerHTML = chart(signNames, QUALITY_ROWS.map(row => row.map(q => SUFFIXES[q] || 'major')));
 $('intervalChart').innerHTML = chart(DIRECTIONS, DIRECTIONS.map((_, right) => DIRECTIONS.map((_, left) => {
   const step = STEP_ROWS[left][right]; return `${step > 0 ? '+' : ''}${step}`;

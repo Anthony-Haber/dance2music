@@ -548,8 +548,11 @@ audio. Reopen your hands after gesture tracking returns before another fist togg
 .venv/Scripts/python.exe live.py
 ```
 
-Choose **Anthony instrument · 300 chords** in Harmony, then Start. New browser
-sessions default to it; an existing saved harmony mode is preserved. Hand tracking
+Open **Sound & music → Harmony → Mode**, choose **Anthony instrument · 300
+chords**, then Start. Desktop sessions keep upstream's six-chord default; phone
+sessions default to Anthony's instrument. An existing saved harmony mode is
+preserved. Root control, Merge ball and Reset appear beneath the mode selector;
+open the chord chart, interval directions or How to play for help. Hand tracking
 defaults to **far**, cropping each body wrist in alternating frames. For an
 instrument close to the camera, **near** is also available. Both detailed signs
 must be reliable to choose a chord quality; **None**, missing signs, fists and
@@ -584,17 +587,25 @@ gesture identities, chord qualities, MIDI routing and native Python labels are
 unchanged by these display aliases. The revised root intervals above apply to
 both runtimes. The website chart reflects displayed names; native tutorials use native IDs.
 
-Choose **native instrument** for the sine-plus-harmonic tone. All existing web
+Choose **native instrument** for the sine-plus-harmonic tone. It is selected when
+entering instrument mode unless you have already saved a timbre preference. All existing web
 timbres now support three through six chord notes. Instrument loudness follows
 the ball's size or captured transfer gain. The Mix pad/master faders still apply;
 instrument mode keeps the pad sounding while a ball is active. Legacy harmony,
 mapping, drum and gesture-action modes remain available in the Harmony selector.
 In instrument mode, signs control chords/balls rather than legacy drum/preset actions.
 
-Record exports one video/audio file with the preview and browser sound, as before
-the separate upstream recording work was imported. Raw pose/hand ZIP export and
-separate microphone recording are removed from Anthony's branches. Use the
-Record button in instrument mode because R is its reset shortcut.
+On the upstream integration branch, **Record** exports upstream's recording ZIP
+with the preview/browser sound, raw pose and hand observations, model provenance,
+and the current instrument state. Optional microphone capture remains in
+**Recording**, off by default. See [recording details](browser-recording.md).
+Use the Record button in instrument mode because R is its reset shortcut.
+
+Find the separate **Body turns** study under **Movement & mapping → Movement
+Dictionary studies → Body turns study**. It opens the experiment in a new tab; Circles
+and Together retain their original mappings. Collapsing a settings section does
+not stop playback or change MIDI routing. **Performance view** remains available
+from the preview.
 
 ## iPhone camera and sound
 
@@ -617,7 +628,8 @@ Open the **setup URL on the iPhone** first. Follow its one-time steps:
 ## Desktop browser MIDI to Ableton
 
 Run `.venv/bin/python live.py` on macOS (Windows: `.venv/Scripts/python.exe live.py`)
-and open the printed localhost URL. Select **Anthony instrument**.
+and open the printed localhost URL. Select **Anthony instrument** under
+**Sound & music → Harmony → Mode**.
 Safari on this Mac uses the [local IAC bridge](#safari-on-macos-iac-midi).
 Chrome, Edge and Firefox use native Web MIDI; that direct route also works from
 an HTTPS hosted page. Safari's local route needs the running server on your Mac.
@@ -631,17 +643,15 @@ an HTTPS hosted page. Safari's local route needs the running server on your Mac.
    **Monitor: In** (or arm the track with Auto), and load an instrument.
    Use a dedicated channel/port for this website. Do not route Ableton's output
    back into the same bus. See [Ableton routing](https://www.ableton.com/en/manual/routing-and-i-o/).
-3. Under the website's **Ableton / MIDI** section, click **Connect / refresh MIDI**
+3. Open **Sound & music → Ableton / MIDI**, click **Connect / refresh MIDI**
    and approve MIDI access when prompted. Select your output port and channel (default 1).
    Firefox may request a site permission add-on; follow its permission prompt.
    Safari lists the Mac's current destinations through the local server. No SysEx
    access is requested.
 4. Choose **All chord notes** to send the voiced three-to-six-note chord into
-   an ordinary Ableton instrument. Choose **One root note** for a chord device
-   such as Expressive Chords: load/configure the chord device before the instrument
-   in Ableton. The root/register determines the trigger; changing hand quality
-   currently changes the visual/browser chord but does not change that MIDI note.
-   A future task will define the gestures' Ableton effect in this mode.
+   an Ableton instrument, or **One root note** to send only the held root.
+   In root-only mode, changing hand quality changes the visual/browser chord
+   without changing that MIDI note. Neither mode needs a chord-generating device.
 5. Choose **MIDI only** to hear Ableton, or **Browser + MIDI** to hear both, then
    click **Start** and allow the camera. **Browser only** is the default on every
    new page load; the site never automatically selects a port or starts MIDI.
@@ -714,8 +724,8 @@ local Anthony instrument server:
 
 Open **http://127.0.0.1:5094/live/** in Safari, then:
 
-1. Under **Harmony**, choose **Anthony instrument · 300 chords**.
-2. Under **Ableton / MIDI**, click **Connect / refresh MIDI**. Choose an existing
+1. Under **Sound & music → Harmony → Mode**, choose **Anthony instrument · 300 chords**.
+2. Open **Sound & music → Ableton / MIDI**, click **Connect / refresh MIDI**. Choose an existing
    IAC destination by its current name, for example **IAC Driver dance2music**,
    **IAC Driver ARIA_IN** or **IAC Driver ARIA_OUT**. Select the bus you configured
    as input in Ableton. Refresh again after adding/removing a bus.
@@ -792,11 +802,16 @@ node --test tests/web/instrument.test.mjs tests/web/audio.test.mjs
 .venv/Scripts/python.exe -m mypy --explicit-package-bases live.py web/phone_server.py tests/web/generate_reference.py
 ```
 
-`tests/web/browser-smoke.cjs` uses Playwright **1.62.1** and Chromium, a synthetic
+`tests/web/browser-smoke.cjs` uses Playwright and Chromium, a synthetic
 camera/model and real browser media APIs. Set `NODE_PATH` to an existing Playwright
 installation, or install it under ignored `output/web-port/browser-tools` with
-`npm install --prefix output/web-port/browser-tools playwright@1.62.1`, then set
-`NODE_PATH` to that folder's `node_modules`. Install Chromium with Playwright's
-CLI, and run `node tests/web/browser-smoke.cjs`. Set `PLAYWRIGHT_BROWSERS_PATH` if
-using a custom browser cache. It saves screenshots/results under `output/web-port/`.
+`npm install --prefix output/web-port/browser-tools playwright@1.64.1`, then set
+`NODE_PATH` to that folder's `node_modules`. Install its matching Chromium with
+Playwright's CLI and set `CHROME_EXECUTABLE` to that executable, or leave it unset
+to use installed Chrome. Run `node tests/web/browser-smoke.cjs`; `PYTHON` can
+override the default `.venv/bin/python` (Windows: `.venv/Scripts/python.exe`).
+The integration was checked with Playwright **1.64.1** and Chromium **156.0.8078.4**.
+Screenshots/results are saved under `output/web-port/`. Upstream's
+`tests/test_browser_live_layout.py` and `tests/test_browser_recording.py` also
+accept `CHROME_EXECUTABLE` for the same browser.
 These checks do not establish real iPhone camera recognition or performance.

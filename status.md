@@ -1,5 +1,54 @@
 # Project Status
 
+## 2026-10-28 - Integrate Anthony features with the current upstream UI
+
+- State: Local branch `codex/anthony-upstream-integration`, reviewed in the separate
+  worktree `/private/tmp/d2m-anthony-upstream`. Based on upstream `a0b374e`; merge
+  `81b2c5c` retains the feature commits and their original Anthony-Haber authorship.
+  Existing Body turns/Circles separation was committed first as `e3ad4d8` on the
+  movement branch. The other source branches and their tips remain separate.
+  No push, PR or deployment.
+- Scope: Native instrument, browser chord/ball/root controls, phone HTTPS,
+  desktop Web MIDI/Safari IAC bridge and Movement Dictionary Body turns. The
+  movement branch already contains the implemented work from the other three
+  branches; merging their later recording-removal reverts is unnecessary.
+- Integration: Preserve upstream's current UI, watch panels, performance view,
+  session/model lifecycle and recording ZIP with optional microphone, raw pose,
+  raw hands and model provenance. Compose MIDI routes with upstream's runtime
+  and asset handler, including packaged host restrictions. Record Anthony's
+  current chord and instrument state. Release unused audio-note owners when
+  switching from a six-note chord to a triad, preventing held Magenta notes.
+- Presentation: Instrument controls, accessible charts and help sit inside
+  Sound & music, alongside a collapsible Ableton / MIDI section. Movement &
+  mapping links to Body turns. Desktop retains the upstream harmony default;
+  phone defaults to Anthony's mode. Native timbre is the instrument default
+  unless a sound was explicitly saved. Section collapse preserves playback and
+  MIDI routing. Tutorials and the earlier isolation contract now explain this
+  authorized integration.
+- Verification: 137 JavaScript feature tests pass, including native parity,
+  300 chords and 90,000 voice-leading transitions. Focused Python suites pass
+  335 tests plus 432 subtests, with one skip, across the initial run and retries
+  using local temporary storage; two initial environment-related timeouts passed
+  on retry. The new composed-server and six-to-three-note regressions pass.
+  Ruff/format checks pass for the changed server/bridge code; mypy passes for
+  18 instrument/server source files. Existing upstream browser-runner lint style
+  remains outside this targeted cleanup.
+- Browser: Playwright 1.64.1 / Chromium 156.0.8078.4, fake camera/model/MIDI and
+  muted audio. Instrument gestures, phone/desktop layout, recording ZIP contents,
+  MIDI cleanup/routing and disclosure behavior pass. Upstream's complete layout
+  and recording suites pass, including keyboard focus, mobile/200% reflow, watch
+  controls, performance view, microphone failures, model changes, ZIP CRC/SHA and
+  media decode. Body turns' real page/audio loop passes with synthetic poses;
+  Circles/Together retain their original pitch. Scene contact audio, Magenta
+  note ownership/crossfade and 44.1/48/96 kHz worklet contracts pass. Desktop and
+  phone screenshots inspected under `output/web-port/`.
+- Graph: AST graph refreshed locally after integration: 3,110 nodes, 6,056 edges
+  and 269 communities; no API or LLM tokens. Generated graph changes are kept in
+  a separate maintenance commit from the UI/tutorial changes.
+- Remaining acceptance: A performer using an actual camera, Safari/iPhone sound,
+  real Ableton/IAC hardware routing, physical watches and native Magenta model
+  performance need device checks; synthetic browser tests do not establish them.
+
 ## 2026-10-22 - Separate Bakarji Circles from Anthony Body turns
 
 - Fixed: Anthony's turn transposition and diagnostics had also been enabled in

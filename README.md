@@ -322,7 +322,11 @@ See [the Python quickstart](specs/001-anthony-instrument/quickstart.md) for setu
 gestures, headless replay, local exports and checks; [decisions](specs/001-anthony-instrument/decisions.md)
 records provisional choices for Anthony's review. The implemented instrument has
 now been translated into JavaScript on explicit request; true 3D remains deferred.
-Choose **Anthony instrument · 300 chords** in the browser. For iPhone camera and
+Choose **Sound & music → Harmony → Mode → Anthony instrument · 300 chords** in
+the browser. Its root/ball controls and help appear below the mode selector;
+**Ableton / MIDI** is a disclosure in the same section. The separate Body turns
+experiment is linked from **Movement & mapping → Movement Dictionary studies**.
+For iPhone camera and
 sound, run `python live.py --phone` and follow the printed certificate setup URL.
 See [browser and iPhone instructions](docs/FEATURE_TUTORIALS.md#play-anthonys-instrument-in-the-browser).
 Desktop Chrome/Edge/Firefox can also send all chord notes or one root note to

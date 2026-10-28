@@ -37,3 +37,14 @@ audio, MIDI lifecycle and hand identity. Real-browser smoke uses synthetic
 MediaPipe/camera/MIDI inputs and verifies gestures, loss, legacy modes, layouts,
 MIDI routing and the restored media recorder. Physical performer/Ableton tests
 remain separate acceptance work.
+
+## Authorized integration — 2026-10-28
+
+Anthony subsequently requested merging the implemented features into the current
+upstream UI and authorized the recommended local integration. This creates the
+separate `codex/anthony-upstream-integration` branch on upstream `a0b374e`, with
+the original feature history merged intact. Upstream recording and UI code are
+retained there; the cleanup contract above records the earlier source-branch
+decision. See [the integration contract](web-port.md#upstream-integration--2026-10-28).
+The source branches remain separate, with the existing Body turns fix committed
+on `codex/anthony-movement-dictionary`; no remote work is published.

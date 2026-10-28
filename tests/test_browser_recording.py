@@ -11,11 +11,11 @@ import http.server
 import io
 import json
 import os
-from pathlib import Path
 import subprocess
 import tempfile
 import threading
 import zipfile
+from pathlib import Path
 
 from live_ui_helpers import open_live_sections
 from playwright.sync_api import sync_playwright
@@ -262,9 +262,11 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(channel='chrome', headless=True,
-                                        args=['--autoplay-policy=no-user-gesture-required',
-                                              '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'])
+            browser = p.chromium.launch(
+                channel=None if os.environ.get('CHROME_EXECUTABLE') else 'chrome',
+                executable_path=os.environ.get('CHROME_EXECUTABLE'), headless=True,
+                args=['--autoplay-policy=no-user-gesture-required',
+                      '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'])
             page = browser.new_page(permissions=['camera'])
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))

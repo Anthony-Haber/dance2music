@@ -71,3 +71,16 @@ body.perf #performanceView { position: fixed; }
   body.perf #workspace { height: 100dvh; }
   #settingsHelp { margin-bottom: 24px; }
 }
+
+/* Instrument controls live inside Sound & music and share the disclosure layout. */
+.instrument-controls { padding: 12px; margin: 10px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 7px; min-width: 0; }
+.instrument-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#instrumentState { white-space: pre-line; overflow-wrap: anywhere; }
+.feature-disclosure { border-block: 1px solid var(--line); }
+.feature-disclosure > summary { color: var(--ink); font-weight: 600; }
+#midiConnect, #midiPanic { width: 100%; margin-bottom: 8px; text-align: left; }
+.gesture-chart { max-width: 100%; overflow-x: auto; margin: 6px 0; }
+.gesture-chart table { font-size: 12px; border-collapse: collapse; width: 100%; }
+.gesture-chart th, .gesture-chart td { padding: 7px; border: 1px solid var(--line); text-align: center; }
+.gesture-chart th { color: var(--ink); font-weight: 500; }
+.gesture-chart:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }

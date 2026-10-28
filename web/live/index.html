@@ -255,27 +255,28 @@
     <option value="twofive_alt">ii–V–I, strong movement alters V</option>
     <option value="fixed">one chord (A minor add9)</option></select></label>
   <div class="rules" id="rules"></div>
-  <div id="instrumentControls" hidden>
+  <div id="instrumentControls" class="instrument-controls" hidden>
     <label>Root control <select id="rootMode"><option value="interval">relative intervals</option>
       <option value="midpoint">12-sector midpoint ring</option></select></label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="instrument-actions">
       <button id="mergeBall">Merge ball (M)</button><button id="resetInstrument">Reset (R)</button>
     </div>
-    <div id="instrumentState" class="status" role="status" style="white-space:pre-line"></div>
-    <details><summary>Chord gesture chart</summary><div id="chordChart" style="overflow-x:auto"></div></details>
-    <details><summary>Interval directions</summary><div id="intervalChart" style="overflow-x:auto"></div>
+    <div id="instrumentState" class="status" role="status"></div>
+    <details class="help"><summary>Chord gesture chart</summary><div id="chordChart" class="gesture-chart" tabindex="0" role="region" aria-label="Chord gesture chart"></div></details>
+    <details class="help"><summary>Interval directions</summary><div id="intervalChart" class="gesture-chart" tabindex="0" role="region" aria-label="Interval directions"></div>
       <p class="note">Use the displayed L/R hand names. Both left/right: fourth down/up.
         Left-right/right-left: whole step down/up. For mixed directions, keep left/right
         fixed and switch up/down to reverse the interval. Both up/down: octave up/down.</p></details>
-    <p class="note">Fist + palm: ball follows the fist. Fist + another sign: toggle root lock.
+    <details class="help"><summary>How to play</summary><p class="note">Fist + palm: ball follows the fist. Fist + another sign: toggle root lock.
       Nearby two fists: split/merge. Reopen before repeating. Both palms for 1.5s: major.
       Center both wrists to arm an interval, hold a direction pair, then return to center.
-      T switches root control. Hand labels follow the mirrored preview, including crossed hands.</p>
+      T switches root control. Hand labels follow the mirrored preview, including crossed hands.</p></details>
   </div>
 
-  <h2>Ableton / MIDI</h2>
+  <details id="midiControls" class="help feature-disclosure"><summary>Ableton / MIDI</summary>
+  <div class="section-body">
   <button id="midiConnect">Connect / refresh MIDI</button>
-  <label style="margin-top:8px">Output port <select id="midiPort"><option value="">Select a MIDI port</option></select></label>
+  <label>Output port <select id="midiPort"><option value="">Select a MIDI port</option></select></label>
   <label>Channel <select id="midiChannel"></select></label>
   <label>Send <select id="midiKind"><option value="chord">All chord notes</option><option value="root">One root note</option></select></label>
   <label>Sound route <select id="soundRoute"><option value="browser">Browser only</option><option value="midi">MIDI only</option><option value="both">Browser + MIDI</option></select></label>
@@ -283,11 +284,12 @@
   <div id="midiStatus" class="status" role="status">MIDI off. Connect and choose an output port.</div>
   <p class="note">Use Anthony instrument mode. Route a virtual MIDI port into an Ableton MIDI track.
     Safari on this Mac lists IAC ports through the running local server; click Connect / refresh MIDI.
-    One root note uses Ableton's chord mapping; hand quality gestures currently affect browser chords only.
+    One root note sends only the root. Choose All chord notes to send the complete voicing.
     Hand span sets velocity linearly: hands together = 0, fully extended arms = 127.
     Held notes restart when velocity changes. No reach calibration is needed.
     Size changes also send expression CC11 (map it for smoother sustained dynamics).
     Browser recording does not capture Ableton audio.</p>
+  </div></details>
 
 
   <h2>Sound</h2>
@@ -327,6 +329,9 @@
 <details id="movementSettings" class="control-section"><summary><span data-icon="movement"></span><span>Movement & mapping</span><span class="section-warning" hidden>Needs attention</span></summary>
 <div class="section-body">
   <h2>Movement</h2>
+  <details class="help"><summary>Movement Dictionary studies</summary>
+    <p>Explore the separate <a href="../experiments/movement-dictionary/#body-turns" target="_blank" rel="noopener">Body turns study</a>: confirmed quarter turns transpose the choir. Circles and Together keep their original behavior.</p>
+  </details>
   <div id="meters"></div>
   <label style="margin-top:6px">Energy memory <span class="rng"><input type="range" id="energyS" min="0.5" max="12" step="0.5">
     <span class="val" id="energyV"></span></span></label>
@@ -359,7 +364,7 @@
 <details class="help"><summary>Help · recording</summary>  <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
     Keep this tab open until the download is ready.</p>
 </details>
-<details class="help"><summary>Help · shortcuts & troubleshooting</summary>  <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
+<details class="help"><summary>Help · shortcuts & troubleshooting</summary><p class="note">In Anthony instrument mode: R resets, M merges the ball, and T switches root control. Use the Record button to record.</p>  <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
     “Tap for sound”. The ring/silent switch should not matter on iOS 16.4 and later.</p>
   <p class="note">Keys: r record/stop · space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>

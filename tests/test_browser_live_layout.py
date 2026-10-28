@@ -1,11 +1,12 @@
 """Live disclosure, accessibility and responsive-layout checks in isolated Chrome."""
 import functools
 import http.server
-from pathlib import Path
+import os
 import threading
+from pathlib import Path
 
-from playwright.sync_api import sync_playwright
 from live_ui_helpers import open_control
+from playwright.sync_api import sync_playwright
 from test_browser_watch_autoconnect import MOCK
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -180,7 +181,11 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(channel='chrome', headless=True, args=['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'])
+            browser = p.chromium.launch(
+                channel=None if os.environ.get('CHROME_EXECUTABLE') else 'chrome',
+                executable_path=os.environ.get('CHROME_EXECUTABLE'), headless=True,
+                args=['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream',
+                      '--autoplay-policy=no-user-gesture-required'])
             try:
                 page = browser.new_page(viewport={'width':1366, 'height':768}, permissions=['camera'], accept_downloads=True)
                 check(page, f'http://127.0.0.1:{server.server_port}')

@@ -34,7 +34,7 @@ async function main() {
     server.once('error', reject); server.once('exit', code => reject(new Error('Server exited ' + code)));
     setTimeout(() => reject(new Error('Server startup timeout')), 10000).unref();
   });
-  const browser = await chromium.launch({ headless: true, channel: 'chrome', args: ['--mute-audio',
+  const browser = await chromium.launch({ headless: true, channel: process.env.CHROME_EXECUTABLE ? undefined : 'chrome', executablePath: process.env.CHROME_EXECUTABLE, args: ['--mute-audio',
     '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required' ] });
   const errors = [];
   try {
@@ -58,6 +58,7 @@ async function main() {
     await page.waitForFunction(() => document.body.dataset.ready === 'true');
     for (const id of ['soundSettings', 'handsSection']) await page.locator(`#${id} > summary`).click();
     assert.equal(await page.locator('#mode').inputValue(), 'instrument');
+    assert.equal(await page.locator('#timbre').inputValue(), 'native');
     assert.equal(await page.locator('#model').inputValue(), 'lite');
     assert.equal(await page.locator('#cam').inputValue(), 'facing:environment');
     assert.equal(await page.locator('#handMode').inputValue(), 'far');
@@ -70,6 +71,7 @@ async function main() {
     await page.waitForTimeout(300);
     await page.evaluate(() => { window.testGestures = { L: 'Closed_Fist', R: 'Open_Palm' }; });
     await page.waitForFunction(() => document.querySelector('#instrumentState').textContent.includes('Ball owned by R'));
+    await page.locator('#stage').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(output, 'phone-owned-ball.png') });
     await page.evaluate(() => { window.testGestures = { L: 'Open_Palm', R: 'Open_Palm' }; });
     await page.waitForTimeout(800);
@@ -111,14 +113,18 @@ async function main() {
     await page.waitForFunction(() => document.querySelector('#go').textContent === 'Start');
     assert.equal(await page.locator('#badge').isVisible(), false);
     await page.locator('#mode').selectOption('six');
+    assert.equal(await page.locator('#timbre').inputValue(), 'saw');
     assert.equal(await page.locator('#instrumentControls').isVisible(), false);
     assert.equal(await page.locator('#gestures').isVisible(), true);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'mobile page overflow');
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.locator('#mode').selectOption('instrument');
+    assert.equal(await page.locator('#timbre').inputValue(), 'native');
+    await page.locator('#rootMode').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(output, 'desktop-controls.png') });
-    // Desktop MIDI is present only on ableton; earlier web branch keeps its scope.
+    // Exercise MIDI without a physical port or an Ableton session.
     if (await page.locator('#midiConnect').count()) {
+    await page.locator('#midiControls > summary').click();
     await page.locator('#midiConnect').click();
     await page.locator('#midiPort').selectOption('test-port');
     await page.waitForFunction(() => document.querySelector('#midiStatus').textContent.includes('MIDI connected'));
@@ -126,6 +132,13 @@ async function main() {
     await page.locator('#go').click();
     await page.waitForFunction(() => window.midiMessages.some(m => m[0] === 144));
     assert.equal(await page.locator('#soundRoute').inputValue(), 'midi');
+    await page.locator('#midiControls > summary').click();
+    await page.locator('#soundSettings > summary').click();
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator('#go').innerText(), 'Stop');
+    assert.equal(await page.locator('#soundRoute').inputValue(), 'midi');
+    await page.locator('#soundSettings > summary').click();
+    await page.locator('#midiControls > summary').click();
     await page.waitForFunction(() => window.testEngine.master.gain.value < 0.001);
     await page.locator('#midiKind').selectOption('root');
     await page.waitForTimeout(150);
@@ -160,6 +173,11 @@ async function main() {
     await page.locator('#midiConnect').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(output, 'desktop-midi.png') });
     }
+    await page.locator('#timbre').selectOption('strings');
+    for (const mode of ['six', 'instrument']) {
+      await page.locator('#mode').selectOption(mode);
+      assert.equal(await page.locator('#timbre').inputValue(), 'strings', 'keep an explicit timbre choice');
+    }
     const samples = await page.evaluate(async () => {
       const { Engine } = await import('/web/live/audio.js');
       const synth = new Engine(); synth.ctx = new OfflineAudioContext(1, 48000, 48000); synth.timbre = 'native';
@@ -184,7 +202,7 @@ async function main() {
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(output, 'browser-results.json'), JSON.stringify({ passed: true, errors,
       browser: await browser.version(), synthetic: true,
-      checks: ['phone defaults','start/audio','neutral','transfer','merge','split','quality','root mode','near hand uniqueness','loss',
+      checks: ['phone defaults','mode timbre defaults and saved preference','start/audio','neutral','transfer','merge','split','quality','root mode','near hand uniqueness','loss',
         'ZIP recording with Anthony chord/state and raw hand observations','stop','legacy mode','mobile layout','desktop controls',
         'MIDI selection','MIDI root hold','MIDI tracking loss','MIDI hidden release','MIDI panic','MIDI stop'] }, null, 2));
     console.log('Browser smoke passed: phone/desktop controls, gestures, tracking loss, ZIP recording, legacy modes.');

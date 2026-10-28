@@ -70,3 +70,33 @@ No new root-level files or npm runtime dependencies are needed. Tests live under
 `tests/web/`; phone-server helpers live with the web app. Instructions belong in
 `docs/FEATURE_TUTORIALS.md`; final evidence and remaining acceptance go in
 `status.md` and this feature's evidence document.
+
+## Upstream integration — 2026-10-28
+
+Anthony authorized integrating these features with the updated upstream UI.
+Local branch `codex/anthony-upstream-integration` starts at upstream `a0b374e`
+and merges `codex/anthony-movement-dictionary` through `e3ad4d8` with merge
+commit `81b2c5c`. This brings in the implemented native/web instrument, phone
+server, MIDI and Body turns history without rewriting its original authors or
+commit IDs. The other feature branches' implemented work is already in this
+ancestry; their later recording-isolation reverts do not need separate merges.
+
+The current integration supersedes the recording-removal policy above on this
+branch: upstream's recording ZIP, microphone option, raw observations, model
+provenance and guarded server lifecycle remain available. The MIDI server wraps
+upstream's handler, retaining its runtime/asset routes and packaged host checks.
+Instrument frames add current chord/ball state to the recording analysis.
+
+The UI follows upstream's existing collapsible sections. Instrument controls and
+help live under Sound & music; MIDI has a nested disclosure. Body turns is linked
+from Movement & mapping. Desktop keeps upstream's default harmony mode, while
+phone sessions default to the instrument; saved choices survive. Sticky session
+controls, performance view, watch panels and recording controls remain intact.
+A separate follow-up commit holds the presentation changes and updated tutorials.
+
+Validation covers native/browser parity, six-to-three-note release observed by
+Magenta, composed MIDI/server routes, instrument gestures and synthetic MIDI,
+upstream layout/accessibility and recording exports. See the dated `status.md`
+entry for results and remaining physical-device acceptance. This is local
+integration only; it does not authorize a push, PR, deployment or source-branch
+history rewrite.
