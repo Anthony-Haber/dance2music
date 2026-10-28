@@ -8,6 +8,7 @@ import http.server
 from pathlib import Path
 import threading
 
+from live_ui_helpers import open_live_sections
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,7 @@ def source_changes(page, origin):
         body=(ROOT / 'tests/vision-fixture.js').read_text(), content_type='text/javascript'))
     page.route('**/*.task', lambda r: r.fulfill(body='fixture-model'))
     page.goto(origin + '/web/live/')
+    open_live_sections(page)
     page.wait_for_function("document.body.dataset.ready==='true'")
     page.locator('#sceneMode').select_option('none')
     page.evaluate('''async()=>{

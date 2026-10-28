@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 import zipfile
+from live_ui_helpers import open_live_sections
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -46,6 +47,7 @@ def integration(page, output):
     assert page.locator('#go').inner_text()=='Start','typing must not start session or recording'
     field.fill('soft warm piano');page.locator('.magenta-prompt button').nth(0).click()
     page.reload()
+    open_live_sections(page)
     page.wait_for_function("document.body.dataset.ready==='true'",timeout=45000)
     assert page.locator('#magentaPrompt0').input_value()=='soft warm piano'
     install_hooks(page, True)
@@ -124,7 +126,7 @@ def integration(page, output):
     page.locator('#magenta-input').select_option('continue')
     page.wait_for_function('!document.querySelector("#magentaCapture").disabled',timeout=10000)
     page.locator('#rec').click()
-    page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+    page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
     page.locator('#magentaCapture').click()
     page.wait_for_function('magentaUnderTest.preparing',timeout=5000)
     page.wait_for_timeout(400)
@@ -271,6 +273,7 @@ def main():
             page.wait_for_function("document.body.dataset.ready==='true'",timeout=45000)
             print('PASS',*passed,flush=True)
             print('PASS',page.evaluate("async()=>{const m=await import('/test-fixtures/magenta-worklet.test.js');return m.runWorkletTests();}"),flush=True)
+            open_live_sections(page)
             if args.live_seconds:live_run(page,args.live_seconds,output,args.camera)
             else:integration(page,output)
             assert not errors,errors

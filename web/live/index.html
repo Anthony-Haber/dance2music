@@ -109,18 +109,19 @@
   }
   @media (max-width: 500px) { .watch-plot-grid { grid-template-columns: 1fr; } }
 </style>
+<link rel="stylesheet" href="presentation.css">
 </head>
 <body>
 <main id="workspace">
 <div id="stage">
+  <button id="performanceView" type="button" aria-pressed="false">Performance view</button>
   <video id="v" playsinline muted></video>
   <canvas id="sceneLayer" aria-hidden="true"></canvas>
   <canvas id="c"></canvas>
   <button id="tap" hidden>Tap for sound</button>
   <div id="recDot" hidden>● REC 0:00</div>
   <div id="badge" hidden><b id="sym">Cmaj9</b><span id="deg">I</span></div>
-  <div id="hint">Pick a camera (or a video file) and press Start.<br>
-    Sound starts with the picture; stand so your whole body is in frame.</div>
+  <div id="hint">Choose a camera or video, then press Start.<br>Keep your whole body in view.</div>
 </div>
 <section id="watchPlots" aria-labelledby="watchPlotsTitle" hidden>
   <div class="watch-plots-header">
@@ -139,23 +140,13 @@
   <p id="watchPlotHint" class="note"></p>
 </section>
 </main>
-<aside>
-  <h1>Dance2Music Live</h1>
-  <div class="sub">Music Intelligence Lab · movement → sound in the browser.
-    <a href="../about.html#m-live" target="_blank">How it works (the math)</a></div>
-
-  <h2>Setup</h2>
+<aside aria-label="Live controls">
+<section id="essentials" aria-label="Essentials">
+  <header><h1>Dance2Music Live</h1><p class="sub">Move. Make music.</p></header>
   <label>Source <select id="source"><option value="camera">Camera</option>
     <option value="file">Video file</option></select></label>
-  <label id="camRow">Camera <select id="cam"><option value="">(allow camera first)</option></select></label>
+  <label id="camRow">Camera <select id="cam"><option value="">Allow camera when you start</option></select></label>
   <label id="fileRow" hidden>File <input type="file" id="file" accept="video/*"></label>
-  <label>Resolution <select id="res"><option value="640x480">640 × 480</option>
-    <option value="1280x720" selected>1280 × 720</option><option value="1920x1080">1920 × 1080</option></select></label>
-  <label>Model <select id="model"><option value="lite">lite (fastest)</option>
-    <option value="full" selected>full</option><option value="heavy">heavy (most accurate)</option></select></label>
-  <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
-    <option value="0">as the camera sees</option></select></label>
-  <label id="outRow">Audio out <select id="out"><option value="">system default</option></select></label>
   <label>Scene <select id="sceneMode" disabled>
     <option value="none">None</option><option value="models">3D Models</option>
     <option value="percussion-kit">Percussions — Drum kit</option>
@@ -164,35 +155,84 @@
     <option value="magenta">Google Magenta</option>
     <option value="floor-piano">Floor Piano</option>
   </select></label>
-  <div class="note" id="sceneNote">Live camera · stop to change · Chrome on Apple Silicon</div>
+  <div class="note" id="sceneNote">Choose a scene, then Start.</div>
+</section>
+<div id="sessionControls" aria-label="Session controls">
+  <div class="session-actions"><button class="go" id="go" disabled>Start</button><button id="rec" disabled>Record</button></div>
+  <div class="status" id="status" role="status">Loading Dance2Music…</div>
+  <div class="status" id="recMsg" role="status"></div>
+  <div class="status mic-status" id="micMsg" role="status" hidden></div>
+  <div id="sectionAlerts" role="status" aria-label="Control warnings"></div>
+</div>
+<details id="watchesSection" class="control-section" open><summary><span data-icon="watch"></span><span>Watches</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
+  <button id="watchConnect">Connect watch</button>
+  <div id="watchProgress" class="status" role="status"></div>
+  <div id="watchStatus" class="status" role="status"></div>
+  <label>Arms pair <select id="watchArms" aria-label="Arms watch pair"></select></label>
+  <label>Legs pair <select id="watchLegs" aria-label="Legs watch pair"></select></label>
+  <label class="mic-option"><input type="checkbox" id="watchAuto" checked>Automatically connect paired watches</label>
+  <div id="watchAutoStatus" class="status"></div>
+  <label class="mic-option"><input type="checkbox" id="watchShowPlots" checked aria-controls="watchPlots">Show live graphs</label>
+  <details id="watchHelp" class="note help">
+    <summary>Help · watches missing from the chooser?</summary>
+    <p>Connect watch automatically shows devices whose names start with <b>M5StickC-IMU-</b>. Select your watch:
+      <b>M5StickC-IMU-00-L/R</b> or <b>M5StickC-IMU-01-L/R</b> (or your assigned pairs).</p>
+    <p>If the chooser stays empty, <b>fully quit Chrome (⌘Q on Mac)</b>, then reopen this page and try Connect watch again.
+      Closing a tab or window is not enough. Try this even when Chrome already has Bluetooth permission.</p>
+    <p>Wait a few seconds for names starting with <b>M5StickC-IMU-</b>.
+      On a Mac, allow Google Chrome in <b>System Settings → Privacy &amp; Security → Bluetooth</b>,
+      then fully quit and reopen Chrome. Disconnect watches from other apps, phones, or browser tabs before retrying.</p>
+  </details>
+  <div id="watchDevices"></div>
+  <details class="help"><summary>Help · pairing & reconnecting</summary><p class="note">Chrome selects one watch at a time. After Pair, choose Connect next watch to add another.
+    You can use fewer than four watches. Automatic connection restores approved watches when supported by the browser.
+    Disconnect pauses that watch until Reconnect or the next page load. Samples are saved during recording.</p>
+    <p>If your browser cannot restore paired watches, select them again after reopening the page. Previously selected watches are hidden from the chooser.</p></details>
+
+</div></details>
+<details id="sceneSettings" class="control-section"><summary><span data-icon="scene"></span><span>Scene settings</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
+  <label>Sphere <select id="sphereShow"><option value="fire">fire, between the hands</option>
+    <option value="light">light, in the chord's colour</option><option value="off">hidden</option></select></label>
+  <details class="help"><summary>Help · sphere</summary><p class="note">The sphere sits between your wrists; its radius is half their distance. Choose the
+    <b>Sphere</b> mapping preset to make its volume (r³) the instrument's loudness.</p></details>
+
   <div id="sceneControls" hidden>
-    <p class="note" id="sceneDragHelp">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <p id="sceneInstruction" class="note">Drag objects to move them. Tap with a hand or foot to play.</p>
     <div id="pianoControls" hidden>
       <label>Listening <select id="pianoListening"><option value="piano-only">Piano only</option><option value="piano-body">Piano + body music</option></select></label>
       <label class="mic-option"><input id="pianoNearCamera" type="checkbox" checked>Black keys toward camera</label>
       <div class="note">Turn off to put the black keys on the far edge. You can change this while playing.</div>
       <div class="status" id="pianoStatus" role="status" aria-live="polite"></div>
-      <p class="note">Acoustic piano: <a href="https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander">Salamander by Alexander Holm</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Samples transposed for intervening notes.</p>
+      <details class="help"><summary>Piano credits</summary><p class="note">Acoustic piano: <a href="https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander">Salamander by Alexander Holm</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Samples transposed for intervening notes.</p></details>
+
     </div>
     <div class="status" id="sceneDragStatus" role="status" aria-live="polite" hidden></div>
     <label class="mic-option" id="sceneTouchRow"><input type="checkbox" id="sceneTouch" checked>Touch effects</label>
-    <div class="note" id="sceneInteractionHelp">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
     <label class="mic-option"><input type="checkbox" id="sceneDebug">Show surfaces</label>
-    <div class="note" id="sceneTouchHelp" hidden>Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.</div>
     <button id="sceneRescan" disabled>Rescan</button>
-    <details><summary>3D diagnostics</summary><div class="status" id="sceneMetrics"></div></details>
+<details class="help"><summary>Help · interacting with the scene</summary>
+    <p class="note">Use a live camera in Chrome on Apple Silicon. Stop the session before changing scenes.</p>
+    <p class="note" id="sceneDragHelp">Drag an object with the mouse to move it onto a detected floor or tabletop. At an edge, it settles at the closest fitting spot. Show surfaces reveals available areas. Esc cancels a drag; Rescan resets positions.</p>
+    <div class="note" id="sceneInteractionHelp">Tap a shape with a hand or foot for sparks and a note in the current chord. Adjust “objects” in Mix. Touches are approximate.</div>
+    <div class="note" id="sceneTouchHelp" hidden>Yellow boxes are touch areas. Cyan dots have hand/foot depth; yellow dots are still waiting for depth.</div>
+</details>
+    <details class="help"><summary>3D diagnostics</summary><div class="status" id="sceneMetrics"></div></details>
   </div>
   <div class="status" id="sceneStatus" role="status" aria-live="polite" hidden></div>
   <div id="magentaInstall" class="note" hidden>
-    <p>Google Magenta requires the Dance2Music Mac app: <strong>Apple Silicon Mac, macOS 14+, Chrome required</strong>.</p>
+<details class="help"><summary>Help · Google Magenta setup</summary>    <p>Google Magenta requires the Dance2Music Mac app: <strong>Apple Silicon Mac, macOS 14+, Chrome required</strong>.</p>
     <p>The app downloads and verifies its assets on first use. After setup, camera, scenes, piano, music, and recording work offline. Other website modes remain available here.</p>
+</details>
     <p id="magentaInstallStatus">The Mac installer has not been published yet.</p>
     <a id="magentaDownload" hidden>Download Dance2Music for Mac</a>
   </div>
   <div id="magentaControls" hidden>
     <div id="magentaPrompts"></div>
     <button id="magentaRandomize" type="button">Randomize prompts</button>
-    <p class="note">Move any visible body part closer to a prompt to increase its influence. Click a label to edit; drag an object to move it.</p>
+    <details class="help"><summary>Help · musical prompts</summary><p class="note">Move any visible body part closer to a prompt to increase its influence. Click a label to edit; drag an object to move it.</p></details>
+
     <label>Body music input <select id="magenta-input"><option value="audio-notes">Audio + notes</option><option value="audio">Audio reference only</option><option value="continue">Continue recent phrase</option></select></label>
     <label>Listening <select id="magenta-listening"><option value="blend">Magenta with blend control</option><option value="both">Both together</option></select></label>
     <label id="magentaBlendRow">Original blend <span><input id="magenta-blend" type="range" min="0" max="100" value="0"><output id="magenta-blend-value">0%</output></span></label>
@@ -207,16 +247,10 @@
     <div id="magentaStatus" class="status" role="status" aria-live="polite">Local MRT2 starts with the session.</div>
     <div id="magentaReferenceStatus" class="status"></div><div id="magentaSpatialStatus" class="status"></div>
   </div>
-  <button class="go" id="go" disabled>Start</button>
-  <div class="recrow"><button id="rec" disabled>● Record</button>
-    <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></div>
-  <label class="mic-option"><input id="recMic" type="checkbox" autocomplete="off">Record microphone separately</label>
-  <div class="status mic-status" id="micMsg" role="status" aria-live="polite" hidden></div>
-  <div class="status" id="recMsg"></div>
-  <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
-    Keep this tab open until the download is ready.</p>
-  <div class="status" id="status">Loading Dance2Music…</div>
 
+</div></details>
+<details id="soundSettings" class="control-section"><summary><span data-icon="music"></span><span>Sound & music</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
   <h2>Harmony</h2>
   <label>Mode <select id="mode"><option value="six">six chords from the hands</option>
     <option value="fingers">six chords from fingers (needs hands)</option>
@@ -229,11 +263,6 @@
   <label>Pad timbre <select id="timbre"><option value="saw">saw (warm, plain)</option>
     <option value="strings">strings (two saws, vibrato)</option><option value="glass">glass (FM bells)</option>
     <option value="organ">organ (drawbars)</option><option value="choir">choir (vowels: map “pad vowel”)</option></select></label>
-  <label>Sphere <select id="sphereShow"><option value="fire">fire, between the hands</option>
-    <option value="light">light, in the chord's colour</option><option value="off">hidden</option></select></label>
-  <p class="note">The sphere sits between your wrists; its radius is half their distance. Choose the
-    <b>Sphere</b> mapping preset to make its volume (r³) the instrument's loudness.</p>
-
   <h2>Mix</h2>
   <div class="mix" id="mix"></div>
 
@@ -249,60 +278,64 @@
     <span class="val" id="syncV"></span></span></label>
   <div class="status" id="bounceTxt">hips not seen</div>
   <div class="status" id="tempo">no steady pulse</div>
-  <p class="note">Bounce steadily from the knees: the groove starts once the hips have been clearly periodic
+  <details class="help"><summary>Help · percussion</summary><p class="note">Bounce steadily from the knees: the groove starts once the hips have been clearly periodic
     for about a second, and follows your tempo. A ring at the hips marks each beat; if the drums feel
-    early or late against your body, move Sync offset.</p>
+    early or late against your body, move Sync offset.</p></details>
 
-  <h2>Hands</h2>
+</div></details>
+<details id="handsSection" class="control-section"><summary><span data-icon="hand"></span><span>Hands</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
   <label>Tracking <select id="handMode"><option value="off">off</option>
     <option value="far">far: crop around each wrist (dancer in full view)</option>
     <option value="near">near: whole frame (close to the camera)</option></select></label>
   <div class="status" id="handTxt" style="white-space:pre-line">hand tracking off</div>
   <div class="dgrid" id="gestures"></div>
 
-  <h2>Watches</h2>
-  <label>Arms pair <select id="watchArms" aria-label="Arms watch pair"></select></label>
-  <label>Legs pair <select id="watchLegs" aria-label="Legs watch pair"></select></label>
-  <button id="watchConnect">Connect watch</button>
-  <div id="watchProgress" class="status" role="status"></div>
-  <label class="mic-option"><input type="checkbox" id="watchAuto" checked>Automatically connect paired watches</label>
-  <div id="watchAutoStatus" class="status"></div>
-  <label class="mic-option"><input type="checkbox" id="watchShowPlots" checked aria-controls="watchPlots">Show live graphs</label>
-  <div id="watchStatus" class="status" role="status"></div>
-  <details id="watchHelp" class="note">
-    <summary>Watches missing from the chooser?</summary>
-    <p>Connect watch automatically shows devices whose names start with <b>M5StickC-IMU-</b>. Select your watch:
-      <b>M5StickC-IMU-00-L/R</b> or <b>M5StickC-IMU-01-L/R</b> (or your assigned pairs).</p>
-    <p>If the chooser stays empty, <b>fully quit Chrome (⌘Q on Mac)</b>, then reopen this page and try Connect watch again.
-      Closing a tab or window is not enough. Try this even when Chrome already has Bluetooth permission.</p>
-    <p>Wait a few seconds for names starting with <b>M5StickC-IMU-</b>.
-      On a Mac, allow Google Chrome in <b>System Settings → Privacy &amp; Security → Bluetooth</b>,
-      then fully quit and reopen Chrome. Disconnect watches from other apps, phones, or browser tabs before retrying.</p>
-  </details>
-  <div id="watchDevices"></div>
-  <p class="note">Chrome selects one watch at a time. After Pair, choose Connect next watch to add another.
-    You can use fewer than four watches. Automatic connection restores approved watches when supported by the browser.
-    Disconnect pauses that watch until Reconnect or the next page load. Samples are saved during recording.</p>
-
+</div></details>
+<details id="movementSettings" class="control-section"><summary><span data-icon="movement"></span><span>Movement & mapping</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
   <h2>Movement</h2>
   <div id="meters"></div>
   <label style="margin-top:6px">Energy memory <span class="rng"><input type="range" id="energyS" min="0.5" max="12" step="0.5">
     <span class="val" id="energyV"></span></span></label>
 
   <h2>Mapping</h2>
-  <div class="maptools"><select id="preset"></select>
-    <button id="savePreset">save</button><button id="exportMap">export</button>
-    <label class="imp">import<input type="file" id="importMap" accept="application/json" hidden></label></div>
-  <p class="note">Each sound parameter reads one movement feature. Open a row to change its source, range and curve.
-    With source “none” it stays at its min.</p>
+  <div class="maptools"><select id="preset" aria-label="Mapping preset"></select>
+    <button id="savePreset">Save</button><button id="exportMap">Export</button>
+    <button id="importMapButton" type="button">Import</button><input type="file" id="importMap" accept="application/json" aria-label="Import mapping" hidden></div>
+  <details class="help"><summary>Help · mapping</summary><p class="note">Each sound parameter reads one movement feature. Open a row to change its source, range and curve.
+    With source “none” it stays at its min.</p></details>
+
   <div id="map"></div>
 
   <h2>Sensitivity</h2>
   <div class="mix" id="sens"></div>
-  <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
+
+</div></details>
+<details id="settingsHelp" class="control-section"><summary><span data-icon="settings"></span><span>Settings & help</span><span class="section-warning" hidden>Needs attention</span></summary>
+<div class="section-body">
+  <label>Resolution <select id="res"><option value="640x480">640 × 480</option>
+    <option value="1280x720" selected>1280 × 720</option><option value="1920x1080">1920 × 1080</option></select></label>
+  <label>Tracking model <select id="model"><option value="lite">lite (fastest)</option>
+    <option value="full" selected>full</option><option value="heavy">heavy (most accurate)</option></select></label>
+  <label>Mirror <select id="mirror"><option value="1">mirrored (like a mirror)</option>
+    <option value="0">as the camera sees</option></select></label>
+  <label id="outRow">Audio output <select id="out"><option value="">system default</option></select></label>
+  <h2>Recording</h2>
+<label for="recWhat">Save <select id="recWhat"><option value="video">video + sound</option><option value="audio">sound only</option></select></label>
+  <label class="mic-option"><input id="recMic" type="checkbox" autocomplete="off">Record microphone separately</label>
+<details class="help"><summary>Help · recording</summary>  <p class="note">Record saves one ZIP with video or sound, body pose, and hands when enabled.
+    Keep this tab open until the download is ready.</p>
+</details>
+<details class="help"><summary>Help · shortcuts & troubleshooting</summary>  <p class="note">iPhone: if there is no sound, check the volume buttons, then tap
     “Tap for sound”. The ring/silent switch should not matter on iOS 16.4 and later.</p>
   <p class="note">Keys: r record/stop · space start/stop · f performance view · 1–5 harmony mode · m mute.
     Everything runs on this computer; no video leaves the browser.</p>
+</details>
+<details class="help"><summary>Credits & how it works</summary><p class="note">Music Intelligence Lab · movement → sound in the browser. <a href="../about.html#m-live" target="_blank" rel="noopener">How it works (the math)</a></p></details>
+<details class="help"><summary>Technical details</summary><div id="sessionMetrics" class="status"></div></details>
+
+</div></details>
 </aside>
 <dialog id="magentaEditor"><p>Edit musical prompt</p><textarea id="magentaEditorText" rows="4" maxlength="250" aria-label="Musical prompt"></textarea><p><button id="magentaEditorApply" type="button">Apply</button> <button id="magentaEditorCancel" type="button">Cancel</button></p></dialog>
 <script type="module" src="live.js"></script>

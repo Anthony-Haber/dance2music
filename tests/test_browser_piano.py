@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import threading
 import zipfile
+from live_ui_helpers import open_live_sections
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,7 @@ def controls(context, origin):
     page.route('**/vision_bundle.mjs', lambda r: r.fulfill(body=(ROOT/'tests/vision-fixture.js').read_text(), content_type='text/javascript'))
     page.route('**/*.task', lambda r: r.fulfill(body='fixture-model'))
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     page.locator('#sceneMode').select_option('floor-piano')
     assert page.locator('#pianoListening').input_value() == 'piano-only'
     assert page.locator('#pianoListening').is_visible()
@@ -34,6 +36,7 @@ def controls(context, origin):
     page.locator('#pianoListening').select_option('piano-body')
     page.locator('#pianoNearCamera').uncheck()
     page.reload()
+    open_live_sections(page)
     page.wait_for_function("document.body.dataset.ready==='true'", timeout=45000)
     assert page.locator('#sceneMode').input_value() == 'floor-piano'
     assert page.locator('#pianoListening').input_value() == 'piano-body'
@@ -87,7 +90,7 @@ def controls(context, origin):
         assert page.evaluate('dragScene.scan.objects[0].black_keys_near_camera')
         assert page.locator('#pianoStatus').inner_text() == 'Piano samples ready'
         page.locator('#rec').click()
-        page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+        page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
         page.evaluate('strike()')
         page.wait_for_function('pianoPlayer.held.size===1')
         assert page.evaluate('jump()'), 'landing restarts the actual sample on the same key'
@@ -171,6 +174,7 @@ def main():
             origin = f'http://127.0.0.1:{server.server_port}'
             if args.camera:
                 page.goto(origin+'/web/live/')
+                open_live_sections(page)
                 page.evaluate('''async()=>{
                   const {SceneController}=await import('/web/live/scene/controller.js');
                   const start=SceneController.prototype.start;

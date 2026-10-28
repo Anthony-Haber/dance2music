@@ -17,6 +17,7 @@ import tempfile
 import threading
 import zipfile
 
+from live_ui_helpers import open_live_sections
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,12 +64,13 @@ def check_live_controls(page, origin):
                                            content_type='text/javascript',
                                            headers={'Access-Control-Allow-Origin': '*'}))
     page.goto(origin + '/web/live/')
+    open_live_sections(page)
     assert page.locator('#rec').is_disabled()
     assert not page.locator('#recMic').is_checked()
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent === 'Stop'")
     page.locator('#rec').click()
-    page.wait_for_function("document.querySelector('#rec').textContent === '■ Stop recording'")
+    page.wait_for_function("document.querySelector('#rec').textContent === 'Stop recording'")
     assert page.locator('#recMic').is_disabled()
     assert page.locator('#recWhat').is_disabled()
     page.wait_for_timeout(400)
@@ -130,6 +132,7 @@ def check_microphone_controls(page, origin):
         };
     }""")
     page.goto(origin + '/web/live/')
+    open_live_sections(page)
     page.locator('#go').click()
     page.wait_for_function("document.querySelector('#go').textContent === 'Stop'")
     assert page.evaluate('navigator.audioSession.type') == 'playback'
@@ -164,7 +167,7 @@ def check_microphone_controls(page, origin):
     page.wait_for_timeout(300)
     page.evaluate("window.liveRecorder.microphoneStream.getAudioTracks()[0].dispatchEvent(new Event('ended'))")
     page.wait_for_function("document.querySelector('#recMsg').textContent.includes('Microphone interrupted')")
-    assert page.locator('#rec').inner_text() == '■ Stop recording'
+    assert page.locator('#rec').inner_text() == 'Stop recording'
     with page.expect_download() as download:
         page.locator('#rec').click()
     with zipfile.ZipFile(download.value.path()) as archive:
@@ -193,7 +196,7 @@ def check_microphone_controls(page, origin):
         }""")
         page.locator('#rec').click()
         page.wait_for_function("document.querySelector('#rec').textContent === 'Cancel recording'")
-        assert 'Waiting for microphone permission' in page.locator('#recMsg').inner_text()
+        assert 'Allow microphone access' in page.locator('#recMsg').inner_text()
         assert page.locator('#recMic').is_disabled()
         page.locator('#go' if cancel_app else '#rec').click()
         if cancel_app:
@@ -210,8 +213,9 @@ def check_microphone_controls(page, origin):
             window.resolveMicrophone(window.lateMicrophoneStream);
         }""")
         page.wait_for_function("window.lateMicrophoneStream.getTracks().every(t => t.readyState === 'ended')")
-        assert page.locator('#rec').inner_text() == '● Record'
+        assert page.locator('#rec').inner_text() == 'Record'
     page.reload()
+    open_live_sections(page)
     assert not page.locator('#recMic').is_checked()
     print('PASS microphone controls: default-off reload, native microphone capture, locked selection, repeated sound-only take, interruption/denial notices and pending cancellation')
 
@@ -230,6 +234,7 @@ def check_watch_recovery_controls(browser, origin):
     }''')
     try:
         page.goto(origin + '/web/live/')
+        open_live_sections(page)
         page.wait_for_function("document.querySelector('#watchStatus').textContent.includes('cannot currently access')")
         assert page.locator('#watchHelp').get_attribute('open') is not None
         page.locator('#watchConnect').click()

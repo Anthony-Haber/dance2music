@@ -1,0 +1,73 @@
+/* Presentation only: disclosures never enable or disable a feature. */
+body { grid-template-columns: minmax(0, 1fr) 370px; }
+aside { padding: 0 16px 24px; scroll-padding-top: var(--session-height, 140px); }
+#essentials { padding-top: 16px; }
+header .sub { margin: 3px 0 14px; }
+select, input, button { min-width: 0; }
+select, input[type=file], button, summary { min-height: 44px; }
+input[type=range] { min-height: 36px; margin: 0; }
+input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
+label { grid-template-columns: 92px minmax(0, 1fr); }
+button:disabled { opacity: .55; cursor: default; }
+:is(button, input, select, textarea, summary, a):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.icon { width: 19px; height: 19px; flex-shrink: 0; vertical-align: middle; }
+button .icon { margin-right: 7px; pointer-events: none; }
+#sessionControls { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); }
+.session-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#sessionControls .status { margin-top: 5px; overflow-wrap: anywhere; }
+#recMsg[data-elapsed]::before { content: attr(data-elapsed) ' · '; color: var(--ink); font-variant-numeric: tabular-nums; }
+.status:empty, #sectionAlerts:empty { display: none; }
+.control-section { border-bottom: 1px solid var(--line); }
+.control-section > summary { display: flex; align-items: center; gap: 10px; padding: 13px 0; cursor: pointer; list-style: none; font-weight: 600; }
+.control-section > summary::-webkit-details-marker { display: none; }
+.control-section > summary::after { content: ''; width: 7px; height: 7px; border-right: 1.5px solid; border-bottom: 1.5px solid; transform: rotate(45deg); margin-left: auto; margin-right: 4px; }
+.control-section[open] > summary::after { transform: rotate(225deg); }
+.control-section > summary .icon { color: var(--accent); }
+.section-body { padding: 0 0 14px; }
+.section-body > :first-child { margin-top: 0; }
+.section-warning { color: #ffc89f; font-size: 10px; font-weight: 500; }
+.control-section[open] > summary .section-warning { display: none; }
+[data-issue="true"], .warning { color: #ffc89f; }
+.section-alert { display: block; width: 100%; text-align: left; font-size: 12px; margin-top: 6px; color: #ffc89f; overflow-wrap: anywhere; }
+.help { margin: 8px 0; color: var(--dim); font-size: 12px; }
+.help > summary { cursor: pointer; padding: 10px 0; }
+.help p { margin: 6px 0 10px; }
+.mic-option { min-height: 44px; margin: 4px 0; }
+#watchConnect { width: 100%; text-align: left; }
+#watchProgress { color: var(--ink); }
+#watchStatus { margin-bottom: 12px; }
+.watch-device { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+.watch-device-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.watch-device strong { color: var(--ink); font-size: 13px; }
+.watch-device p { margin: 4px 0; }
+.watch-device .help { margin: 0; overflow-wrap: anywhere; }
+.watch-device button { font-size: 12px; padding: 6px 8px; }
+.mix { grid-template-columns: 70px 44px minmax(0, 1fr) 38px; }
+.mix button { min-height: 44px; }
+.mix label { display: block; margin: 0; font-size: 12px; }
+.dgrid { grid-template-columns: 92px minmax(0, 1fr); }
+.dgrid label { display: block; margin: 0; font-size: inherit; }
+.dgrid input[type=number] { min-height: 44px; }
+.maptools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.maptools select { grid-column: 1 / -1; }
+details.dest summary { min-height: 44px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; }
+#performanceView { position: absolute; left: 12px; bottom: 12px; z-index: 4; background: #1b1a18e8; }
+body.perf #performanceView { position: fixed; }
+#hint { pointer-events: none; }
+#tap { bottom: 72px; }
+#sceneNote { margin-bottom: 3px; }
+.watch-plot-legend { flex-wrap: wrap; }
+@media (max-width: 800px) {
+  body { display: flex; flex-direction: column; height: auto; }
+  body:not(.perf) aside { display: contents; }
+  #essentials, #sessionControls, .control-section { margin: 0 16px; }
+  #essentials { order: 0; }
+  #sessionControls { order: 1; position: static; }
+  #watchesSection { order: 2; }
+  #workspace { order: 3; width: 100%; }
+  .control-section { order: 4; }
+  body:not(.perf) #workspace { margin: 16px 0; }
+  body:not(.perf) #workspace #stage { height: 52vh; min-height: 240px; }
+  body.perf #workspace { height: 100dvh; }
+  #settingsHelp { margin-bottom: 24px; }
+}

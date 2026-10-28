@@ -13,6 +13,7 @@ from pathlib import Path
 import statistics
 import threading
 import zipfile
+from live_ui_helpers import open_live_sections, open_control
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
@@ -20,6 +21,7 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 def real_models(page, origin, camera, output, resolution, mode="models"):
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     page.evaluate('''async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
       const pose=SceneController.prototype.pose;
@@ -75,7 +77,7 @@ def real_models(page, origin, camera, output, resolution, mode="models"):
         print('EFFECT STRESS',stress,flush=True)
     page.locator('#sceneDebug').check()
     page.locator('#rec').click()
-    page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+    page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
     page.wait_for_timeout(1200)
     with page.expect_download() as download: page.locator('#rec').click()
     download.value.save_as(output/'scene-recording.zip')
@@ -101,21 +103,26 @@ def live_controls(context, origin):
     page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
     page.route('**/scene/worker.js',lambda r:r.fulfill(body="self.onmessage=({data})=>postMessage({...data,type:'status',message:'Loading test scene…'});",content_type='text/javascript'))
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     assert page.locator('#sceneMode').input_value()=='none'
     page.evaluate("localStorage.removeItem('d2m:sceneMode');localStorage.setItem('d2m:sceneObjects','true')")
     page.reload()
+    open_live_sections(page)
     assert page.locator('#sceneMode').input_value()=='models','legacy enabled setting migrates'
     for mode in ['percussion-kit','percussion-hand','percussion-metal']:
         page.locator('#sceneMode').select_option(mode)
         assert not page.locator('#sceneTouch').is_visible()
+        open_control(page, '#sceneInteractionHelp')
         assert 'any body part' in page.locator('#sceneInteractionHelp').inner_text()
         page.reload()
+        open_live_sections(page)
         assert page.locator('#sceneMode').input_value()==mode
     page.locator('#sceneMode').select_option('models')
     page.locator('#sceneMode').select_option('models')
     assert page.locator('#sceneTouch').is_checked()
     page.locator('#sceneTouch').uncheck()
     page.reload()
+    open_live_sections(page)
     assert page.locator('#sceneMode').input_value()=='models'
     assert not page.locator('#sceneTouch').is_checked()
     page.locator('#sceneTouch').check()
@@ -136,7 +143,7 @@ def live_controls(context, origin):
     assert 'WebGPU' in page.locator('#sceneStatus').inner_text()
     assert not page.locator('#rec').is_disabled()
     page.locator('#rec').click()
-    page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+    page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
     page.evaluate('''async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
       const original=SceneController.prototype.takeTouchEvents;
@@ -166,6 +173,7 @@ def drag_controls(context, origin):
     page.route('**/vision_bundle.mjs',lambda r:r.fulfill(body=(ROOT/'tests/vision-fixture.js').read_text(),content_type='text/javascript'))
     page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     page.evaluate('''async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
       const {installDragFixture}=await import('/tests/scene-drag.test.js');
@@ -185,7 +193,7 @@ def drag_controls(context, origin):
         x,y=centre();page.mouse.move(x,y);assert page.locator('#c').evaluate("e=>e.style.cursor")=='grab'
         page.mouse.down();assert page.evaluate('!!dragScene.drag');return x,y
     original=position()
-    page.locator('#rec').click();page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+    page.locator('#rec').click();page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
     x,y=begin();page.mouse.move(x-60,y,steps=8);page.mouse.up()
     moved=position();assert moved[0]>original[0]+.2,'mirrored mouse drag moves toward matching image location'
     assert page.evaluate("dragScene.scan.objects[0].placement==='manual' && dragScene.touchObjects().length===1")
@@ -223,6 +231,7 @@ def percussion_controls(context, origin):
     page.route('**/vision_bundle.mjs',lambda r:r.fulfill(body=(ROOT/'tests/vision-fixture.js').read_text(),content_type='text/javascript'))
     page.route('**/*.task',lambda r:r.fulfill(body='fixture-model'))
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     page.evaluate("""async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
       const {installDragFixture}=await import('/tests/scene-drag.test.js');
@@ -236,7 +245,7 @@ def percussion_controls(context, origin):
         assert page.evaluate('dragScene.scan.objects[0].instrument')==instrument
         assert page.evaluate('dragScene.interactions.enabled')
         page.locator('#rec').click()
-        page.wait_for_function("document.querySelector('#rec').textContent==='■ Stop recording'")
+        page.wait_for_function("document.querySelector('#rec').textContent==='Stop recording'")
         hits=page.evaluate("""async()=>{
           const {percussionTapFrame}=await import('/tests/scene-percussion.test.js');
           const c=dragScene,o=c.scan.objects[0],observe=c.observePose,hits=[];
@@ -278,6 +287,7 @@ def percussion_controls(context, origin):
 def interactive_percussion(page, origin, output, resolution):
     """Leave a real-camera window available while collecting human hit evidence."""
     page.goto(origin+'/web/live/')
+    open_live_sections(page)
     page.evaluate("""async()=>{
       const {SceneController}=await import('/web/live/scene/controller.js');
       const {Engine}=await import('/web/live/audio.js');

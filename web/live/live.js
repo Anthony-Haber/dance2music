@@ -17,6 +17,9 @@ import { MagentaScene } from './magenta.js';
 import { PianoPlayer } from './piano.js';
 import { availability, availableScene, downloadLink as appDownloadLink } from './app-availability.js';
 
+import { action, initPresentation } from './presentation.js';
+initPresentation();
+
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/';
 const MODEL = m => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${m}/float16/1/pose_landmarker_${m}.task`;
 const LOCAL = 'vendor/mediapipe/';       // `python live.py --offline` fills this
@@ -47,6 +50,8 @@ const scene = new SceneController({canvas: $('sceneLayer'), onChange: () => reco
   onStatus: ({state, message}) => {
     $('sceneStatus').textContent = message;
     $('sceneStatus').hidden = state === 'off';
+    $('sceneStatus').dataset.issue = String(state === 'failed');
+    if (starting && state !== 'off') status(message);
     $('sceneRescan').disabled = !['active', 'empty'].includes(state);
     if (state === 'failed') disableSceneMask();
   }});
@@ -77,15 +82,18 @@ function renderWatches() {
   const allAdded = watches.devices.size >= target;
   $('watchProgress').textContent = connected === target ? `All ${target} watches connected.` : `${connected} of ${target} watches connected.`;
   $('watchConnect').disabled = !!watches.supportMessage || watches.pending > 0 || allAdded || watches.activeCount >= target;
-  $('watchConnect').textContent = watches.pending ? 'Choose a watch…' : connected === target ? 'All watches connected'
-    : allAdded ? 'All watches added' : watches.devices.size ? 'Connect next watch' : 'Connect watch';
-  $('watchAutoStatus').textContent = watches.autoMessage;
+  action($('watchConnect'), watches.pending ? 'Choose a watch…' : connected === target ? 'All watches connected'
+    : allAdded ? 'All watches added' : watches.devices.size ? 'Connect next watch' : 'Connect watch', 'connect');
+  $('watchAutoStatus').textContent = watches.autoConnect && !watches.supportMessage
+    ? watches.autoNotice || (watches.restoring ? 'Reconnecting paired watches…'
+      : navigator.bluetooth?.getDevices ? 'Paired watches reconnect automatically.' : 'Reconnects while this page stays open.') : '';
   $('watchAuto').disabled = !!watches.supportMessage;
   $('watchStatus').textContent = watches.supportMessage || watches.error || watches.availabilityMessage || (watches.pending
-    ? 'Looking for watches… Select your watch, then click Pair.'
-    : allAdded ? 'Use the controls below to disconnect or reconnect a watch.'
-    : watches.devices.size ? 'Select Connect next watch to add another. Previously selected watches are hidden from the list.'
-    : 'Connect watch shows nearby M5StickC-IMU watches. Select your watch, then click Pair.');
+    ? 'Select your watch, then choose Pair.'
+    : allAdded ? 'Manage each watch below.'
+    : watches.devices.size ? 'Choose Connect next watch to add another.'
+    : 'Turn on your watch, then choose Connect watch.');
+  $('watchStatus').dataset.issue = String(!!(watches.supportMessage || watches.error || watches.availabilityMessage));
   const help = $('watchHelp'), needsHelp = watches.discoveryHelp || watches.availability === false;
   if (needsHelp && !help.dataset.shownForError) { help.open = true; help.dataset.shownForError = '1'; }
   if (!needsHelp) delete help.dataset.shownForError;
@@ -93,13 +101,25 @@ function renderWatches() {
   LIMBS.forEach((limb, id) => {
     let row = $(`watchSlot${id}`);
     if (!row) {
-      row = document.createElement('div'); row.id = `watchSlot${id}`; row.className = 'status';
-      row.append(document.createElement('span'), document.createElement('button')); $('watchDevices').append(row);
+      row = document.createElement('div'); row.id = `watchSlot${id}`; row.className = 'watch-device';
+      row.innerHTML = `<div class="watch-device-heading"><strong>${limb}</strong><button type="button"></button></div>
+        <p class="watch-device-state"></p><p class="status watch-device-error"></p>
+        <details class="help"><summary>Device details</summary><div class="watch-device-details"></div></details>`;
+      $('watchDevices').append(row);
     }
-    const d = [...watches.devices.values()].find(x => x.device_id === id), button = row.lastChild;
-    row.firstChild.textContent = `${limb}: ${d ? `${d.name} · ${watches.status(d)} · ${d.battery ?? '—'}% · ${watches.rate(d).toFixed(0)} Hz${d.error ? ' · ' + d.error : ''}` : id >= 2 && !watches.assignments.legsPairID ? 'disabled' : 'not connected'} `;
+    const d = [...watches.devices.values()].find(x => x.device_id === id), button = row.querySelector('button');
+    row.querySelector('.watch-device-state').textContent = d
+      ? `${watches.status(d)} · Battery ${d.battery ?? '—'}%`
+      : id >= 2 && !watches.assignments.legsPairID ? 'Disabled' : 'Not connected';
+    const error = row.querySelector('.watch-device-error');
+    const dropped = d && !d.connected && !d.connecting && !d.paused;
+    error.textContent = d?.error || (dropped ? watches.status(d) : '');
+    error.dataset.issue = String(!!(d?.error || dropped));
+    row.querySelector('details').hidden = !d;
+    row.querySelector('.watch-device-details').textContent = d ? `${d.name} · ${d.device.id} · ${watches.rate(d).toFixed(0)} Hz` : '';
     button.hidden = !d; button.disabled = !!(d?.connecting && d?.paused);
-    button.textContent = d?.connecting ? (d.paused ? 'Canceling…' : 'Cancel connection') : d?.connected ? 'Disconnect' : 'Reconnect';
+    const label = d?.connecting ? (d.paused ? 'Canceling…' : 'Cancel connection') : d?.connected ? 'Disconnect' : 'Reconnect';
+    action(button, label, d?.connected || d?.connecting ? 'cancel' : 'connect', `${label} ${limb.toLowerCase()} watch`);
     button.onclick = () => d.connected || d.connecting ? watches.disconnect(d.device.id) : watches.reconnect(d.device.id).catch(error => { watches.error = error.message; renderWatches(); });
   });
 }
@@ -244,8 +264,12 @@ function lockSessionOptions() {
     $('sceneInteractionHelp').textContent='Step onto a key with a visible foot near the floor. Hold to let the piano decay. Lift your foot or jump, then land on the same key to replay; stepping off also damps it. Use Objects in Mix for volume. Clear the floor during scanning. Foot contact is approximate.';
     $('sceneTouchHelp').textContent='Cyan dots have foreground foot depth. Only toes (or heels when toes are uncertain) close to the floor play keys. Hands and knees do not play.';
   }
+  $('sceneInstruction').textContent = isPiano ? 'Clear the floor to scan. Step on a key to play.'
+    : percussion ? 'Tap an instrument with any body part to play.'
+    : $('sceneMode').value === 'magenta' ? 'Move closer to a prompt to change the music.'
+    : 'Drag objects to move them. Tap with a hand or foot to play.';
   $('sceneNote').textContent = $('source').value === 'camera'
-    ? 'Live camera · stop to change · Chrome on Apple Silicon' : '3D objects are unavailable for video files.';
+    ? running || starting ? 'Stop to change the scene.' : 'Choose a scene, then Start.' : 'Scenes need a live camera.';
 }
 async function start() {
   if (starting || running || stopping) return;
@@ -254,7 +278,7 @@ async function start() {
   scene.setMode($('sceneMode').value);
   const generation = ++sessionGeneration;
   lastF = null;
-  starting = true; $('go').textContent = 'Cancel'; lockSessionOptions();
+  starting = true; action($('go'), 'Cancel', 'cancel'); lockSessionOptions();
   engine.unlock();
   try {
     status('opening source…');
@@ -269,7 +293,7 @@ async function start() {
     await hands.load(vision, $('handMode').value);
     if (generation !== sessionGeneration) return;
     if(sceneWanted()&&$('sceneMode').value==='floor-piano'){
-      await piano.load(message=>{$('pianoStatus').textContent=message;});
+      await piano.load(message=>{$('pianoStatus').textContent=message;status(message);});
       if(generation!==sessionGeneration)return;
       $('pianoStatus').textContent='Piano samples ready';
     }
@@ -280,9 +304,9 @@ async function start() {
     applyMix(); applySens(); watchAudio();
     piano.setListening($('pianoListening').value,sceneWanted()&&$('sceneMode').value==='floor-piano');
     running = true; starting = false; $('badge').hidden = false;
-    $('go').textContent = 'Stop'; $('go').disabled = false; lockSessionOptions();
+    action($('go'), 'Stop', 'stop'); $('go').disabled = false; lockSessionOptions();
     $('rec').disabled = !window.MediaRecorder || recorder.busy || !!recorder.pending;
-    status('camera running — waiting for movement');
+    status('Running · move to make music');
     loop();
     if(sceneWanted()&&$('sceneMode').value==='magenta')magenta.start();
   } catch (e) {
@@ -307,8 +331,8 @@ async function stop() {
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; v.pause();
   await magentaStopped;piano.dispose();await engine.stop();
-  stopping = false; $('go').textContent = 'Start'; $('go').disabled = false;
-  $('hint').hidden = false; $('tap').hidden = true; lockSessionOptions(); status('stopped');
+  stopping = false; action($('go'), 'Start', 'play'); $('go').disabled = false;
+  $('hint').hidden = false; $('tap').hidden = true; lockSessionOptions(); status('Stopped · ready to start');
 }
 
 // iOS can leave the context suspended, or interrupt it when the camera
@@ -620,22 +644,25 @@ function meters(f) {
   if (now - statusAt > 500 && engine.ctx) {
     statusAt = now;
     const lat = 1000 * ((engine.ctx.baseLatency || 0) + (engine.ctx.outputLatency || 0));
-    status(`${fpsT.length} fps · pose ${inferMs.toFixed(0)} ms · audio ${lat.toFixed(0)} ms · ` +
-           `${v.videoWidth}×${v.videoHeight}${vision && vision.local ? ' · offline models' : ''}`);
+    $('sessionMetrics').textContent = `${fpsT.length} fps · pose ${inferMs.toFixed(0)} ms · audio ${lat.toFixed(0)} ms · ` +
+           `${v.videoWidth}×${v.videoHeight}${vision && vision.local ? ' · offline models' : ''}`;
   }
 }
-function status(s) { $('status').textContent = s; }
+function status(s) {
+  $('status').textContent = s;
+  $('status').dataset.issue = String(/could not|failed|needs https/i.test(s));
+}
 
 // ── mixer and sensitivity ───────────────────────────────────────────
 const LAYERS = [['pad', 1], ['bass', 1], ['plucks', 1], ['wind', 1], ['wind tuned', 0.6], ['drums', 0.8], ['objects', 0.8]];
 const mix = store.get('mix', Object.fromEntries(LAYERS.map(([k, d]) => [k, { vol: d, mute: false }]).concat([['master', { vol: 1 }]])));
 const slider = (key, val, min, max, step, cls = '') =>
-  `<input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-k="${key}" class="${cls}">`;
-$('mix').innerHTML = LAYERS.map(([k,defaultVolume]) => `<span>${k}</span>
-  <button data-k="${k}" class="${mix[k]?.mute ? '' : 'on'}">${mix[k]?.mute ? 'off' : 'on'}</button>
+  `<input id="slider-${key.replace(' ', '_')}" type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-k="${key}" class="${cls}">`;
+$('mix').innerHTML = LAYERS.map(([k,defaultVolume]) => `<label for="slider-${k.replace(' ', '_')}">${k}</label>
+  <button data-k="${k}" aria-label="${k} sound" aria-pressed="${!mix[k]?.mute}" class="${mix[k]?.mute ? '' : 'on'}">${mix[k]?.mute ? 'off' : 'on'}</button>
   ${slider(k, mix[k]?.vol ?? defaultVolume, 0, 1.5, 0.01)}<span class="val" id="mv-${k.replace(' ', '_')}"></span>`).join('') +
-  `<span>master</span><span></span>${slider('master', mix.master?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-master"></span>` +
-  `<span>pad floor</span><button id="floorBtn">off</button>${slider('__floor', 0, 0, 0.5, 0.01)}<span class="val" id="mv-floor"></span>`;
+  `<label for="slider-master">master</label><span></span>${slider('master', mix.master?.vol ?? 1, 0, 1.5, 0.01)}<span class="val" id="mv-master"></span>` +
+  `<label for="slider-__floor">pad floor</label><button id="floorBtn" aria-label="Pad floor sound">off</button>${slider('__floor', 0, 0, 0.5, 0.01)}<span class="val" id="mv-floor"></span>`;
 function applyMix() {
   for (const [k,defaultVolume] of LAYERS) {
     const m = mix[k] || (mix[k] = { vol: defaultVolume, mute: false });
@@ -653,13 +680,13 @@ $('mix').addEventListener('click', e => {
     m.lo = m.lo > 0 ? 0 : (store.get('floorOn', 0.15)); mapChanged(); return; }
   const k = e.target.dataset.k; if (!k || e.target.tagName !== 'BUTTON') return;
   mix[k].mute = !mix[k].mute; e.target.classList.toggle('on', !mix[k].mute);
-  e.target.textContent = mix[k].mute ? 'off' : 'on'; if (engine.ctx) applyMix(); else store.set('mix', mix); });
+  e.target.textContent = mix[k].mute ? 'off' : 'on'; e.target.setAttribute('aria-pressed', String(!mix[k].mute)); if (engine.ctx) applyMix(); else store.set('mix', mix); });
 
 const SENS = [['weight', 'Weight', 0.25, 3, 1], ['time', 'Suddenness', 0.25, 3, 1],
               ['flow', 'Flow', 0.25, 3, 1], ['space', 'Space', 0.25, 3, 1],
               ['smooth', 'Smoothing', 0.3, 4, 1.2], ['hold', 'Chord hold', 0.1, 1.5, 0.5]];
 const sens = store.get('sens', Object.fromEntries(SENS.map(s => [s[0], s[4]])));
-$('sens').innerHTML = SENS.map(([k, n, lo, hi]) => `<span>${n}</span><span></span>
+$('sens').innerHTML = SENS.map(([k, n, lo, hi]) => `<label for="slider-${k}">${n}</label><span></span>
   ${slider(k, sens[k] ?? 1, lo, hi, 0.05)}<span class="val" id="sv-${k}"></span>`).join('');
 function applySens() {
   for (const [k] of SENS.slice(0, 4)) { P.gain[k] = sens[k]; $('sv-' + k).textContent = '×' + (+sens[k]).toFixed(2); }
@@ -688,21 +715,21 @@ function presetList() {
 function renderMapping() {
   const opts = sel => SOURCES.map(([k, n]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${n}</option>`).join('');
   $('map').innerHTML = Object.entries(DESTS).map(([k, d]) => { const m = mapping[k];
-    const num = (f, v, step) => `<input type="number" data-k="${k}" data-f="${f}" value="${fmt(d, v)}" step="${step}">`;
+    const num = (f, v, step) => `<input id="map-${k}-${f}" type="number" data-k="${k}" data-f="${f}" aria-label="${d.label} ${f === 'lo' ? 'minimum' : f === 'hi' ? 'maximum' : f === 'exp' ? 'curve' : f}" value="${fmt(d, v)}" step="${step}">`;
     const st = d.log ? 1 : 0.01;
     return `<details class="dest"><summary><span class="dn">${d.label}</span>
         <span class="ds">${SOURCES.find(s => s[0] === m.src)[1].split(' (')[0]}</span>
         <span class="bar small"><i id="mv:${k}"></i></span></summary>
       <div class="dgrid">
-        <span>source</span><select data-k="${k}" data-f="src">${opts(m.src)}</select>
-        <span>min ${d.unit || ''}</span>${num('lo', m.lo, st)}
-        <span>max ${d.unit || ''}</span>${num('hi', m.hi, st)}
-        <span>gain</span>${num('gain', m.gain, 0.05)}
-        <span>curve (exp)</span>${num('exp', m.exp, 0.05)}
-        <span>invert</span><input type="checkbox" data-k="${k}" data-f="inv" ${m.inv ? 'checked' : ''}>
+        <label for="map-${k}-src">source</label><select id="map-${k}-src" data-k="${k}" data-f="src" aria-label="${d.label} source">${opts(m.src)}</select>
+        <label for="map-${k}-lo">min ${d.unit || ''}</label>${num('lo', m.lo, st)}
+        <label for="map-${k}-hi">max ${d.unit || ''}</label>${num('hi', m.hi, st)}
+        <label for="map-${k}-gain">gain</label>${num('gain', m.gain, 0.05)}
+        <label for="map-${k}-exp">curve (exp)</label>${num('exp', m.exp, 0.05)}
+        <label for="map-${k}-inv">invert</label><input id="map-${k}-inv" type="checkbox" data-k="${k}" data-f="inv" aria-label="${d.label} invert" ${m.inv ? 'checked' : ''}>
       </div></details>`; }).join('');
   const lo = mapping['pad.level'].lo;
-  $('floorBtn').textContent = lo > 0 ? 'on' : 'off'; $('floorBtn').classList.toggle('on', lo > 0);
+  $('floorBtn').textContent = lo > 0 ? 'on' : 'off'; $('floorBtn').setAttribute('aria-pressed', String(lo > 0)); $('floorBtn').classList.toggle('on', lo > 0);
   document.querySelector('[data-k="__floor"]').value = lo;
   $('mv-floor').textContent = Math.round(lo * 100) + '%';
 }
@@ -725,6 +752,7 @@ $('savePreset').onclick = () => { const n = prompt('Name for this mapping'); if 
 $('exportMap').onclick = () => { const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(mapping, null, 1)], { type: 'application/json' }));
   a.download = 'dance2music-mapping.json'; a.click(); };
+$('importMapButton').onclick = () => $('importMap').click();
 $('importMap').onchange = async () => { const f = $('importMap').files[0]; if (!f) return;
   try { const m = JSON.parse(await f.text()); for (const k of Object.keys(DESTS)) if (m[k]) mapping[k] = { ...mapping[k], ...m[k] };
         mapChanged(); } catch (e) { status('could not read that mapping'); } };
@@ -745,7 +773,7 @@ $('handMode').onchange = async () => { store.set('handMode', $('handMode').value
     try { await loading; status('hands: ' + hands.mode); }
     catch (error) { status('could not load hands: ' + error.message); }
     finally { recordConfiguration();if(restartMagenta&&running&&session===sessionGeneration)magenta.start(); } } };
-$('gestures').innerHTML = GESTURES.map(gname => `<span>${gname.replace('_', ' ')}</span><select data-g="${gname}">` +
+$('gestures').innerHTML = GESTURES.map(gname => `<label for="gesture-${gname}">${gname.replace('_', ' ')}</label><select id="gesture-${gname}" data-g="${gname}" aria-label="${gname.replaceAll('_', ' ')} action">` +
   ACTIONS.map(([k, n]) => `<option value="${k}" ${actions[gname] === k ? 'selected' : ''}>${n}</option>`).join('') + '</select>').join('');
 $('gestures').onchange = e => { const gname = e.target.dataset.g; if (!gname) return;
   actions[gname] = e.target.value; store.set('actions', actions); };
@@ -835,16 +863,31 @@ $('file').onchange = () => changeSource();
 
 document.addEventListener('keydown', e => {
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||e.target.closest('dialog')) return;
+  if (e.key === ' ' && e.target.closest('button, summary, a')) return;
   if (e.key === ' ') { e.preventDefault(); running || starting ? stop() : start(); }
   else if (e.key === 'r') { if (running) toggleRecord(); }
-  else if (e.key === 'f') { document.body.classList.toggle('perf');
-    if (document.body.classList.contains('perf')) document.documentElement.requestFullscreen?.().catch(() => {});
-    else document.exitFullscreen?.().catch(() => {}); }
+  else if (e.key === 'f') togglePerformance();
+  else if (e.key === 'Escape' && document.body.classList.contains('perf')) togglePerformance(false);
   else if ('12345'.includes(e.key)) { $('mode').value = ['six', 'fingers', 'twofive', 'twofive_alt', 'fixed'][+e.key - 1]; $('mode').onchange(); }
   else if (e.key === 'm') { engine.masterLevel(engine.master && engine.master.gain.value > 0 ? 0 : mix.master.vol); }
 });
+function performanceLabel() {
+  const active = document.body.classList.contains('perf');
+  action($('performanceView'), active ? 'Exit performance view' : 'Performance view', active ? 'collapse' : 'expand');
+  $('performanceView').setAttribute('aria-pressed', String(active));
+}
+function togglePerformance(active = !document.body.classList.contains('perf')) {
+  document.body.classList.toggle('perf', active); performanceLabel();
+  if (active) document.documentElement.requestFullscreen?.().catch(() => {});
+  else if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  $('performanceView').focus();
+}
+$('performanceView').onclick = () => togglePerformance();
+performanceLabel();
 document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) document.body.classList.remove('perf'); });
+  if (!document.fullscreenElement) document.body.classList.remove('perf');
+  performanceLabel();
+});
 
 // fill device lists if permission was granted before
 navigator.mediaDevices?.enumerateDevices && listDevices().catch(() => {});
@@ -876,16 +919,17 @@ document.querySelector('aside').addEventListener('change', recordConfiguration);
 function downloadLink({ name, url }) {
   const a = document.createElement('a'); a.href = url; a.download = name; a.textContent = name; return a;
 }
-function packagingProgress(progress) { $('recMsg').textContent = `Preparing recording bundle… ${progress ?? 0}%`; }
+function packagingProgress(progress) { $('recMsg').textContent = `Preparing download… ${progress ?? 0}%`; }
 // A fresh page always starts with microphone capture off, including form restoration.
 $('recMic').checked = false;
 window.addEventListener('pageshow', () => { if (!recorder.starting && !recorder.recording) $('recMic').checked = false; });
 let recordingStartGeneration = 0;
 function lockRecordingOptions(locked) { $('recMic').disabled = locked; $('recWhat').disabled = locked; }
 function cancelRecordingStart() {
+  delete $('recMsg').dataset.elapsed;
   ++recordingStartGeneration; recorder.cancelStart(); lockRecordingOptions(false);
   $('micMsg').hidden = true;
-  $('rec').textContent = '● Record'; $('recMsg').textContent = 'Recording cancelled.';
+  action($('rec'), 'Record', 'record'); $('recMsg').textContent = 'Recording cancelled.';
 }
 function microphoneStatus(mic = recorder.microphone) {
   const message = $('micMsg');
@@ -914,15 +958,16 @@ let finishingRecording = null;
 function finishRecording(retry = false) {
   if (finishingRecording) return finishingRecording;
   finishingRecording = (async () => {
+    delete $('recMsg').dataset.elapsed;
     $('rec').disabled = true; $('recDot').hidden = true;
-    $('rec').classList.remove('on'); $('rec').textContent = 'Preparing…';
+    $('rec').classList.remove('on'); action($('rec'), 'Preparing…', 'record');
     packagingProgress(0);
     try {
       const r = await (retry ? recorder.retry(packagingProgress) : recorder.stop(packagingProgress));
       if (r) {
         microphoneStatus(r.microphone);
         const a = downloadLink(r);
-        $('recMsg').replaceChildren(document.createTextNode(`Bundle ready (${(r.size / 1e6).toFixed(1)} MB, ${r.seconds.toFixed(0)} s, ${r.observations} observations). Download again: `), a);
+        $('recMsg').replaceChildren(document.createTextNode(`Recording ready · ${r.seconds.toFixed(0)} s · ${(r.size / 1e6).toFixed(1)} MB. Download again: `), a);
         a.click();
         if (r.mediaError) $('recMsg').append(document.createTextNode(' Media was interrupted: ' + r.mediaError));
         if (r.microphone?.selected) $('recMsg').append(document.createTextNode(
@@ -943,7 +988,8 @@ function finishRecording(retry = false) {
       $('recMsg').append(' ', discard);
     } finally {
       lockRecordingOptions(false);
-      $('rec').textContent = '● Record'; $('rec').disabled = !running || !!recorder.pending;
+      action($('rec'), 'Record', 'record'); $('rec').disabled = !running || !!recorder.pending;
+      if (running) status(recorder.pending ? 'Recording needs attention. Retry or clear it below.' : 'Running · move to make music');
       finishingRecording = null;
     }
   })();
@@ -964,18 +1010,18 @@ async function toggleRecord() {
         finalAnalysis: () => $('sceneMode').value==='magenta'?{magenta_events:magenta.takeEvents(recorder.t0)}:$('sceneMode').value==='floor-piano'?{piano_events:piano.takeEvents(recorder.t0)}:null,
         label: () => { const c = follower.chord(); return [c.symbol, c.degree, DEG[c.degree] || '#efe9df']; } });
       if (recorder.starting) {
-        $('rec').textContent = 'Cancel recording';
-        $('recMsg').textContent = 'Waiting for microphone permission… Press Cancel recording to cancel.';
+        action($('rec'), 'Cancel recording', 'cancel');
+        $('recMsg').textContent = 'Allow microphone access, or cancel recording.';
       }
       const type = await starting;
       if (generation !== recordingStartGeneration || !type) return;
-      $('rec').classList.add('on'); $('rec').textContent = '■ Stop recording'; $('recDot').hidden = false;
-      status('recording ' + type.split(';')[0]);
+      $('rec').classList.add('on'); action($('rec'), 'Stop recording', 'stop'); $('recDot').hidden = false;
+      status('Running · recording');
       recordingStatus();
       recTick();
     } catch (e) {
       if (generation !== recordingStartGeneration) return;
-      lockRecordingOptions(false); $('rec').textContent = '● Record';
+      lockRecordingOptions(false); action($('rec'), 'Record', 'record');
       $('micMsg').hidden = true;
       $('recMsg').textContent = 'Could not record: ' + e.message; status('could not record: ' + e.message);
     }
@@ -986,7 +1032,10 @@ async function toggleRecord() {
 function recTick() {
   if (!recorder.active) return;
   const s = Math.floor(recorder.elapsed());
-  $('recDot').textContent = `● REC ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const elapsed = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  $('recDot').textContent = `● REC ${elapsed}`;
+  $('rec').setAttribute('aria-label', `Stop recording · ${elapsed}`);
+  $('recMsg').dataset.elapsed = elapsed;
   setTimeout(recTick, 250);
 }
 $('rec').onclick = () => toggleRecord();
@@ -995,4 +1044,4 @@ $('rec').onclick = () => toggleRecord();
 $('sceneMode').disabled = false;
 $('go').disabled = false;
 document.body.dataset.ready = 'true';
-status('idle');
+status('Ready to start');
